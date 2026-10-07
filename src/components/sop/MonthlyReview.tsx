@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, Lightbulb, Warehouse } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { MonthlyReview as Data } from "@/server/sop/monthly";
@@ -40,18 +41,7 @@ function InsightCards({ items }: { items: Insight[] }) {
   );
 }
 
-function PlanBar({ plan, actual, max }: { plan: number; actual: number; max: number }) {
-  const over = actual > plan;
-  return (
-    <div className="relative h-2 w-full min-w-[90px] overflow-hidden rounded-full bg-muted">
-      <div className="absolute inset-y-0 left-0 rounded-full bg-line-strong" style={{ width: `${(plan / max) * 100}%` }} />
-      <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(actual / max) * 100}%`, background: over ? "linear-gradient(90deg,#fb7185,#dc2626)" : "linear-gradient(90deg, var(--color-accent-2), var(--color-accent))", opacity: 0.9 }} />
-    </div>
-  );
-}
-
 function ViewTable({ rows, label }: { rows: Row[]; label: string }) {
-  const max = Math.max(1, ...rows.filter((r) => !r.kind).flatMap((r) => [r.tp, r.ta]));
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[980px] border-collapse text-[13px]">
@@ -63,8 +53,8 @@ function ViewTable({ rows, label }: { rows: Row[]; label: string }) {
             <th colSpan={3} className="rounded-tr-xl border-l-2 border-white bg-[#fdf2e3] px-3 py-1.5 text-center text-[#9a3412]">North</th>
           </tr>
           <tr className="thead-hl text-[10.5px] font-bold uppercase tracking-[0.06em]">
-            {["Plan", "Actual", "Util %", "Plan vs actual", "Plan", "Actual", "Util %", "Plan", "Actual", "Util %"].map((h, i) => (
-              <th key={i} className={cn("px-3 py-2", i === 3 ? "text-left" : "text-right", (i === 0 || i === 4 || i === 7) && "border-l-2 border-white")}>{h}</th>
+            {["Plan", "Actual", "Variance", "Util %", "Plan", "Actual", "Util %", "Plan", "Actual", "Util %"].map((h, i) => (
+              <th key={i} className={cn("px-3 py-2 text-right", (i === 0 || i === 4 || i === 7) && "border-l-2 border-white")}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -74,8 +64,8 @@ function ViewTable({ rows, label }: { rows: Row[]; label: string }) {
               <td className="px-3 py-2.5 font-semibold text-ink">{r.label}</td>
               <td className="border-l-2 border-line/0 px-3 text-right tabular">{fmt(r.tp)}</td>
               <td className="px-3 text-right font-bold tabular">{fmt(r.ta)}</td>
+              <td className={cn("px-3 text-right font-bold tabular", r.gap > 0 ? "text-bad" : r.gap < 0 ? "text-warn" : "text-ink-4")}>{r.gap === 0 ? "—" : `${r.gap > 0 ? "+" : "−"}${fmt(Math.abs(r.gap))}`}</td>
               <td className="px-3 text-right"><UtilChip u={r.tu} plan={r.tp} actual={r.ta} /></td>
-              <td className="px-3">{!r.kind && <PlanBar plan={r.tp} actual={r.ta} max={max} />}</td>
               <td className="px-3 text-right tabular text-ink-2">{fmt(r.sp)}</td>
               <td className="px-3 text-right tabular">{fmt(r.sa)}</td>
               <td className="px-3 text-right"><UtilChip u={r.su} plan={r.sp} actual={r.sa} /></td>
@@ -94,7 +84,7 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
   const cur = [...pts].reverse().find((p) => p.util != null);
   const u = cur?.util ?? 0;
   return (
-    <div className="card p-5">
+    <div className="card p-4">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-[14px] font-bold"><span className="size-2.5 rounded-full" style={{ background: tone }} />{name}</span>
         {cur && <span className={cn("rounded-full px-2.5 py-0.5 text-[11.5px] font-bold", u >= 0.9 ? "bg-bad-soft text-bad" : u >= 0.8 ? "bg-warn-soft text-warn" : "bg-accent-soft text-accent-ink")}>{u >= 0.9 ? "Near full" : u >= 0.8 ? "Tight" : "Healthy"}</span>}
@@ -104,16 +94,46 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
         <span className="mb-1 text-[12.5px] font-medium text-ink-3">utilised · {cur ? mon(cur.period) : ""}</span>
       </div>
       <div className="mt-1 text-[12.5px] text-ink-3"><b className="font-bold text-ink">{cur?.inventory != null ? lakh(cur.inventory) : "—"}</b> on hand of <b className="font-bold text-ink">{cur ? lakh(cur.capacity) : "—"}</b> capacity</div>
-      <div className="mt-4 flex h-20 items-end gap-2">
-        {pts.map((p) => (
-          <div key={p.period} className="flex flex-1 flex-col items-center gap-1">
-            <div className="relative flex h-14 w-full items-end overflow-hidden rounded-lg bg-muted">
-              {p.util != null && <div className="w-full rounded-lg" style={{ height: `${Math.min(100, p.util * 100)}%`, background: p.util >= 0.9 ? "linear-gradient(180deg,#fb7185,#dc2626)" : p.util >= 0.8 ? "linear-gradient(180deg,#fbbf24,#d97706)" : "linear-gradient(180deg, var(--color-accent-2), var(--color-accent))" }} />}
-            </div>
-            <span className="text-[10.5px] font-semibold text-ink-4">{mon(p.period).split(" ")[0]}</span>
-          </div>
-        ))}
-      </div>
+    </div>
+  );
+}
+
+/** Sheet-style warehouse table: capacity, inventory and utilisation by month for South, North and Total. */
+function WhTable({ wh }: { wh: Data["wh"] }) {
+  const blocks: [string, WhPoint[], string][] = [["South (BLR)", wh.South, "#e8f0fe"], ["North (GGN)", wh.North, "#fdf2e3"], ["Total", wh.Total, "#e7f7ed"]];
+  return (
+    <div className="card overflow-x-auto">
+      <table className="w-full min-w-[900px] border-collapse text-[13px]">
+        <thead>
+          <tr className="thead-hl text-[10.5px] font-bold uppercase tracking-[0.08em]">
+            <th className="px-4 py-2.5 text-left">Warehouse</th><th className="px-4 py-2.5 text-left">Details</th>
+            {wh.months.map((m) => <th key={m} className="px-4 py-2.5 text-right">{new Date(`${m}T00:00:00Z`).toLocaleString("en-IN", { month: "short", year: "numeric", timeZone: "UTC" })}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {blocks.map(([name, pts, bg]) => (
+            <Fragment key={name}>
+              <tr className="border-t border-line">
+                <td rowSpan={3} className="px-4 py-2 align-middle text-[14px] font-extrabold" style={{ background: bg }}>{name}</td>
+                <td className="whitespace-nowrap px-4 py-2 text-ink-3">Capacity (lakh units)</td>
+                {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right tabular">{(p.capacity / 100000).toFixed(2)}</td>)}
+              </tr>
+              <tr className="border-t border-line/60">
+                <td className="whitespace-nowrap px-4 py-2 text-ink-3">Inventory (lakh units)</td>
+                {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right font-bold tabular">{p.inventory != null ? (p.inventory / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
+              </tr>
+              <tr className="border-t border-line/60 bg-subtle/50">
+                <td className="whitespace-nowrap px-4 py-2 font-bold">Utilisation %</td>
+                {pts.map((p) => (
+                  <td key={p.period} className="px-4 py-2 text-right">
+                    {p.util != null ? <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-extrabold tabular", p.util >= 0.9 ? "bg-bad-soft text-bad" : p.util >= 0.8 ? "bg-warn-soft text-warn" : "bg-accent-soft text-accent-ink")}>{(p.util * 100).toFixed(2)}%</span> : <span className="text-ink-4">—</span>}
+                  </td>
+                ))}
+              </tr>
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -133,6 +153,7 @@ export function MonthlyReviewView({ d }: { d: Data }) {
           <WhTile name="Total" pts={d.wh.Total} tone="var(--color-ink)" />
         </div>
         {d.whInsights.length > 0 && <div className="mt-4"><InsightCards items={d.whInsights} /></div>}
+        <div className="mt-4"><WhTable wh={d.wh} /></div>
       </section>
 
       {flows.map((f) => (
