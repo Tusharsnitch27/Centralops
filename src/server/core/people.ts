@@ -2,12 +2,12 @@ import "server-only";
 import { cache } from "react";
 import { q } from "../db";
 
-export interface Person { id: string; name: string; email: string | null; title: string | null; role: string; team_id: string | null; team_name: string | null; avatar_color: string | null }
+export interface Person { id: string; username: string | null; name: string; email: string | null; title: string | null; role: string; team_id: string | null; team_name: string | null; avatar_color: string | null }
 export interface TeamLite { id: string; name: string; function: string | null; color: string | null }
 
 /** Active people for pickers (cached per request). */
 export const listPeople = cache(() =>
-  q<Person>(`select u.id, u.name, u.email, u.title, u.role, u.team_id, t.name as team_name, u.avatar_color
+  q<Person>(`select u.id, u.username, u.name, u.email, u.title, u.role, u.team_id, t.name as team_name, u.avatar_color
              from users u left join teams t on t.id = u.team_id where u.active order by u.name`),
 );
 export const listTeams = cache(() => q<TeamLite>(`select id, name, function, color from teams order by name`));
@@ -23,11 +23,15 @@ export async function matchPerson(name: string | null | undefined): Promise<Pers
   const n = name.trim().toLowerCase().replace(/^@/, "");
   if (!n) return null;
   const people = await listPeople();
+  const first = n.split(/[\s.]+/)[0];
+  const tokens = (p: Person) => p.name.toLowerCase().split(/[\s.]+/).filter((t) => t.length > 1);
+  const byToken = people.filter((p) => tokens(p).includes(first));
   return (
     people.find((p) => p.email?.toLowerCase() === n) ??
+    people.find((p) => p.username?.toLowerCase() === n || p.username?.toLowerCase() === first) ??
     people.find((p) => p.name.toLowerCase() === n) ??
-    people.find((p) => p.name.toLowerCase().split(/\s+/)[0] === n.split(/\s+/)[0]) ??
-    null
+    people.find((p) => p.name.toLowerCase().split(/\s+/)[0] === first) ??
+    (byToken.length === 1 ? byToken[0] : null)
   );
 }
 export async function matchTeam(name: string | null | undefined): Promise<TeamLite | null> {

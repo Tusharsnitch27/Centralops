@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import * as Icons from "lucide-react";
 import { NAV } from "@/lib/nav";
 import { cn } from "@/lib/cn";
+import { LogoMark } from "./Logo";
 
 type IconCmp = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
 
@@ -32,9 +33,7 @@ export function NavRail({ counts, user }: { counts: Record<string, number>; user
   return (
     <aside className="sticky top-3 mt-3 hidden h-[calc(100dvh-24px)] self-start w-[240px] shrink-0 flex-col rounded-[24px] border border-white p-3 shadow-[0_1px_2px_rgb(17_18_20/0.04),0_14px_36px_-16px_rgb(17_18_20/0.18)] backdrop-blur-xl lg:flex" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.95), color-mix(in srgb, var(--color-subtle) 85%, white))" }}>
       <Link href="/" className="mb-4 flex items-center gap-3 rounded-2xl p-2">
-        <span className="flex size-10 items-center justify-center rounded-2xl text-white shadow-[0_8px_18px_-8px_var(--color-accent)]" style={{ background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-2))" }}>
-          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="7.5" opacity=".55" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" /></svg>
-        </span>
+        <LogoMark size={42} />
         <span className="leading-tight">
           <span className="block text-[16px] font-extrabold tracking-[-0.025em] text-ink">Central Ops</span>
           <span className="block text-[11.5px] font-medium text-ink-3">Program Manager 2.0</span>

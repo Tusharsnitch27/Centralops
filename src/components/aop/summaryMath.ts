@@ -23,7 +23,7 @@ export function aggLines(lines: LineNode[], period: string | string[]): Agg {
 }
 
 /* ---------- time spans: month · quarter · year ---------- */
-export type Grain = "month" | "quarter" | "year";
+export type Grain = "month" | "quarter" | "year" | "custom";
 export interface Span { key: string; label: string; short: string; periods: string[]; closed: boolean }
 /** Indian FY quarters: Q1 Apr–Jun … Q4 Jan–Mar. Year offers full FY and YTD (through last closed month). */
 export function spansFor(t: Pick<SummaryTree, "months" | "lastClosed">, grain: Grain): Span[] {
@@ -135,4 +135,78 @@ export function momLike(lines: LineNode[], cur: string[], prev: string[]) {
     a += ca.reduce((x, y) => x + y, 0); b += pa.reduce((x, y) => x + y, 0); n++;
   }
   return n && b ? { cur: a, prev: b, lines: n } : null;
+}
+
+/** A custom inclusive month range as a span. */
+export function customSpan(t: Pick<SummaryTree, "months" | "lastClosed">, from: string, to: string): Span {
+  const [a, b] = from <= to ? [from, to] : [to, from];
+  const periods = t.months.filter((p) => p >= a && p <= b);
+  const label = periods.length === 1 ? monLabel(periods[0]) : `${monLabel(periods[0]).slice(0, 3)} – ${monLabel(periods[periods.length - 1])} · ${periods.length} months`;
+  return { key: `C:${a}:${b}`, label, short: periods.length === 1 ? monLabel(periods[0]).slice(0, 3) : `${monLabel(periods[0]).slice(0, 3)}–${monLabel(periods[periods.length - 1]).slice(0, 3)}`, periods, closed: t.lastClosed != null && periods.every((p) => p <= t.lastClosed!) };
+}
+/** The equally long window just before a span (for custom-range comparisons). */
+export function priorWindow(t: Pick<SummaryTree, "months" | "lastClosed">, s: Span): Span | null {
+  const i = t.months.indexOf(s.periods[0]), n = s.periods.length;
+  if (i - n < 0) return null;
+  const periods = t.months.slice(i - n, i);
+  return { key: `P:${periods[0]}`, label: `prior ${n} month${n === 1 ? "" : "s"}`, short: `prior ${n}m`, periods, closed: true };
+}
+
+/* ---------- variation from average ---------- */
+export interface AvgInsight {
+  key: string; name: string; path: string; level: "function" | "line"; focusAvg: number; baseAvg: number; delta: number; deltaPct: number;
+  series: { p: string; v: number | null }[]; direction: Direction; note: string;
+}
+export interface AvgInsights { focusLabel: string; baseLabel: string; increases: AvgInsight[]; decreases: AvgInsight[]; volatile: (AvgInsight & { cv: number })[] }
+
+const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+
+/**
+ * Compares each function / line's average monthly actual in the selected period with its own average over the
+ * other closed months (or, when the period covers every closed month, the latest month vs the rest).
+ */
+export function averageInsights(t: SummaryTree, span: Span): AvgInsights {
+  const closedAll = t.months.filter((p) => t.lastClosed != null && p <= t.lastClosed);
+  let focus = span.periods.filter((p) => closedAll.includes(p));
+  let base = closedAll.filter((p) => !focus.includes(p));
+  if (base.length < 2 && focus.length >= 3) { base = focus.slice(0, -1); focus = focus.slice(-1); }
+  const label = (ps: string[]) => (ps.length === 1 ? monLabel(ps[0]) : `${monLabel(ps[0]).slice(0, 3)}–${monLabel(ps[ps.length - 1])}`);
+  const out: AvgInsights = { focusLabel: focus.length ? label(focus) : "—", baseLabel: base.length ? `${label(base)} avg` : "—", increases: [], decreases: [], volatile: [] };
+  if (!focus.length || base.length < 2) return out;
+  const entities: { key: string; name: string; path: string; level: "function" | "line"; lines: LineNode[] }[] = [];
+  for (const f of t.functions) {
+    entities.push({ key: `f:${f.id}`, name: f.name, path: "Function", level: "function", lines: fnLines(f) });
+    for (const l of f.lines) entities.push({ key: l.id, name: l.name, path: f.name, level: "line", lines: [l] });
+    for (const g of f.groups) for (const l of g.lines) entities.push({ key: l.id, name: l.name, path: `${f.name} › ${g.name}`, level: "line", lines: [l] });
+  }
+  const monthly = (lines: LineNode[], p: string) => { const vs = lines.map((l) => l.vals[p]?.actual).filter((v): v is number => v != null); return vs.length ? vs.reduce((a, b) => a + b, 0) : null; };
+  for (const e of entities) {
+    const series = closedAll.map((p) => ({ p, v: monthly(e.lines, p) }));
+    const fv = focus.map((p) => monthly(e.lines, p)).filter((v): v is number => v != null);
+    const bv = base.map((p) => monthly(e.lines, p)).filter((v): v is number => v != null);
+    const direction = e.lines[0]?.direction ?? "lower_better";
+    if (fv.length && bv.length >= 2) {
+      const fa = mean(fv), ba = mean(bv), d = fa - ba;
+      const min = e.level === "function" ? 200000 : 50000;
+      if (ba > 0 && Math.abs(d) >= min && Math.abs(d / ba) >= 0.15) {
+        const ins: AvgInsight = { key: e.key, name: e.name, path: e.path, level: e.level, focusAvg: fa, baseAvg: ba, delta: d, deltaPct: d / ba, series, direction,
+          note: `${inr(fa)}/mo vs ${inr(ba)}/mo average` };
+        (d > 0 ? out.increases : out.decreases).push(ins);
+      }
+    }
+    const all = series.map((x) => x.v).filter((v): v is number => v != null);
+    if (e.level === "line" && all.length >= 3) {
+      const m = mean(all);
+      if (m >= 100000) {
+        const sd = Math.sqrt(mean(all.map((v) => (v - m) ** 2)));
+        out.volatile.push({ key: `v:${e.key}`, name: e.name, path: e.path, level: "line", focusAvg: all[all.length - 1], baseAvg: m, delta: 0, deltaPct: 0, series, direction, cv: sd / m,
+          note: `swings ±${pct(sd / m, 0)} around ${inr(m)}/mo` });
+      }
+    }
+  }
+  const byFn = (a: AvgInsight, b: AvgInsight) => (a.level === b.level ? Math.abs(b.delta) - Math.abs(a.delta) : a.level === "function" ? -1 : 1);
+  out.increases.sort(byFn); out.decreases.sort(byFn);
+  out.volatile = out.volatile.filter((v) => v.cv >= 0.25).sort((a, b) => b.cv - a.cv).slice(0, 6);
+  out.increases = out.increases.slice(0, 6); out.decreases = out.decreases.slice(0, 6);
+  return out;
 }

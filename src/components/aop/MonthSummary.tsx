@@ -9,7 +9,8 @@ import { ago } from "@/lib/dates";
 import { impactOf, monLabel, monShort, type Direction } from "@/server/aop/calc";
 import type { LineNode, SummaryTree } from "@/server/aop/summaryData";
 import { FunctionBars, MonthlySpendChart } from "./SummaryCharts";
-import { activeMonths, aggLines, deviationsFor, momLike, fnLines, hasReason, prevSpan, spansFor, type Agg, type Deviation, type Grain, type Span } from "./summaryMath";
+import { activeMonths, aggLines, averageInsights, customSpan, deviationsFor, momLike, fnLines, hasReason, prevSpan, priorWindow, spansFor, type Agg, type Deviation, type Grain, type Span } from "./summaryMath";
+import { AverageInsights } from "./AverageInsights";
 
 const KIND_LABEL = { commentary: "Remark", variance_reason: "Reason", corrective_action: "Action" } as const;
 
@@ -17,13 +18,17 @@ const KIND_LABEL = { commentary: "Remark", variance_reason: "Reason", corrective
 export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHref: string }) {
   const months = useMemo(() => activeMonths(tree), [tree]);
   const [grain, setGrain] = useState<Grain>("month");
-  const spans = useMemo(() => spansFor(tree, grain).filter((sp) => sp.periods.some((p) => months.includes(p))), [tree, grain, months]);
+  const closedActive = months.filter((p) => tree.lastClosed && p <= tree.lastClosed);
+  const [from, setFrom] = useState(closedActive[0] ?? months[0]);
+  const [to, setTo] = useState(closedActive[closedActive.length - 1] ?? months[months.length - 1]);
+  const spans = useMemo(() => grain === "custom" ? [customSpan(tree, from, to)] : spansFor(tree, grain).filter((sp) => sp.periods.some((p) => months.includes(p))), [tree, grain, months, from, to]);
   const defaultKey = (g: Grain) => g === "month" ? (tree.lastClosed && months.includes(tree.lastClosed) ? tree.lastClosed : months[months.length - 1])
     : g === "quarter" ? spansFor(tree, "quarter").filter((x) => x.periods.some((p) => months.includes(p))).reverse().find((x) => x.periods.some((p) => tree.lastClosed && p <= tree.lastClosed))?.key ?? "Q1"
-    : tree.lastClosed ? "YTD" : "FY";
+    : g === "custom" ? `C:${from <= to ? from : to}:${from <= to ? to : from}` : tree.lastClosed ? "YTD" : "FY";
   const [spanKey, setSpanKey] = useState<string>(defaultKey("month"));
-  const span: Span = spans.find((x) => x.key === spanKey) ?? spans[spans.length - 1];
-  const prev = prevSpan(spans, span);
+  const span: Span = grain === "custom" ? spans[0] : spans.find((x) => x.key === spanKey) ?? spans[spans.length - 1];
+  const prev = grain === "custom" ? priorWindow(tree, span) : prevSpan(spans, span);
+  const avgIns = useMemo(() => averageInsights(tree, span), [tree, span]);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const L = tree.labels;
   const dir: Direction = tree.functions[0]?.lines[0]?.direction ?? tree.functions[0]?.groups[0]?.lines[0]?.direction ?? "lower_better";
@@ -33,7 +38,7 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
   const key = devs.filter((d) => d.severity !== "low" || d.kind === "missing").slice(0, 12);
   const toggle = (id: string) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const closed = span.closed || (tree.lastClosed != null && span.periods.some((p) => p <= tree.lastClosed!));
-  const chg = grain === "quarter" ? "QoQ" : "MoM";
+  const chg = grain === "quarter" ? "QoQ" : grain === "custom" ? "vs prior" : "MoM";
   const momTotal = grain !== "year" && prev ? momLike(all, span.periods, prev.periods) : null;
   const period = span.periods[span.periods.length - 1];
 
@@ -43,10 +48,23 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="seg">
           <span className="seg-label">View</span>
-          {(["month", "quarter", "year"] as Grain[]).map((g) => (
+          {(["month", "quarter", "year", "custom"] as Grain[]).map((g) => (
             <button key={g} data-on={grain === g} onClick={() => { setGrain(g); setSpanKey(defaultKey(g)); }} className="seg-item capitalize">{g}</button>
           ))}
         </div>
+        {grain === "custom" ? (
+          <div className="seg">
+            <span className="seg-label">From</span>
+            <select value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 rounded-full border border-line bg-subtle px-3 text-[13px] font-semibold text-ink outline-none">
+              {months.map((p) => <option key={p} value={p}>{monLabel(p)}</option>)}
+            </select>
+            <span className="seg-label">To</span>
+            <select value={to} onChange={(e) => setTo(e.target.value)} className="h-8 rounded-full border border-line bg-subtle px-3 text-[13px] font-semibold text-ink outline-none">
+              {months.map((p) => <option key={p} value={p}>{monLabel(p)}</option>)}
+            </select>
+            <span className="px-2 text-[12.5px] font-medium text-ink-3">{span.periods.length} month{span.periods.length === 1 ? "" : "s"}</span>
+          </div>
+        ) : (
         <div className="seg max-w-full overflow-x-auto [scrollbar-width:none]">
           <span className="seg-label">Period</span>
           {spans.map((x) => (
@@ -55,6 +73,7 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
             </button>
           ))}
         </div>
+        )}
       </div>
 
       {/* Headline tile */}
@@ -90,7 +109,7 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
           <HeroTile label={L.forecast} value={total.hasForecast ? inr(total.forecast) : "—"} hint={total.hasForecast && total.plan ? `${pct(total.forecast / total.plan, 0)} of ${L.plan.toLowerCase()}` : undefined} />
           <HeroTile label={`Gap vs ${L.plan}`} value={total.hasActual ? inr(total.actual - total.planReported, { sign: true }) : "—"} hint="Reported lines only"
             tone={total.hasActual ? (total.actual > total.planReported ? "bad" : "ok") : undefined} />
-          <HeroTile label={grain === "quarter" ? "Quarter-on-quarter" : grain === "year" ? "Run-rate / month" : "Month-on-month"}
+          <HeroTile label={grain === "quarter" ? "Quarter-on-quarter" : grain === "year" ? "Run-rate / month" : grain === "custom" ? "vs prior period" : "Month-on-month"}
             value={grain === "year" ? (total.hasActual ? inr(total.actual / Math.max(1, span.periods.filter((p) => tree.lastClosed && p <= tree.lastClosed).length)) : "—") : momTotal ? pct((momTotal.cur - momTotal.prev) / momTotal.prev, 0, true) : "—"}
             hint={grain === "year" ? `Avg ${L.actual.toLowerCase()} per closed month` : prev && momTotal ? `vs ${prev.short} · ${momTotal.lines} like-for-like lines` : undefined}
             tone={momTotal && grain !== "year" ? (momTotal.cur > momTotal.prev ? "bad" : "ok") : undefined} />
@@ -180,6 +199,8 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
             </div>
           ))}</div> : <div className="px-4 py-8 text-center text-[13px] text-ink-3">Nothing material to review for {span.label}.</div>}
         </div>
+
+        <AverageInsights ins={avgIns} labels={L} />
       </div>
     </div>
   );

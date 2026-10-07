@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUser } from "@/server/auth";
 import { safeNext } from "@/lib/session";
-import { BrandMark } from "@/components/shell/Sidebar";
+import { LogoMark } from "@/components/shell/Logo";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sign in" };
@@ -19,7 +19,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
     <div className="flex min-h-dvh items-center justify-center bg-canvas p-6">
       <div className="w-full max-w-[380px] animate-rise">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-5"><BrandMark size={48} /></div>
+          <div className="mb-5"><LogoMark size={56} /></div>
           <h1 className="font-serif text-[34px] leading-none tracking-[-0.01em]">Central Ops</h1>
           <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-accent/80">Program Manager 2.0</p>
         </div>

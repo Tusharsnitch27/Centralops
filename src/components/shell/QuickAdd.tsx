@@ -45,7 +45,7 @@ export function QuickAdd() {
   }, [opts]);
 
   const parsed = useMemo(() => parseQuick(text), [text]);
-  const owner = ownerId ? opts?.people.find((p) => p.id === ownerId) : parsed.owner ? opts?.people.find((p) => p.name.toLowerCase().split(" ")[0] === parsed.owner!.toLowerCase()) : undefined;
+  const owner = ownerId ? opts?.people.find((p) => p.id === ownerId) : parsed.owner ? opts?.people.find((p) => p.name.toLowerCase().split(/[\s.]+/).includes(parsed.owner!.toLowerCase())) : undefined;
   const dueDate = due || parsed.due || "";
 
   const submit = () => {

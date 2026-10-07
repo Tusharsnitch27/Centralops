@@ -13,6 +13,7 @@ import { markNotificationsRead } from "@/server/shell/actions";
 import { openPalette } from "./CommandPalette";
 import { openQuickAdd } from "./QuickAdd";
 import { ThemePicker } from "./ThemePicker";
+import { LogoMark } from "./Logo";
 
 interface Note { id: string; kind: string; title: string; body: string | null; href: string | null; read_at: string | null; created_at: string; actor_name: string | null }
 
@@ -27,9 +28,7 @@ export function Topbar({ unread, counts, user }: { unread: number; counts: Recor
     <div className="sticky top-0 z-30 pt-3">
       <div className="mx-auto flex h-[64px] items-center gap-3 rounded-[22px] border border-white bg-white/85 px-3 shadow-[0_1px_2px_rgb(17_18_20/0.04),0_10px_30px_-12px_rgb(17_18_20/0.12)] backdrop-blur-xl md:px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2.5 pr-2 lg:hidden">
-          <span className="flex size-9 items-center justify-center rounded-xl text-white shadow-[0_6px_16px_-6px_var(--color-accent)]" style={{ background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-2))" }}>
-            <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="7.5" opacity=".55" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" /></svg>
-          </span>
+          <LogoMark size={36} />
           <span className="hidden leading-tight sm:block">
             <span className="block text-[15.5px] font-bold tracking-[-0.02em] text-ink">Central Ops</span>
             <span className="block text-[11px] font-medium text-ink-3">Program Manager 2.0</span>

@@ -3,6 +3,7 @@ import type { RunQ } from "../db";
 import { hashPassword } from "../auth/passwords";
 import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
+import { syncDirectory } from "./directory";
 
 const mk = (rawQ: RunQ) => ({
   setting: async (key: string) => (await rawQ<{ value: unknown }>(`select value from app_settings where key = $1`, [key]))[0]?.value ?? null,
@@ -45,6 +46,13 @@ export async function bootstrap(rawQ: RunQ) {
       await rawQ("rollback");
       throw e;
     }
+  }
+
+  // Central Operations team directory (idempotent; versioned so edits to directory.json re-apply)
+  if ((await setting("seed.directory")) !== "v1") {
+    await syncDirectory(rawQ, admin);
+    await setSetting("seed.directory", "v1");
+    console.log("[seed] team directory synced");
   }
 
   if ((process.env.SEED_DEMO ?? "false") === "true" && !(await setting("seed.demo"))) {
