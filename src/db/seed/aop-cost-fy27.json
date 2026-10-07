@@ -1,0 +1,3042 @@
+{
+ "name": "Central Ops Cost · FY 26-27",
+ "fy_start": "2026-04-01",
+ "owners": [
+  {
+   "fn": "Warehousing & Fulfillment",
+   "owners": "Manish",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "remarks": "Leder/Sub-Ledger level details pending from AP Team occupied to Monthly MIS and payments cycle"
+  },
+  {
+   "fn": "Logistics",
+   "owners": "Iqbal",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "remarks": "In case of any delays due to invoice receipt, arrears etc, we should put relevant remarks"
+  },
+  {
+   "fn": "RFID",
+   "owners": "Nitin",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "remarks": "In case of any delays due to invoice receipt, arrears etc, we should put relevant remarks"
+  },
+  {
+   "fn": "SaaS",
+   "owners": "Tushar & Faisal",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "remarks": "In case of any delays due to invoice receipt, arrears etc, we should put relevant remarks"
+  },
+  {
+   "fn": "Staffing",
+   "owners": "Manish & Mahadevan",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "remarks": "In case of any delays due to invoice receipt, arrears etc, we should put relevant remarks"
+  },
+  {
+   "fn": "Packaging",
+   "owners": "Manish & Mahadevan",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "remarks": "Packaging cost details follow-up going on, AP team occupied to Monthly MIS and payments cycle"
+  },
+  {
+   "fn": "Fixed Asset",
+   "owners": "All function owners",
+   "cutoff": "Actuals for previous month: By 10th of current month; Projections: For next month by 20th of current month",
+   "remarks": ""
+  }
+ ],
+ "guidelines": [
+  "1. One-time/ Fixed Asset expense should cover all compliance, fixed assets that are procured across departments (provisioning for only one month to be done)",
+  "2. Logistics remarks has to be put clearly keeping in mind the credit note settlements and time frames involved",
+  "3. SaaS cost has to be considered on a monthly basis (breakdown of quaterly, projections of actual usage and right month indexation is important)",
+  "4. Staffing cost to be broken into Warehousing, Omni & Quick Com and HQ (Maintain a sheet of headcount for the month as well tagged to all the three sub groups of staffing) - overtime expense to be included in the staffing cost (reimbursements will also be a line item to be tracked separately)",
+  "5. Packing costs are guestimates at channel level >> actuals exclusive to only warehousing vendors to be provided (this includes Omni & Quick com packaging as well)",
+  "6. April to July projections can be skipped (past months)",
+  "7. If additional rows are added, formulaes needs to be dragged and adjusted",
+  "8. Non GST bill amount across all line items to be mentioned"
+ ],
+ "functions": [
+  {
+   "name": "Warehousing & Fulfilment",
+   "owners": "Manish",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "sections": [
+    {
+     "name": "YLK 1 & 2 (South)",
+     "items": [
+      {
+       "name": "Rentals",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 749190,
+         "forecast": 749190,
+         "actual": 749190
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 749190,
+         "forecast": 749190,
+         "actual": 736746
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 736746,
+         "forecast": 736746,
+         "actual": 749190
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 749190,
+         "forecast": 749190,
+         "actual": 749190
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 749190,
+         "forecast": 749190,
+         "actual": 749190
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 750000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Utility Bills",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 250000,
+         "forecast": 280000,
+         "actual": 473718
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 280000,
+         "forecast": 280000,
+         "actual": 231712
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 300000,
+         "forecast": 320000,
+         "actual": 213396
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 300000,
+         "forecast": 250000,
+         "actual": 201502
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 300000,
+         "forecast": 250000,
+         "actual": 194117
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 300000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Security & Housekeeping",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 400000,
+         "forecast": 385596,
+         "actual": 365138
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 400000,
+         "forecast": 380000,
+         "actual": 398174
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 350000,
+         "forecast": 400000,
+         "actual": 426625
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 350000,
+         "forecast": 400000,
+         "actual": 468164
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 425000,
+         "forecast": 420000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 425000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Repairs & Maintenance",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 70000,
+         "forecast": 20737,
+         "actual": 40476
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 50000,
+         "forecast": 45000,
+         "actual": 87997.2
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 50000,
+         "forecast": 75000,
+         "actual": 101340
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 100000,
+         "forecast": 110000,
+         "actual": 120051
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 100000,
+         "forecast": 90000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 100000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "3P Ironing Cost",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 350000,
+         "forecast": 350000,
+         "actual": 430255
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 400000,
+         "forecast": 450000,
+         "actual": 312988
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 600000,
+         "forecast": 550000,
+         "actual": 398706
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 500000,
+         "forecast": 350000,
+         "actual": 198434.5
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 300000,
+         "forecast": 320000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 300000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Staff Welfare (except salary)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 70000,
+         "forecast": 60000,
+         "actual": 53488
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 100000,
+         "forecast": 120000,
+         "actual": 53903
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 80000,
+         "forecast": 75000,
+         "actual": 55614
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 80000,
+         "forecast": 70000,
+         "actual": 66905
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 80000,
+         "forecast": 70000,
+         "actual": 47466
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 100000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Internet connection",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 15000,
+         "forecast": 15000,
+         "actual": 15000
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 15000,
+         "forecast": 15000,
+         "actual": 15000
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 15000,
+         "forecast": 12000,
+         "actual": 15000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 15000,
+         "forecast": 12000,
+         "actual": 15000
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 91666,
+         "forecast": 90000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 100000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Diesel",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 30000,
+         "forecast": 25000,
+         "actual": 9000
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 50000,
+         "forecast": 60000,
+         "actual": 15000
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 50000,
+         "forecast": 35000,
+         "actual": 24000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 30000,
+         "forecast": 25000,
+         "actual": 12000
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 30000,
+         "forecast": 25000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 30000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Miscellaneous (Additional Pacaking, Ad-Hoc Cost)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 10000,
+         "forecast": 10000,
+         "actual": 0
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 25000,
+         "forecast": 20000,
+         "actual": 0
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 20000,
+         "forecast": 15000,
+         "actual": 34230
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 20000,
+         "forecast": 15000,
+         "actual": 0
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 20000,
+         "forecast": 15000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 20000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    },
+    {
+     "name": "North Warehouse",
+     "items": [
+      {
+       "name": "Rentals",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 1000000,
+         "forecast": 988743,
+         "actual": 988743
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 1000000,
+         "forecast": 988743,
+         "actual": 988743
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1000000,
+         "forecast": 988743,
+         "actual": 1011068
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1000000,
+         "forecast": 1000000,
+         "actual": 1038180
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1050000,
+         "forecast": 1040000,
+         "actual": 1038180
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 1050000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Utility Bills",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 200000,
+         "forecast": 180000,
+         "actual": 149928
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 200000,
+         "forecast": 170000,
+         "actual": 175404
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 200000,
+         "forecast": 170000,
+         "actual": 167468
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 200000,
+         "forecast": 170000,
+         "actual": 172650
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 200000,
+         "forecast": 170000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 200000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Security & Housekeeping",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 450000,
+         "forecast": 570000,
+         "actual": 565864
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 650000,
+         "forecast": 600000,
+         "actual": 672786
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 700000,
+         "forecast": 680000,
+         "actual": 661611
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 700000,
+         "forecast": 670000,
+         "actual": 600198
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 850000,
+         "forecast": 800000,
+         "actual": 416836
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 850000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Repairs & Maintenance",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 75000,
+         "forecast": 55000,
+         "actual": 50765
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 75000,
+         "forecast": 75000,
+         "actual": 73201
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 75000,
+         "forecast": 50000,
+         "actual": 30842
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 75000,
+         "forecast": 70000,
+         "actual": 42496
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 75000,
+         "forecast": 50000,
+         "actual": 5000
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 75000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "3P Ironing Cost",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 65000,
+         "forecast": 65000,
+         "actual": 63568
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 75000,
+         "forecast": 70000,
+         "actual": 67093
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 75000,
+         "forecast": 75000,
+         "actual": 111231
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 125000,
+         "forecast": 90000,
+         "actual": 82012
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 125000,
+         "forecast": 80000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 125000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Staff Welfare (except salary)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 150000,
+         "forecast": 160000,
+         "actual": 164509
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 175000,
+         "forecast": 170000,
+         "actual": 249350
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 175000,
+         "forecast": 175000,
+         "actual": 188160
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 175000,
+         "forecast": 170000,
+         "actual": 148152
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 175000,
+         "forecast": 150000,
+         "actual": 99705
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 450000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Internet connection",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 50000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "GTM Expense-Travel and all",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 70000,
+         "forecast": 65000,
+         "actual": 48000
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 20000,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 20000,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 20000,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 20000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Diesel",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 120000,
+         "forecast": 240000,
+         "actual": 234131
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 240000,
+         "forecast": 245124,
+         "actual": 245124
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 240000,
+         "forecast": 240000,
+         "actual": 247902
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 240000,
+         "forecast": 170000,
+         "actual": 168988
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 240000,
+         "forecast": 240000,
+         "actual": 209638
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 240000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Rental Pallets",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 35000,
+         "forecast": 45000,
+         "actual": 44690
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 35000,
+         "forecast": 45000,
+         "actual": 32700
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 35000,
+         "forecast": 33000,
+         "actual": 33790
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 35000,
+         "forecast": 34000,
+         "actual": 33790
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 35000,
+         "forecast": 35000,
+         "actual": 33975
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 35000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "MHE Rental Cost",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 50000,
+         "forecast": 50000,
+         "actual": 50000
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 50000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Petty Cash Expenditure",
+       "values": [
+        {
+         "period": "2026-09-01",
+         "plan": 30000,
+         "forecast": 30000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 30000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Miscellaneous (Additional Pacaking, Ad-Hoc Cost)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 25000,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 25000,
+         "forecast": 3100,
+         "actual": 3100
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 25000,
+         "forecast": 2000,
+         "actual": 1680
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 25000,
+         "forecast": 2000,
+         "actual": 1320
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 25000,
+         "forecast": 2000,
+         "actual": null
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 75000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Staffing",
+   "owners": "Manish & Mahadevan",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "sections": [
+    {
+     "name": "Warehouse manpower · YLK 1 & 2 (South)",
+     "items": [
+      {
+       "name": "Monthly Manpower Cost",
+       "values": [
+        {
+         "period": "2026-08-01",
+         "plan": 5882953,
+         "forecast": 5500000,
+         "actual": 5173350
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 5882953,
+         "forecast": 5265793,
+         "actual": 5034974
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 5882953,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Monthly OT",
+       "values": [
+        {
+         "period": "2026-08-01",
+         "plan": 142421.5385,
+         "forecast": 50000,
+         "actual": 2011
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 142421.5385,
+         "forecast": 100000,
+         "actual": 26366
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 142421.5385,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    },
+    {
+     "name": "Warehouse manpower · North Warehouse",
+     "items": [
+      {
+       "name": "Monthly Manpower Cost",
+       "values": [
+        {
+         "period": "2026-08-01",
+         "plan": 5500000,
+         "forecast": 5300000,
+         "actual": 5211077
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 5800000,
+         "forecast": 5700000,
+         "actual": 5859266
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 6700000,
+         "forecast": null,
+         "actual": null
+        },
+        {
+         "period": "2026-11-01",
+         "plan": 6700000,
+         "forecast": null,
+         "actual": null
+        },
+        {
+         "period": "2026-12-01",
+         "plan": 6700000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Monthly OT",
+       "values": [
+        {
+         "period": "2026-08-01",
+         "plan": 200000,
+         "forecast": 150000,
+         "actual": 86907
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 200000,
+         "forecast": 150000,
+         "actual": 145204
+        },
+        {
+         "period": "2026-10-01",
+         "plan": 300000,
+         "forecast": null,
+         "actual": null
+        },
+        {
+         "period": "2026-11-01",
+         "plan": 300000,
+         "forecast": null,
+         "actual": null
+        },
+        {
+         "period": "2026-12-01",
+         "plan": 300000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    },
+    {
+     "name": "HQ & Operations",
+     "items": [
+      {
+       "name": "HQ staffing cost",
+       "values": [
+        {
+         "period": "2026-04-01",
+         "plan": null,
+         "forecast": null,
+         "actual": 2208450
+        },
+        {
+         "period": "2026-05-01",
+         "plan": null,
+         "forecast": null,
+         "actual": 1722364
+        },
+        {
+         "period": "2026-06-01",
+         "plan": null,
+         "forecast": null,
+         "actual": 1984785
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Logistics",
+   "owners": "Iqbal",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "sections": [
+    {
+     "name": "B2C",
+     "items": [
+      {
+       "name": "Bluedart",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 7774747.07,
+         "forecast": 7923955,
+         "actual": 8224076
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 7523948.78,
+         "forecast": 10601280,
+         "actual": 11007176
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 18082384,
+         "forecast": 16293141.515151516,
+         "actual": 16492629.7000343
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 6750994,
+         "forecast": 5992544,
+         "actual": 7606414.67
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 7468008,
+         "forecast": 5180340,
+         "actual": 5153172.74
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Delhivery",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 2619904.74,
+         "forecast": 1914241,
+         "actual": 1774709
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 2535391.69,
+         "forecast": 2340420,
+         "actual": 1723175.35
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 4866086,
+         "forecast": 4120720,
+         "actual": 4454783.54
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 2302518.8,
+         "forecast": 1548120,
+         "actual": 1749028.74
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1746518,
+         "forecast": 2238960,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Bigshort Pvt Ltd (Blitz)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 3514857.5,
+         "forecast": 2734400,
+         "actual": 3426081
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 3401475,
+         "forecast": 2936000,
+         "actual": 3002674.68
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 4925469,
+         "forecast": 4708800,
+         "actual": 8181573.31
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1901961.6,
+         "forecast": 1726400,
+         "actual": 2547331.11
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1972080,
+         "forecast": 1438560,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Instakart Pvt Ltd (eKart)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 1325859.15,
+         "forecast": 868071,
+         "actual": 650257
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 1283089,
+         "forecast": 1326132,
+         "actual": 728059.57
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 3158155,
+         "forecast": 2684130,
+         "actual": 2351180.13
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1087594.08,
+         "forecast": 500994,
+         "actual": 250831.55
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 614021,
+         "forecast": 638268,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Prozo",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 1296961.53,
+         "forecast": 1713972,
+         "actual": 1985161
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 1255124.06,
+         "forecast": 2439650,
+         "actual": 2124623
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 5060388,
+         "forecast": 4245200,
+         "actual": 4582020
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 2815001.5,
+         "forecast": 2229200,
+         "actual": 2726108
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 3226253,
+         "forecast": 2391050,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Shadowfax",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 3926018.25,
+         "forecast": 2909998,
+         "actual": 2447988.94
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 3799372.5,
+         "forecast": 3522000,
+         "actual": 2525792.56
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 6462148,
+         "forecast": 5872843.137254902,
+         "actual": 7381755.06
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 2305187.9,
+         "forecast": 2309700,
+         "actual": 2706355.84
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 2509219,
+         "forecast": 2104200,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Bigfoot (Shiprocket)",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 696570,
+         "forecast": 602566,
+         "actual": 425833
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 674100,
+         "forecast": 632550,
+         "actual": 437530.86
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1567072,
+         "forecast": 1244138.4615384615,
+         "actual": 617126.32
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 764134.5,
+         "forecast": 510010,
+         "actual": 821891.04
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 818835,
+         "forecast": 555800,
+         "actual": 457526.84
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "SR Quick",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 800000,
+         "forecast": 874000,
+         "actual": 1074526
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 800000,
+         "forecast": 1644500,
+         "actual": 1689108
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1598500,
+         "forecast": 1552500,
+         "actual": 1993147.44
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 178250,
+         "forecast": 463450,
+         "actual": 547858
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1125000,
+         "forecast": 1781000,
+         "actual": 547858.86
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Pidge Quick",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 200000,
+         "forecast": 89700,
+         "actual": 92886
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 100000,
+         "forecast": 23115,
+         "actual": 25058
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1610,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 0,
+         "forecast": 650,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Urbonebolt",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 200000,
+         "forecast": 57075,
+         "actual": 29820
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 400000,
+         "forecast": 1104900,
+         "actual": 1824308.33
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 2177062,
+         "forecast": 2158026.3157894737,
+         "actual": 4400309.74
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1000000,
+         "forecast": 556650,
+         "actual": 572109.9
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 245520,
+         "forecast": 105450,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "SFX HLD",
+       "values": [
+        {
+         "period": "2026-06-01",
+         "plan": 75000,
+         "forecast": 65000,
+         "actual": 56250
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 79400,
+         "forecast": 60000,
+         "actual": 136290
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 0,
+         "forecast": 1700,
+         "actual": 2860.2
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 25000,
+         "forecast": 10500,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    },
+    {
+     "name": "B2B",
+     "items": [
+      {
+       "name": "Bluedart",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 4000000,
+         "forecast": 2800000,
+         "actual": null
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 4000000,
+         "forecast": 2500000,
+         "actual": 2092003.56
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1750000,
+         "forecast": 1120000,
+         "actual": 1393390.22
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 2500000,
+         "forecast": 1670942.5,
+         "actual": 1670942.5
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 2000000,
+         "forecast": 2210748.52,
+         "actual": 2210748.52
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Movemate - NSO",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 300000,
+         "forecast": 200000,
+         "actual": 95275
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 300000,
+         "forecast": 150000,
+         "actual": 172807
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 200000,
+         "forecast": 175000,
+         "actual": 227179.01
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 200000,
+         "forecast": 249200.32,
+         "actual": 203800.25
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 200000,
+         "forecast": 176400,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Movemate- Marketplace",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 200000,
+         "forecast": 1200000,
+         "actual": 1180476.85
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 200000,
+         "forecast": 1000000,
+         "actual": 942115
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 100000,
+         "forecast": 225000,
+         "actual": 244388.74
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 100000,
+         "forecast": 254000,
+         "actual": 1263527.52
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 100000,
+         "forecast": 1500000,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Movemate - Stock Transfer",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 0,
+         "forecast": 200000,
+         "actual": 346920
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 100000,
+         "forecast": 100000,
+         "actual": 89000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 100000,
+         "forecast": 100000,
+         "actual": 60500
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 100000,
+         "forecast": 84000,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Movemate - Logistics",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 100000,
+         "forecast": 120000,
+         "actual": 559820
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 700000,
+         "forecast": 900000,
+         "actual": 1067835
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1000000,
+         "forecast": 638750,
+         "actual": 954396.21
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1000000,
+         "forecast": 721000,
+         "actual": 1296269.62
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1000000,
+         "forecast": 892360,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Movemate - Milkrun Delhi",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 100000,
+         "forecast": 100000,
+         "actual": 84985
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 100000,
+         "forecast": 100000,
+         "actual": 101421
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 100000,
+         "forecast": 100000,
+         "actual": 80035
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1000000,
+         "forecast": 1000000,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Mudita Cargo",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 500000,
+         "forecast": 900000,
+         "actual": 651169
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 500000,
+         "forecast": 1500000,
+         "actual": 1821696
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1500000,
+         "forecast": 1000000,
+         "actual": 1120180.83
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1200000,
+         "forecast": 1100000,
+         "actual": 1130662.21
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1600000,
+         "forecast": 1968120,
+         "actual": 2172289
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Stock Area",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 1000000,
+         "forecast": 700000,
+         "actual": 673439
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 700000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Sri Maruti Courier",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 200000,
+         "forecast": 350000,
+         "actual": 276573.8
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 200000,
+         "forecast": 150000,
+         "actual": 168282
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Ekart B2B",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 300000,
+         "forecast": 400000,
+         "actual": 267294
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 700000,
+         "forecast": 600000,
+         "actual": 527829
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 100000,
+         "forecast": 100000,
+         "actual": 217429.45
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 100000,
+         "forecast": 375620.1,
+         "actual": 247989.3
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 100000,
+         "forecast": 48440,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Ekart MP",
+       "values": [
+        {
+         "period": "2026-07-01",
+         "plan": 500000,
+         "forecast": 300000,
+         "actual": 146579.7
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 300000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "XP India",
+       "values": [
+        {
+         "period": "2026-07-01",
+         "plan": 100000,
+         "forecast": 98000,
+         "actual": 132759
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 200000,
+         "forecast": 255000,
+         "actual": 261357.72
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 50000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SaaS",
+   "owners": "Tushar & Faisal",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "sections": [
+    {
+     "name": "Subscriptions",
+     "items": [
+      {
+       "name": "Unicommerce",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 1450000,
+         "forecast": 1450000,
+         "actual": 1334701
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 1450000,
+         "forecast": 1450000,
+         "actual": 1461383
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 1450000,
+         "forecast": 1450000,
+         "actual": 1450000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1450000,
+         "forecast": 1450000,
+         "actual": 1049257
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1450000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "eShipz",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": null,
+         "forecast": null,
+         "actual": 25000
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 25000,
+         "forecast": 25000,
+         "actual": 25000
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 25000,
+         "forecast": 25000,
+         "actual": 25000
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 25000,
+         "forecast": 25000,
+         "actual": 25000
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 25000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Clickpost",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": null,
+         "forecast": 170818,
+         "actual": 191906
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 192906,
+         "forecast": 192906,
+         "actual": 192906
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 192906,
+         "forecast": 192906,
+         "actual": 192906
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 192906,
+         "forecast": 192906,
+         "actual": 192906
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 192906,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Snitch Workflow tool",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": null,
+         "forecast": 4356,
+         "actual": 4356
+        },
+        {
+         "period": "2026-06-01",
+         "plan": null,
+         "forecast": 4356,
+         "actual": 4356
+        },
+        {
+         "period": "2026-07-01",
+         "plan": null,
+         "forecast": 8712,
+         "actual": 8712
+        },
+        {
+         "period": "2026-08-01",
+         "plan": null,
+         "forecast": 8712,
+         "actual": 8712
+        },
+        {
+         "period": "2026-09-01",
+         "plan": null,
+         "forecast": 8712,
+         "actual": 8712
+        }
+       ],
+       "attrs": {
+        "note": "Billed in USD; converted at ₹88/$"
+       }
+      },
+      {
+       "name": "Workflow VPS",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": null,
+         "forecast": 2176,
+         "actual": 2176
+        },
+        {
+         "period": "2026-06-01",
+         "plan": null,
+         "forecast": 3696,
+         "actual": 3696
+        },
+        {
+         "period": "2026-07-01",
+         "plan": null,
+         "forecast": 3696,
+         "actual": 3696
+        },
+        {
+         "period": "2026-08-01",
+         "plan": null,
+         "forecast": 3696,
+         "actual": 3696
+        },
+        {
+         "period": "2026-09-01",
+         "plan": null,
+         "forecast": 3696,
+         "actual": 3696
+        }
+       ],
+       "attrs": {
+        "note": "Billed in USD; converted at ₹88/$"
+       }
+      },
+      {
+       "name": "RFID",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 28000,
+         "forecast": 26500,
+         "actual": 44250
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 47500,
+         "forecast": 41750,
+         "actual": 45500
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 47500,
+         "forecast": 47500,
+         "actual": 45500
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 60000,
+         "forecast": 52081,
+         "actual": 52081
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 65000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Packaging",
+   "owners": "Manish & Mahadevan",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "sections": [
+    {
+     "name": "Channel level",
+     "items": [
+      {
+       "name": "Shopify",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 1220230.7662934554,
+         "forecast": 797965.6799999999,
+         "actual": 797965.6799999999
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 1220230.766,
+         "forecast": 1682392.69,
+         "actual": 1682392.6900000002
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 2196415.379,
+         "forecast": 2314071.84,
+         "actual": 2314071.84
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 1757132.303,
+         "forecast": 1047331.88,
+         "actual": 1047331.88
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 1229992.612,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Marketplace",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 938896.4796352518,
+         "forecast": 1030104.43,
+         "actual": 1030104.43
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 751117.1837,
+         "forecast": 605380.39,
+         "actual": 605380.39
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 600893.747,
+         "forecast": 450728.54,
+         "actual": 450728.54
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 480714.9976,
+         "forecast": 514315.85,
+         "actual": 514315.85
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 504750.7475,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "B2B MP",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": null,
+         "forecast": 3297.7999999999997,
+         "actual": 3297.7999999999997
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 0,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      },
+      {
+       "name": "Store",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 250000,
+         "forecast": 225725,
+         "actual": 225725
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 250000,
+         "forecast": 261330,
+         "actual": 261330
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 250000,
+         "forecast": 266445,
+         "actual": 266445
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 250000,
+         "forecast": 254797.7,
+         "actual": 254797.7
+        },
+        {
+         "period": "2026-09-01",
+         "plan": 262500,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Fixed Assets & One-time",
+   "owners": "All function owners",
+   "cutoff": "Actuals for previous month: By 10th of current month; Projections: For next month by 20th of current month",
+   "sections": [
+    {
+     "name": "North Warehouse",
+     "items": [
+      {
+       "name": "IT assets",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 475000,
+         "forecast": 468046,
+         "actual": 468046
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 429500,
+         "forecast": 429500,
+         "actual": null
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 104000,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {
+        "reference": "Cctv Camera Requiremnts - North wh (Jul26_WIFI Routers Coverage)",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "Non-IT Asset",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 380000,
+         "forecast": 378300,
+         "actual": 378300
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        }
+       ],
+       "attrs": {
+        "reference": "Quotation scrap trolley and vertical trolley",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "Non-IT Asset",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 180000,
+         "forecast": 180000,
+         "actual": 180000
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 0,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {
+        "reference": "Quotations of Air Coolers for North Warehouse",
+        "keepEmpty": true
+       }
+      }
+     ]
+    },
+    {
+     "name": "South Warehouse",
+     "items": [
+      {
+       "name": "IT assets",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 15000,
+         "forecast": 15000,
+         "actual": 0
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 91666,
+         "forecast": null,
+         "actual": null
+        }
+       ],
+       "attrs": {
+        "reference": "Wifi and CCTV Infra",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "Non-IT Asset",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": 0
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 0,
+         "forecast": 0,
+         "actual": null
+        }
+       ],
+       "attrs": {
+        "reference": "Non_iT Assets",
+        "keepEmpty": true
+       }
+      }
+     ]
+    },
+    {
+     "name": "HHD",
+     "items": [
+      {
+       "name": "HHD Device",
+       "values": [],
+       "attrs": {
+        "reference": "NEED LEDGER - SNITCH",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "HHD Device",
+       "values": [],
+       "attrs": {
+        "reference": "REQUIREMENT OF HHD",
+        "keepEmpty": true
+       }
+      }
+     ]
+    },
+    {
+     "name": "Quick Commerce",
+     "items": [
+      {
+       "name": "IT devices",
+       "values": [],
+       "attrs": {
+        "reference": "Quickcom Procurement – Final List",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "Blue Bins",
+       "values": [],
+       "attrs": {
+        "reference": "Due invoice payment request (Dated: 4th Sept from Packlabs)",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "Racks/ tables & other infra",
+       "values": [],
+       "attrs": {
+        "reference": "Payment Clearance for Quick Commerce Infra Deployment – Phase 1",
+        "keepEmpty": true
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "RFID",
+   "owners": "Nitin",
+   "cutoff": "Actuals for previous month: By 7th of current month; Projections: For next quarter by 20th of current month",
+   "sections": [
+    {
+     "name": "RFID",
+     "items": [
+      {
+       "name": "RFID TUNNEL",
+       "values": [],
+       "attrs": {
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "RFID STORE PILOT ASSET",
+       "values": [],
+       "attrs": {
+        "reference": "MOM – RFID Store Pilot Project - 22/09/2025/ REQUIRED RFID TAGS",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "RFID HANDHELD",
+       "values": [],
+       "attrs": {
+        "reference": "Demo unit dispatch to Tagid/RFID HANDHELD - NORTH WAREHOUSE",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "Bangalore Doors",
+       "values": [],
+       "attrs": {
+        "reference": "SNITCH- BLR DOORS UNLOCKING",
+        "keepEmpty": true
+       }
+      },
+      {
+       "name": "STORE ASSET KIT",
+       "values": [
+        {
+         "period": "2026-05-01",
+         "plan": 3500000,
+         "forecast": 2504882,
+         "actual": 1753392
+        },
+        {
+         "period": "2026-06-01",
+         "plan": 3500000,
+         "forecast": 2400000,
+         "actual": 2053156
+        },
+        {
+         "period": "2026-07-01",
+         "plan": 2500000,
+         "forecast": 500000,
+         "actual": 74531
+        },
+        {
+         "period": "2026-08-01",
+         "plan": 5300000,
+         "forecast": 3900000,
+         "actual": 2951936
+        }
+       ],
+       "attrs": {
+        "reference": "RFID EXPANSION COCO DOORS & NSO",
+        "keepEmpty": true
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "credit_notes": [
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "partner": "Blitz",
+   "type": "Weight Dispute",
+   "amount": 550000,
+   "received": 550000,
+   "remarks": "Received",
+   "owner": "Vaishnavi"
+  },
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "partner": "Delhivery",
+   "type": "Weight Dispute",
+   "amount": 90000,
+   "received": 90000,
+   "remarks": "Received",
+   "owner": "Vaishnavi"
+  },
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "partner": "Shadowfax",
+   "type": "Weight Dispute",
+   "amount": 200000,
+   "received": 200000,
+   "remarks": "",
+   "owner": "Vaishnavi"
+  },
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "partner": "Prozo",
+   "type": "Weight Dispute",
+   "amount": 120000,
+   "received": 120000,
+   "remarks": "",
+   "owner": "Vaishnavi"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Oct'25",
+   "partner": "Blitz",
+   "type": "Lost/Damage Dispute",
+   "amount": 81437.18,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Bluedart",
+   "type": "Lost/Damage Dispute",
+   "amount": 568017.46,
+   "received": 121550.46,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Delhivery",
+   "type": "Lost/Damage Dispute",
+   "amount": 46005,
+   "received": 43327,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Ekart",
+   "type": "Lost/Damage Dispute",
+   "amount": 27031,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Prozo",
+   "type": "Lost/Damage Dispute",
+   "amount": 80936,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Shadowfax",
+   "type": "Lost/Damage Dispute",
+   "amount": 493584,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Shiprocket",
+   "type": "Lost/Damage Dispute",
+   "amount": 55328,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Nov'25",
+   "partner": "Blitz",
+   "type": "Lost/Damage Dispute",
+   "amount": 140394.69,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Bluedart",
+   "type": "Lost/Damage Dispute",
+   "amount": 1251068.93,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Delhivery",
+   "type": "Lost/Damage Dispute",
+   "amount": 55457.69,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Ekart",
+   "type": "Lost/Damage Dispute",
+   "amount": 137349.26,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Prozo",
+   "type": "Lost/Damage Dispute",
+   "amount": 77139.92,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Shadowfax",
+   "type": "Lost/Damage Dispute",
+   "amount": 360360.75,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  },
+  {
+   "fn": "Logistics",
+   "month": "",
+   "partner": "Shiprocket",
+   "type": "Lost/Damage Dispute",
+   "amount": 40093.16,
+   "received": null,
+   "remarks": "",
+   "owner": "Jyoti"
+  }
+ ],
+ "incidents": [
+  {
+   "fn": "North Warehouse",
+   "month": "December",
+   "channel": "B2C",
+   "type": "OT",
+   "reason": "Black Friday Sale",
+   "amount": 16680,
+   "remarks": "Black Friday Sale",
+   "owner": ""
+  },
+  {
+   "fn": "North Warehouse",
+   "month": "December",
+   "channel": "Over All",
+   "type": "Christmas Celebration",
+   "reason": "Christmas Celebration",
+   "amount": 33859,
+   "remarks": "Christmas Celebration",
+   "owner": ""
+  },
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "channel": "Marketplace",
+   "type": "Marketplace",
+   "reason": "No Unloaders at MNOW",
+   "amount": 320,
+   "remarks": "Unloading at MNOW",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "channel": "Retail",
+   "type": "NSO Hold",
+   "reason": "Retail requested to hold",
+   "amount": 11000,
+   "remarks": "Kurla - Mumbai NSO",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "October",
+   "channel": "Retail",
+   "type": "NSO Unloading",
+   "reason": "Unloading Mathadi charges",
+   "amount": 30000,
+   "remarks": "Kurla - Mumbai NSO",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Marketplace",
+   "type": "Marketplace Hold",
+   "reason": "Marketplace requested to hold",
+   "amount": 2000,
+   "remarks": "Tauru to Myntra BLR",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Retail",
+   "type": "NSO Hold",
+   "reason": "Retail requested to hold",
+   "amount": 9000,
+   "remarks": "YLK to Mall of India Noida",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Retail",
+   "type": "NSO Unloading",
+   "reason": "Unloading Mathadi charges",
+   "amount": 14240,
+   "remarks": "YLK to Kopa Mall Pune",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Retail",
+   "type": "NSO Unloading",
+   "reason": "Unloading Mathadi charges",
+   "amount": 18500,
+   "remarks": "YLK to Viviana Thane",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Marketplace",
+   "type": "Marketplace",
+   "reason": "No Unloaders at Myntra",
+   "amount": 16645,
+   "remarks": "YLK to Myntra",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Retail",
+   "type": "KOTA & Surat- Handling charges",
+   "reason": "Bluedart - Handling charges",
+   "amount": 6800,
+   "remarks": "2nd Floor delivery charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Marketplace",
+   "type": "Marketplace",
+   "reason": "No Unloaders at Myntra",
+   "amount": 550,
+   "remarks": "Tauru to Myntra",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Retail",
+   "type": "Warai Charges - Mumbai",
+   "reason": "Handling charges - Mudita",
+   "amount": 5758,
+   "remarks": "Mudita - Mumbai handling charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "November",
+   "channel": "Own Vehicle",
+   "type": "Own Vehicle maintenance",
+   "reason": "Vehicle Service",
+   "amount": 18505,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "December",
+   "channel": "Marketplace",
+   "type": "Marketplace - Unloading Cost",
+   "reason": "No Unloaders at Myntra&Flipkart",
+   "amount": 20122,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "December",
+   "channel": "Marketplace",
+   "type": "Marketplace - Detention Cost",
+   "reason": "Shipment Hold with courier",
+   "amount": 21500,
+   "remarks": "Myntra shipments Hold",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "December",
+   "channel": "Retail",
+   "type": "NSO Unloading cost",
+   "reason": "NSO Unloading Manpower cost",
+   "amount": 16500,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "December",
+   "channel": "Retail",
+   "type": "Hyd Mulkrun - Unloading Cost",
+   "reason": "Hyd Mulkrun - Unloading Cost",
+   "amount": 500,
+   "remarks": "YLK to HYD - Milkrun",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "December",
+   "channel": "Retail",
+   "type": "Warai Charges - Mumbai",
+   "reason": "Handling charges - Mudita",
+   "amount": 11829,
+   "remarks": "Mudita - Mumbai handling charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "December",
+   "channel": "Retail",
+   "type": "KOTA - Handling charges",
+   "reason": "Bluedart - Handling charges",
+   "amount": 1000,
+   "remarks": "2nd Floor delivery charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Marketplace",
+   "type": "Marketplace - Unloading Cost",
+   "reason": "No Unloaders at Myntra&Flipkart",
+   "amount": 9605,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Retail",
+   "type": "Delhi NCR - Milkrun - Milkrun",
+   "reason": "Delhi NCR - Milkrun unloading cost",
+   "amount": 1200,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Retail",
+   "type": "NSO Unloading cost",
+   "reason": "NSO Unloading Manpower cost",
+   "amount": 35000,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Marketplace",
+   "type": "Marketplace - Detention Cost",
+   "reason": "Shipment Hold with courier",
+   "amount": 4500,
+   "remarks": "Myntra shipments Hold",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Marketplace",
+   "type": "Scheduled delivery Cost",
+   "reason": "Appointment based delviery Cost",
+   "amount": 16000,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Own Vehicle",
+   "type": "Own Vehicle maintenance",
+   "reason": "Vehicle Service",
+   "amount": 14617,
+   "remarks": "",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Retail",
+   "type": "Warai Charges - Mumbai & Haryana",
+   "reason": "Handling charges - Mudita",
+   "amount": 13776,
+   "remarks": "Mudita - handling charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Jan'26",
+   "channel": "Retail",
+   "type": "2nd Floor delivery charges",
+   "reason": "Handling charges - BD",
+   "amount": 5100,
+   "remarks": "Bluedart - handling charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Feb'26",
+   "channel": "Retail",
+   "type": "2nd Floor delivery charges",
+   "reason": "Handling charges - BD",
+   "amount": 6500,
+   "remarks": "Bluedart - handling charges",
+   "owner": "Ifham"
+  },
+  {
+   "fn": "Logistics",
+   "month": "Feb'26",
+   "channel": "Retail",
+   "type": "Warai Charges - Mumbai & Haryana",
+   "reason": "Handling charges - Mudita",
+   "amount": 14841,
+   "remarks": "Warai Charges",
+   "owner": "Ifham"
+  }
+ ]
+}

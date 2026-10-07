@@ -1,0 +1,25 @@
+# Coolify "Docker Compose" deployment (or deploy the Dockerfile and attach a managed PostgreSQL; set DATABASE_URL).
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://centralops:${POSTGRES_PASSWORD:-centralops}@db:5432/centralops
+    ports: ["3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: centralops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-centralops}
+      POSTGRES_DB: centralops
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U centralops"]
+      interval: 5s
+      retries: 10
+volumes:
+  pgdata:

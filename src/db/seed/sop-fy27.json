@@ -1,0 +1,2164 @@
+{
+ "pocs": [
+  {
+   "stream": "B2C-SF",
+   "poc": "Aaryan",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Pending",
+    "2026-12-01": "Pending"
+   }
+  },
+  {
+   "stream": "B2C-MP",
+   "poc": "Liza",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Pending",
+    "2026-12-01": "Pending"
+   }
+  },
+  {
+   "stream": "B2B-MP",
+   "poc": "Liza",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Pending",
+    "2026-12-01": "Pending"
+   }
+  },
+  {
+   "stream": "Retail-Forward",
+   "poc": "Yash",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Done",
+    "2026-12-01": "Done"
+   }
+  },
+  {
+   "stream": "Retail -Return",
+   "poc": "Yash",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Pending",
+    "2026-12-01": "Pending"
+   }
+  },
+  {
+   "stream": "Inbound-Category Wise",
+   "poc": "Shikha",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Done",
+    "2026-12-01": "Done"
+   }
+  },
+  {
+   "stream": "Pre-pack-Category Wise",
+   "poc": "Niketh",
+   "status": {
+    "2026-10-01": "Pending",
+    "2026-11-01": "Pending",
+    "2026-12-01": "Pending"
+   }
+  },
+  {
+   "stream": "Liquidation",
+   "poc": "Praveen",
+   "status": {
+    "2026-10-01": "Done",
+    "2026-11-01": "Pending",
+    "2026-12-01": "Pending"
+   }
+  }
+ ],
+ "status_months": [
+  "2026-10-01",
+  "2026-11-01",
+  "2026-12-01"
+ ],
+ "methodology": [
+  {
+   "sheet": "B2C Channel",
+   "owners": "Aniket (D2C), Liza (MP)",
+   "text": "Table-01> We need orders and items quantities as well, so that U2S can be monitored and capacity can be planned accordingly"
+  },
+  {
+   "sheet": "B2C Channel",
+   "owners": "Aniket (D2C), Liza (MP)",
+   "text": "Table-02> We need Sales events dates and % BAU per day Increase volume details, so that same capacity can be planned accordingly and monitor closely to avoid any breaches and cost impact."
+  },
+  {
+   "sheet": "B2B MP Channel",
+   "owners": "Liza",
+   "text": "Table-03> We need B2B MP Monthly Volumes, so that same capacity can be planned accordingly and monitor closely to avoid any breaches and cost impact."
+  },
+  {
+   "sheet": "B2B Retail Store",
+   "owners": "Medha and Devender",
+   "text": "Table-04> We need Weekly numbers for Number of NSO Launch, Inventory requirement for NSO, weekly replinishmnet requirement for existing stores as well, so that same capacity can be planned accordingly and monitor closely to avoid any breaches and cost impact."
+  },
+  {
+   "sheet": "Category Projections",
+   "owners": "Niketh",
+   "text": "Table-05> We need category wise and WH Wise break-up to plan Ramp-up and Ram-down for both warehouse, so that same can be monitored and capacity can be planned accordingly for peak season"
+  },
+  {
+   "sheet": "Assumptions",
+   "owners": "All",
+   "text": "1. Going forward we will be considering this particular data for WH capacity planning and Ramp-up+Ramp-Down for both Gurgaon and Bangalore respectively, to avoid any disruption for over/under utilization of both warehouse and avoid any extra cost impact."
+  },
+  {
+   "sheet": "General Guidelines",
+   "owners": "All",
+   "text": "1. All upcoming month data should be filled by Week-03 of previous month, for example Aug-25 data should be filled up by closing of 21-Jul-25 2. Considering Aug-25 being first time we are initiating this S&OP Projection, hence would need all teams help to complete same by 4-Aug-25 EOD, as upcoming months are very critical from sales and expansion POV. 3. We will schedule follow-up call next week to help to understand sheet for filling this data. 4. NSO numbers has to communicated 2 months in prior"
+  }
+ ],
+ "lines": [
+  {
+   "stream": "B2C Forward",
+   "line": "Shopify (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 139413
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 162693
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 132935
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 322796
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 153845
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 153120.2857
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 151302.8571
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Shopify (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 227244
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 231909
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 186109
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 451914
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 215380
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 214363
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 211824
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Myntra (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 79694
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 114399
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 96275
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 79739
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 86654
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 86476
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 109582
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Myntra (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 90210
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 128596
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 108790
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 90103
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 97921
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 97716
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 123829
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Flipkart (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 35633
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 48567
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 34716
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 17900
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 15469
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 51201
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 106357
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Flipkart (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 43209
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 58326
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 73251
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 37764
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 32633
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 57857
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 120183
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Amazon (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 6765
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 12893
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 13669
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 6406
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 5024
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 7201
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 7756
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Amazon (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 8072
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 21097
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 16129
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 7240
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 5675
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 8140
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 8764
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "AJIO (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 23757
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 30851
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 36760
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 30134
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 26412
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 19143
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 10352
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "AJIO (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 31732
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 40323
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 47053
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 38570
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 33807
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 21635
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 11697
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Nykaa (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 16616
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 19974
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 15036
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 13887
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 14147
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 18419
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 20254
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "Nykaa (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 18723
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 22395
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 17742
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 16385
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 16693
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 20815
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 22890
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "NOON (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 3741
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 3297
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 3297
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 2967.3
+    }
+   ]
+  },
+  {
+   "stream": "B2C Forward",
+   "line": "NOON (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 4505
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 3750
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 3750
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 3187.5
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "Shopify (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 0
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "Myntra (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 36084
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 51438.4
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 45691.8
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 37843.26
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 41126.82
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 41040.72
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 52008.18
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "Flipkart (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 17283.6
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 23330.4
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 31497.93
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 16238.52
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 14032.19
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 24878.51
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 52880.52
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "Amazon (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 3228.8
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 8438.8
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 6451.6
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 2896
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 2270
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 3256
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 3505.6
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "AJIO (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 12692.8
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 16129.2
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 19762.26
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 16199.4
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 14198.94
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 9086.7
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 5029.71
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "Nykaa (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 7489.2
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 8958
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 7096.8
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 6554
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 6677.2
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 8326
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 9842.7
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "NOON (Orders)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 0
+    }
+   ]
+  },
+  {
+   "stream": "B2C Returns",
+   "line": "NOON (Items Quantity)",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 0
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Slikk",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 3000
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 3000
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 9000
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 10000
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 7500
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 18000
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 3000
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Myntra SOR",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 130000
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 75643
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 20000
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 40000
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 50000
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 80000
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 43000
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "SJIT Myntra",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 0
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Zilo",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 2000
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 3000
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 3000
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 3000
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 0
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Knot",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 1000
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 4000
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 3000
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 5000
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 5000
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 3000
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Flipkart SOR",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 72000
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 59759
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 15000
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 25000
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 100000
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 223000
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 30000
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Instamart",
+   "values": [
+    {
+     "period": "2026-04-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-05-01",
+     "projection": 1200
+    },
+    {
+     "period": "2026-06-01",
+     "projection": 5000
+    },
+    {
+     "period": "2026-07-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 7000
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 6000
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 2000
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Noon SOR",
+   "values": [
+    {
+     "period": "2026-05-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 0
+    }
+   ]
+  },
+  {
+   "stream": "B2B Marketplace",
+   "line": "Amazon Coco Blue",
+   "values": [
+    {
+     "period": "2026-05-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-08-01",
+     "projection": 0
+    },
+    {
+     "period": "2026-09-01",
+     "projection": 10000
+    },
+    {
+     "period": "2026-10-01",
+     "projection": 15000
+    }
+   ]
+  }
+ ],
+ "retail": [
+  {
+   "week": "Apr_WK_01",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 129798,
+   "total": 135798
+  },
+  {
+   "week": "Apr_WK_02",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 135798,
+   "total": 141798
+  },
+  {
+   "week": "Apr_WK_03",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 141798,
+   "total": 147798
+  },
+  {
+   "week": "Apr_WK_04",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 147798,
+   "total": 153798
+  },
+  {
+   "week": "May_WK_01",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 153798,
+   "total": 159798
+  },
+  {
+   "week": "May_WK_02",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 159798,
+   "total": 165798
+  },
+  {
+   "week": "May_WK_03",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 165798,
+   "total": 171798
+  },
+  {
+   "week": "May_WK_04",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 171798,
+   "total": 177798
+  },
+  {
+   "week": "Jun_WK_01",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 177798,
+   "total": 183798
+  },
+  {
+   "week": "Jun_WK_02",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 183798,
+   "total": 189798
+  },
+  {
+   "week": "Jun_WK_03",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 189798,
+   "total": 195798
+  },
+  {
+   "week": "Jun_WK_04",
+   "nso": 1,
+   "nso_inventory": 6000,
+   "replenishment": 195798,
+   "total": 201798
+  },
+  {
+   "week": "Jul_WK_01",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Jul_WK_02",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Jul_WK_03",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Jul_WK_04",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Aug_WK_01",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Aug_WK_02",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Aug_WK_03",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Aug_WK_04",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Sep_WK_01",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Sep_WK_02",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Sep_WK_03",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Sep_WK_04",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Oct_WK_01",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Oct_WK_02",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Oct_WK_03",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Oct_WK_04",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Nov_WK_01",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Nov_WK_02",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Nov_WK_03",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Nov_WK_04",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Dec_WK_01",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Dec_WK_02",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Dec_WK_03",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  },
+  {
+   "week": "Dec_WK_04",
+   "nso": null,
+   "nso_inventory": null,
+   "replenishment": null,
+   "total": 0
+  }
+ ],
+ "categories": [
+  {
+   "period": "2026-04-01",
+   "category": "Jeans",
+   "north": 57312,
+   "south": 86016
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Joggers & Trackpants",
+   "north": 444,
+   "south": 1556
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Overshirt",
+   "north": 3448,
+   "south": 3844
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Shirts",
+   "north": 180704,
+   "south": 321512
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Shorts",
+   "north": 5868,
+   "south": 10080
+  },
+  {
+   "period": "2026-04-01",
+   "category": "T-Shirts",
+   "north": 53980,
+   "south": 159910
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Trousers",
+   "north": 41192,
+   "south": 76534
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Shoes",
+   "north": 19864,
+   "south": 14352
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Perfumes",
+   "north": 5300,
+   "south": 14700
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Belts",
+   "north": 124,
+   "south": 176
+  },
+  {
+   "period": "2026-04-01",
+   "category": "accessories",
+   "north": 4476,
+   "south": 6752
+  },
+  {
+   "period": "2026-04-01",
+   "category": "Sunglasses",
+   "north": 600,
+   "south": 1196
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Cargo Pants",
+   "north": 1419.6,
+   "south": 2129.4
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Co_Ords_Plus",
+   "north": 7200,
+   "south": 0
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Jackets",
+   "north": 2888.4,
+   "south": 4332.6
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Jeans",
+   "north": 56929.72806,
+   "south": 85442.27194
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Joggers & Trackpants",
+   "north": 700,
+   "south": 0
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Overshirt",
+   "north": 10772.89962,
+   "south": 9663.100384
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Shirts",
+   "north": 192251.3771,
+   "south": 314265.1229
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Shorts",
+   "north": 14060.34086,
+   "south": 13906.65914
+  },
+  {
+   "period": "2026-05-01",
+   "category": "T-Shirts",
+   "north": 164657.0707,
+   "south": 52212.92931
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Trousers",
+   "north": 26569.27037,
+   "south": 49365.22963
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Shoes",
+   "north": 29139.2,
+   "south": 21100.8
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Perfumes",
+   "north": 2915,
+   "south": 8085
+  },
+  {
+   "period": "2026-05-01",
+   "category": "Belts",
+   "north": 2810.666667,
+   "south": 3989.333333
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Cargo Pants",
+   "north": 2997.2,
+   "south": 4495.8
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Jeans",
+   "north": 53892.74548,
+   "south": 80884.25452
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Joggers & Trackpants",
+   "north": 1400,
+   "south": 0
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Shirts",
+   "north": 156576.3393,
+   "south": 255948.6607
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Shorts",
+   "north": 8693.510713,
+   "south": 8598.489287
+  },
+  {
+   "period": "2026-06-01",
+   "category": "T-Shirts",
+   "north": 143571.3688,
+   "south": 45526.63119
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Trousers",
+   "north": 43190.61291,
+   "south": 80247.38709
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Shoes",
+   "north": 14210,
+   "south": 10290
+  },
+  {
+   "period": "2026-06-01",
+   "category": "Perfumes",
+   "north": 3566.9,
+   "south": 9893.1
+  },
+  {
+   "period": "2026-07-01",
+   "category": "Cargo Pants",
+   "north": 3594,
+   "south": 5391
+  },
+  {
+   "period": "2026-07-01",
+   "category": "Jackets",
+   "north": 1200,
+   "south": 1800
+  },
+  {
+   "period": "2026-07-01",
+   "category": "Jeans",
+   "north": 56606.6363,
+   "south": 84957.3637
+  },
+  {
+   "period": "2026-07-01",
+   "category": "Shirts",
+   "north": 154158.188,
+   "south": 251995.812
+  },
+  {
+   "period": "2026-07-01",
+   "category": "Shorts",
+   "north": 3519.232882,
+   "south": 3480.767118
+  },
+  {
+   "period": "2026-07-01",
+   "category": "T-Shirts",
+   "north": 130050.7661,
+   "south": 41239.23393
+  },
+  {
+   "period": "2026-07-01",
+   "category": "Trousers",
+   "north": 15548.03282,
+   "south": 28887.96718
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Hoodies",
+   "north": 1000,
+   "south": 0
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Jackets",
+   "north": 159341,
+   "south": 0
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Jeans",
+   "north": 72970,
+   "south": 79049
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Overshirt",
+   "north": 4671,
+   "south": 4669
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Shirts",
+   "north": 134221,
+   "south": 218990
+  },
+  {
+   "period": "2026-09-01",
+   "category": "T-Shirts",
+   "north": 172092,
+   "south": 179622.5
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Trousers",
+   "north": 61810,
+   "south": 96677
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Sweaters",
+   "north": 77030,
+   "south": 0
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Shoes",
+   "north": 26872,
+   "south": 0
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Perfumes",
+   "north": 12000,
+   "south": 12000
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Belts",
+   "north": 9900,
+   "south": 9900
+  },
+  {
+   "period": "2026-09-01",
+   "category": "Innerwear",
+   "north": 28000,
+   "south": 28000
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Hoodies",
+   "north": 56100,
+   "south": 0
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Jackets",
+   "north": 188047,
+   "south": 0
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Jeans",
+   "north": 94944,
+   "south": 103691
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Joggers & Trackpants",
+   "north": 4308.409833,
+   "south": 5241.590167
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Overshirt",
+   "north": 24867,
+   "south": 32650
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Shirts",
+   "north": 173678,
+   "south": 283371
+  },
+  {
+   "period": "2026-10-01",
+   "category": "T-Shirts",
+   "north": 49219,
+   "south": 51371
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Trousers",
+   "north": 38443,
+   "south": 67921
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Sweaters",
+   "north": 82800,
+   "south": 0
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Shoes",
+   "north": 18920,
+   "south": 0
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Perfumes",
+   "north": 39333,
+   "south": 39333
+  },
+  {
+   "period": "2026-10-01",
+   "category": "Innerwear",
+   "north": 50025,
+   "south": 50025
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Hoodies",
+   "north": 35000,
+   "south": 0
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Jackets",
+   "north": 32000,
+   "south": 0
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Jeans",
+   "north": 58694,
+   "south": 64101
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Joggers & Trackpants",
+   "north": 4514,
+   "south": 5492
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Overshirt",
+   "north": 6242,
+   "south": 8196
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Shirts",
+   "north": 197442,
+   "south": 322144
+  },
+  {
+   "period": "2026-11-01",
+   "category": "T-Shirts",
+   "north": 74400,
+   "south": 77652
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Trousers",
+   "north": 30496,
+   "south": 53881
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Shoes",
+   "north": 30000,
+   "south": 0
+  },
+  {
+   "period": "2026-11-01",
+   "category": "Perfumes",
+   "north": 30000,
+   "south": 30000
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Jeans",
+   "north": 98447,
+   "south": 107516
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Joggers & Trackpants",
+   "north": 9609,
+   "south": 11691
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Overshirt",
+   "north": 6474,
+   "south": 8500
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Shirts",
+   "north": 149267,
+   "south": 243542
+  },
+  {
+   "period": "2026-12-01",
+   "category": "T-Shirts",
+   "north": 61099,
+   "south": 63770
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Trousers",
+   "north": 34894,
+   "south": 61652
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Shoes",
+   "north": 25000,
+   "south": 0
+  },
+  {
+   "period": "2026-12-01",
+   "category": "Perfumes",
+   "north": 17500,
+   "south": 17500
+  }
+ ],
+ "liquidation": [
+  {
+   "week": "Sep_Week-01",
+   "period": "2026-09-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Sep_Week-02",
+   "period": "2026-09-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Sep_Week-03",
+   "period": "2026-09-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Sep_Week-04",
+   "period": "2026-09-01",
+   "proj_north": 100000,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": 65588
+  },
+  {
+   "week": "Oct_Week-01",
+   "period": "2026-10-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Oct_Week-02",
+   "period": "2026-10-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Oct_Week-03",
+   "period": "2026-10-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Oct_Week-04",
+   "period": "2026-10-01",
+   "proj_north": 50000,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Nov_Week-01",
+   "period": "2026-11-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Nov_Week-02",
+   "period": "2026-11-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Nov_Week-03",
+   "period": "2026-11-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Nov_Week-04",
+   "period": "2026-11-01",
+   "proj_north": 35000,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Dec_Week-01",
+   "period": "2026-12-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Dec_Week-02",
+   "period": "2026-12-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Dec_Week-03",
+   "period": "2026-12-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Dec_Week-04",
+   "period": "2026-12-01",
+   "proj_north": 35000,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Jan_Week-01",
+   "period": "2027-01-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Jan_Week-02",
+   "period": "2027-01-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Jan_Week-03",
+   "period": "2027-01-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Jan_Week-04",
+   "period": "2027-01-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Feb_Week-01",
+   "period": "2027-02-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Feb_Week-02",
+   "period": "2027-02-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Feb_Week-03",
+   "period": "2027-02-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Feb_Week-04",
+   "period": "2027-02-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Mar_Week-01",
+   "period": "2027-03-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Mar_Week-02",
+   "period": "2027-03-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Mar_Week-03",
+   "period": "2027-03-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  },
+  {
+   "week": "Mar_Week-04",
+   "period": "2027-03-01",
+   "proj_north": null,
+   "proj_south": null,
+   "act_north": null,
+   "act_south": null
+  }
+ ],
+ "capacity": [
+  {
+   "period": "2026-04-01",
+   "department": "Inventory/Audit/CC",
+   "req_south": 15000,
+   "req_north": 10000,
+   "act_south": 15000,
+   "act_north": 10000
+  },
+  {
+   "period": "2026-04-01",
+   "department": "Inward (Ratio+Put-Away)",
+   "req_south": 20000,
+   "req_north": 10000,
+   "act_south": 20000,
+   "act_north": 10000
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2C-Forward-Shopify",
+   "req_south": 4500,
+   "req_north": 4000,
+   "act_south": 4500,
+   "act_north": 4000
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2C-Forward-MP",
+   "req_south": 6500,
+   "req_north": 3500,
+   "act_south": 6500,
+   "act_north": 3500
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2B-Forward-Retail",
+   "req_south": 12500,
+   "req_north": 12500,
+   "act_south": 12500,
+   "act_north": 12500
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2B-Forward-MP",
+   "req_south": 4000,
+   "req_north": 4000,
+   "act_south": 4000,
+   "act_north": 4000
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2B-Retail Store Return",
+   "req_south": 2500,
+   "req_north": 2500,
+   "act_south": 2500,
+   "act_north": 2500
+  },
+  {
+   "period": "2026-04-01",
+   "department": "MP-B2B Returns",
+   "req_south": 0,
+   "req_north": 0,
+   "act_south": 0,
+   "act_north": 0
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2C Return-Shopify",
+   "req_south": 2000,
+   "req_north": 1000,
+   "act_south": 2000,
+   "act_north": 1000
+  },
+  {
+   "period": "2026-04-01",
+   "department": "B2C Return-MP",
+   "req_south": 2000,
+   "req_north": 1500,
+   "act_south": 2000,
+   "act_north": 1500
+  }
+ ]
+}

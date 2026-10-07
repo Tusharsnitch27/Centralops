@@ -1,0 +1,10 @@
+// Dev-only: a Postgres-wire-compatible server backed by PGlite, for running locally without Docker.
+// DATABASE_URL=postgres://postgres@127.0.0.1:5434/postgres
+import { PGlite } from "@electric-sql/pglite";
+import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
+
+const db = await PGlite.create({ dataDir: process.env.PGLITE_DIR ?? "./.pglite" });
+const server = new PGLiteSocketServer({ db, port: Number(process.env.PGLITE_PORT ?? 5434), host: "127.0.0.1", maxConnections: 16 });
+await server.start();
+console.log(`PGlite listening on 127.0.0.1:${process.env.PGLITE_PORT ?? 5434}`);
+process.on("SIGINT", async () => { await server.stop(); await db.close(); process.exit(0); });
