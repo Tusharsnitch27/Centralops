@@ -106,7 +106,8 @@ export function viewInsights(v: ViewDef, raw: RawRow[], wh: { South: WhPoint | n
     if (r.sp > 0 && r.np > 0 && r.su != null && r.nu != null && Math.abs(r.su - r.nu) >= 0.4) {
       const hi = r.su > r.nu ? "South" : "North", lo = hi === "South" ? "North" : "South";
       const g = Math.max(Math.abs(r.sa - r.sp), Math.abs(r.na - r.np));
-      if (g >= min) out.push({ key: `${r.label}:skew`, tone: "info", score: g * 0.8,
+      const extreme = Math.max(r.su, r.nu) >= 1.4 || Math.min(r.su, r.nu) <= 0.5;
+      if (g >= min) out.push({ key: `${r.label}:skew`, tone: extreme ? "warn" : "info", score: g * (extreme ? 1.25 : 0.8),
         title: [{ b: what }, ` skewed to ${hi}: `, { b: pc(hi === "South" ? r.su : r.nu) }, ` vs ${lo} `, { b: pc(lo === "South" ? r.su : r.nu) }],
         impact: [`Volume moved between warehouses — rebalance the ${v.flow === "inbound" ? "inward" : "dispatch"} split${whAt(hi)?.util != null ? ` (${hi} WH at ${pc(whAt(hi)!.util)})` : ""}.`] });
     }
