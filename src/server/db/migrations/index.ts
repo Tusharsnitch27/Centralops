@@ -6,6 +6,7 @@ import { sql as plans } from "./002_plans";
 import { sql as directory } from "./003_directory";
 import { sql as aopScope } from "./030_aop_scope";
 import { sql as aopOwners } from "./031_aop_owners";
+import { sql as aopDeadlines } from "./032_aop_deadlines";
 import { sql as insights60 } from "./060_insights";
 import { sql as sop40 } from "./040_sop";
 
@@ -15,6 +16,7 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 3, name: "directory", sql: directory },
   { version: 30, name: "aop_scope", sql: aopScope },
   { version: 31, name: "aop_owners", sql: aopOwners },
+  { version: 32, name: "aop_deadlines", sql: aopDeadlines },
   { version: 60, name: "insights", sql: insights60 },
   { version: 40, name: "sop", sql: sop40 },
 ];

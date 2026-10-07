@@ -80,7 +80,7 @@ export async function createUser(input: UserInput): Promise<ActionResult<{ id: s
   } catch (e) { return fail(e); }
 }
 
-export async function updateUserAccess(id: string, input: { name?: string; email?: string | null; role?: string; teamId?: string | null; title?: string; active?: boolean; joinedAt?: string }): Promise<ActionResult> {
+export async function updateUserAccess(id: string, input: { name?: string; email?: string | null; role?: string; teamId?: string | null; title?: string; active?: boolean; joinedAt?: string; phone?: string | null; whatsappOptIn?: boolean }): Promise<ActionResult> {
   try {
     const me = await requireManager();
     if (!UUID.test(id)) throw new Error("Unknown user");
@@ -103,6 +103,13 @@ export async function updateUserAccess(id: string, input: { name?: string; email
     if (input.teamId !== undefined) set("team_id", optId(input.teamId));
     if (input.active !== undefined) set("active", !!input.active);
     if (input.joinedAt !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(input.joinedAt)) set("joined_at", input.joinedAt);
+    if (input.phone !== undefined) {
+      const raw = (input.phone ?? "").replace(/\D/g, "");
+      const p = !raw ? null : raw.length === 10 ? `91${raw}` : raw.length === 11 && raw.startsWith("0") ? `91${raw.slice(1)}` : /^\d{11,15}$/.test(raw) ? raw : "";
+      if (p === "") throw new Error("That WhatsApp number doesn't look right");
+      set("phone", p);
+    }
+    if (input.whatsappOptIn !== undefined) set("whatsapp_opt_in", !!input.whatsappOptIn);
     if (!sets.length) return ok();
     vals.push(id);
     await tx(async (x) => {

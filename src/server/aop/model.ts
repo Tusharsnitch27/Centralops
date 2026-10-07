@@ -3,6 +3,7 @@ import { cache } from "react";
 import { q, one } from "../db";
 import { canEdit, canManage, type User } from "../auth";
 import { addMonths, monthStart, today } from "@/lib/dates";
+import { parseDeadlines, type DeadlineConfig } from "./deadlines";
 import { cycleMonths, DEFAULT_LABELS, impactOf, statusFrom, type AopStatus, type Direction, type Labels } from "./calc";
 
 /* The AOP model: one query per table, all maths in memory. Cached per request. */
@@ -10,7 +11,7 @@ import { cycleMonths, DEFAULT_LABELS, impactOf, statusFrom, type AopStatus, type
 export interface Cycle {
   id: string; name: string; kind: "cost" | "revenue" | "mixed"; fy_start: string; months: number; status: "draft" | "active" | "closed";
   currency: string; labels: Labels; actuals_cutoff_day: number; projection_cutoff_day: number; guidelines: string[];
-  source_file: string | null; owner_id: string | null;
+  source_file: string | null; owner_id: string | null; deadlines: DeadlineConfig;
 }
 export interface CycleLite { id: string; name: string; kind: string; status: string; fy_start: string }
 
@@ -58,13 +59,14 @@ export const listCycles = cache(() =>
 
 /** The requested cycle, else the active one (most recent). */
 export const resolveCycle = cache(async (id?: string | null): Promise<Cycle | null> => {
-  const row = await one<Cycle>(
-    `select id, name, kind, fy_start, months, status, currency, labels, actuals_cutoff_day, projection_cutoff_day, guidelines, source_file, owner_id
+  const row = await one<Cycle & { deadline_config: unknown }>(
+    `select id, name, kind, fy_start, months, status, currency, labels, actuals_cutoff_day, projection_cutoff_day, guidelines, source_file, owner_id, deadline_config
      from aop_cycles where ($1::uuid is null or id = $1::uuid)
      order by (status = 'active') desc, fy_start desc, created_at desc limit 1`,
     [id && /^[0-9a-f-]{36}$/i.test(id) ? id : null]);
   if (!row) return null;
-  return { ...row, labels: parseLabels(row.labels), guidelines: Array.isArray(row.guidelines) ? row.guidelines : [] };
+  const { deadline_config, ...rest } = row;
+  return { ...rest, labels: parseLabels(row.labels), guidelines: Array.isArray(row.guidelines) ? row.guidelines : [], deadlines: parseDeadlines(deadline_config) };
 });
 
 const emptyVals = (): Vals => ({ plan: null, forecast: null, actual: null });

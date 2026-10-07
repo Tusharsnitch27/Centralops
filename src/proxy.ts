@@ -20,5 +20,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|api/auth|api/health|api/integrations/google/callback|_next/static|_next/image|favicon.ico|icon.svg).*)"],
+  matcher: ["/((?!login|api/auth|api/health|api/cron|api/integrations/google/callback|_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };

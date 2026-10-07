@@ -5,7 +5,8 @@ import { allItemsOf, sectionOwner, type ItemRow, type Model } from "./model";
 
 /* Input collection: which function owners have updated their lines for an open period. */
 
-export type InputKind = "actuals" | "projections";
+import { dueDate, KIND_MEASURE, type InputKind } from "./deadlines";
+export type { InputKind };
 export interface FunctionInput {
   sectionId: string; name: string; ownerId: string | null; ownerName: string | null; ownerLabel: string | null;
   updated: number; total: number; status: "submitted" | "complete" | "partial" | "not_started" | "none";
@@ -13,12 +14,12 @@ export interface FunctionInput {
 }
 export interface InputPeriod { period: string; kind: InputKind; dueDate: string; functions: FunctionInput[]; updated: number; total: number; late: number }
 
-const withDay = (p: string, day: number) => `${p.slice(0, 8)}${String(Math.min(28, Math.max(1, day))).padStart(2, "0")}`;
-export const dueFor = (m: Model, period: string, kind: InputKind) =>
-  kind === "actuals" ? withDay(addMonths(period, 1), m.cycle.actuals_cutoff_day) : withDay(addMonths(period, -1), m.cycle.projection_cutoff_day);
+/** Due date for a function's input (cycle deadline rules, with per-function overrides such as Logistics actuals on the 12th). */
+export const dueFor = (m: Model, period: string, kind: InputKind, functionName?: string | null) => dueDate(m.cycle.deadlines, KIND_MEASURE[kind], period, functionName);
 
 function expected(m: Model, it: ItemRow, period: string, kind: InputKind) {
   const v = it.vals[period];
+  if (kind === "budget") return m.closed.slice(-3).some((p) => { const x = it.vals[p]; return !!x && ((x.plan ?? 0) !== 0 || x.actual != null); }) || (v?.plan != null);
   if (kind === "actuals") return !!v && ((v.plan ?? 0) !== 0 || (v.forecast ?? 0) !== 0 || v.actual != null);
   if (v && (v.plan != null || v.forecast != null)) return true;
   // projections: lines that were live recently are expected to carry a provision
@@ -26,7 +27,7 @@ function expected(m: Model, it: ItemRow, period: string, kind: InputKind) {
 }
 const isUpdated = (it: ItemRow, period: string, kind: InputKind) => {
   const v = it.vals[period];
-  return kind === "actuals" ? v?.actual != null : v?.forecast != null;
+  return kind === "actuals" ? v?.actual != null : kind === "budget" ? v?.plan != null : v?.forecast != null || v?.actual != null;
 };
 
 /** Default open periods: last closed month's actuals + next month's projections (the ones due soonest). */
@@ -49,7 +50,7 @@ export async function inputPeriod(m: Model, period: string, kind: InputKind): Pr
     const upd = items.filter((i) => isUpdated(i, period, kind));
     const sub = subBy.get(f.id);
     const owner = sectionOwner(f);
-    const dueDate = sub?.due_date ?? defaultDue;
+    const dueDate = dueFor(m, period, kind, f.name);
     const submitted = sub && (sub.status === "submitted" || sub.status === "approved");
     const status: FunctionInput["status"] = !items.length ? "none" : submitted ? "submitted" : upd.length === items.length ? "complete" : upd.length ? "partial" : "not_started";
     return {

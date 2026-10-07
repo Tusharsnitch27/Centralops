@@ -24,6 +24,7 @@ const ALL_TABS = [
   { key: "teams", label: "Teams", admin: true },
   { key: "templates", label: "Templates", admin: true },
   { key: "rules", label: "Insight rules", admin: true },
+  { key: "integrations", label: "Integrations", admin: true },
 ];
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string; user?: string }> }) {
@@ -64,6 +65,11 @@ async function renderTab(tab: string, userId: string, isAdmin: boolean, manager:
       const templates = await getTemplates();
       const meta = Object.fromEntries(Object.entries(TEMPLATE_KEYS).map(([k, v]) => [k, { label: v.label, hint: v.hint }])) as Record<keyof typeof TEMPLATE_KEYS, { label: string; hint: string }>;
       return <TemplatesForm templates={templates} defaults={DEFAULT_TEMPLATES} meta={meta} canEdit={manager} />;
+    }
+    case "integrations": {
+      const { integrationsData } = await import("@/server/integrations/queries");
+      const { IntegrationsAdmin } = await import("@/components/settings/IntegrationsAdmin");
+      return <IntegrationsAdmin d={await integrationsData(userId)} />;
     }
     case "rules":
       return (

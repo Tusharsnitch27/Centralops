@@ -113,7 +113,7 @@ async function remind(x: Tx, u: User, m: Model, sectionId: string, period: strin
   if (!owner) throw new Error(`${f.name} has no owner — set one in Setup`);
   const L = m.cycle.labels;
   const what = kind === "actuals" ? `${monLabel(period)} ${L.actual.toLowerCase()}` : `${monLabel(period)} ${L.forecast.toLowerCase()}s`;
-  const due = dueFor(m, period, kind);
+  const due = dueFor(m, period, kind, m.sectionById.get(sectionId)?.name);
   const missing = allItemsOf(f).filter((i) => (kind === "actuals" ? i.vals[period]?.actual == null && (i.vals[period]?.plan || i.vals[period]?.forecast) : i.vals[period]?.forecast == null)).length;
   const msg = `Please update ${what} for ${f.name}${missing ? ` — ${missing} line${missing === 1 ? "" : "s"} pending` : ""}. Due ${due}.`;
   const href = `/aop/inputs/submit?cycle=${m.cycle.id}&period=${period}&kind=${kind}&owner=${owner.id}`;
