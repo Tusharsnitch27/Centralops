@@ -68,7 +68,7 @@ export default async function CommandCentre() {
           <span className="flex size-10 items-center justify-center rounded-xl bg-ink text-white"><Rocket size={17} /></span>
           <div className="flex-1">
             <div className="text-[14px] font-semibold">Capture everything you’re working on</div>
-            <div className="text-[12.5px] text-ink-3">Dump your projects, open actions, recurring reviews and the people you’re waiting on — Central Ops structures it and tracks from today.</div>
+            <div className="text-[12.5px] text-ink-3">Dump your open actions, recurring meetings and the people you’re waiting on — Central Ops structures it and tracks from today.</div>
           </div>
           <span className="flex items-center gap-1 text-[13px] font-medium text-ink">Start <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" /></span>
         </Link>

@@ -66,7 +66,7 @@ export async function runSweeps(u: User, opts: { force?: boolean } = {}) {
 
   // 6 · first-run capture
   if (!u.onboarded_at)
-    await toInbox({ userId: u.id, kind: "onboarding", title: "Capture everything you're working on", body: "Projects, open tasks, recurring meetings and people you're waiting on — so Central Ops can start tracking from today.", href: "/welcome", priority: 90, dedupeKey: "onboarding" });
+    await toInbox({ userId: u.id, kind: "onboarding", title: "Capture everything you're working on", body: "Open tasks, recurring meetings and people you're waiting on — so Central Ops can start tracking from today.", href: "/welcome", priority: 90, dedupeKey: "onboarding" });
   else await q(`update inbox_items set status = 'done', resolved_at = now() where user_id = $1 and dedupe_key = 'onboarding' and status = 'open'`, [u.id]);
 
   // 7 · module sweeps
