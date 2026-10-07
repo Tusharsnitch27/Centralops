@@ -4,6 +4,7 @@ import { hashPassword } from "../auth/passwords";
 import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
+import { seedSopReview } from "./sopReview";
 
 const mk = (rawQ: RunQ) => ({
   setting: async (key: string) => (await rawQ<{ value: unknown }>(`select value from app_settings where key = $1`, [key]))[0]?.value ?? null,
@@ -53,6 +54,12 @@ export async function bootstrap(rawQ: RunQ) {
     await syncDirectory(rawQ, admin);
     await setSetting("seed.directory", "v2");
     console.log("[seed] team directory synced");
+  }
+
+  if ((await setting("seed.sop_review")) !== "v1") {
+    await seedSopReview(rawQ);
+    await setSetting("seed.sop_review", "v1");
+    console.log("[seed] S&OP monthly review (Sep 2026) loaded");
   }
 
   if ((process.env.SEED_DEMO ?? "false") === "true" && !(await setting("seed.demo"))) {

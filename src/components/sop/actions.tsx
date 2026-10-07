@@ -27,7 +27,8 @@ export function SopNav({ counts }: { counts?: { inputs?: number; capacity?: numb
   const active = path === "/sop" ? "overview" : path.split("/")[2] ?? "overview";
   return (
     <Tabs className="mb-6" active={active} items={[
-      { key: "overview", href: "/sop", label: "Overview" },
+      { key: "overview", href: "/sop", label: "Monthly review" },
+      { key: "streams", href: "/sop/streams", label: "Streams" },
       { key: "inputs", href: "/sop/inputs", label: "Inputs", count: counts?.inputs },
       { key: "projections", href: "/sop/projections", label: "Projections" },
       { key: "capacity", href: "/sop/capacity", label: "Capacity", count: counts?.capacity },

@@ -9,6 +9,7 @@ import { sql as aopOwners } from "./031_aop_owners";
 import { sql as aopDeadlines } from "./032_aop_deadlines";
 import { sql as insights60 } from "./060_insights";
 import { sql as sop40 } from "./040_sop";
+import { sql as sopReview } from "./041_sop_review";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -19,4 +20,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 32, name: "aop_deadlines", sql: aopDeadlines },
   { version: 60, name: "insights", sql: insights60 },
   { version: 40, name: "sop", sql: sop40 },
+  { version: 41, name: "sop_review", sql: sopReview },
 ];

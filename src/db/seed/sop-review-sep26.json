@@ -1,0 +1,511 @@
+{
+ "period": "2026-09-01",
+ "rows": [
+  {
+   "view": "b2c",
+   "label": "Myntra",
+   "group": "Marketplace",
+   "sort": 0,
+   "sp": 43716,
+   "sa": 50348,
+   "np": 43971,
+   "na": 35511
+  },
+  {
+   "view": "b2c",
+   "label": "Flipkart",
+   "group": "Marketplace",
+   "sort": 1,
+   "sp": 31823,
+   "sa": 21094,
+   "np": 26036,
+   "na": 15431
+  },
+  {
+   "view": "b2c",
+   "label": "Amazon",
+   "group": "Marketplace",
+   "sort": 2,
+   "sp": 4475,
+   "sa": 2783,
+   "np": 3665,
+   "na": 1972
+  },
+  {
+   "view": "b2c",
+   "label": "AJIO",
+   "group": "Marketplace",
+   "sort": 3,
+   "sp": 11898,
+   "sa": 17879,
+   "np": 9738,
+   "na": 9029
+  },
+  {
+   "view": "b2c",
+   "label": "Nykaa",
+   "group": "Marketplace",
+   "sort": 4,
+   "sp": 10132,
+   "sa": 11451,
+   "np": 9365,
+   "na": 8465
+  },
+  {
+   "view": "b2c",
+   "label": "Shopify (Items)",
+   "group": "D2C",
+   "sort": 5,
+   "sp": 115717,
+   "sa": 96531,
+   "np": 92795,
+   "na": 78807
+  },
+  {
+   "view": "b2b_mp",
+   "label": "Slikk",
+   "group": null,
+   "sort": 0,
+   "sp": 9000,
+   "sa": 14235,
+   "np": 9000,
+   "na": 830
+  },
+  {
+   "view": "b2b_mp",
+   "label": "M-Now",
+   "group": null,
+   "sort": 1,
+   "sp": 40000,
+   "sa": 54866,
+   "np": 40000,
+   "na": 30737
+  },
+  {
+   "view": "b2b_mp",
+   "label": "SJIT Myntra",
+   "group": null,
+   "sort": 2,
+   "sp": 0,
+   "sa": 0,
+   "np": 0,
+   "na": 0
+  },
+  {
+   "view": "b2b_mp",
+   "label": "Zilo",
+   "group": null,
+   "sort": 3,
+   "sp": 0,
+   "sa": 0,
+   "np": 0,
+   "na": 0
+  },
+  {
+   "view": "b2b_mp",
+   "label": "Knot",
+   "group": null,
+   "sort": 4,
+   "sp": 2500,
+   "sa": 0,
+   "np": 2500,
+   "na": 0
+  },
+  {
+   "view": "b2b_mp",
+   "label": "Flipkart",
+   "group": null,
+   "sort": 5,
+   "sp": 111500,
+   "sa": 101063,
+   "np": 111500,
+   "na": 57393
+  },
+  {
+   "view": "b2b_mp",
+   "label": "Instamart",
+   "group": null,
+   "sort": 6,
+   "sp": 3000,
+   "sa": 0,
+   "np": 3000,
+   "na": 0
+  },
+  {
+   "view": "b2b_mp",
+   "label": "Amazon cocoblu",
+   "group": null,
+   "sort": 7,
+   "sp": 5000,
+   "sa": 2716,
+   "np": 5000,
+   "na": 1909
+  },
+  {
+   "view": "retail_fwd",
+   "label": "Wk_01",
+   "group": null,
+   "sort": 0,
+   "sp": 65386,
+   "sa": 70442,
+   "np": 60356,
+   "na": 41367
+  },
+  {
+   "view": "retail_fwd",
+   "label": "Wk_02",
+   "group": null,
+   "sort": 1,
+   "sp": 69317,
+   "sa": 91375,
+   "np": 63985,
+   "na": 52582
+  },
+  {
+   "view": "retail_fwd",
+   "label": "Wk_03",
+   "group": null,
+   "sort": 2,
+   "sp": 69317,
+   "sa": 56872,
+   "np": 63985,
+   "na": 64531
+  },
+  {
+   "view": "retail_fwd",
+   "label": "Wk_04",
+   "group": null,
+   "sort": 3,
+   "sp": 98090,
+   "sa": 147339,
+   "np": 90544,
+   "na": 129604
+  },
+  {
+   "view": "category_inward",
+   "label": "Wk_01",
+   "group": null,
+   "sort": 0,
+   "sp": 123375,
+   "sa": 137782,
+   "np": 98075,
+   "na": 74045
+  },
+  {
+   "view": "category_inward",
+   "label": "Wk_02",
+   "group": null,
+   "sort": 1,
+   "sp": 129216,
+   "sa": 215708,
+   "np": 126268,
+   "na": 257488
+  },
+  {
+   "view": "category_inward",
+   "label": "Wk_03",
+   "group": null,
+   "sort": 2,
+   "sp": 144719,
+   "sa": 147957,
+   "np": 211295,
+   "na": 48364
+  },
+  {
+   "view": "category_inward",
+   "label": "Wk_04",
+   "group": null,
+   "sort": 3,
+   "sp": 231598,
+   "sa": 102028,
+   "np": 324269,
+   "na": 224188
+  },
+  {
+   "view": "prepack",
+   "label": "Wk_01",
+   "group": null,
+   "sort": 0,
+   "sp": 0,
+   "sa": 360,
+   "np": 0,
+   "na": 0
+  },
+  {
+   "view": "prepack",
+   "label": "Wk_02",
+   "group": null,
+   "sort": 1,
+   "sp": 1913,
+   "sa": 0,
+   "np": 3840,
+   "na": 0
+  },
+  {
+   "view": "prepack",
+   "label": "Wk_03",
+   "group": null,
+   "sort": 2,
+   "sp": 1903,
+   "sa": 552,
+   "np": 5033,
+   "na": 312
+  },
+  {
+   "view": "prepack",
+   "label": "Wk_04",
+   "group": null,
+   "sort": 3,
+   "sp": 5038,
+   "sa": 160,
+   "np": 8878,
+   "na": 4320
+  },
+  {
+   "view": "category_view",
+   "label": "T-Shirts",
+   "group": null,
+   "sort": 0,
+   "sp": 179623,
+   "sa": 86584,
+   "np": 172092,
+   "na": 267884
+  },
+  {
+   "view": "category_view",
+   "label": "Shirts",
+   "group": null,
+   "sort": 1,
+   "sp": 218990,
+   "sa": 254353,
+   "np": 134221,
+   "na": 189611
+  },
+  {
+   "view": "category_view",
+   "label": "Jackets",
+   "group": null,
+   "sort": 2,
+   "sp": 0,
+   "sa": 12324,
+   "np": 159341,
+   "na": 15930
+  },
+  {
+   "view": "category_view",
+   "label": "Overshirt",
+   "group": null,
+   "sort": 3,
+   "sp": 4669,
+   "sa": 7059,
+   "np": 4671,
+   "na": 4527
+  },
+  {
+   "view": "category_view",
+   "label": "Jeans",
+   "group": null,
+   "sort": 4,
+   "sp": 79049,
+   "sa": 118899,
+   "np": 72970,
+   "na": 105554
+  },
+  {
+   "view": "category_view",
+   "label": "Chinos",
+   "group": null,
+   "sort": 5,
+   "sp": 0,
+   "sa": 22242,
+   "np": 0,
+   "na": 21195
+  },
+  {
+   "view": "category_view",
+   "label": "Sweater",
+   "group": null,
+   "sort": 6,
+   "sp": 0,
+   "sa": 17438,
+   "np": 77030,
+   "na": 22173
+  },
+  {
+   "view": "category_view",
+   "label": "Accessories",
+   "group": null,
+   "sort": 7,
+   "sp": 9900,
+   "sa": 9463,
+   "np": 9900,
+   "na": 5793
+  },
+  {
+   "view": "category_view",
+   "label": "Trousers",
+   "group": null,
+   "sort": 8,
+   "sp": 96677,
+   "sa": 53173,
+   "np": 61810,
+   "na": 28706
+  },
+  {
+   "view": "category_view",
+   "label": "Trolley",
+   "group": null,
+   "sort": 9,
+   "sp": 0,
+   "sa": 572,
+   "np": 0,
+   "na": 710
+  },
+  {
+   "view": "category_view",
+   "label": "Shoes",
+   "group": null,
+   "sort": 10,
+   "sp": 0,
+   "sa": 0,
+   "np": 26872,
+   "na": 12540
+  },
+  {
+   "view": "category_view",
+   "label": "Sweatshirts",
+   "group": null,
+   "sort": 11,
+   "sp": 0,
+   "sa": 992,
+   "np": 0,
+   "na": 945
+  },
+  {
+   "view": "category_view",
+   "label": "Perfumes",
+   "group": null,
+   "sort": 12,
+   "sp": 12000,
+   "sa": 11869,
+   "np": 12000,
+   "na": 11792
+  },
+  {
+   "view": "category_view",
+   "label": "Shorts",
+   "group": null,
+   "sort": 13,
+   "sp": 0,
+   "sa": 6128,
+   "np": 0,
+   "na": 3158
+  },
+  {
+   "view": "category_view",
+   "label": "Joggers & Trackpants",
+   "group": null,
+   "sort": 14,
+   "sp": 0,
+   "sa": 2379,
+   "np": 0,
+   "na": 1926
+  },
+  {
+   "view": "category_view",
+   "label": "Innerwear",
+   "group": null,
+   "sort": 15,
+   "sp": 28000,
+   "sa": 0,
+   "np": 28000,
+   "na": 0
+  }
+ ],
+ "capacity": [
+  {
+   "period": "2026-09-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": 1494000
+  },
+  {
+   "period": "2026-10-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": 1422000
+  },
+  {
+   "period": "2026-11-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": null
+  },
+  {
+   "period": "2026-12-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": null
+  },
+  {
+   "period": "2027-01-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": null
+  },
+  {
+   "period": "2027-02-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": null
+  },
+  {
+   "period": "2027-03-01",
+   "wh": "South",
+   "capacity": 1600000,
+   "inventory": null
+  },
+  {
+   "period": "2026-09-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": 933000
+  },
+  {
+   "period": "2026-10-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": 883000
+  },
+  {
+   "period": "2026-11-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": null
+  },
+  {
+   "period": "2026-12-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": null
+  },
+  {
+   "period": "2027-01-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": null
+  },
+  {
+   "period": "2027-02-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": null
+  },
+  {
+   "period": "2027-03-01",
+   "wh": "North",
+   "capacity": 1200000,
+   "inventory": null
+  }
+ ]
+}
