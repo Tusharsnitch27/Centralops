@@ -24,9 +24,9 @@ export function Topbar({ unread, counts, user }: { unread: number; counts: Recor
   const items = NAV.flatMap((g) => g.items);
   const isActive = (href: string, match: string[] = []) => (href === "/" ? path === "/" : [href, ...match].some((h) => path === h || path.startsWith(`${h}/`)));
   return (
-    <div className="sticky top-0 z-30 px-3 pt-3 md:px-6">
-      <div className="mx-auto flex h-[64px] max-w-[1440px] items-center gap-3 rounded-[22px] border border-white bg-white/85 px-3 shadow-[0_1px_2px_rgb(17_18_20/0.04),0_10px_30px_-12px_rgb(17_18_20/0.12)] backdrop-blur-xl md:px-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5 pr-2">
+    <div className="sticky top-0 z-30 pt-3">
+      <div className="mx-auto flex h-[64px] items-center gap-3 rounded-[22px] border border-white bg-white/85 px-3 shadow-[0_1px_2px_rgb(17_18_20/0.04),0_10px_30px_-12px_rgb(17_18_20/0.12)] backdrop-blur-xl md:px-4">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 pr-2 lg:hidden">
           <span className="flex size-9 items-center justify-center rounded-xl text-white shadow-[0_6px_16px_-6px_var(--color-accent)]" style={{ background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-2))" }}>
             <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="7.5" opacity=".55" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" /></svg>
           </span>
@@ -35,7 +35,8 @@ export function Topbar({ unread, counts, user }: { unread: number; counts: Recor
             <span className="block text-[11px] font-medium text-ink-3">Program Manager 2.0</span>
           </span>
         </Link>
-        <nav className="mx-auto flex items-center gap-1 overflow-x-auto rounded-full bg-subtle p-1 [scrollbar-width:none]">
+        <PageTitle />
+        <nav className="mx-auto flex items-center gap-1 overflow-x-auto rounded-full bg-subtle p-1 [scrollbar-width:none] lg:hidden">
           {items.map((it) => {
             const Icon = ((Icons as unknown as Record<string, IconCmp>)[it.icon] ?? Icons.Circle) as IconCmp;
             const on = isActive(it.href, it.match);
@@ -52,17 +53,33 @@ export function Topbar({ unread, counts, user }: { unread: number; counts: Recor
           })}
         </nav>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button onClick={() => openPalette()} title="Search (⌘K)" className="flex h-9 items-center gap-2 rounded-full border border-line bg-white px-3 text-[13px] text-ink-3 transition-colors hover:border-line-strong hover:text-ink">
-            <Search size={15} /><span className="hidden xl:inline">Search</span><span className="hidden items-center gap-0.5 xl:flex"><Kbd>⌘</Kbd><Kbd>K</Kbd></span>
+          <button onClick={() => openPalette()} title="Search (⌘K)" className="flex h-10 items-center gap-2.5 rounded-full border border-line bg-subtle/60 px-4 text-[13.5px] text-ink-3 transition-colors hover:border-line-strong hover:bg-white hover:text-ink lg:w-[340px]">
+            <Search size={16} /><span className="hidden flex-1 text-left lg:inline">Search tasks, meetings, AOP lines…</span><span className="hidden items-center gap-0.5 xl:flex"><Kbd>⌘</Kbd><Kbd>K</Kbd></span>
           </button>
           <ThemePicker />
           <Notifications unread={unread} />
           <button onClick={() => openQuickAdd()} title="Quick add (C)" className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink-2">
             <Plus size={15} strokeWidth={2.4} /><span className="hidden sm:inline">New</span>
           </button>
-          <UserMenu user={user} />
+          <span className="lg:hidden"><UserMenu user={user} /></span>
         </div>
       </div>
+    </div>
+  );
+}
+
+const TITLES: [RegExp, string, string][] = [
+  [/^\/$/, "Home", "Summary"], [/^\/tasks/, "Work", "Tasks"], [/^\/followups/, "Work", "Follow-ups"], [/^\/meetings/, "Work", "Meetings"],
+  [/^\/decisions/, "Work", "Decisions"], [/^\/aop/, "Programs", "AOP"], [/^\/sop/, "Programs", "S&OP"], [/^\/settings/, "Account", "Settings"], [/^\/welcome/, "Home", "Get started"],
+];
+function PageTitle() {
+  const path = usePathname();
+  const hit = TITLES.find(([re]) => re.test(path));
+  return (
+    <div className="hidden min-w-0 items-center gap-2 pl-2 lg:flex">
+      <span className="text-[13px] font-medium text-ink-4">{hit?.[1]}</span>
+      <span className="text-ink-4">/</span>
+      <span className="text-[14px] font-bold text-ink">{hit?.[2]}</span>
     </div>
   );
 }

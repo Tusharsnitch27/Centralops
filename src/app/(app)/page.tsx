@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Boxes, CalendarClock, CheckCheck, Gavel, Rocket, Video } from "lucide-react";
+import { AlarmClock, ArrowRight, ArrowUpRight, Boxes, CalendarClock, CheckCheck, Gavel, ListChecks, NotebookPen, Presentation, Rocket, Send, Video } from "lucide-react";
 import { Avatar, AvatarStack, Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { AttentionList } from "@/components/home/Attention";
-import { AopTrend } from "@/components/home/AopTrend";
+import { HeroSpend } from "@/components/home/HeroSpend";
+import { StatCard } from "@/components/home/StatCard";
+import { homeSeries } from "@/server/home/series";
 import { TaskList } from "@/components/tasks/TaskRow";
 import { requireUser } from "@/server/auth";
 import { runSweeps } from "@/server/inbox/sweep";
@@ -25,12 +27,14 @@ function greeting() {
 export default async function CommandCentre() {
   const u = await requireUser();
   await runSweeps(u);
-  const [items, stats, schedule, due, aop, sop, follow, decisions] = await Promise.all([
+  const [items, stats, schedule, due, aop, sop, follow, decisions, series] = await Promise.all([
     attention(u), homeStats(u), todaySchedule(u), dueToday(u), aopOutcome(), sopHeadline(), followupPreview(u),
     q<{ id: string; title: string; due_date: string | null; maker: string | null }>(
       `select d.id, d.title, d.due_date, m.name as maker from decisions d left join users m on m.id = d.decision_maker_id
        where d.status in ('pending','proposed') order by d.due_date nulls last limit 4`),
+    homeSeries(u),
   ]);
+  const sum = (xs: { value: number }[], n = 7) => xs.slice(-n).reduce((a, x) => a + x.value, 0);
   const now = Date.now();
   const first = u.name.split(" ")[0];
   const cost = aop?.kind === "cost";
@@ -41,27 +45,28 @@ export default async function CommandCentre() {
       {/* Header */}
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <div className="eyebrow mb-2">{fmtDate(today(), { dow: true })}</div>
-          <h1 className="font-serif text-[38px] leading-[1.05] tracking-[-0.015em]">{greeting()}, {first}</h1>
-          <p className="mt-2 text-[14px] text-ink-3">
+          <h1 className="text-[34px] font-extrabold leading-[1.08] tracking-[-0.04em]">{greeting()}, <span className="text-gradient">{first}</span></h1>
+          <p className="mt-2 text-[14.5px] font-medium text-ink-3">
             {items.length ? <>Here’s what needs your attention today — <span className="text-ink-2">{plural(items.length, "item")}</span>, most important first.</> : "Nothing needs your attention right now. Enjoy the calm."}
           </p>
         </div>
-        <dl className="flex flex-wrap gap-x-7 gap-y-3">
-          {[
-            { k: "Meetings today", v: stats.meetingsToday, href: "/meetings" },
-            { k: "Open tasks", v: stats.openTasks, href: "/tasks" },
-            { k: "Overdue", v: stats.overdue, href: "/tasks?view=overdue", tone: stats.overdue ? "text-bad" : "" },
-            { k: "To follow up", v: stats.followupsDue, href: "/followups", tone: stats.followupsDue ? "text-warn" : "" },
-            { k: "MoMs pending", v: stats.momPending, href: "/meetings", tone: stats.momPending ? "text-warn" : "" },
-          ].map((s) => (
-            <Link key={s.k} href={s.href} className="group">
-              <dt className="text-[11.5px] text-ink-3 group-hover:text-ink-2">{s.k}</dt>
-              <dd className={cn("font-serif text-[26px] leading-tight tabular", s.tone)}>{s.v}</dd>
-            </Link>
-          ))}
-        </dl>
+        <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink-2 shadow-[var(--shadow-card)]">
+          <CalendarClock size={15} className="text-accent" /> {fmtDate(today(), { dow: true })}
+        </div>
       </header>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <StatCard label="Open tasks" value={stats.openTasks} href="/tasks" icon={<ListChecks size={15} />} bars={series.completed.map((d) => d.value)}
+          badge={`${sum(series.completed)} done this week`} foot="Completed per day · 14 days" />
+        <StatCard label="Overdue" value={stats.overdue} href="/tasks?view=overdue" icon={<AlarmClock size={15} />}
+          badge={stats.overdue ? "Needs action" : "All clear"} badgeTone={stats.overdue ? "bad" : "accent"} foot={stats.overdue ? "Past due date" : "Nothing past due"} />
+        <StatCard label="To follow up" value={stats.followupsDue} href="/followups" icon={<Send size={15} />} bars={series.followups.map((d) => d.value)}
+          badge={stats.followupsDue ? `${sum(series.followups)} nudges sent` : undefined} badgeTone="warn" foot="Delegated, no update in 5d+" />
+        <StatCard label="MoMs pending" value={stats.momPending} href="/meetings" icon={<NotebookPen size={15} />}
+          badge={stats.momPending ? "Awaiting" : "Up to date"} badgeTone={stats.momPending ? "warn" : "accent"} foot="Ended meetings without minutes" />
+        <StatCard label="Meetings today" value={stats.meetingsToday} href="/meetings" icon={<Presentation size={15} />} bars={series.meetings.map((d) => d.value)}
+          foot="Meetings per day · 14 days" />
+      </div>
 
       {!u.onboarded_at && (
         <Link href="/welcome" className="group flex items-center gap-4 rounded-xl border border-line bg-surface px-5 py-4 transition-colors hover:border-line-strong" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -74,7 +79,7 @@ export default async function CommandCentre() {
         </Link>
       )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="min-w-0 space-y-6">
           {/* Attention */}
           <Card className="overflow-hidden">
@@ -124,27 +129,9 @@ export default async function CommandCentre() {
 
         {/* Right rail */}
         <div className="space-y-6">
-          {aop && (
-            <Card className="overflow-hidden">
-              <div className="px-4 pt-4">
-                <div className="flex items-center justify-between">
-                  <span className="eyebrow">{aop.cycleName}</span>
-                  <Badge tone={aopTone} dot>{aop.status === "on_track" ? "On track" : aop.status === "at_risk" ? "Watch" : cost ? "Over budget" : "Behind plan"}</Badge>
-                </div>
-                <div className="mt-3 font-serif text-[30px] leading-none tabular">{inr(aop.ytdActual)}</div>
-                <div className="mt-1 text-[12px] text-ink-3">{aop.labels.actual} YTD through {fmtMonth(aop.lastClosed)} (lines with actuals)</div>
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px]">
-                  <span className={cn("font-medium tabular", (cost ? aop.variance > 0 : aop.variance < 0) ? "text-bad" : "text-ok")}>{inr(aop.variance, { sign: true })} vs {aop.labels.plan.toLowerCase()}</span>
-                  <span className="text-ink-3">{pct(aop.variancePct, 1, true)}</span>
-                  <span className="text-ink-3">· FY projection {inr(aop.projection)} of {inr(aop.fyPlan)}</span>
-                </div>
-              </div>
-              <div className="px-2 pt-2"><AopTrend data={aop.trend} labels={aop.labels} /></div>
-              <div className="flex items-center gap-2 border-t border-line px-4 py-2.5">
-                <ButtonLink href="/aop" variant="secondary" size="xs">View deviations</ButtonLink>
-                <ButtonLink href="/aop/inputs" variant="ghost" size="xs">Input status</ButtonLink>
-              </div>
-            </Card>
+          {aop && aop.lastClosed && (
+            <HeroSpend title={aop.cycleName} ytdActual={aop.ytdActual} variance={aop.variance} variancePct={aop.variancePct} projection={aop.projection} fyPlan={aop.fyPlan}
+              lastClosed={aop.lastClosed} labels={aop.labels} cost={cost} trend={aop.trend.map((t) => ({ period: t.period, plan: t.plan, actual: t.actual }))} />
           )}
 
           <Card className="overflow-hidden">
