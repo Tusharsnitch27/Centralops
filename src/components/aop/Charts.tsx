@@ -5,7 +5,7 @@ import { inr } from "@/lib/format";
 export interface MonthPoint { period: string; label: string; plan: number | null; forecast: number | null; actual: number | null; closed: boolean }
 interface Labels { plan: string; forecast: string; actual: string }
 
-const C = { plan: "#d6d5cf", forecast: "#71717a", actual: "#18181b", grid: "#ebebe7", axis: "#a1a1aa" };
+const C = { plan: "var(--color-line-strong)", forecast: "var(--color-accent)", actual: "var(--color-ink)", grid: "var(--color-line)", axis: "var(--color-ink-4)" };
 
 function Tip({ active, payload, labels }: { active?: boolean; payload?: { payload: MonthPoint }[]; labels: Labels }) {
   if (!active || !payload?.length) return null;
@@ -44,7 +44,7 @@ export function MonthlyChart({ data, labels, height = 240, compact = false }: { 
             <CartesianGrid vertical={false} stroke={C.grid} />
             <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: C.axis }} interval={0} />
             <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: C.axis }} width={compact ? 40 : 58} tickFormatter={(v: number) => inr(v).replace("₹", "")} hide={compact} />
-            <Tooltip content={<Tip labels={labels} />} cursor={{ fill: "rgb(24 24 27 / 0.04)" }} />
+            <Tooltip content={<Tip labels={labels} />} cursor={{ fill: "rgb(127 127 127 / 0.06)" }} />
             {lastClosed && !compact && <ReferenceLine x={lastClosed} stroke="transparent" label={{ value: "last closed", position: "insideTopRight", fontSize: 10, fill: C.axis }} />}
             <Bar isAnimationActive={false} dataKey="plan" fill={C.plan} radius={[3, 3, 0, 0]} maxBarSize={18} />
             <Bar isAnimationActive={false} dataKey="actual" fill={C.actual} radius={[3, 3, 0, 0]} maxBarSize={18} />

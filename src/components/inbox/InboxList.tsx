@@ -71,7 +71,7 @@ export function InboxList({ items, readOnly }: { items: InboxItem[]; readOnly?: 
             </div>
             {!readOnly && (
               <div className="flex shrink-0 items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                {it.href && <Link href={it.href} className="h-7 rounded-lg bg-ink px-2.5 text-[12px] font-medium leading-7 text-white hover:bg-ink-2">{k.cta}</Link>}
+                {it.href && <Link href={it.href} className="h-7 rounded-lg bg-ink px-2.5 text-[12px] font-medium leading-7 text-canvas hover:bg-ink-2">{k.cta}</Link>}
                 <button title="Done (E)" onClick={() => act(it.id, () => resolveInboxItem(it.id, "done"), "Marked done")} className="flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-muted hover:text-ink"><Icons.Check size={15} /></button>
                 <Popover align="end" trigger={({ toggle }) => <button onClick={toggle} title="Snooze (S)" className="flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-muted hover:text-ink"><Icons.Clock size={14} /></button>}>
                   {(close) => (

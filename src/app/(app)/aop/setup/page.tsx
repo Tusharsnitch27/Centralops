@@ -2,6 +2,8 @@ import { ButtonLink, EmptyState } from "@/components/ui";
 import { AopHeader } from "@/components/aop/AopNav";
 import { CycleSettings, NewCycleButton, OwnersTable, type SetupSection } from "@/components/aop/SetupForms";
 import { requireUser, canManage } from "@/server/auth";
+import { InputFieldsForm } from "@/components/aop/InputFieldsForm";
+import { inputConfig } from "@/server/aop/actions";
 import { allItemsOf, listCycles, loadModel, resolveCycle } from "@/server/aop/model";
 
 export const metadata = { title: "AOP · Setup" };
@@ -19,6 +21,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     </div>
   );
   const m = (await loadModel(cycle.id))!;
+  const cfg = await inputConfig(cycle.id);
   const sections: SetupSection[] = [];
   for (const f of m.functions) {
     for (const s of [f, ...f.children]) sections.push({
@@ -35,6 +38,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           id: cycle.id, name: cycle.name, kind: cycle.kind, status: cycle.status, labels: cycle.labels, actuals_cutoff_day: cycle.actuals_cutoff_day,
           projection_cutoff_day: cycle.projection_cutoff_day, guidelines: cycle.guidelines, fy_start: cycle.fy_start, months: cycle.months,
         }} />
+        <InputFieldsForm cycleId={cycle.id} config={cfg} labels={cycle.labels} canEdit={manage} />
         <OwnersTable cycleId={cycle.id} sections={sections} canEdit={manage} />
       </div>
     </div>

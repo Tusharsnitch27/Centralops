@@ -49,8 +49,8 @@ export default async function SopCapacity({ searchParams }: { searchParams: Prom
       <div className="flex flex-wrap items-center gap-1.5">
         {months.map((p) => (
           <Link key={p} href={`/sop/capacity?month=${p}`} className={cn("flex h-8 items-center rounded-lg border px-2.5 text-[12.5px] transition",
-            p === month ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink")}>
-            {fmtMonth(p)}{p === cur && <span className={cn("ml-1.5 text-[10.5px]", p === month ? "text-white/70" : "text-info")}>now</span>}
+            p === month ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink")}>
+            {fmtMonth(p)}{p === cur && <span className={cn("ml-1.5 text-[10.5px]", p === month ? "text-canvas/70" : "text-info")}>now</span>}
           </Link>
         ))}
       </div>

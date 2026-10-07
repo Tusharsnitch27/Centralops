@@ -89,7 +89,7 @@ export function MilestoneList({ projectId, milestones, editable }: { projectId: 
               <button type="button" disabled={!editable || pending} aria-label={m.status === "done" ? "Reopen milestone" : "Complete milestone"}
                 onClick={() => run(() => setMilestoneStatus(m.id, m.status === "done" ? "in_progress" : "done"))}
                 className={cn("flex size-[18px] shrink-0 rotate-45 items-center justify-center rounded-[4px] border transition-colors",
-                  m.status === "done" ? "border-ok bg-ok text-white" : "border-ink-4 hover:border-ink-2")}>
+                  m.status === "done" ? "border-ok bg-ok text-canvas" : "border-ink-4 hover:border-ink-2")}>
                 <Check size={10} strokeWidth={3} className={cn("-rotate-45", m.status === "done" ? "opacity-100" : "opacity-0 group-hover:opacity-30")} />
               </button>
               <span className={cn("min-w-0 flex-1 truncate text-[13.5px]", m.status === "done" ? "text-ink-3 line-through decoration-ink-4" : "text-ink")}>{m.title}</span>

@@ -1,6 +1,5 @@
 import { requireUser } from "@/server/auth";
 import { navCounts } from "@/server/shell/counts";
-import { Sidebar } from "@/components/shell/Sidebar";
 import { Topbar } from "@/components/shell/Topbar";
 import { CommandPalette } from "@/components/shell/CommandPalette";
 import { QuickAdd } from "@/components/shell/QuickAdd";
@@ -13,12 +12,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const counts = await navCounts(user);
   return (
     <Toaster>
-      <div className="flex min-h-dvh">
-        <Sidebar counts={counts} user={{ name: user.name, title: user.title, role: user.role }} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar unread={counts.notifications ?? 0} />
-          <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 py-7 md:px-8">{children}</main>
-        </div>
+      <div className="min-h-dvh">
+        <Topbar unread={counts.notifications ?? 0} counts={counts} user={{ name: user.name, title: user.title }} />
+        <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-7 md:px-9">{children}</main>
       </div>
       <CommandPalette />
       <QuickAdd />

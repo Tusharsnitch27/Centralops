@@ -98,8 +98,13 @@ export async function seedReference(S: RunQ, adminId: string) {
   const today = istToday();
   const lastClosed = addMonths(`${today.slice(0, 7)}-01`, -1);
   let fSort = 0;
-  for (const f of aop.functions) {
-    const { owner, others } = who(f.owners);
+  // scope: opex only — Staffing and one-time / fixed-asset (capex) buckets are not tracked
+  const OUT_OF_SCOPE = new Set(["Staffing", "Fixed Assets & One-time", "RFID"]);
+  for (const f of aop.functions.filter((x) => !OUT_OF_SCOPE.has(x.name))) {
+    // function owners as set by the PM (overrides the workbook's owner column)
+    const FN_OWNER: Record<string, string> = { Logistics: "Iqbal", SaaS: "Faisal", Packaging: "Tushar", "Warehousing & Fulfilment": "Manish" };
+    const { owner, others } = FN_OWNER[f.name] ? { owner: who(FN_OWNER[f.name]).owner, others: [] as string[] } : who(f.owners);
+    f.owners = FN_OWNER[f.name] ?? f.owners;
     const team = TEAMS.find((t) => f.name.toLowerCase().includes(t.name.split(" ")[0].toLowerCase()))?.name;
     const fid = (await S<{ id: string }>(`insert into aop_sections (cycle_id, name, kind, owner_id, owner_label, team_id, sort) values ($1,$2,'function',$3,$4,$5,$6) returning id`,
       [cycle, f.name, owner, f.owners, team ? teamId.get(team) : null, fSort++]))[0].id;

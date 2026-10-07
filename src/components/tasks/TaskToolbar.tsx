@@ -188,7 +188,7 @@ function OptionList({ f, value, onChange, close }: { f: FilterDef; value: string
                 } else { onChange(on ? null : o.value); close(); }
               }}
               className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-subtle", on ? "text-ink" : "text-ink-2")}>
-              {f.multi && <span className={cn("flex size-3.5 shrink-0 items-center justify-center rounded-[4px] border", on ? "border-ink bg-ink text-white" : "border-line-strong")}>{on && <Check size={10} strokeWidth={3} />}</span>}
+              {f.multi && <span className={cn("flex size-3.5 shrink-0 items-center justify-center rounded-[4px] border", on ? "border-ink bg-ink text-canvas" : "border-line-strong")}>{on && <Check size={10} strokeWidth={3} />}</span>}
               {o.icon}
               <span className="min-w-0 flex-1 truncate">{o.label}</span>
               {!f.multi && on && <Check size={14} />}

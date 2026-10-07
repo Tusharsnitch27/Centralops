@@ -29,7 +29,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
             </div>
             <div className="flex shrink-0 items-center gap-1.5 self-center">
               {it.secondary && <Link href={it.secondary.href} className="hidden h-7 items-center rounded-lg px-2 text-[12px] text-ink-3 hover:bg-muted hover:text-ink sm:flex">{it.secondary.label}</Link>}
-              <Link href={it.cta.href} className="flex h-7 items-center gap-1 rounded-lg border border-line-strong bg-surface px-2.5 text-[12px] font-medium text-ink transition-colors group-hover:border-ink group-hover:bg-ink group-hover:text-white">
+              <Link href={it.cta.href} className="flex h-7 items-center gap-1 rounded-lg border border-line-strong bg-surface px-2.5 text-[12px] font-medium text-ink transition-colors group-hover:border-ink group-hover:bg-ink group-hover:text-canvas">
                 {it.cta.label}<Icons.ArrowRight size={12} />
               </Link>
             </div>

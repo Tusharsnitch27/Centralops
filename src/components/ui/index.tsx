@@ -9,8 +9,8 @@ type BtnVariant = "primary" | "secondary" | "ghost" | "danger" | "subtle";
 type BtnSize = "xs" | "sm" | "md";
 const btnBase = "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap select-none transition-[background,border-color,color,box-shadow,transform] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-50";
 const btnVariant: Record<BtnVariant, string> = {
-  primary: "bg-ink text-white hover:bg-ink-2 shadow-[0_1px_0_rgb(255_255_255/0.08)_inset,0_1px_2px_rgb(0_0_0/0.15)]",
-  secondary: "bg-surface text-ink border border-line-strong hover:bg-subtle hover:border-ink-4/60",
+  primary: "bg-ink text-canvas hover:bg-ink-2 shadow-[0_1px_0_rgb(255_255_255/0.5)_inset,0_1px_2px_rgb(0_0_0/0.4)]",
+  secondary: "bg-subtle text-ink-2 border border-line-strong hover:bg-muted hover:text-ink",
   ghost: "text-ink-2 hover:bg-subtle hover:text-ink",
   subtle: "bg-subtle text-ink-2 hover:bg-muted hover:text-ink",
   danger: "bg-surface text-bad border border-bad/25 hover:bg-bad-soft",
@@ -93,13 +93,22 @@ export function AvatarStack({ people, max = 4, size = 22 }: { people: { name: st
 }
 
 /* ---------- Layout ---------- */
+/** Thin accent rule with a diamond — sits under page titles. */
+export function Ornament({ className }: { className?: string }) {
+  return (
+    <div className={cn("mt-2 flex items-center gap-1.5", className)} aria-hidden>
+      <span className="h-px w-10" style={{ background: "linear-gradient(90deg, var(--color-accent), transparent)" }} />
+      <span className="size-[5px] rotate-45" style={{ background: "var(--color-accent)" }} />
+    </div>
+  );
+}
 export function PageHeader({ title, subtitle, eyebrow, actions, className }: { title: ReactNode; subtitle?: ReactNode; eyebrow?: ReactNode; actions?: ReactNode; className?: string }) {
   return (
     <header className={cn("mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="min-w-0">
-        {eyebrow && <div className="eyebrow mb-1.5">{eyebrow}</div>}
-        <h1 className="font-serif text-[30px] leading-[1.1] tracking-[-0.01em] text-ink">{title}</h1>
-        {subtitle && <p className="mt-1.5 text-[13.5px] text-ink-3">{subtitle}</p>}
+        {eyebrow && <div className="label-caps mb-2">{eyebrow}</div>}
+        <h1 className="text-[32px] font-extrabold leading-[1.1] tracking-[-0.035em] text-ink">{title}</h1>
+        {subtitle && <p className="mt-2 text-[13.5px] text-ink-3">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </header>
@@ -112,9 +121,9 @@ export function CardHeader({ title, subtitle, action, className, icon }: { title
   return (
     <div className={cn("flex items-center justify-between gap-3 border-b border-line px-4 py-3", className)}>
       <div className="flex min-w-0 items-center gap-2">
-        {icon && <span className="text-ink-3">{icon}</span>}
+        {icon ? <span className="text-accent">{icon}</span> : <span className="size-[5px] shrink-0 rotate-45 bg-accent" />}
         <div className="min-w-0">
-          <h2 className="truncate text-[13.5px] font-semibold text-ink">{title}</h2>
+          <h2 className="truncate font-serif text-[17px] leading-tight text-ink">{title}</h2>
           {subtitle && <p className="truncate text-[12px] text-ink-3">{subtitle}</p>}
         </div>
       </div>
@@ -135,17 +144,18 @@ export function SectionTitle({ children, count, action, className }: { children:
 }
 
 /* ---------- Tabs (link-based) ---------- */
-export function Tabs({ items, active, className }: { items: { href: string; label: ReactNode; key: string; count?: number }[]; active: string; className?: string }) {
+export function Tabs({ items, active, className, label }: { items: { href: string; label: ReactNode; key: string; count?: number }[]; active: string; className?: string; label?: string }) {
   return (
-    <nav className={cn("flex items-center gap-1 border-b border-line", className)}>
-      {items.map((t) => (
-        <Link key={t.key} href={t.href} scroll={false}
-          className={cn("relative -mb-px flex h-9 items-center gap-1.5 px-2.5 text-[13px] transition-colors",
-            t.key === active ? "font-medium text-ink after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:rounded-full after:bg-ink" : "text-ink-3 hover:text-ink")}>
-          {t.label}
-          {t.count != null && t.count > 0 && <span className="rounded-full bg-muted px-1.5 text-[11px] tabular text-ink-2">{t.count}</span>}
-        </Link>
-      ))}
+    <nav className={cn("flex items-center", className)}>
+      <div className="seg">
+        {label && <span className="seg-label">{label}</span>}
+        {items.map((t) => (
+          <Link key={t.key} href={t.href} scroll={false} data-on={t.key === active} className="seg-item gap-1.5">
+            {t.label}
+            {t.count != null && t.count > 0 && <span className={cn("rounded-md px-1.5 text-[11px] font-semibold tabular", t.key === active ? "bg-white/20 text-white" : "bg-accent-soft text-accent-ink")}>{t.count}</span>}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 }

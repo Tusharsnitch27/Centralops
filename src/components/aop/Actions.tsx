@@ -56,7 +56,7 @@ export function CreateTaskModal({ open, onClose, itemId, sectionId, defaultTitle
           <div className="flex gap-1.5">
             {(["urgent", "high", "medium", "low"] as const).map((p) => (
               <button key={p} type="button" onClick={() => setPriority(p)}
-                className={`h-8 rounded-lg px-3 text-[12.5px] capitalize ring-1 ring-inset transition-colors ${priority === p ? "bg-ink text-white ring-ink" : "text-ink-2 ring-line-strong hover:bg-subtle"}`}>{p}</button>
+                className={`h-8 rounded-lg px-3 text-[12.5px] capitalize ring-1 ring-inset transition-colors ${priority === p ? "bg-ink text-canvas ring-ink" : "text-ink-2 ring-line-strong hover:bg-subtle"}`}>{p}</button>
             ))}
           </div>
         </Field>

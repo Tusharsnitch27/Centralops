@@ -121,7 +121,7 @@ export function NoteButton({ streamId, period, streamName, periodLabel, size = "
         footer={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="primary" disabled={pending || !body.trim()} onClick={() => run(() => addSopNote({ streamId, period, kind, body }), (r) => { if (r.ok) { setOpen(false); setBody(""); } })}>Add</Button></>}>
         <div className="mb-3 flex gap-1">
           {([["commentary", "Commentary"], ["variance_reason", "Variance reason"], ["corrective_action", "Corrective action"]] as const).map(([k, l]) => (
-            <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-md px-2 py-1 text-[12.5px] ${kind === k ? "bg-ink text-white" : "text-ink-3 hover:bg-subtle"}`}>{l}</button>
+            <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-md px-2 py-1 text-[12.5px] ${kind === k ? "bg-ink text-canvas" : "text-ink-3 hover:bg-subtle"}`}>{l}</button>
           ))}
         </div>
         <textarea className="field min-h-28" autoFocus value={body} onChange={(e) => setBody(e.target.value)} placeholder="e.g. Myntra SOR cut to 43K for October after the category reset…" />

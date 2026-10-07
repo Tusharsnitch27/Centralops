@@ -49,7 +49,7 @@ export function TaskComposer({ id, status, me, isOwner, readOnly }: { id: string
               {statuses.map((s) => (
                 <button key={s} type="button" onClick={() => setNext(next === s ? "" : s)}
                   className={cn("inline-flex h-6 items-center gap-1.5 rounded-full border px-2 text-[11.5px] transition-colors",
-                    next === s ? "border-ink bg-ink text-white" : "border-line text-ink-2 hover:border-line-strong hover:text-ink")}>
+                    next === s ? "border-ink bg-ink text-canvas" : "border-line text-ink-2 hover:border-line-strong hover:text-ink")}>
                   {next === s ? <Check size={10} /> : <Dot tone={TASK_STATUS[s].tone as Tone} className="size-1.5" />}
                   {TASK_STATUS[s].label}
                 </button>

@@ -71,7 +71,7 @@ export function Assistant() {
         )}
         <div className="space-y-4">
           {msgs.map((m, i) => (
-            <div key={i} className={cn("text-[13.5px] leading-relaxed", m.role === "user" ? "ml-10 rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-white" : "text-ink")}>
+            <div key={i} className={cn("text-[13.5px] leading-relaxed", m.role === "user" ? "ml-10 rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-canvas" : "text-ink")}>
               {m.role === "assistant" ? <Rich text={m.text} /> : m.text}
               {m.links && m.links.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -89,7 +89,7 @@ export function Assistant() {
           <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="Ask anything about your programs…"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void ask(input); } }}
             className="max-h-32 flex-1 resize-none bg-transparent py-1.5 text-[13.5px] outline-none placeholder:text-ink-4" />
-          <button disabled={!input.trim() || busy} className="flex size-8 items-center justify-center rounded-lg bg-ink text-white disabled:opacity-30"><ArrowUp size={15} /></button>
+          <button disabled={!input.trim() || busy} className="flex size-8 items-center justify-center rounded-lg bg-ink text-canvas disabled:opacity-30"><ArrowUp size={15} /></button>
         </div>
       </form>
     </div>

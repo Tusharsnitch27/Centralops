@@ -65,7 +65,7 @@ export default async function CommandCentre() {
 
       {!u.onboarded_at && (
         <Link href="/welcome" className="group flex items-center gap-4 rounded-xl border border-line bg-surface px-5 py-4 transition-colors hover:border-line-strong" style={{ boxShadow: "var(--shadow-card)" }}>
-          <span className="flex size-10 items-center justify-center rounded-xl bg-ink text-white"><Rocket size={17} /></span>
+          <span className="flex size-10 items-center justify-center rounded-xl bg-ink text-canvas"><Rocket size={17} /></span>
           <div className="flex-1">
             <div className="text-[14px] font-semibold">Capture everything you’re working on</div>
             <div className="text-[12.5px] text-ink-3">Dump your open actions, recurring meetings and the people you’re waiting on — Central Ops structures it and tracks from today.</div>

@@ -4,9 +4,9 @@ import { num, pct } from "@/lib/format";
 
 export interface ChartPoint { label: string; projection: number | null; baseline: number | null; actual: number | null; demo: boolean }
 
-const PROJ = "#c9c8c1";   // neutral — the plan
-const ACT = "#3f3f46";    // ink — what happened
-const DEMO = "#b45309";   // amber — illustrative only
+const PROJ = "var(--color-line-strong)";   // neutral — the plan
+const ACT = "var(--color-ink)";    // ink — what happened
+const DEMO = "var(--color-warn)";   // amber — illustrative only
 
 export function ProjectionChart({ data, metric, height = 240 }: { data: ChartPoint[]; metric: string; height?: number }) {
   const anyDemo = data.some((d) => d.demo && d.actual != null);
@@ -19,10 +19,10 @@ export function ProjectionChart({ data, metric, height = 240 }: { data: ChartPoi
       </div>
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="28%">
-          <CartesianGrid vertical={false} stroke="#ebebe7" />
-          <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "#e6e5e0" }} tick={{ fontSize: 11.5, fill: "#71717a" }} />
-          <YAxis tickLine={false} axisLine={false} width={48} tick={{ fontSize: 11, fill: "#a1a1aa" }} tickFormatter={(v: number) => num(v)} />
-          <Tooltip cursor={{ fill: "rgb(24 24 27 / 0.04)" }} content={({ active, payload }) => {
+          <CartesianGrid vertical={false} stroke="var(--color-line)" />
+          <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "var(--color-line)" }} tick={{ fontSize: 11.5, fill: "var(--color-ink-3)" }} />
+          <YAxis tickLine={false} axisLine={false} width={48} tick={{ fontSize: 11, fill: "var(--color-ink-4)" }} tickFormatter={(v: number) => num(v)} />
+          <Tooltip cursor={{ fill: "rgb(127 127 127 / 0.06)" }} content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
             const p = payload[0]!.payload as ChartPoint;
             const v = p.actual != null && p.baseline ? (p.actual - p.baseline) / p.baseline : null;

@@ -106,7 +106,7 @@ export function InputsForm({ cycleId, period, kind, ownerId, rows, labels: L, th
                           <span className="mr-1 text-[11.5px] text-ink-3">Confidence</span>
                           {(["high", "medium", "low"] as const).map((c) => (
                             <button key={c} type="button" onClick={() => set(r.id, "confidence", x.confidence === c ? "" : c)}
-                              className={cn("h-6 rounded-md px-2 text-[11.5px] capitalize ring-1 ring-inset", x.confidence === c ? "bg-ink text-white ring-ink" : "text-ink-2 ring-line-strong hover:bg-surface")}>{c}</button>
+                              className={cn("h-6 rounded-md px-2 text-[11.5px] capitalize ring-1 ring-inset", x.confidence === c ? "bg-ink text-canvas ring-ink" : "text-ink-2 ring-line-strong hover:bg-surface")}>{c}</button>
                           ))}
                         </div>
                       </div>

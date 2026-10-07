@@ -67,13 +67,13 @@ export function QuickAdd() {
         <>
           <span className="mr-auto hidden text-[11.5px] text-ink-4 sm:block">@owner · #tag · !high · fri / 15 oct / in 3 days</span>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={submit} disabled={!parsed.title || pending}>{pending ? "Creating…" : `Create ${k.label.toLowerCase()}`} <Kbd className="border-white/20 bg-white/10 text-white/70">↵</Kbd></Button>
+          <Button variant="primary" onClick={submit} disabled={!parsed.title || pending}>{pending ? "Creating…" : `Create ${k.label.toLowerCase()}`} <Kbd className="border-canvas/20 bg-canvas/10 text-canvas/70">↵</Kbd></Button>
         </>
       }>
       <div className="-mx-1 mb-3 mt-3 flex flex-wrap gap-1">
         {KINDS.map((x) => (
           <button key={x.kind} onClick={() => setKind(x.kind)}
-            className={cn("flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] transition-colors", kind === x.kind ? "bg-ink text-white" : "text-ink-2 hover:bg-subtle")}>
+            className={cn("flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] transition-colors", kind === x.kind ? "bg-ink text-canvas" : "text-ink-2 hover:bg-subtle")}>
             {x.icon}{x.label}
           </button>
         ))}

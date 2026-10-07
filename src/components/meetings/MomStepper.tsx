@@ -29,7 +29,7 @@ export function MomStepper({ m, ownerName, isPM, reviewerName }: { m: { starts_a
       {steps.map((st, i) => (
         <li key={i} className={cn("relative flex min-w-[170px] flex-1 items-center gap-3 px-4 py-3", i > 0 && "border-l border-line", st.state === "current" && "bg-subtle/60")}>
           <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
-            st.state === "done" ? "bg-ok text-white" : st.state === "current" ? "bg-ink text-white" : st.state === "muted" ? "bg-muted text-ink-4" : "border border-line-strong text-ink-4")}>
+            st.state === "done" ? "bg-ok text-canvas" : st.state === "current" ? "bg-ink text-canvas" : st.state === "muted" ? "bg-muted text-ink-4" : "border border-line-strong text-ink-4")}>
             {st.state === "done" ? <Check size={13} strokeWidth={3} /> : st.state === "muted" ? <Minus size={12} /> : i + 1}
           </span>
           <span className="min-w-0">

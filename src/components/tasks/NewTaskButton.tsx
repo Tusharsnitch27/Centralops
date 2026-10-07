@@ -8,7 +8,7 @@ export function NewTaskButton({ kind = "task", label = "New task", variant = "pr
   return (
     <Button variant={variant} size="sm" onClick={() => openQuickAdd(kind)}>
       <Plus size={14} /> {label}
-      {shortcut && <Kbd className="ml-1 border-white/20 bg-white/10 text-white/70">{shortcut}</Kbd>}
+      {shortcut && <Kbd className="ml-1 border-canvas/20 bg-canvas/10 text-canvas/70">{shortcut}</Kbd>}
     </Button>
   );
 }

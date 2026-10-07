@@ -41,7 +41,7 @@ export function ChipSelect({ options, value, onChange, max = 30, className }: { 
         return (
           <button key={o.value} type="button" onClick={() => onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])}
             className={cn("inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[12px] transition-colors",
-              on ? "border-ink bg-ink text-white" : "border-line-strong bg-surface text-ink-2 hover:border-ink-4 hover:text-ink")}>
+              on ? "border-ink bg-ink text-canvas" : "border-line-strong bg-surface text-ink-2 hover:border-ink-4 hover:text-ink")}>
             {on && <Check size={11} strokeWidth={3} />}{o.label}
           </button>
         );

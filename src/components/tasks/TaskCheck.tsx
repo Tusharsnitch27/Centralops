@@ -20,7 +20,7 @@ export function TaskCheck({ id, status, disabled }: { id: string; status: TaskSt
         start(async () => { setOpt(next); const r = await setTaskStatus(id, next); if (!r.ok) toast(r.error, "error"); else if (next === "completed") toast("Task completed", "success"); });
       }}
       className={cn("group/check flex size-[18px] shrink-0 items-center justify-center rounded-full border transition-all",
-        done ? "border-ok bg-ok text-white" : opt === "blocked" ? "border-bad/60 border-dashed" : opt === "in_progress" ? "border-info/70" : "border-ink-4 hover:border-ink-2")}>
+        done ? "border-ok bg-ok text-canvas" : opt === "blocked" ? "border-bad/60 border-dashed" : opt === "in_progress" ? "border-info/70" : "border-ink-4 hover:border-ink-2")}>
       <Check size={11} strokeWidth={3} className={cn(done ? "opacity-100" : "opacity-0 group-hover/check:opacity-40")} />
     </button>
   );

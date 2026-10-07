@@ -82,9 +82,9 @@ export default async function SopProjections({ searchParams }: { searchParams: P
           const a = streamAccuracy(monthly, s.id, lastClosed);
           return (
             <Link key={s.id} href={`/sop/projections?stream=${s.id}`}
-              className={cn("flex h-8 items-center gap-2 rounded-lg border px-2.5 text-[12.5px] transition", s.id === stream.id ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink")}>
+              className={cn("flex h-8 items-center gap-2 rounded-lg border px-2.5 text-[12.5px] transition", s.id === stream.id ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink")}>
               {s.name}
-              {a.accuracy != null && <span className={cn("tabular text-[11.5px]", s.id === stream.id ? "text-white/70" : "text-ink-4")}>{pct(a.accuracy)}</span>}
+              {a.accuracy != null && <span className={cn("tabular text-[11.5px]", s.id === stream.id ? "text-canvas/70" : "text-ink-4")}>{pct(a.accuracy)}</span>}
             </Link>
           );
         })}

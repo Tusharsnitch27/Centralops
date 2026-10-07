@@ -305,7 +305,7 @@ export function PlanGrid({ cycleId, labels, months, lastClosed, currentMonth, th
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={cn("flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] ring-1 ring-inset transition-colors", on ? "bg-ink text-white ring-ink [&_span]:text-white/70" : "text-ink-2 ring-line-strong hover:bg-subtle")}>
+      className={cn("flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] ring-1 ring-inset transition-colors", on ? "bg-ink text-canvas ring-ink [&_span]:text-canvas/70" : "text-ink-2 ring-line-strong hover:bg-subtle")}>
       {children}
     </button>
   );

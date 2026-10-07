@@ -101,7 +101,7 @@ function DecisionModal({ options, initial, onClose }: { options: DecisionOptions
               return (
                 <button key={t.value} type="button" onClick={() => set("taskIds", on ? v.taskIds.filter((x) => x !== t.value) : [...v.taskIds, t.value])}
                   className={cn("flex w-full items-center gap-2 border-b border-line/60 px-2.5 py-1.5 text-left text-[12.5px] last:border-0 hover:bg-subtle", on && "bg-subtle")}>
-                  <span className={cn("flex size-4 shrink-0 items-center justify-center rounded border", on ? "border-ink bg-ink text-white" : "border-line-strong")}>{on && <Check size={10} strokeWidth={3} />}</span>
+                  <span className={cn("flex size-4 shrink-0 items-center justify-center rounded border", on ? "border-ink bg-ink text-canvas" : "border-line-strong")}>{on && <Check size={10} strokeWidth={3} />}</span>
                   <span className="w-12 shrink-0 font-mono text-[11px] text-ink-4">{t.hint}</span>
                   <span className="truncate text-ink-2">{t.label}</span>
                 </button>

@@ -156,7 +156,7 @@ export function Toaster({ children }: { children: ReactNode }) {
       <div className="pointer-events-none fixed bottom-5 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-2">
         {toasts.map((t) => (
           <div key={t.id} className={cn("pointer-events-auto flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13px] animate-rise",
-            t.tone === "error" ? "bg-bad text-white" : "bg-ink text-white")} style={{ boxShadow: "var(--shadow-pop)" }}>
+            t.tone === "error" ? "bg-bad text-white" : "bg-ink text-canvas")} style={{ boxShadow: "var(--shadow-pop)" }}>
             {t.tone === "success" && <Check size={14} />}
             {t.text}
           </div>

@@ -472,3 +472,88 @@ export async function saveImportTemplate(i: { id?: string | null; name: string; 
     return ok({ id }, "Template saved");
   } catch (e) { return fail(e); }
 }
+
+/* ---------- tabular inputs & review (month view) ---------- */
+export interface MonthCell { itemId: string; plan?: number | null; forecast?: number | null; actual?: number | null; remark?: string | null }
+
+/** Save edited cells for one month (Inputs table). Field visibility comes from the cycle's input config; permissions per line. */
+export async function saveMonthInputs(i: { cycleId: string; period: string; cells: MonthCell[]; submitSectionIds?: string[] }): Promise<ActionResult<{ changed: number }>> {
+  try {
+    const u = await requireUser();
+    const m = await loadModel(i.cycleId);
+    if (!m) throw new Error("Cycle not found");
+    if (!m.months.includes(i.period)) throw new Error("That month isn't in this plan year");
+    const cfg = await inputConfig(i.cycleId);
+    let changed = 0;
+    await tx(async (x) => {
+      for (const c of i.cells) {
+        const it = m.itemById.get(c.itemId);
+        if (!it) continue;
+        for (const f of ["plan", "forecast", "actual"] as const) {
+          if (c[f] === undefined) continue;
+          if (!cfg.fields.includes(f)) throw new Error(`${m.cycle.labels[f]} isn't collected in this plan`);
+          const allowed = f === "plan" ? canManage(u) || (cfg.ownerCanEditPlan && canEditField(m, u, it, "forecast")) : canEditField(m, u, it, f);
+          if (!allowed) throw new Error(`You can't change ${m.cycle.labels[f].toLowerCase()} on ${it.name}`);
+          if (f === "actual" && i.period > m.currentMonth) throw new Error(`${m.cycle.labels.actual} can't be entered for a future month`);
+          const v = c[f] ?? null;
+          if (v != null && !Number.isFinite(v)) throw new Error(`Check the number on ${it.name}`);
+          changed += Number(await writeValue(x, u, m, it.id, it.name, i.period, f, v));
+        }
+        if (c.remark?.trim()) {
+          if (!canEditField(m, u, it, "comment")) throw new Error(`You can't add remarks on ${it.name}`);
+          await x.q(`insert into aop_comments (item_id, period, kind, body, author_id) values ($1,$2,'commentary',$3,$4)`, [it.id, i.period, c.remark.trim(), u.id]);
+          changed++;
+        }
+      }
+      for (const sid of i.submitSectionIds ?? []) {
+        const s = m.sectionById.get(sid);
+        if (!s) continue;
+        const kind: InputKind = m.lastClosed && i.period <= m.lastClosed ? "actuals" : "projections";
+        await x.q(
+          `insert into aop_submissions (cycle_id, section_id, period, kind, owner_id, due_date, status, submitted_at, submitted_by)
+           values ($1,$2,$3,$4,$5,$6,'submitted', now(), $7)
+           on conflict (section_id, period, kind) do update set status = 'submitted', submitted_at = now(), submitted_by = excluded.submitted_by`,
+          [m.cycle.id, sid, i.period, kind, s.owner_id, dueFor(m, i.period, kind), u.id]);
+        await resolveInbox(`aop_submission:${sid}:${i.period}:${kind}`, undefined, x);
+        await logActivity({ actorId: u.id, entityType: "aop_section", entityId: sid, action: "inputs_submitted", to: `${kind}:${i.period}`, summary: `${s.name} · ${monLabel(i.period)} ${kind}` }, x);
+      }
+    });
+    done();
+    return ok({ changed });
+  } catch (e) { return fail(e) as ActionResult<{ changed: number }>; }
+}
+
+/** Owner explains a deviation for a month (Review table). */
+export async function saveDeviationRemark(i: { itemId: string; period: string; body: string }): Promise<ActionResult> {
+  try {
+    const u = await requireUser();
+    if (!i.body?.trim()) throw new Error("Write a remark");
+    const { m, it } = await modelForItem(i.itemId);
+    if (!canEditField(m, u, it, "comment")) throw new Error("You can only add remarks on lines you own");
+    await q(`insert into aop_comments (item_id, period, kind, body, author_id) values ($1,$2,'variance_reason',$3,$4)`, [it.id, i.period, i.body.trim().slice(0, 2000), u.id]);
+    await logActivity({ actorId: u.id, entityType: "aop_item", entityId: it.id, action: "remark_added", field: i.period, to: i.body.trim(), summary: `${it.name} · ${monLabel(i.period)}` });
+    done();
+    return ok(undefined, "Remark saved");
+  } catch (e) { return fail(e); }
+}
+
+export interface InputConfig { fields: string[]; ownerCanEditPlan: boolean; requireReasonOverThreshold: boolean }
+const DEFAULT_INPUT_CONFIG: InputConfig = { fields: ["plan", "forecast", "actual", "commentary"], ownerCanEditPlan: false, requireReasonOverThreshold: true };
+export async function inputConfig(cycleId: string): Promise<InputConfig> {
+  const r = await one<{ input_config: Partial<InputConfig> | null }>(`select input_config from aop_cycles where id = $1`, [cycleId]);
+  const c = { ...DEFAULT_INPUT_CONFIG, ...(r?.input_config ?? {}) };
+  const fields = (c.fields ?? []).filter((f) => ["plan", "forecast", "actual", "commentary"].includes(f));
+  return { ...c, fields: fields.length ? fields : DEFAULT_INPUT_CONFIG.fields };
+}
+export async function saveInputConfig(i: { cycleId: string; config: InputConfig }): Promise<ActionResult> {
+  try {
+    const u = await requireUser();
+    if (!canManage(u)) throw new Error("Only the PM can change input fields");
+    const fields = i.config.fields.filter((f) => ["plan", "forecast", "actual", "commentary"].includes(f));
+    if (!fields.some((f) => f !== "commentary")) throw new Error("Collect at least one value");
+    await q(`update aop_cycles set input_config = $2 where id = $1`, [i.cycleId, JSON.stringify({ ...i.config, fields })]);
+    await logActivity({ actorId: u.id, entityType: "aop_cycle", entityId: i.cycleId, action: "input_fields_changed", to: fields.join(", ") });
+    done();
+    return ok(undefined, "Input fields saved");
+  } catch (e) { return fail(e); }
+}

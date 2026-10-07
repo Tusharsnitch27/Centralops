@@ -38,7 +38,7 @@ function Scale({ value, onChange, labels }: { value: number; onChange: (n: numbe
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
           <button key={n} type="button" onClick={() => onChange(n)} title={labels[n]}
-            className={cn("h-8 flex-1 rounded-md border text-[12.5px] tabular transition-colors", n === value ? "border-ink bg-ink text-white" : "border-line-strong text-ink-2 hover:bg-subtle")}>{n}</button>
+            className={cn("h-8 flex-1 rounded-md border text-[12.5px] tabular transition-colors", n === value ? "border-ink bg-ink text-canvas" : "border-line-strong text-ink-2 hover:bg-subtle")}>{n}</button>
         ))}
       </div>
       <div className="mt-1 text-[11.5px] text-ink-3">{labels[value]}</div>

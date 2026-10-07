@@ -78,7 +78,7 @@ export function RulesEditor({ rules, metrics, canEdit }: { rules: InsightRule[];
               <div className="flex gap-1.5">
                 {(["critical", "warning", "info"] as Severity[]).map((s) => (
                   <button key={s} type="button" onClick={() => setDraft({ ...draft, severity: s })}
-                    className={cn("flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] capitalize ring-1 ring-inset", draft.severity === s ? "bg-ink text-white ring-ink" : "text-ink-2 ring-line-strong hover:bg-subtle")}>
+                    className={cn("flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] capitalize ring-1 ring-inset", draft.severity === s ? "bg-ink text-canvas ring-ink" : "text-ink-2 ring-line-strong hover:bg-subtle")}>
                     <span className={cn("size-1.5 rounded-full", SEV_DOT[s])} />{s}
                   </button>
                 ))}

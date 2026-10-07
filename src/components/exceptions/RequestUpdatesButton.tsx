@@ -13,7 +13,7 @@ export function RequestUpdatesButton({ taskIds, label }: { taskIds: string[]; la
   return (
     <button disabled={pending || done || !taskIds.length}
       onClick={() => start(async () => { const r = await requestUpdatesForTasks(taskIds); if (!r.ok) toast(r.error, "error"); else { toast(r.message ?? "Requested", "success"); setDone(true); router.refresh(); } })}
-      className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-ink px-2.5 text-[12px] font-medium text-white hover:bg-ink-2 disabled:opacity-50">
+      className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-ink px-2.5 text-[12px] font-medium text-canvas hover:bg-ink-2 disabled:opacity-50">
       <Send size={12} />{done ? "Requested" : pending ? "Sending…" : label ?? `Request ${taskIds.length} update${taskIds.length === 1 ? "" : "s"}`}
     </button>
   );
