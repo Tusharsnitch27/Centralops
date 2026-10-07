@@ -1,7 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Link from "next/link";
-import { KeyRound, MailWarning, Plus, Search, UserPlus, Wand2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, KeyRound, MailWarning, Plus, Search, UserPlus, Wand2 } from "lucide-react";
 import { Avatar, Badge, Button, Field } from "@/components/ui";
 import { Combobox, Modal } from "@/components/ui/client";
 import { cn } from "@/lib/cn";
@@ -12,6 +12,8 @@ import { ROLE_OPTIONS, Toggle, useAction } from "./bits";
 type Team = { id: string; name: string };
 const ROLE_TONE: Record<string, "violet" | "info" | "neutral" | "muted"> = { admin: "violet", pm: "info", owner: "neutral", leadership: "neutral", viewer: "muted" };
 const roleLabel = (r: string) => ROLE_OPTIONS.find((o) => o.value === r)?.label ?? r;
+const ROLE_ORDER: Record<string, number> = { admin: 0, pm: 1, leadership: 2, owner: 3, viewer: 4 };
+type SortKey = "name" | "team" | "role" | "title" | "emp" | "joined" | "email";
 
 function tempPassword() {
   const words = ["amber", "cedar", "delta", "ember", "fjord", "gamma", "harbor", "indigo", "jasper", "kilo", "lumen", "maple", "nova", "orbit"];
@@ -23,6 +25,8 @@ function tempPassword() {
 export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: AdminUser[]; teams: Team[]; today: string; focus?: string; isAdmin: boolean }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "noemail" | "inactive">("all");
+  const [team, setTeam] = useState<string>("all");
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "team", dir: 1 });
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(() => users.find((u) => u.id === focus) ?? null);
   const [resetting, setResetting] = useState<AdminUser | null>(null);
@@ -30,9 +34,33 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
   const noEmail = users.filter((u) => u.active && !u.email);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const val = (u: AdminUser): string => {
+      switch (sort.key) {
+        case "name": return u.name.toLowerCase();
+        case "team": return `${u.team_name ?? "~"}|${ROLE_ORDER[u.role] ?? 9}|${u.name}`.toLowerCase();
+        case "role": return `${ROLE_ORDER[u.role] ?? 9}|${u.name}`.toLowerCase();
+        case "title": return (u.title ?? "~").toLowerCase();
+        case "emp": return u.employee_no ?? "~";
+        case "joined": return u.joined_at;
+        case "email": return u.email ?? "~";
+      }
+    };
     return users.filter((u) => (filter === "noemail" ? u.active && !u.email : filter === "inactive" ? !u.active : true))
-      .filter((u) => !q || u.name.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.team_name?.toLowerCase().includes(q));
-  }, [users, query, filter]);
+      .filter((u) => team === "all" || (team === "none" ? !u.team_id : u.team_id === team))
+      .filter((u) => !q || u.name.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.team_name?.toLowerCase().includes(q) || u.title?.toLowerCase().includes(q) || u.employee_no?.toLowerCase().includes(q))
+      .sort((a, b) => (val(a) < val(b) ? -1 : val(a) > val(b) ? 1 : 0) * sort.dir);
+  }, [users, query, filter, team, sort]);
+  const teamCounts = useMemo(() => { const m = new Map<string, number>(); for (const u of users) m.set(u.team_id ?? "none", (m.get(u.team_id ?? "none") ?? 0) + 1); return m; }, [users]);
+  const Th = ({ k, children, className }: { k: SortKey; children: React.ReactNode; className?: string }) => {
+    const on = sort.key === k;
+    return (
+      <th className={className}>
+        <button onClick={() => setSort((s) => ({ key: k, dir: s.key === k ? (s.dir === 1 ? -1 : 1) : 1 }))} className="inline-flex items-center gap-1 uppercase hover:text-ink">
+          {children}{on ? (sort.dir === 1 ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={11} className="opacity-40" />}
+        </button>
+      </th>
+    );
+  };
   const teamOptions = teams.map((t) => ({ value: t.id, label: t.name }));
   const roles = isAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value !== "admin");
 
@@ -42,7 +70,7 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-warn/25 bg-warn-soft px-4 py-3 text-[13px]">
           <MailWarning size={16} className="shrink-0 text-warn" />
           <div className="min-w-0 flex-1 text-ink-2">
-            <span className="font-medium text-ink">{noEmail.length} people can't sign in yet</span> — they were imported from the plans without an email.
+            <span className="font-medium text-ink">{noEmail.length} people can't sign in yet</span> — no email on file yet.
             Add an email and a temporary password to invite them.
           </div>
           <Button size="xs" onClick={() => setFilter("noemail")}>Show them</Button>
@@ -58,13 +86,29 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
             <button key={k} onClick={() => setFilter(k)} className={cn("rounded-md px-2.5 py-1", filter === k ? "bg-subtle font-medium text-ink" : "text-ink-3 hover:text-ink")}>{l}</button>
           ))}
         </div>
+        <select value={`${sort.key}:${sort.dir}`} onChange={(e) => { const [k, d] = e.target.value.split(":"); setSort({ key: k as SortKey, dir: Number(d) as 1 | -1 }); }}
+          className="field h-8 w-auto py-1 text-[12.5px]" title="Sort">
+          {([["team", "Team"], ["name", "Name"], ["role", "Role"], ["title", "Title"], ["emp", "Employee no."], ["joined", "Joining date"], ["email", "Email"]] as const).map(([k, l]) => (
+            <Fragment key={k}><option value={`${k}:1`}>Sort: {l} ↑</option><option value={`${k}:-1`}>Sort: {l} ↓</option></Fragment>
+          ))}
+        </select>
         <div className="ml-auto"><Button variant="primary" onClick={() => setCreating(true)}><UserPlus size={14} />Add user</Button></div>
+      </div>
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-4">Team</span>
+        {[{ id: "all", name: "All", n: users.length }, ...teams.map((t) => ({ id: t.id, name: t.name, n: teamCounts.get(t.id) ?? 0 })).filter((t) => t.n > 0),
+          ...(teamCounts.get("none") ? [{ id: "none", name: "No team", n: teamCounts.get("none")! }] : [])].map((t) => (
+          <button key={t.id} onClick={() => setTeam(t.id)}
+            className={cn("flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-semibold transition-colors", team === t.id ? "bg-ink text-white" : "bg-surface text-ink-2 ring-1 ring-inset ring-line hover:bg-subtle")}>
+            {t.name}<span className={cn("rounded-full px-1.5 text-[11px] tabular", team === t.id ? "bg-white/20" : "bg-subtle text-ink-3")}>{t.n}</span>
+          </button>
+        ))}
       </div>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="table-base min-w-[860px]">
-            <thead><tr><th>Person</th><th>Email (sign-in)</th><th>Role</th><th>Team</th><th>Joined</th><th>Active</th><th /></tr></thead>
+            <thead><tr><Th k="name">Person</Th><Th k="emp">Emp no.</Th><Th k="email">Email (sign-in)</Th><Th k="role">Role</Th><Th k="team">Team</Th><Th k="joined">Joined</Th><th>Active</th><th /></tr></thead>
             <tbody>
               {shown.map((u) => (
                 <tr key={u.id} className={cn(!u.active && "opacity-60")}>
@@ -77,6 +121,7 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
                       </div>
                     </div>
                   </td>
+                  <td className="font-mono text-[12px] text-ink-3">{u.employee_no ?? "—"}</td>
                   <td>
                     {u.email ? (
                       <span className="text-ink-2">{u.email}{!u.has_password && <span className="ml-2 text-[11.5px] text-warn">no password</span>}</span>
@@ -98,7 +143,7 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
                   </td>
                 </tr>
               ))}
-              {!shown.length && <tr><td colSpan={7} className="py-10 text-center text-ink-3">No one matches.</td></tr>}
+              {!shown.length && <tr><td colSpan={8} className="py-10 text-center text-ink-3">No one matches.</td></tr>}
             </tbody>
           </table>
         </div>

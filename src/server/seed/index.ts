@@ -49,9 +49,9 @@ export async function bootstrap(rawQ: RunQ) {
   }
 
   // Central Operations team directory (idempotent; versioned so edits to directory.json re-apply)
-  if ((await setting("seed.directory")) !== "v1") {
+  if ((await setting("seed.directory")) !== "v2") {
     await syncDirectory(rawQ, admin);
-    await setSetting("seed.directory", "v1");
+    await setSetting("seed.directory", "v2");
     console.log("[seed] team directory synced");
   }
 

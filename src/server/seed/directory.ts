@@ -34,4 +34,9 @@ export async function syncDirectory(S: RunQ, adminId: string) {
     await S(`insert into team_members (team_id, user_id) values ($1,$2) on conflict do nothing`, [tid, id]);
     if (d.lead || d.role === "pm") await S(`update teams set lead_id = $2 where id = $1`, [tid, id]);
   }
+  // Only the Central Operations directory has accounts: remove everyone else (except the admin).
+  // References are nulled by the schema (owners show as unassigned; S&OP keeps the POC name as text).
+  await S(`update sop_streams st set poc_label = coalesce(st.poc_label, u.name) from users u where u.id = st.poc_id and u.employee_no is null`);
+  await S(`delete from users where employee_no is null and id <> $1`, [adminId]);
+  await S(`delete from teams t where not exists (select 1 from users u where u.team_id = t.id) and not (t.name = any($1::text[]))`, [Object.keys(COLORS)]);
 }
