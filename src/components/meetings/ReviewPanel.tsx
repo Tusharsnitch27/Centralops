@@ -81,7 +81,7 @@ export function ReviewPanel({ meetingId, items: initial, opts, engine, ownerName
     <div className="card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-[14px] font-semibold text-ink"><Sparkles size={15} className="text-ink-3" />Suggested actions</h2>
+          <h2 className="flex items-center gap-2 text-[13px] font-semibold text-ink"><Sparkles size={15} className="text-ink-3" />Suggested actions</h2>
           <p className="mt-0.5 text-[12px] text-ink-3">
             From {ownerName ? `${ownerName}’s` : "the"} MoM · {engine === "claude" ? "read by Claude" : "rule-based extraction"} · edit anything, then accept or ignore. Nothing goes out until you distribute.
           </p>
@@ -159,7 +159,7 @@ function Card({ it, patch, decide, people, assignees, projects, actions }: {
     <div className={cn("rounded-xl border bg-surface px-3.5 py-3 transition-[border-color,box-shadow]", accepted ? "border-ok/35 shadow-[0_0_0_3px_rgb(21_128_61/0.06)]" : "border-line hover:border-line-strong")}>
       <div className="flex items-start gap-3">
         <input value={p.title ?? ""} onChange={(e) => setP({ title: e.target.value })} placeholder={`Describe the ${KIND[it.kind].label.toLowerCase()}…`}
-          className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-0.5 text-[13.5px] font-medium text-ink outline-none placeholder:font-normal placeholder:text-ink-4 hover:bg-subtle focus:bg-subtle" />
+          className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-0.5 text-[13px] font-medium text-ink outline-none placeholder:font-normal placeholder:text-ink-4 hover:bg-subtle focus:bg-subtle" />
         <div className="flex shrink-0 items-center gap-1">
           {accepted ? (
             <button type="button" onClick={() => decide("pending")} className="inline-flex h-7 items-center gap-1 rounded-lg bg-ok-soft px-2 text-[12px] font-medium text-ok ring-1 ring-inset ring-ok/20 hover:bg-ok-soft/70"><Check size={13} strokeWidth={2.5} />Accepted</button>

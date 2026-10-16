@@ -218,7 +218,7 @@ export function ImportWizard({ cycles, templates, defaultCycle, functions }: { c
       {result && (
         <Card className="flex flex-wrap items-center gap-3 p-4">
           <CheckCircle2 size={18} className="text-ok" />
-          <span className="text-[13.5px] text-ink">Imported {result.lines} lines and {result.values} values</span>
+          <span className="text-[13px] text-ink">Imported {result.lines} lines and {result.values} values</span>
           <Badge tone="muted">{result.createdItems} new lines</Badge><Badge tone="muted">{result.createdSections} new sections</Badge>
           <ButtonLink className="ml-auto" variant="primary" href={`/aop/plan?cycle=${result.cycleId}`}>Open plan</ButtonLink>
         </Card>

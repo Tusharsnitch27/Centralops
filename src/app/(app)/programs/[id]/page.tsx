@@ -44,12 +44,12 @@ export default async function ProgramPage({ params }: { params: Promise<{ id: st
           {mod && <ButtonLink href={mod.href} variant="secondary">{mod.label}<ArrowUpRight size={13} /></ButtonLink>}
           {canEdit(user) && <ProjectFormButton options={opts} defaultProgramId={id} label="Add project" variant="primary" />}
         </>} />
-      {g.description && <p className="-mt-2 mb-6 max-w-3xl text-[13.5px] leading-relaxed text-ink-2">{g.description}</p>}
+      {g.description && <p className="-mt-2 mb-6 max-w-3xl text-[13px] leading-relaxed text-ink-2">{g.description}</p>}
 
       <Card className="mb-6 grid grid-cols-2 gap-6 p-5 sm:grid-cols-3 lg:grid-cols-6">
         <div className="col-span-2 sm:col-span-1">
           <div className="eyebrow mb-1">Progress</div>
-          <div className="font-serif text-[28px] leading-none tabular">{pctInt(g.progress)}%</div>
+          <div className="font-serif text-[22px] leading-none tabular">{pctInt(g.progress)}%</div>
           <Progress value={g.progress} className="mt-2" tone={g.derived_health === "on_track" ? "neutral" : g.derived_health === "at_risk" ? "amber" : "red"} />
         </div>
         <Stat label="Projects" value={live.length} delta={g.at_risk ? `${g.at_risk} at risk` : undefined} tone="amber" hint={g.at_risk ? undefined : "on track"} />

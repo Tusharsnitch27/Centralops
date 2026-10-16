@@ -215,7 +215,7 @@ function Metric({ label, value, hint, href, tone }: { label: string; value: numb
   return (
     <Link href={href} className="group bg-surface px-4 py-3.5 transition-colors hover:bg-subtle/50">
       <div className="eyebrow mb-1">{label}</div>
-      <div className={cn("font-serif text-[26px] leading-none tabular", tone === "bad" ? "text-bad" : "text-ink")}>{value}</div>
+      <div className={cn("font-serif text-[22px] leading-none tabular", tone === "bad" ? "text-bad" : "text-ink")}>{value}</div>
       {hint && <div className={cn("mt-1.5 text-[12px]", tone === "warn" ? "text-warn" : "text-ink-3")}>{hint}</div>}
     </Link>
   );

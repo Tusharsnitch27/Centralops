@@ -70,7 +70,7 @@ function Body({ d, onClose, reload, openTask }: { d: ItemDetail; onClose: () => 
           <div className="min-w-0 text-[12px] text-ink-3">{it.functionName}{it.groupName ? ` › ${it.groupName}` : ""}</div>
           <button onClick={onClose} className="-mr-1 -mt-1 rounded-md p-1 text-ink-3 hover:bg-subtle hover:text-ink" aria-label="Close"><X size={16} /></button>
         </div>
-        <h2 className="font-serif text-[24px] leading-tight text-ink">{it.name}</h2>
+        <h2 className="font-serif text-[20px] leading-tight text-ink">{it.name}</h2>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px] text-ink-2">
           <Badge tone={st.tone} dot>{st.label}</Badge>
           <span className="flex items-center gap-1.5"><Avatar name={it.owner_name} size={18} />{it.owner_name ?? "No owner"}</span>
@@ -158,8 +158,8 @@ const fieldLabel = (f: string, L: ItemDetail["labels"]) => (f === "plan" || f ==
 function Mini({ label, value, hint }: { label: string; value: React.ReactNode; hint?: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <div className="eyebrow mb-1 truncate text-[10px]">{label}</div>
-      <div className="truncate font-serif text-[18px] leading-none tabular text-ink">{value}</div>
+      <div className="eyebrow mb-1 truncate text-[10.5px]">{label}</div>
+      <div className="truncate font-serif text-[16px] leading-none tabular text-ink">{value}</div>
       {hint && <div className="mt-1 truncate text-[11px] text-ink-3">{hint}</div>}
     </div>
   );

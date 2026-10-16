@@ -130,7 +130,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                         : <span className="text-ink-4">commented</span>}
                       <span className="text-ink-4" title={`${fmtDate(dateOf(c.created_at), { dow: true })} · ${fmtTime(c.created_at)}`}>{ago(c.created_at)}</span>
                     </div>
-                    <p className={cn("mt-1 whitespace-pre-wrap text-[13.5px] leading-relaxed text-ink-2", c.kind === "update" && "rounded-lg border border-line bg-surface px-3 py-2")}>{c.body}</p>
+                    <p className={cn("mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-2", c.kind === "update" && "rounded-lg border border-line bg-surface px-3 py-2")}>{c.body}</p>
                   </div>
                 </div>
               ))}

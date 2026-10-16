@@ -30,7 +30,7 @@ export function Sidebar({ counts, user }: { counts: Record<string, number>; user
     const active = isActive(href, match);
     return (
       <Link href={href} prefetch={false}
-        className={cn("group relative flex h-9 items-center gap-3 rounded-lg px-3 text-[13.5px] transition-all duration-200", active ? "bg-white/[0.07] shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]" : "hover:bg-white/[0.04]")}
+        className={cn("group relative flex h-9 items-center gap-3 rounded-lg px-3 text-[13px] transition-all duration-200", active ? "bg-white/[0.07] shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]" : "hover:bg-white/[0.04]")}
         style={{ color: active ? S.ink : S.ink2 }}>
         {active && <span className="absolute inset-y-2 left-0 w-[2px] rounded-r-full" style={{ background: S.accent }} />}
         <Icon size={16} strokeWidth={1.7} className="shrink-0 transition-colors" />
@@ -46,8 +46,8 @@ export function Sidebar({ counts, user }: { counts: Record<string, number>; user
     <aside className="sticky top-0 hidden h-dvh w-[252px] shrink-0 flex-col lg:flex"
       style={{ background: "linear-gradient(180deg, var(--color-side) 0%, var(--color-side-2) 100%)", boxShadow: "inset -1px 0 0 rgb(255 255 255 / 0.04)" }}>
       <div className="px-6 pb-5 pt-6">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.32em]" style={{ color: S.ink3 }}>Snitch</div>
-        <div className="mt-1 font-serif text-[30px] leading-none tracking-[-0.01em]" style={{ color: S.ink }}>Central Ops</div>
+        <div className="text-[10.5px] font-semibold uppercase tracking-[0.32em]" style={{ color: S.ink3 }}>Snitch</div>
+        <div className="mt-1 font-serif text-[24px] leading-none tracking-[-0.01em]" style={{ color: S.ink }}>Central Ops</div>
         <div className="mt-2 flex items-center gap-2">
           <span className="h-px w-5" style={{ background: S.accent }} />
           <span className="text-[10.5px] font-medium uppercase tracking-[0.2em]" style={{ color: S.accent }}>Program Manager 2.0</span>
@@ -59,7 +59,7 @@ export function Sidebar({ counts, user }: { counts: Record<string, number>; user
           <div key={g.label} className="mb-6">
             <div className="mb-2 flex items-center gap-2 px-3">
               <span className="size-1 rounded-full" style={{ background: S.accent }} />
-              <span className="font-serif text-[14px]" style={{ color: S.ink2 }}>{g.label}</span>
+              <span className="font-serif text-[13px]" style={{ color: S.ink2 }}>{g.label}</span>
               <span className="h-px flex-1 bg-white/[0.06]" />
             </div>
             <div className="space-y-0.5">
@@ -74,7 +74,7 @@ export function Sidebar({ counts, user }: { counts: Record<string, number>; user
       <div className="space-y-1.5 p-3">
         <Item href="/settings" label="Settings" icon="Settings" />
         <form action="/api/auth/logout" method="post" className="flex items-center gap-2.5 rounded-xl bg-white/[0.05] px-3 py-2.5 ring-1 ring-inset ring-white/[0.06]">
-          <div className="flex size-8 items-center justify-center rounded-full font-serif text-[14px]" style={{ background: "color-mix(in srgb, var(--color-accent) 30%, transparent)", color: S.ink }}>
+          <div className="flex size-8 items-center justify-center rounded-full font-serif text-[13px]" style={{ background: "color-mix(in srgb, var(--color-accent) 30%, transparent)", color: S.ink }}>
             {user.name.slice(0, 1)}
           </div>
           <div className="min-w-0 flex-1 leading-tight">

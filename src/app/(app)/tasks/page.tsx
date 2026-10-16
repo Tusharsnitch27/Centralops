@@ -121,7 +121,7 @@ function InsightStrip({ insights }: { insights: TaskInsight[] }) {
             i.tone === "red" ? "bg-bad-soft text-bad" : i.tone === "amber" ? "bg-warn-soft text-warn" : "bg-info-soft text-info")}>
             {INSIGHT_ICON[i.key]}
           </span>
-          <p className="min-w-0 flex-1 text-[13.5px] text-ink">{i.text}</p>
+          <p className="min-w-0 flex-1 text-[13px] text-ink">{i.text}</p>
           <ButtonLink href={i.href} size="xs" variant="ghost" className="text-ink-2 group-hover:bg-subtle">
             {i.cta} <ArrowRight size={12} />
           </ButtonLink>

@@ -128,7 +128,7 @@ export function TaskToolbar({ options, meId }: { options: ToolbarOptions; meId: 
 }
 
 function TeamChip({ name }: { name: string }) {
-  return <span className="flex size-[18px] shrink-0 items-center justify-center rounded-[5px] bg-muted text-[8.5px] font-semibold text-ink-2">{name.slice(0, 2).toUpperCase()}</span>;
+  return <span className="flex size-[18px] shrink-0 items-center justify-center rounded-[5px] bg-muted text-[9.5px] font-semibold text-ink-2">{name.slice(0, 2).toUpperCase()}</span>;
 }
 
 type FilterDef = { key: string; label: string; opts: Opt[]; multi?: boolean };

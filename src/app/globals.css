@@ -9,24 +9,24 @@
 
   /* Default theme: Emerald — light bento canvas, white cards, bold ink, one vivid accent.
      Other themes swap the accent family under html[data-theme]. */
-  --color-canvas: #eceef1;
+  --color-canvas: #f6f6f4;
   --color-surface: #ffffff;
-  --color-subtle: #f4f5f7;
-  --color-muted: #e9ebef;
-  --color-line: #e7e9ed;
-  --color-line-strong: #d5d8de;
-  --color-ink: #111214;
-  --color-ink-2: #33373e;
-  --color-ink-3: #5f6570;
-  --color-ink-4: #8b919b;
-  --color-accent: #16a34a;
-  --color-accent-2: #4ade80;
-  --color-accent-soft: #e7f7ed;
-  --color-accent-ink: #11743a;
-  --color-hero: #1b1c1e;
-  --color-hero-2: #26282b;
-  --color-head: #f2f4f6;
-  --color-head-ink: #23262b;
+  --color-subtle: #f5f5f3;
+  --color-muted: #ebebe8;
+  --color-line: #e8e8e4;
+  --color-line-strong: #d6d6d1;
+  --color-ink: #121212;
+  --color-ink-2: #2b2b2b;
+  --color-ink-3: #4f5054;
+  --color-ink-4: #75767b;
+  --color-accent: #157347;
+  --color-accent-2: #3f9d6d;
+  --color-accent-soft: #eaf4ee;
+  --color-accent-ink: #0f5a37;
+  --color-hero: #151515;
+  --color-hero-2: #1f1f1f;
+  --color-head: #f7f7f5;
+  --color-head-ink: #3a3b3f;
   --color-side: #1b1c1e;
   --color-side-2: #26282b;
   --color-side-ink: #f2f2f2;
@@ -44,10 +44,10 @@
   --color-violet: #6d28d9;
   --color-violet-soft: #f2ecfc;
 
-  --radius-xl: 18px;
-  --radius-2xl: 22px;
-  --shadow-card: 0 1px 2px rgb(17 18 20 / 0.04), 0 4px 16px -6px rgb(17 18 20 / 0.06);
-  --shadow-pop: 0 0 0 1px rgb(28 26 23 / 0.04), 0 16px 40px -12px rgb(28 26 23 / 0.22), 0 4px 10px rgb(28 26 23 / 0.06);
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --shadow-card: 0 1px 2px rgb(20 20 18 / 0.03);
+  --shadow-pop: 0 0 0 1px rgb(20 20 18 / 0.05), 0 12px 32px -12px rgb(20 20 18 / 0.18), 0 2px 6px rgb(20 20 18 / 0.04);
 
   --animate-fade-in: fade-in 160ms ease-out;
   --animate-rise: rise 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -60,7 +60,7 @@
 
 @layer base {
   html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; color-scheme: light; }
-  body { @apply bg-canvas text-ink font-sans text-[14px] leading-[1.5]; font-feature-settings: "tnum" 0; }
+  body { @apply bg-canvas text-ink font-sans text-[13px] leading-[1.5]; font-feature-settings: "cv11", "ss01"; }
   ::selection { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
   :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
   input, textarea, select, button { font: inherit; color: inherit; }
@@ -68,21 +68,21 @@
 }
 
 @layer components {
-  .card { @apply rounded-[20px] border border-white; background: linear-gradient(180deg, #ffffff 0%, #fdfdfe 100%); box-shadow: var(--shadow-card); }
-  .card-tint { background: linear-gradient(160deg, color-mix(in srgb, var(--color-accent) 9%, #fff) 0%, #fff 55%); }
-  .text-gradient { background: linear-gradient(90deg, var(--color-ink), color-mix(in srgb, var(--color-accent) 70%, var(--color-ink))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .card { @apply rounded-[12px] border border-line bg-surface; box-shadow: var(--shadow-card); }
+  .card-tint { background: var(--color-surface); }
+  .text-gradient { color: var(--color-ink); }
   .hairline { @apply border-line; }
   .field {
     @apply w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-[13.5px] text-ink placeholder:text-ink-4
       transition-[border-color,box-shadow] duration-150 outline-none focus:border-accent/60 focus:ring-4 focus:ring-accent/10 disabled:opacity-60;
   }
   .label { @apply mb-1.5 block text-[12px] font-medium text-ink-2; }
-  .table-base { @apply w-full border-collapse text-[13px]; }
-  .table-base th { @apply h-9 border-b border-line px-3 text-left text-[10.5px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap; background: var(--color-head); color: var(--color-head-ink); }
-  .table-base td { @apply h-11 border-b border-line/70 px-3 align-middle; }
+  .table-base { @apply w-full border-collapse text-[12.5px]; }
+  .table-base th { @apply h-8 border-b border-line px-3 text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] whitespace-nowrap; background: var(--color-head); color: var(--color-head-ink); }
+  .table-base td { @apply h-10 border-b border-line/70 px-3 align-middle; }
   .table-base tbody tr { @apply transition-colors hover:bg-subtle/60; }
   .skeleton { @apply rounded-md bg-muted; background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent); background-size: 200px 100%; background-repeat: no-repeat; animation: var(--animate-shimmer); }
-  .eyebrow { @apply text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3; }
+  .eyebrow { @apply text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4; }
   .scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
 }
 
@@ -91,34 +91,49 @@
 }
 
 @layer base {
-  body { background-image: radial-gradient(1200px 520px at 100% -10%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 60%), radial-gradient(900px 480px at -10% 110%, color-mix(in srgb, var(--color-accent-2) 8%, transparent), transparent 60%), linear-gradient(180deg, #f3f4f6, var(--color-canvas)); background-attachment: fixed; }
+  body { background: var(--color-canvas); }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 10px; border: 2px solid var(--color-canvas); }
+  ::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 10px; border: 3px solid var(--color-canvas); }
   ::-webkit-scrollbar-track { background: transparent; }
 }
 
 /* ---------- Colour themes (swatch in the top bar): same bento layout, different accent family ---------- */
-html[data-theme="indigo"] { --color-accent: #4f46e5; --color-accent-2: #818cf8; --color-accent-soft: #eef0ff; --color-accent-ink: #3730a3; }
-html[data-theme="coral"]  { --color-accent: #ea580c; --color-accent-2: #fb923c; --color-accent-soft: #fff1e8; --color-accent-ink: #9a3412; }
-html[data-theme="teal"]   { --color-accent: #0d9488; --color-accent-2: #2dd4bf; --color-accent-soft: #e6f7f5; --color-accent-ink: #0f6b63; }
-html[data-theme="violet"] { --color-accent: #7c3aed; --color-accent-2: #a78bfa; --color-accent-soft: #f3eefe; --color-accent-ink: #5b21b6; }
-html[data-theme="mono"]   { --color-accent: #111214; --color-accent-2: #6b7280; --color-accent-soft: #eef0f2; --color-accent-ink: #111214; }
+html[data-theme="indigo"] { --color-accent: #3f46b8; --color-accent-2: #6b72d6; --color-accent-soft: #eeeffa; --color-accent-ink: #2f3590; }
+html[data-theme="coral"]  { --color-accent: #b4532a; --color-accent-2: #d27a50; --color-accent-soft: #f8eee8; --color-accent-ink: #8a3d1d; }
+html[data-theme="teal"]   { --color-accent: #0f6e68; --color-accent-2: #3a9690; --color-accent-soft: #e8f3f2; --color-accent-ink: #0b5551; }
+html[data-theme="violet"] { --color-accent: #5b3fae; --color-accent-2: #8569cc; --color-accent-soft: #f1edf9; --color-accent-ink: #452f88; }
+html[data-theme="mono"]   { --color-accent: #1c1c1c; --color-accent-2: #6b6b6b; --color-accent-soft: #efefec; --color-accent-ink: #1c1c1c; }
 
 @layer components {
   /* highlighted headers: tables, section bars */
   .thead-hl { background: var(--color-head); color: var(--color-head-ink); }
   .thead-hl th, .thead-hl > * { color: var(--color-head-ink) !important; }
-  .label-caps { @apply text-[11px] font-semibold uppercase tracking-[0.1em]; color: var(--color-ink-4); }
-  .hero { color: #fff; background: radial-gradient(900px 300px at 85% -20%, color-mix(in srgb, var(--color-accent) 28%, transparent), transparent 60%), linear-gradient(135deg, var(--color-hero), var(--color-hero-2)); border-radius: 22px; box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.5); }
+  .label-caps { @apply text-[10.5px] font-semibold uppercase tracking-[0.08em]; color: var(--color-ink-4); }
+  .hero { color: #fff; background: var(--color-hero); border-radius: 12px; }
   .kpi { position: relative; overflow: hidden; }
   .kpi::before { content: none; }
-  .seg { @apply inline-flex items-center gap-0.5 rounded-full bg-surface p-1; box-shadow: var(--shadow-card); }
-  .seg-label { @apply pl-3 pr-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4; }
-  .seg-item { @apply flex h-8 items-center rounded-full px-3.5 text-[13px] font-medium text-ink-3 transition-colors hover:bg-subtle hover:text-ink; }
-  .seg-item[data-on="true"] { background: linear-gradient(135deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 70%, var(--color-accent-2))); color: #fff; box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--color-accent) 60%, transparent); }
+  .seg { @apply inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-[10px] border border-line bg-muted/60 p-[3px] [scrollbar-width:none]; }
+  .seg-label { @apply shrink-0 pl-2.5 pr-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4; }
+  .seg-item { @apply flex h-7 shrink-0 items-center rounded-[7px] px-3 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink; }
+  .seg-item[data-on="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgb(20 20 18 / 0.08), 0 0 0 1px rgb(20 20 18 / 0.04); }
 }
 
 /* Display numbers & titles: bold, tight sans (the "font-serif" utility is repurposed as the display face). */
 @layer utilities {
-  .font-serif { font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important; font-weight: 700; letter-spacing: -0.03em; }
+  .font-serif { font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif !important; font-weight: 600; letter-spacing: -0.02em; }
+}
+
+/* ---------- Mobile ---------- */
+@layer components {
+  /* wide tables scroll sideways inside their card instead of breaking the page */
+  .table-wrap { @apply -mx-px overflow-x-auto [scrollbar-width:thin]; -webkit-overflow-scrolling: touch; }
+  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+}
+@media (max-width: 767px) {
+  html { -webkit-text-size-adjust: 100%; }
+  /* 16px inputs stop iOS zooming in on focus */
+  input.field:not([type="date"]), textarea.field, input[type="text"], input[type="email"], input[type="password"], input[type="search"], textarea { font-size: 16px !important; }
+  .table-base th, .table-base td { @apply px-2.5; }
+  /* any card holding a table scrolls sideways on phones */
+  .card:has(table) { overflow-x: auto; }
 }

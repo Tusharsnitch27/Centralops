@@ -9,8 +9,8 @@ type BtnVariant = "primary" | "secondary" | "ghost" | "danger" | "subtle";
 type BtnSize = "xs" | "sm" | "md";
 const btnBase = "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap select-none transition-[background,border-color,color,box-shadow,transform] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-50";
 const btnVariant: Record<BtnVariant, string> = {
-  primary: "bg-ink text-canvas hover:bg-ink-2 shadow-[0_1px_0_rgb(255_255_255/0.5)_inset,0_1px_2px_rgb(0_0_0/0.4)]",
-  secondary: "bg-subtle text-ink-2 border border-line-strong hover:bg-muted hover:text-ink",
+  primary: "bg-ink text-white hover:bg-ink-2",
+  secondary: "bg-surface text-ink-2 border border-line-strong hover:bg-subtle hover:text-ink",
   ghost: "text-ink-2 hover:bg-subtle hover:text-ink",
   subtle: "bg-subtle text-ink-2 hover:bg-muted hover:text-ink",
   danger: "bg-surface text-bad border border-bad/25 hover:bg-bad-soft",
@@ -58,7 +58,7 @@ export function HealthBadge({ health, className }: { health: Health; className?:
 export function PriorityIcon({ priority, className }: { priority: Priority; className?: string }) {
   const rank = PRIORITY[priority].rank;
   if (priority === "urgent")
-    return <span title="Urgent" className={cn("inline-flex size-4 items-center justify-center rounded-[4px] bg-bad text-[10px] font-bold text-white", className)}>!</span>;
+    return <span title="Urgent" className={cn("inline-flex size-4 items-center justify-center rounded-[4px] bg-bad text-[10.5px] font-semibold text-white", className)}>!</span>;
   return (
     <span title={PRIORITY[priority].label} className={cn("inline-flex h-4 items-end gap-[2px]", className)}>
       {[0, 1, 2].map((i) => (
@@ -104,13 +104,13 @@ export function Ornament({ className }: { className?: string }) {
 }
 export function PageHeader({ title, subtitle, eyebrow, actions, className }: { title: ReactNode; subtitle?: ReactNode; eyebrow?: ReactNode; actions?: ReactNode; className?: string }) {
   return (
-    <header className={cn("mb-6 flex flex-wrap items-end justify-between gap-4", className)}>
+    <header className={cn("mb-5 flex flex-wrap items-end justify-between gap-3", className)}>
       <div className="min-w-0">
-        {eyebrow && <div className="label-caps mb-2">{eyebrow}</div>}
-        <h1 className="text-[32px] font-extrabold leading-[1.1] tracking-[-0.035em] text-ink">{title}</h1>
-        {subtitle && <p className="mt-2 text-[13.5px] text-ink-3">{subtitle}</p>}
+        {eyebrow && <div className="label-caps mb-1.5">{eyebrow}</div>}
+        <h1 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[22px]">{title}</h1>
+        {subtitle && <p className="mt-1 text-[12.5px] text-ink-3">{subtitle}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
@@ -121,9 +121,9 @@ export function CardHeader({ title, subtitle, action, className, icon }: { title
   return (
     <div className={cn("flex items-center justify-between gap-3 border-b border-line px-4 py-3", className)}>
       <div className="flex min-w-0 items-center gap-2">
-        {icon ? <span className="text-accent">{icon}</span> : <span className="size-[5px] shrink-0 rotate-45 bg-accent" />}
+        {icon && <span className="text-ink-4">{icon}</span>}
         <div className="min-w-0">
-          <h2 className="truncate font-serif text-[17px] leading-tight text-ink">{title}</h2>
+          <h2 className="truncate text-[13.5px] font-semibold leading-tight text-ink">{title}</h2>
           {subtitle && <p className="truncate text-[12px] text-ink-3">{subtitle}</p>}
         </div>
       </div>
@@ -165,7 +165,7 @@ export function Stat({ label, value, delta, tone, hint, className }: { label: Re
   return (
     <div className={cn("min-w-0", className)}>
       <div className="eyebrow mb-1 truncate">{label}</div>
-      <div className="font-serif text-[28px] leading-none tracking-[-0.01em] tabular text-ink">{value}</div>
+      <div className="font-serif text-[22px] leading-none tracking-[-0.01em] tabular text-ink">{value}</div>
       {(delta || hint) && (
         <div className="mt-1.5 flex items-center gap-1.5 text-[12px]">
           {delta && <span className={cn("font-medium tabular", tone === "red" ? "text-bad" : tone === "green" ? "text-ok" : tone === "amber" ? "text-warn" : "text-ink-2")}>{delta}</span>}
@@ -190,7 +190,7 @@ export function EmptyState({ icon, title, body, action, className, compact }: { 
   return (
     <div className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
       {icon && <div className="mb-3 flex size-10 items-center justify-center rounded-xl border border-line bg-subtle text-ink-3">{icon}</div>}
-      <div className="text-[14px] font-medium text-ink">{title}</div>
+      <div className="text-[13px] font-medium text-ink">{title}</div>
       {body && <p className="mt-1 max-w-sm text-[13px] text-ink-3">{body}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>

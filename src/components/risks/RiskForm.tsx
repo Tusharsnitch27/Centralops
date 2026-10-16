@@ -65,7 +65,7 @@ function RiskModal({ options, initial, onClose }: { options: { people: Option[];
         <div className="grid grid-cols-[1fr_1fr_110px] items-start gap-3">
           <div><span className="label">Probability</span><Scale value={v.probability} onChange={(n) => set("probability", n)} labels={P_LABEL} /></div>
           <div><span className="label">Impact</span><Scale value={v.impact} onChange={(n) => set("impact", n)} labels={I_LABEL} /></div>
-          <div><span className="label">Score</span><div className="flex h-8 items-center gap-2"><span className="font-serif text-[22px] tabular">{score}</span><Badge tone={lvl.tone}>{lvl.label}</Badge></div></div>
+          <div><span className="label">Score</span><div className="flex h-8 items-center gap-2"><span className="font-serif text-[19px] tabular">{score}</span><Badge tone={lvl.tone}>{lvl.label}</Badge></div></div>
         </div>
         <Field label="Mitigation"><TextArea rows={2} value={v.mitigation} onChange={(x) => set("mitigation", x)} placeholder="What we're doing about it" /></Field>
         <FieldRow>

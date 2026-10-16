@@ -40,7 +40,7 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
       <div className="mb-5 grid gap-5 lg:grid-cols-3">
         <Card className="p-5">
           <div className="eyebrow mb-1.5">Credit notes outstanding</div>
-          <div className="font-serif text-[30px] leading-none tabular text-ink">{inr(claimed - received)}</div>
+          <div className="font-serif text-[24px] leading-none tabular text-ink">{inr(claimed - received)}</div>
           <div className="mt-3"><Meter value={claimed ? received / claimed : 0} tone={claimed && received / claimed < 0.5 ? "amber" : "green"} /></div>
           <div className="mt-2 flex justify-between text-[12px] text-ink-3"><span>{pct(claimed ? received / claimed : null)} recovered · {inr(received)} of {inr(claimed)}</span><span>{openCount} open</span></div>
         </Card>
@@ -52,7 +52,7 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
         </Card>
         <Card className="min-w-0 p-5">
           <div className="eyebrow mb-1.5">Incident expenses</div>
-          <div className="font-serif text-[30px] leading-none tabular text-ink">{inr(incTotal)}</div>
+          <div className="font-serif text-[24px] leading-none tabular text-ink">{inr(incTotal)}</div>
           <div className="mt-1.5 text-[12px] text-ink-3">{incidents.length} incidents logged</div>
           <div className="mt-3 space-y-1.5">
             {byType.slice(0, 4).map(([k, v]) => (

@@ -71,17 +71,17 @@ export type RunQ = <T = Record<string, unknown>>(text: string, params?: unknown[
 /** Migrates + seeds once per process; retried on the next call if it failed. */
 export function ready() {
   if (!dbConfigured()) return Promise.reject(new Error("DATABASE_URL is not set"));
-  // a new migration file (dev hot reload) re-runs the migrator
-  if (g.__pgMigCount !== MIGRATIONS.length) {
+  // a new migration file (dev hot reload) re-runs the migrator, chained after any in-flight run
+  if (g.__pgMigCount !== MIGRATIONS.length || !g.__pgReady) {
     g.__pgMigCount = MIGRATIONS.length;
-    // chain after any in-flight run instead of racing it
     const prev = g.__pgReady?.catch(() => {}) ?? Promise.resolve();
-    g.__pgReady = prev.then(() => runMigrations());
+    const run: Promise<void> = prev.then(() => runMigrations()).catch((e) => {
+      // never cache a failure (e.g. DB not up yet): the next call retries
+      if (g.__pgReady === run) { g.__pgReady = undefined; g.__pgMigCount = undefined; }
+      throw e;
+    });
+    g.__pgReady = run;
   }
-  g.__pgReady ??= runMigrations().catch((e) => {
-    g.__pgReady = undefined;
-    throw e;
-  });
   return g.__pgReady;
 }
 
@@ -101,7 +101,7 @@ export async function q<T = Row>(text: string, params: unknown[] = []): Promise<
 
 const isConnError = (e: unknown) => {
   const m = e instanceof Error ? `${(e as { code?: string }).code ?? ""} ${e.message}` : "";
-  return /ECONNRESET|EPIPE|Connection terminated|connection.*closed/i.test(m);
+  return /ECONNRESET|ECONNREFUSED|EPIPE|Connection terminated|connection.*closed/i.test(m);
 };
 
 /** First row or null. */

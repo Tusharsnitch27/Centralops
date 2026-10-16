@@ -42,7 +42,7 @@ export function MilestoneTimeline({ milestones, start, target }: { milestones: M
       {start && <Marker at={x(start)} label="Start" sub={fmt(start)} />}
       {target && <Marker at={x(target)} label="Target" sub={fmt(target)} strong />}
       <div className="absolute top-[52px] bottom-[30px] w-px bg-info/60" style={{ left: `${x(td)}%` }}>
-        <span className="absolute -top-4 -translate-x-1/2 rounded bg-info-soft px-1 text-[10px] font-medium text-info">Today</span>
+        <span className="absolute -top-4 -translate-x-1/2 rounded bg-info-soft px-1 text-[10.5px] font-medium text-info">Today</span>
       </div>
       {dated.map((m, i) => {
         const cx = x(m.due_date!), bx = m.baseline_date ? x(m.baseline_date) : cx;
@@ -70,7 +70,7 @@ export function MilestoneTimeline({ milestones, start, target }: { milestones: M
 function Marker({ at, label, sub, strong }: { at: number; label: string; sub: string; strong?: boolean }) {
   return (
     <div className="absolute top-[60px] bottom-[30px] w-px border-l border-dashed border-line-strong" style={{ left: `${at}%` }} title={`${label} · ${sub}`}>
-      <span className={cn("absolute -bottom-0 left-1 text-[10px] whitespace-nowrap", strong ? "font-medium text-ink-2" : "text-ink-4")}>{label}</span>
+      <span className={cn("absolute -bottom-0 left-1 text-[10.5px] whitespace-nowrap", strong ? "font-medium text-ink-2" : "text-ink-4")}>{label}</span>
     </div>
   );
 }
@@ -92,7 +92,7 @@ export function MilestoneList({ projectId, milestones, editable }: { projectId: 
                   m.status === "done" ? "border-ok bg-ok text-canvas" : "border-ink-4 hover:border-ink-2")}>
                 <Check size={10} strokeWidth={3} className={cn("-rotate-45", m.status === "done" ? "opacity-100" : "opacity-0 group-hover:opacity-30")} />
               </button>
-              <span className={cn("min-w-0 flex-1 truncate text-[13.5px]", m.status === "done" ? "text-ink-3 line-through decoration-ink-4" : "text-ink")}>{m.title}</span>
+              <span className={cn("min-w-0 flex-1 truncate text-[13px]", m.status === "done" ? "text-ink-3 line-through decoration-ink-4" : "text-ink")}>{m.title}</span>
               {m.overdue > 0 && <Badge tone="red">{m.overdue}d overdue</Badge>}
               {m.slip > 0 && <Badge tone="amber">Slipped +{m.slip}d</Badge>}
               {editable ? (
@@ -113,7 +113,7 @@ export function MilestoneList({ projectId, milestones, editable }: { projectId: 
         {!milestones.length && (
           <div className="flex flex-col items-center px-6 py-10 text-center">
             <div className="mb-3 flex size-10 items-center justify-center rounded-xl border border-line bg-subtle text-ink-3"><Flag size={17} /></div>
-            <div className="text-[14px] font-medium text-ink">No milestones yet</div>
+            <div className="text-[13px] font-medium text-ink">No milestones yet</div>
             <p className="mt-1 max-w-sm text-[13px] text-ink-3">Milestones drive progress and slip tracking. Add the 3–6 checkpoints that matter.</p>
           </div>
         )}

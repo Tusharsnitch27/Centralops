@@ -109,11 +109,11 @@ export function MomView({ note, collapsed }: { note: MomNote; collapsed?: boolea
       {MOM_SECTIONS.filter((s) => sections[s.key].trim()).map((s) => (
         <div key={s.key} className="grid gap-1 md:grid-cols-[150px_1fr] md:gap-5">
           <div className="text-[12.5px] font-medium text-ink-3">{s.label}</div>
-          <p className="whitespace-pre-line text-[13.5px] leading-[1.65] text-ink-2">{sections[s.key]}</p>
+          <p className="whitespace-pre-line text-[13px] leading-[1.65] text-ink-2">{sections[s.key]}</p>
         </div>
       ))}
     </div>
-  ) : <p className="whitespace-pre-line text-[13.5px] leading-[1.65] text-ink-2">{note.body}</p>;
+  ) : <p className="whitespace-pre-line text-[13px] leading-[1.65] text-ink-2">{note.body}</p>;
   if (collapsed) {
     return (
       <details className="group card">

@@ -95,8 +95,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                 <div key={d} className={cn("border-l border-line px-2 pb-2 pt-2.5", d === td && "bg-subtle/60")}>
                   <div className="flex items-baseline gap-1.5">
                     <span className={cn("text-[11.5px] font-medium uppercase tracking-[0.06em]", d === td ? "text-ink" : "text-ink-3")}>{DOW[i]}</span>
-                    <span className={cn("font-serif text-[20px] leading-none tabular", d === td ? "text-ink" : "text-ink-2")}>{Number(d.slice(8))}</span>
-                    {d === td && <span className="ml-auto rounded-full bg-ink px-1.5 text-[10px] font-medium text-canvas">Today</span>}
+                    <span className={cn("font-serif text-[18px] leading-none tabular", d === td ? "text-ink" : "text-ink-2")}>{Number(d.slice(8))}</span>
+                    {d === td && <span className="ml-auto rounded-full bg-ink px-1.5 text-[10.5px] font-medium text-canvas">Today</span>}
                   </div>
                   <div className="mt-2 min-h-[22px] space-y-1">
                     {ts.slice(0, 3).map((t) => (

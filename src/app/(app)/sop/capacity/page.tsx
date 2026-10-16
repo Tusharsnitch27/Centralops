@@ -60,7 +60,7 @@ export default async function SopCapacity({ searchParams }: { searchParams: Prom
         <div className="flex items-start gap-3">
           {breaches.length ? <AlertTriangle size={18} className="mt-0.5 shrink-0 text-bad" /> : <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-ok" />}
           <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-semibold text-ink">
+            <div className="text-[13px] font-semibold text-ink">
               {breaches.length ? `${plural(breaches.length, "capacity breach", "capacity breaches")} in ${fmtMonth(month)}` : rows.length ? `Capacity covers ${fmtMonth(month)} requirements` : `No capacity plan for ${fmtMonth(month)} yet`}
               {[...shortBy].map(([wh, g]) => <span key={wh} className="ml-2 text-[12.5px] font-normal text-ink-3">· {WH_LABEL[wh]} {num(g)}/day short</span>)}
             </div>

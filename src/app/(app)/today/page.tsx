@@ -133,7 +133,7 @@ function TodayMeetingItem({ m }: { m: TodayMeeting }) {
       <div className="flex items-start gap-3">
         <div className="w-[62px] shrink-0 pt-0.5 text-[12px] tabular text-ink-3">{timeRange(m.starts_at, null)}</div>
         <div className="min-w-0 flex-1">
-          <Link href={`/meetings/${m.id}`} className={cn("block truncate text-[13.5px] font-medium hover:underline", ph === "ended" ? "text-ink-2" : "text-ink")}>{m.title}</Link>
+          <Link href={`/meetings/${m.id}`} className={cn("block truncate text-[13px] font-medium hover:underline", ph === "ended" ? "text-ink-2" : "text-ink")}>{m.title}</Link>
           <div className="mt-0.5 truncate text-[12px] text-ink-3">{[m.review_name, m.project_name ?? m.program_name].filter(Boolean).join(" · ") || "Ad-hoc"}{m.mom_owner_name ? ` · MoM ${m.is_mine_mom ? "you" : m.mom_owner_name}` : ""}</div>
           {m.prep_notes && ph !== "ended" && <p className="mt-1.5 line-clamp-2 text-[12px] text-ink-2">{m.prep_notes}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-2">

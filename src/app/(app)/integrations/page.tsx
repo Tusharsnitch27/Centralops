@@ -67,7 +67,7 @@ function GoogleCard({ def, g, joinedAt }: { def: IntegrationDef; g: Awaited<Retu
         <Logo icon={def.icon} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[15px] font-semibold text-ink">{def.name}</h3>{status}
+            <h3 className="text-[14px] font-semibold text-ink">{def.name}</h3>{status}
           </div>
           <p className="mt-0.5 text-[13px] text-ink-3">{def.tagline}</p>
           <ul className="mt-3 grid gap-1.5 text-[12.5px] text-ink-2 md:grid-cols-3">
@@ -120,7 +120,7 @@ function SoonCard({ def }: { def: IntegrationDef }) {
       <div className="flex items-start gap-3">
         <Logo icon={def.icon} muted />
         <div className="min-w-0">
-          <div className="flex items-center gap-2"><h3 className="text-[13.5px] font-semibold text-ink">{def.name}</h3><Badge tone="muted">Soon</Badge></div>
+          <div className="flex items-center gap-2"><h3 className="text-[13px] font-semibold text-ink">{def.name}</h3><Badge tone="muted">Soon</Badge></div>
           <p className="mt-0.5 text-[12.5px] text-ink-3">{def.tagline}</p>
         </div>
       </div>

@@ -11,7 +11,7 @@ export function ExecSummaryCard({ name, s, aiEnabled }: { name: string; s: Proje
     <section className="card overflow-hidden">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-[13.5px] font-semibold text-ink">Executive summary</h2>
+          <h2 className="text-[13px] font-semibold text-ink">Executive summary</h2>
           <span className="text-[11.5px] text-ink-4">auto-generated from milestones, tasks, risks, decisions & updates</span>
         </div>
         <CopyText text={`${name} — ${s.text}`} label="Copy" />
@@ -27,7 +27,7 @@ export function ExecSummaryCard({ name, s, aiEnabled }: { name: string; s: Proje
         </dl>
         <div className="mt-4 rounded-lg border border-line bg-subtle/60 px-3.5 py-3">
           <div className="eyebrow mb-1">Recommended intervention</div>
-          <p className="text-[13.5px] font-medium leading-relaxed text-ink">{s.recommendation}.</p>
+          <p className="text-[13px] font-medium leading-relaxed text-ink">{s.recommendation}.</p>
           {s.recommendations.length > 2 && (
             <ul className="mt-2 space-y-0.5 text-[12.5px] text-ink-3">
               {s.recommendations.slice(2, 5).map((r) => <li key={r}>· {r}</li>)}

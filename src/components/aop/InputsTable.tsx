@@ -56,14 +56,14 @@ export function InputsTable({ tree, period, fields, editable, canEditPlan, submi
     router.refresh();
   });
 
-  const gridCols = `minmax(260px,1.6fr) ${cols.map(() => "132px").join(" ")} ${withRemark ? "minmax(200px,1fr)" : ""}`;
+  const gridCols = `minmax(190px,1.6fr) ${cols.map(() => "112px").join(" ")} ${withRemark ? "minmax(180px,1fr)" : ""}`;
 
   return (
     <div>
       <div className="card overflow-x-auto">
-        <div className="min-w-[760px]">
-          <div className="grid items-center gap-3 thead-hl border-b border-line px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ gridTemplateColumns: gridCols }}>
-            <span>Function · line · {monLabel(period)}</span>
+        <div className="min-w-[620px]">
+          <div className="grid items-center gap-3 thead-hl border-b border-line px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ gridTemplateColumns: gridCols }}>
+            <span className="sticky left-0 z-[1] -ml-4 bg-head pl-4 md:static md:ml-0 md:bg-transparent md:pl-0">Function · line · {monLabel(period)}</span>
             {cols.map((f) => <span key={f} className="text-right">{L[f]}</span>)}
             {withRemark && <span>Remark</span>}
           </div>
@@ -79,10 +79,10 @@ export function InputsTable({ tree, period, fields, editable, canEditPlan, submi
               <div key={f.id} className="border-b border-line last:border-0">
                 <div className="grid cursor-pointer items-center gap-3 px-4 py-3 hover:bg-subtle/50" style={{ gridTemplateColumns: gridCols }}
                   onClick={() => setOpen((s) => { const n = new Set(s); if (n.has(f.id)) n.delete(f.id); else n.add(f.id); return n; })}>
-                  <div className="flex min-w-0 items-center gap-2">
+                  <div className="sticky left-0 z-[1] -my-3 -ml-4 flex min-w-0 items-center gap-2 bg-surface py-3 pl-4 md:static md:m-0 md:bg-transparent md:p-0">
                     <ChevronRight size={14} className={cn("shrink-0 text-ink-3 transition-transform", isOpen && "rotate-90")} />
                     <span className="truncate font-semibold text-ink">{f.name}</span>
-                    <span className="flex shrink-0 items-center gap-1 text-[12px] text-ink-3"><Avatar name={f.owner} size={16} />{f.owner}</span>
+                    <span className="flex shrink-0 items-center gap-1 text-[12px] text-ink-3"><Avatar name={f.owner} size={16} /><span className="hidden sm:inline">{f.owner}</span></span>
                     {isSubmitted ? <Badge tone="green" dot>Submitted</Badge> : st && st.total > 0 ? (
                       <Badge tone={st.late ? "red" : st.updated === st.total ? "green" : "amber"}>{st.updated}/{st.total}{st.late ? " · late" : ""}</Badge>
                     ) : null}
@@ -101,10 +101,10 @@ export function InputsTable({ tree, period, fields, editable, canEditPlan, submi
                 </div>
                 {isOpen && groups.map((gr, gi) => (
                   <Fragment key={gi}>
-                    {gr.name && <div className="bg-subtle/30 px-4 py-1.5 pl-10 text-[11px] font-medium uppercase tracking-[0.05em] text-ink-4">{gr.name}</div>}
+                    {gr.name && <div className="bg-subtle/30 px-4 py-1.5 pl-10 text-[11px] font-medium uppercase tracking-[0.05em] text-ink-4"><span className="sticky left-10">{gr.name}</span></div>}
                     {gr.lines.map((l) => (
                       <div key={l.id} className="grid items-center gap-3 border-t border-line/50 px-4 py-1.5 pl-10" style={{ gridTemplateColumns: gridCols }}>
-                        <span className="truncate text-[13px] text-ink-2" title={l.name}>{l.name}</span>
+                        <span className="sticky left-0 z-[1] -my-1.5 -ml-10 truncate bg-surface py-1.5 pl-10 text-[13px] text-ink-2 md:static md:m-0 md:bg-transparent md:p-0" title={l.name}>{l.name}</span>
                         {cols.map((c) => {
                           const v = val(l, c), dirty = draft[l.id]?.[c] !== undefined, bad = !!v && Number.isNaN(parseUnit(v, "inr") ?? 0);
                           return canField(l, c) ? (
@@ -125,7 +125,7 @@ export function InputsTable({ tree, period, fields, editable, canEditPlan, submi
           })}
         </div>
       </div>
-      <div className="sticky bottom-3 z-10 mt-4 flex items-center gap-3 rounded-xl border border-line bg-surface/95 px-4 py-3 backdrop-blur" style={{ boxShadow: "var(--shadow-pop)" }}>
+      <div className="sticky bottom-[72px] z-10 mt-4 flex flex-wrap items-center gap-3 lg:bottom-3 rounded-xl border border-line bg-surface/95 px-4 py-3 backdrop-blur" style={{ boxShadow: "var(--shadow-pop)" }}>
         <span className="text-[13px] text-ink-2">{dirtyCount ? <><b className="font-semibold text-ink">{dirtyCount}</b> unsaved change{dirtyCount === 1 ? "" : "s"}</> : `Editing ${monShort(period)} — values in ₹ (12.5L, 1.2Cr also work)`}</span>
         {futureActual && cols.includes("actual") && <span className="text-[12px] text-ink-4">{L.actual} open once the month starts</span>}
         <div className="ml-auto flex gap-2">

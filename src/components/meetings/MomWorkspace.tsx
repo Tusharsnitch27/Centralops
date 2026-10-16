@@ -29,7 +29,7 @@ function AutoGrow({ value, onChange, placeholder, minRows = 2, className, autoFo
   useEffect(() => { const el = ref.current; if (!el) return; el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; }, [value]);
   return (
     <textarea ref={ref} rows={minRows} value={value} autoFocus={autoFocus} onKeyDown={onKeyDown} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-      className={cn("block w-full resize-none bg-transparent text-[13.5px] leading-[1.6] text-ink outline-none placeholder:text-ink-4", className)} />
+      className={cn("block w-full resize-none bg-transparent text-[13px] leading-[1.6] text-ink outline-none placeholder:text-ink-4", className)} />
   );
 }
 
@@ -97,7 +97,7 @@ export function MomWorkspace(p: MomWorkspaceProps) {
         <div className="flex items-start gap-4 px-5 py-5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-warn/20 bg-warn-soft text-warn"><NotebookPen size={18} /></span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[15px] font-semibold text-ink">{p.isOwner ? "Add the MoM" : `Add the MoM for ${p.ownerName ?? "the owner"}`}</h2>
+            <h2 className="text-[14px] font-semibold text-ink">{p.isOwner ? "Add the MoM" : `Add the MoM for ${p.ownerName ?? "the owner"}`}</h2>
             <p className="mt-0.5 text-[13px] text-ink-3">
               {p.isOwner ? "You're the MoM owner for this meeting." : `${p.ownerName ?? "The MoM owner"} hasn't added minutes yet — as PM you can write them.`} Once submitted, actions are extracted for review and distribution.
             </p>

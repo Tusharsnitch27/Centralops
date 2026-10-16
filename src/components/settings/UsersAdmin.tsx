@@ -95,7 +95,7 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
         <div className="ml-auto"><Button variant="primary" onClick={() => setCreating(true)}><UserPlus size={14} />Add user</Button></div>
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-4">Team</span>
+        <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">Team</span>
         {[{ id: "all", name: "All", n: users.length }, ...teams.map((t) => ({ id: t.id, name: t.name, n: teamCounts.get(t.id) ?? 0 })).filter((t) => t.n > 0),
           ...(teamCounts.get("none") ? [{ id: "none", name: "No team", n: teamCounts.get("none")! }] : [])].map((t) => (
           <button key={t.id} onClick={() => setTeam(t.id)}

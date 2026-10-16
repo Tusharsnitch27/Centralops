@@ -51,7 +51,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
           <CardHeader icon={<CircleCheck size={15} className="text-ok" />} title="Distributed"
             subtitle={`${m.reviewed_by_name ?? "PM"} reviewed ${m.reviewed_at ? ago(m.reviewed_at) : ""} · ${plural(outcomes.tasks.length, "task")}, ${plural(outcomes.decisions.length, "decision")}, ${plural(outcomes.risks.length, "risk")}${ignored ? ` · ${ignored} ignored` : ""}`} />
           <div className="space-y-4 px-4 py-4">
-            {m.summary && <p className="text-[13.5px] leading-[1.65] text-ink-2">{m.summary}</p>}
+            {m.summary && <p className="text-[13px] leading-[1.65] text-ink-2">{m.summary}</p>}
             {m.pm_feedback && (
               <div className="flex gap-3 rounded-lg border border-line bg-subtle/60 px-3.5 py-3">
                 <MessageSquareQuote size={15} className="mt-0.5 shrink-0 text-ink-3" />
@@ -101,7 +101,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
             <div className="flex items-start gap-3">
               <Hourglass size={16} className="mt-0.5 text-info" />
               <div>
-                <div className="text-[13.5px] font-medium text-ink">With the PM for review</div>
+                <div className="text-[13px] font-medium text-ink">With the PM for review</div>
                 <p className="text-[12.5px] text-ink-3">{plural(items.length, "suggested item")} extracted. The PM will accept, edit and assign them — owners are notified with feedback once distributed.</p>
               </div>
             </div>
@@ -149,7 +149,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
           {m.review_name ? <span>{m.review_name}{m.review_cadence ? ` · ${m.review_cadence}` : ""}</span> : <span>Meeting</span>}
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <h1 className="font-serif text-[30px] leading-[1.1] tracking-[-0.01em] text-ink">{m.title}</h1>
+          <h1 className="font-serif text-[24px] leading-[1.1] tracking-[-0.01em] text-ink">{m.title}</h1>
           <div className="flex items-center gap-2">
             {showNudge && <NudgeButton meetingId={id} ownerName={ownerFirst} />}
             <MomBadge m={m} />

@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
-import { Geist_Mono, Instrument_Serif, Plus_Jakarta_Sans } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono, Instrument_Serif, Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { isTheme, THEME_COOKIE } from "@/lib/themes";
 
-const sans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-geist", weight: ["400", "500", "600", "700", "800"] });
+const sans = Inter({ subsets: ["latin"], variable: "--font-geist" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", variable: "--font-serif-display" });
 
@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Central Ops — Program Manager 2.0",
   icons: { icon: "/icon.svg" },
 };
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f6f4" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const t = (await cookies()).get(THEME_COOKIE)?.value;

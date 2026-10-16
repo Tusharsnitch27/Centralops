@@ -55,8 +55,8 @@ export function Capture({ options, name }: { options: Opt; name: string }) {
     <div className="mx-auto max-w-[920px]">
       <div className="mb-8 text-center animate-rise">
         <div className="eyebrow mb-3">Welcome to Central Ops</div>
-        <h1 className="font-serif text-[40px] leading-[1.05] tracking-[-0.015em]">What are you working on, {name}?</h1>
-        <p className="mx-auto mt-3 max-w-[560px] text-[14px] text-ink-3">
+        <h1 className="font-serif text-[30px] leading-[1.05] tracking-[-0.015em]">What are you working on, {name}?</h1>
+        <p className="mx-auto mt-3 max-w-[560px] text-[13px] text-ink-3">
           Dump everything in your head — open actions, recurring meetings and the people you’re waiting on. Central Ops will structure it and start tracking from today. Nothing before your joining date is back-filled.
         </p>
       </div>
@@ -65,7 +65,7 @@ export function Capture({ options, name }: { options: Opt; name: string }) {
         <div className="card overflow-hidden animate-rise">
           <textarea value={text} onChange={(e) => setText(e.target.value)} rows={11} autoFocus
             placeholder={EXAMPLE}
-            className="block w-full resize-none bg-transparent px-6 py-5 font-[450] text-[14.5px] leading-[1.7] outline-none placeholder:text-ink-4/80" />
+            className="block w-full resize-none bg-transparent px-6 py-5 font-[450] text-[13.5px] leading-[1.7] outline-none placeholder:text-ink-4/80" />
           <div className="flex flex-wrap items-center gap-3 border-t border-line bg-subtle/50 px-5 py-3">
             <div className="flex flex-wrap gap-1.5 text-[11.5px] text-ink-3">
               {Object.values(KINDS).map((k) => k && <span key={k.label} className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 ring-1 ring-inset ring-line">{k.icon}{k.label}</span>)}
@@ -84,7 +84,7 @@ export function Capture({ options, name }: { options: Opt; name: string }) {
       {items && (
         <div className="animate-rise">
           <div className="mb-3 flex items-center gap-2">
-            <h2 className="text-[14px] font-semibold">Review {items.length} items</h2>
+            <h2 className="text-[13px] font-semibold">Review {items.length} items</h2>
             <Badge tone={engine === "claude" ? "violet" : "neutral"}>{engine === "claude" ? "Structured by Claude" : "Structured by rules"}</Badge>
             <button onClick={() => setItems(null)} className="ml-auto text-[12.5px] text-ink-3 hover:text-ink">← Edit text</button>
           </div>

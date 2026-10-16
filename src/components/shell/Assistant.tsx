@@ -55,7 +55,7 @@ export function Assistant() {
       <div className="flex h-14 items-center gap-2 border-b border-line px-4">
         <Sparkles size={16} className="text-violet" />
         <div className="flex-1">
-          <div className="text-[14px] font-semibold">Ask Central Ops</div>
+          <div className="text-[13px] font-semibold">Ask Central Ops</div>
           <div className="text-[11.5px] text-ink-3">Answers from your tasks, meetings, projects, AOP & S&OP</div>
         </div>
         <button onClick={() => setOpen(false)} className="rounded-md p-1.5 text-ink-3 hover:bg-subtle hover:text-ink"><X size={16} /></button>
@@ -71,7 +71,7 @@ export function Assistant() {
         )}
         <div className="space-y-4">
           {msgs.map((m, i) => (
-            <div key={i} className={cn("text-[13.5px] leading-relaxed", m.role === "user" ? "ml-10 rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-canvas" : "text-ink")}>
+            <div key={i} className={cn("text-[13px] leading-relaxed", m.role === "user" ? "ml-10 rounded-2xl rounded-br-md bg-ink px-3.5 py-2 text-canvas" : "text-ink")}>
               {m.role === "assistant" ? <Rich text={m.text} /> : m.text}
               {m.links && m.links.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -88,7 +88,7 @@ export function Assistant() {
         <div className="flex items-end gap-2 rounded-xl border border-line-strong bg-surface p-1.5 pl-3 focus-within:border-ink-3">
           <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="Ask anything about your programs…"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void ask(input); } }}
-            className="max-h-32 flex-1 resize-none bg-transparent py-1.5 text-[13.5px] outline-none placeholder:text-ink-4" />
+            className="max-h-32 flex-1 resize-none bg-transparent py-1.5 text-[13px] outline-none placeholder:text-ink-4" />
           <button disabled={!input.trim() || busy} className="flex size-8 items-center justify-center rounded-lg bg-ink text-canvas disabled:opacity-30"><ArrowUp size={15} /></button>
         </div>
       </form>

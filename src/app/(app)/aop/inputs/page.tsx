@@ -50,7 +50,7 @@ export default async function InputsPage({ searchParams }: { searchParams: Promi
       <div className="card mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3.5">
         <div>
           <div className="eyebrow">{monLabel(period)} · {kind === "actuals" ? L.actual : L.forecast}</div>
-          <div className="mt-1 font-serif text-[24px] leading-none tabular">{status.updated}<span className="text-ink-4"> / {status.total}</span> <span className="font-sans text-[13px] text-ink-3">lines updated</span></div>
+          <div className="mt-1 font-serif text-[20px] leading-none tabular">{status.updated}<span className="text-ink-4"> / {status.total}</span> <span className="font-sans text-[13px] text-ink-3">lines updated</span></div>
         </div>
         <div className="text-[12.5px] text-ink-3">Due {fmtDate(status.dueDate)}{status.late ? <span className="text-bad"> · {status.late} function{status.late === 1 ? "" : "s"} late</span> : null}</div>
         {manage && pending.length > 0 && (

@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["pg"],
   poweredByHeader: false,
+  devIndicators: false,
 };
 
 export default nextConfig;

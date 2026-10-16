@@ -12,13 +12,13 @@ export function ReportView({ doc, aiSummary }: { doc: ReportDoc; aiSummary?: str
     <article className="print-doc card mx-auto max-w-[860px] px-6 py-7 md:px-10 md:py-9">
       <header className="mb-6 border-b border-line pb-5">
         <div className="eyebrow mb-1.5">Central Ops · Report</div>
-        <h1 className="font-serif text-[28px] leading-tight tracking-[-0.01em] text-ink">{doc.title}</h1>
+        <h1 className="font-serif text-[22px] leading-tight tracking-[-0.01em] text-ink">{doc.title}</h1>
         <p className="mt-1 text-[13px] text-ink-3">{doc.subtitle}</p>
       </header>
       {aiSummary && (
         <section className="mb-6 rounded-xl border border-violet/15 bg-violet-soft/50 px-4 py-3">
           <div className="eyebrow mb-1 text-violet">Executive summary · AI</div>
-          <p className="text-[13.5px] leading-relaxed text-ink-2">{aiSummary}</p>
+          <p className="text-[13px] leading-relaxed text-ink-2">{aiSummary}</p>
         </section>
       )}
       <div className="space-y-6">
@@ -38,7 +38,7 @@ export function ReportView({ doc, aiSummary }: { doc: ReportDoc; aiSummary?: str
 }
 
 function BlockView({ b }: { b: Block }) {
-  if (b.type === "p") return <p className="text-[13.5px] leading-relaxed text-ink-2">{b.text}</p>;
+  if (b.type === "p") return <p className="text-[13px] leading-relaxed text-ink-2">{b.text}</p>;
   if (b.type === "pre") return <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-ink-2">{b.text}</pre>;
   if (b.type === "stats")
     return (
@@ -46,7 +46,7 @@ function BlockView({ b }: { b: Block }) {
         {b.items.map((x, i) => (
           <div key={i} className="bg-surface px-3 py-2.5">
             <div className="truncate text-[11px] uppercase tracking-[0.06em] text-ink-3">{x.label}</div>
-            <div className={cn("mt-0.5 font-serif text-[22px] leading-tight tabular", x.tone ? toneText[x.tone] : "text-ink")}>{x.value}</div>
+            <div className={cn("mt-0.5 font-serif text-[19px] leading-tight tabular", x.tone ? toneText[x.tone] : "text-ink")}>{x.value}</div>
             {x.hint && <div className="truncate text-[11px] text-ink-4">{x.hint}</div>}
           </div>
         ))}
@@ -69,7 +69,7 @@ function BlockView({ b }: { b: Block }) {
   return (
     <Tag className="space-y-1.5">
       {b.items.map((it, i) => (
-        <li key={i} className="flex gap-2.5 text-[13.5px] leading-snug">
+        <li key={i} className="flex gap-2.5 text-[13px] leading-snug">
           {b.ordered ? <span className="w-5 shrink-0 text-right font-mono text-[12px] leading-[1.45] text-ink-4">{i + 1}.</span>
             : <span className={cn("mt-[7px] size-1.5 shrink-0 rounded-full", it.tone ? toneDot[it.tone] : "bg-ink-4")} />}
           <span className="min-w-0">

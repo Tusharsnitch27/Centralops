@@ -18,7 +18,7 @@ function Section({ n, title, aside, children }: { n: number; title: string; asid
   return (
     <section className="border-t border-line px-8 py-6 first:border-t-0">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="font-serif text-[19px] text-ink"><span className="mr-2 text-ink-4">{n}.</span>{title}</h2>
+        <h2 className="font-serif text-[17px] text-ink"><span className="mr-2 text-ink-4">{n}.</span>{title}</h2>
         {aside}
       </div>
       {children}
@@ -45,7 +45,7 @@ export default async function SopReview() {
       <Card className="overflow-hidden">
         <header className="border-b border-line bg-subtle/40 px-8 py-6">
           <div className="eyebrow mb-1.5">Pre-read</div>
-          <h1 className="font-serif text-[28px] leading-tight text-ink">{m?.title ?? "Weekly S&OP Review"}</h1>
+          <h1 className="font-serif text-[22px] leading-tight text-ink">{m?.title ?? "Weekly S&OP Review"}</h1>
           <p className="mt-1 text-[13px] text-ink-3">
             {m ? <>{fmtDate(dateOf(m.starts_at), { dow: true })} · {fmtTime(m.starts_at)} · {m.attendees} attendees{m.mom_owner_name ? ` · MoM by ${m.mom_owner_name}` : ""}</> : "Not yet on the calendar"}
           </p>
@@ -55,11 +55,11 @@ export default async function SopReview() {
         <Section n={1} title="Previous review" aside={b.previous && <span className="text-[12px] text-ink-3">{fmtDate(dateOf(b.previous.starts_at), { dow: true })}</span>}>
           {!b.previous ? <p className="text-[13px] text-ink-3">No previous review on record.</p> : (
             <div className="space-y-4">
-              {b.previous.summary && <p className="text-[13.5px] leading-relaxed text-ink-2">{b.previous.summary}</p>}
+              {b.previous.summary && <p className="text-[13px] leading-relaxed text-ink-2">{b.previous.summary}</p>}
               {b.prevDecisions.length > 0 && (
                 <div>
                   <div className="eyebrow mb-1.5">Decisions</div>
-                  <ul className="space-y-1">{b.prevDecisions.map((d) => <li key={d.id} className="flex gap-2 text-[13.5px] text-ink"><span className="text-ink-4">—</span><Link href={`/decisions?focus=${d.id}`} className="hover:underline">{d.title}</Link></li>)}</ul>
+                  <ul className="space-y-1">{b.prevDecisions.map((d) => <li key={d.id} className="flex gap-2 text-[13px] text-ink"><span className="text-ink-4">—</span><Link href={`/decisions?focus=${d.id}`} className="hover:underline">{d.title}</Link></li>)}</ul>
                 </div>
               )}
               <div>
@@ -116,7 +116,7 @@ export default async function SopReview() {
 
         <Section n={4} title={`Projection accuracy · ${fmtMonth(b.periods.lastClosed)}`} aside={b.accuracy.demo && <DemoBadge long />}>
           <div className="mb-3 flex items-baseline gap-3">
-            <span className="font-serif text-[30px] leading-none"><AccuracyText a={b.accuracy.overall} threshold={b.accuracy.threshold} /></span>
+            <span className="font-serif text-[24px] leading-none"><AccuracyText a={b.accuracy.overall} threshold={b.accuracy.threshold} /></span>
             {b.accuracy.bias != null && <span className="text-[13px] text-ink-3">overall · bias {pct(b.accuracy.bias, 0, true)} ({b.accuracy.bias > 0 ? "under-projected" : "over-projected"})</span>}
           </div>
           <ul className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
@@ -153,7 +153,7 @@ export default async function SopReview() {
                 <li key={i} className="flex gap-3">
                   <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-line-strong text-[11px] text-ink-3">{i + 1}</span>
                   <div className="min-w-0">
-                    <div className="text-[13.5px] text-ink">{d.href ? <Link href={d.href} className="hover:underline">{d.title}</Link> : d.title}{d.suggested && <Badge tone="muted" className="ml-2">suggested</Badge>}</div>
+                    <div className="text-[13px] text-ink">{d.href ? <Link href={d.href} className="hover:underline">{d.title}</Link> : d.title}{d.suggested && <Badge tone="muted" className="ml-2">suggested</Badge>}</div>
                     {d.detail && <div className="text-[12.5px] text-ink-3">{d.detail}</div>}
                   </div>
                 </li>

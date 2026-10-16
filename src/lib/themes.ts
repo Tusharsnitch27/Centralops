@@ -1,12 +1,12 @@
-// Colour themes — same bento layout (light canvas, white cards, bold ink); each swaps the accent family.
+// Colour themes — same minimal layout (warm off-white canvas, white cards, hairline borders); each swaps the accent family.
 // Values live in globals.css (html[data-theme]); this list drives the picker.
 export const THEMES = [
-  { key: "emerald", name: "Emerald", note: "Fresh green accent — the default", swatch: ["#eceef1", "#111214", "#16a34a"] },
-  { key: "indigo", name: "Indigo", note: "Calm, corporate blue-violet", swatch: ["#eceef1", "#111214", "#4f46e5"] },
-  { key: "teal", name: "Teal", note: "Cool, clinical teal", swatch: ["#eceef1", "#111214", "#0d9488"] },
-  { key: "coral", name: "Coral", note: "Warm, energetic orange", swatch: ["#eceef1", "#111214", "#ea580c"] },
-  { key: "violet", name: "Violet", note: "Rich purple accent", swatch: ["#eceef1", "#111214", "#7c3aed"] },
-  { key: "mono", name: "Monochrome", note: "Black & grey, no colour accent", swatch: ["#eceef1", "#111214", "#6b7280"] },
+  { key: "emerald", name: "Emerald", note: "Deep green — the default", swatch: ["#f6f6f4", "#121212", "#157347"] },
+  { key: "indigo", name: "Indigo", note: "Quiet ink blue", swatch: ["#f6f6f4", "#121212", "#3f46b8"] },
+  { key: "teal", name: "Teal", note: "Muted teal", swatch: ["#f6f6f4", "#121212", "#0f6e68"] },
+  { key: "coral", name: "Terracotta", note: "Terracotta", swatch: ["#f6f6f4", "#121212", "#b4532a"] },
+  { key: "violet", name: "Plum", note: "Muted plum", swatch: ["#f6f6f4", "#121212", "#5b3fae"] },
+  { key: "mono", name: "Monochrome", note: "Black & grey only", swatch: ["#f6f6f4", "#121212", "#6b7280"] },
 ] as const;
 export type ThemeKey = (typeof THEMES)[number]["key"];
 export const THEME_COOKIE = "co_theme";

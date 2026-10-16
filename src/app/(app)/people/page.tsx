@@ -124,7 +124,7 @@ async function TeamsView({ teams, focus }: { teams: Awaited<ReturnType<typeof li
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[12px] font-semibold text-white" style={{ background: t.color ?? "#71717a" }}>{t.name.slice(0, 2).toUpperCase()}</span>
               <div className="min-w-0">
-                <div className="truncate text-[14px] font-semibold text-ink">{t.name}</div>
+                <div className="truncate text-[13px] font-semibold text-ink">{t.name}</div>
                 <div className="truncate text-[12px] text-ink-3">{t.function ?? "—"} · Lead {t.lead_id ? <Link href={`/people/${t.lead_id}`} className="text-ink-2 hover:underline">{t.lead_name}</Link> : <span className="text-ink-4">not set</span>}</div>
               </div>
             </div>
@@ -133,7 +133,7 @@ async function TeamsView({ teams, focus }: { teams: Awaited<ReturnType<typeof li
           <div className="mt-3 grid grid-cols-4 gap-px border-y border-line bg-line text-center">
             {[["Open tasks", t.open_tasks, null], ["Team-owned", t.team_owned, null], ["Overdue", t.overdue, t.overdue ? "text-bad" : null], ["Projects", t.projects, null]].map(([l, v, c]) => (
               <div key={l as string} className="bg-surface px-2 py-2.5">
-                <div className={cn("font-serif text-[20px] leading-none tabular", (c as string) ?? "text-ink")}>{v as number}</div>
+                <div className={cn("font-serif text-[18px] leading-none tabular", (c as string) ?? "text-ink")}>{v as number}</div>
                 <div className="mt-1 text-[11px] text-ink-3">{l as string}</div>
               </div>
             ))}

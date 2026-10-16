@@ -45,7 +45,7 @@ export function ReviewTable({ tree, period, editable, onlyMine }: { tree: Summar
       </div>
       <div className="card overflow-x-auto">
         <div className="min-w-[960px]">
-        <div className="grid grid-cols-[minmax(200px,1.2fr)_92px_92px_92px_132px_minmax(260px,1.5fr)] items-center gap-3 thead-hl border-b border-line px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em]">
+        <div className="grid grid-cols-[minmax(200px,1.2fr)_92px_92px_92px_132px_minmax(260px,1.5fr)] items-center gap-3 thead-hl border-b border-line px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em]">
           <span>Function · line · {monLabel(period)}</span><span className="text-right">{L.plan}</span><span className="text-right">{L.forecast}</span><span className="text-right">{L.actual}</span><span>Flags</span><span>Remark</span>
         </div>
         {tree.functions.map((f) => {

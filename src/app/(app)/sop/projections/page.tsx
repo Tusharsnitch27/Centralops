@@ -95,7 +95,7 @@ export default async function SopProjections({ searchParams }: { searchParams: P
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="min-w-0 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="font-serif text-[22px] leading-tight text-ink">{stream.name}</h2>
+              <h2 className="font-serif text-[19px] leading-tight text-ink">{stream.name}</h2>
               <SourceBadge source={stream.actual_source} />
               {anyDemo && <DemoBadge long />}
             </div>
@@ -133,7 +133,7 @@ export default async function SopProjections({ searchParams }: { searchParams: P
               <thead>
                 <tr>
                   <th className="sticky left-0 z-10 min-w-[200px] bg-surface">Line</th>
-                  {visibleMonths.map((p) => <th key={p} className={cn("min-w-[92px] text-right", p === cur && "text-ink")}>{fmtMonth(p, false)}{p === cur && <span className="ml-1 text-[10px] text-info">now</span>}</th>)}
+                  {visibleMonths.map((p) => <th key={p} className={cn("min-w-[92px] text-right", p === cur && "text-ink")}>{fmtMonth(p, false)}{p === cur && <span className="ml-1 text-[10.5px] text-info">now</span>}</th>)}
                   <th className="text-right">Accuracy</th>
                 </tr>
               </thead>
@@ -148,7 +148,7 @@ export default async function SopProjections({ searchParams }: { searchParams: P
                         const v = a?.act != null && a.proj ? (a.act - a.proj) / a.proj : null;
                         return (
                           <td key={p} className="py-1.5 text-right align-top leading-tight">
-                            <div className="tabular text-ink">{num(a?.eff)}{a?.revised && <span className="ml-0.5 text-[10px] text-info" title={`Revised from ${num(a.proj)}`}>r</span>}</div>
+                            <div className="tabular text-ink">{num(a?.eff)}{a?.revised && <span className="ml-0.5 text-[10.5px] text-info" title={`Revised from ${num(a.proj)}`}>r</span>}</div>
                             {a?.act != null && <div className={cn("tabular text-[11.5px]", a.demo ? "text-warn" : "text-ink-3")}>{num(a.act)} · <Variance v={v} threshold={th} className="text-[11.5px]" /></div>}
                           </td>
                         );

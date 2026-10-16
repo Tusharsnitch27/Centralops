@@ -40,7 +40,7 @@ export default async function ProgramsPage() {
                       <span className="font-mono text-[11px] text-ink-4">{g.code}</span>
                       <HealthBadge health={g.derived_health} />
                     </div>
-                    <Link href={`/programs/${g.id}`} className="font-serif text-[22px] leading-tight text-ink hover:underline hover:decoration-line-strong hover:underline-offset-4">{g.name}</Link>
+                    <Link href={`/programs/${g.id}`} className="font-serif text-[19px] leading-tight text-ink hover:underline hover:decoration-line-strong hover:underline-offset-4">{g.name}</Link>
                     {g.description && <p className="mt-1 line-clamp-2 max-w-3xl text-[13px] text-ink-3">{g.description}</p>}
                   </div>
                   <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ function Metric({ label, value, sub, tone, href }: { label: string; value: numbe
   const inner = (
     <>
       <div className="eyebrow mb-1">{label}</div>
-      <div className={cn("font-serif text-[24px] leading-none tabular", value ? tone ?? "text-ink" : "text-ink-4")}>{value}</div>
+      <div className={cn("font-serif text-[20px] leading-none tabular", value ? tone ?? "text-ink" : "text-ink-4")}>{value}</div>
       {sub && <div className={cn("mt-1 text-[11.5px]", tone && value ? tone : "text-ink-3")}>{sub}</div>}
     </>
   );

@@ -106,7 +106,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
             {p.objective && (
               <section>
                 <div className="eyebrow mb-1.5">Objective</div>
-                <p className="text-[14px] leading-relaxed text-ink-2">{p.objective}</p>
+                <p className="text-[13px] leading-relaxed text-ink-2">{p.objective}</p>
               </section>
             )}
             <Card>
@@ -202,11 +202,11 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
                 return (
                   <li key={m.id}>
                     <Link href={`/meetings/${m.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-subtle/60">
-                      <span className="flex size-9 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-subtle text-[10px] leading-tight text-ink-3">
+                      <span className="flex size-9 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-subtle text-[10.5px] leading-tight text-ink-3">
                         <span className="font-semibold text-ink">{Number(dateOf(m.starts_at).slice(8, 10))}</span>{fmtDate(dateOf(m.starts_at)).slice(0, 3)}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13.5px] font-medium text-ink">{m.title}</div>
+                        <div className="truncate text-[13px] font-medium text-ink">{m.title}</div>
                         <div className="text-[12px] text-ink-3">{relDay(dateOf(m.starts_at))} · {fmtTime(m.starts_at)}{m.mom_owner_name ? ` · MoM: ${m.mom_owner_name}` : ""}{m.review_name ? ` · ${m.review_name}` : ""}</div>
                       </div>
                       {future ? <Badge tone="info">Upcoming</Badge> : ms ? <Badge tone={ms.tone as Tone}>{ms.label}</Badge> : null}

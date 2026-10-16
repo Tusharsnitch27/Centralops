@@ -47,7 +47,7 @@ function DecisionRow({ d, options, focused, editable, compact }: { d: DecisionVi
         </span>
         <div className="min-w-0 flex-1">
           <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-start gap-2 text-left">
-            <span className="min-w-0 flex-1 text-[13.5px] font-medium leading-snug text-ink">{d.title}</span>
+            <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-ink">{d.title}</span>
             {hasDetail ? <ChevronDown size={14} className={cn("mt-0.5 shrink-0 text-ink-4 transition-transform", open && "rotate-180")} /> : null}
           </button>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-3">

@@ -41,7 +41,7 @@ export function TaskComposer({ id, status, me, isOwner, readOnly }: { id: string
         <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); } }}
           placeholder={mode === "update" ? "What moved since the last update? What's next, and is anything blocking?" : "Add a comment…"}
-          className="block w-full resize-none bg-transparent px-3 py-2.5 text-[13.5px] leading-relaxed text-ink outline-none placeholder:text-ink-4" />
+          className="block w-full resize-none bg-transparent px-3 py-2.5 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-4" />
         <div className="flex flex-wrap items-center gap-2 px-2.5 pb-2.5">
           {mode === "update" && (
             <div className="flex flex-wrap items-center gap-1">

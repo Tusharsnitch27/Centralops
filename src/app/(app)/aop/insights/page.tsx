@@ -60,7 +60,7 @@ function InsightRow({ i, cycleId, period, manage }: { i: Insight; cycleId: strin
         <span className={cn("mt-[7px] size-1.5 shrink-0 rounded-full", SEV[i.severity].dot)} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-            <Link href={i.entity.href} className="text-[13.5px] font-medium text-ink hover:underline">{i.title}</Link>
+            <Link href={i.entity.href} className="text-[13px] font-medium text-ink hover:underline">{i.title}</Link>
             <span className="text-[11px] text-ink-4">{i.ruleName}</span>
           </div>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">{i.detail}</p>

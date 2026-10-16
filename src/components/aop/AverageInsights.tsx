@@ -11,15 +11,15 @@ export function AverageInsights({ ins, labels }: { ins: AvgInsights; labels: { a
     <div className="card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4">
         <div>
-          <div className="text-[16px] font-bold tracking-[-0.01em] text-ink">Insights · variation from average</div>
+          <div className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">Insights · variation from average</div>
           <div className="text-[12.5px] font-medium text-ink-3">
-            {labels.actual} per month in <b className="font-bold text-ink-2">{ins.focusLabel}</b> compared with each line’s own <b className="font-bold text-ink-2">{ins.baseLabel}</b>
+            {labels.actual} per month in <b className="font-semibold text-ink-2">{ins.focusLabel}</b> compared with each line’s own <b className="font-semibold text-ink-2">{ins.baseLabel}</b>
           </div>
         </div>
         <span className="rounded-full bg-subtle px-3 py-1 text-[12px] font-semibold text-ink-3">Threshold ±15% · ₹50K+/mo per line</span>
       </div>
       {empty ? (
-        <div className="px-5 py-10 text-center text-[13.5px] text-ink-3">Not enough closed months to compare yet — insights appear once at least two other months have {labels.actual.toLowerCase()}.</div>
+        <div className="px-5 py-10 text-center text-[13px] text-ink-3">Not enough closed months to compare yet — insights appear once at least two other months have {labels.actual.toLowerCase()}.</div>
       ) : (
         <div className="grid divide-line lg:grid-cols-3 lg:divide-x">
           <Column title="Above average" icon={<TrendingUp size={15} />} tone="up" items={ins.increases} empty="Nothing running materially above its average." />
@@ -34,11 +34,11 @@ export function AverageInsights({ ins, labels }: { ins: AvgInsights; labels: { a
 function Column({ title, icon, tone, items, empty }: { title: string; icon: React.ReactNode; tone: "up" | "down" | "var"; items: AvgInsight[]; empty: string }) {
   return (
     <div className="p-4">
-      <div className={cn("mb-3 flex items-center gap-2 text-[13.5px] font-bold",
+      <div className={cn("mb-3 flex items-center gap-2 text-[13px] font-semibold",
         tone === "up" ? "text-bad" : tone === "down" ? "text-accent-ink" : "text-ink-2")}>
         <span className={cn("flex size-7 items-center justify-center rounded-lg", tone === "up" ? "bg-bad-soft" : tone === "down" ? "bg-accent-soft" : "bg-subtle")}>{icon}</span>
         {title}
-        <span className="ml-auto rounded-full bg-subtle px-2 py-0.5 text-[11px] font-bold text-ink-3">{items.length}</span>
+        <span className="ml-auto rounded-full bg-subtle px-2 py-0.5 text-[11px] font-semibold text-ink-3">{items.length}</span>
       </div>
       {items.length ? (
         <div className="space-y-2">
@@ -50,18 +50,18 @@ function Column({ title, icon, tone, items, empty }: { title: string; icon: Reac
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="truncate text-[13.5px] font-bold text-ink">{i.name}</span>
-                      {i.level === "function" && <span className="rounded-md bg-ink px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-white">Function</span>}
+                      <span className="truncate text-[13px] font-semibold text-ink">{i.name}</span>
+                      {i.level === "function" && <span className="rounded-md bg-ink px-1.5 py-px text-[10.5px] font-semibold uppercase tracking-wide text-white">Function</span>}
                     </div>
                     <div className="truncate text-[11.5px] font-medium text-ink-4">{i.path}</div>
                   </div>
                   {tone !== "var" ? (
-                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[12px] font-extrabold tabular", bad ? "bg-bad-soft text-bad" : "bg-accent-soft text-accent-ink")}>{pct(i.deltaPct, 0, true)}</span>
-                  ) : <span className="shrink-0 rounded-full bg-warn-soft px-2 py-0.5 text-[12px] font-extrabold tabular text-warn">±{pct((i as AvgInsight & { cv: number }).cv, 0)}</span>}
+                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular", bad ? "bg-bad-soft text-bad" : "bg-accent-soft text-accent-ink")}>{pct(i.deltaPct, 0, true)}</span>
+                  ) : <span className="shrink-0 rounded-full bg-warn-soft px-2 py-0.5 text-[12px] font-semibold tabular text-warn">±{pct((i as AvgInsight & { cv: number }).cv, 0)}</span>}
                 </div>
                 <div className="mt-2 flex items-end justify-between gap-3">
                   <div className="text-[12px] font-medium text-ink-3">
-                    {tone !== "var" ? <><b className="font-bold text-ink">{inr(i.focusAvg)}</b>/mo vs <b className="font-semibold text-ink-2">{inr(i.baseAvg)}</b> avg · <b className={bad ? "font-bold text-bad" : "font-bold text-accent-ink"}>{inr(i.delta, { sign: true })}</b></> : i.note}
+                    {tone !== "var" ? <><b className="font-semibold text-ink">{inr(i.focusAvg)}</b>/mo vs <b className="font-semibold text-ink-2">{inr(i.baseAvg)}</b> avg · <b className={bad ? "font-semibold text-bad" : "font-semibold text-accent-ink"}>{inr(i.delta, { sign: true })}</b></> : i.note}
                   </div>
                   <Spark series={i.series} tone={tone === "var" ? "var" : bad ? "bad" : "good"} />
                 </div>

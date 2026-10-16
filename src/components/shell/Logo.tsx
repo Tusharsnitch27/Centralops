@@ -13,10 +13,9 @@ export function LogoGlyph({ className, style }: { className?: string; style?: Re
 
 export function LogoMark({ size = 40 }: { size?: number }) {
   return (
-    <span className="relative inline-flex shrink-0 items-center justify-center overflow-hidden text-white"
-      style={{ width: size, height: size, borderRadius: size * 0.32, background: "linear-gradient(140deg, var(--color-accent-2) 0%, var(--color-accent) 55%, color-mix(in srgb, var(--color-accent) 70%, black) 100%)", boxShadow: "0 10px 22px -10px var(--color-accent), inset 0 1px 0 rgb(255 255 255 / 0.35)" }}>
-      <span className="absolute inset-x-0 top-0 h-1/2" style={{ background: "linear-gradient(180deg, rgb(255 255 255 / 0.22), transparent)" }} />
-      <LogoGlyph className="relative" style={{ width: size * 0.62, height: size * 0.62 }} />
+    <span className="inline-flex shrink-0 items-center justify-center bg-ink text-white"
+      style={{ width: size, height: size, borderRadius: size * 0.28 }}>
+      <LogoGlyph style={{ width: size * 0.64, height: size * 0.64, color: "#fff" }} />
     </span>
   );
 }

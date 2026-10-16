@@ -58,7 +58,7 @@ export function FileLinks({ entityType, entityId, files, editable }: { entityTyp
             <li key={f.id} className="group flex items-center gap-3 px-4 py-2.5">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-line bg-subtle text-ink-3"><Link2 size={14} /></span>
               <div className="min-w-0 flex-1">
-                <a href={f.url ?? "#"} target="_blank" rel="noreferrer" className="flex items-center gap-1 truncate text-[13.5px] font-medium text-ink hover:underline">{f.name}<ExternalLink size={11} className="text-ink-4" /></a>
+                <a href={f.url ?? "#"} target="_blank" rel="noreferrer" className="flex items-center gap-1 truncate text-[13px] font-medium text-ink hover:underline">{f.name}<ExternalLink size={11} className="text-ink-4" /></a>
                 <div className="text-[12px] text-ink-3">{host(f.url)}{f.uploaded_by_name ? ` · added by ${f.uploaded_by_name}` : ""}</div>
               </div>
               {editable && <button type="button" onClick={() => run(() => removeAttachment(f.id))} className="rounded p-1 text-ink-4 opacity-0 hover:bg-bad-soft hover:text-bad group-hover:opacity-100" aria-label="Remove link"><Trash2 size={13} /></button>}
@@ -68,7 +68,7 @@ export function FileLinks({ entityType, entityId, files, editable }: { entityTyp
       ) : (
         <div className="px-6 py-10 text-center">
           <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-xl border border-line bg-subtle text-ink-3"><Link2 size={17} /></div>
-          <div className="text-[14px] font-medium text-ink">No files linked</div>
+          <div className="text-[13px] font-medium text-ink">No files linked</div>
           <p className="mx-auto mt-1 max-w-sm text-[13px] text-ink-3">Link the plan, trackers and vendor documents so the project has one source of truth.</p>
         </div>
       )}

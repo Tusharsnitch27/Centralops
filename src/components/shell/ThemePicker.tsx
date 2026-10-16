@@ -16,8 +16,8 @@ export function ThemePicker() {
   };
   return (
     <Popover align="end" className="w-[300px] p-1.5" trigger={({ toggle }) => (
-      <button onClick={toggle} title="Colour theme" className="flex size-9 items-center justify-center rounded-full border border-line bg-white text-ink-3 hover:border-line-strong hover:text-ink">
-        <Palette size={16} />
+      <button onClick={toggle} title="Colour theme" className="flex size-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-subtle hover:text-ink">
+        <Palette size={15} />
       </button>
     )}>
       <div className="px-2 pb-1.5 pt-1 text-[10.5px] font-medium uppercase tracking-[0.14em] text-ink-4">Colour theme</div>

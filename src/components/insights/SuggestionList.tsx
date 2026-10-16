@@ -37,7 +37,7 @@ export function SuggestionList({ items, readOnly }: { items: Suggestion[]; readO
     return (
       <div className="flex flex-col items-center px-6 py-14 text-center">
         <span className="mb-3 flex size-10 items-center justify-center rounded-xl border border-line bg-subtle text-ok"><CircleCheck size={18} /></span>
-        <div className="text-[14px] font-medium text-ink">You're on top of everything</div>
+        <div className="text-[13px] font-medium text-ink">You're on top of everything</div>
         <p className="mt-1 max-w-sm text-[13px] text-ink-3">No open suggestions. New ones appear as soon as something slips, goes over budget or misses an update.</p>
       </div>
     );
@@ -61,7 +61,7 @@ export function SuggestionList({ items, readOnly }: { items: Suggestion[]; readO
               <div className="mb-0.5 flex items-center gap-1.5 text-[11.5px]">
                 <span className={cn("size-1.5 rounded-full", sev.dot)} /><span className={cn("font-medium", sev.text)}>{sev.label}</span>
               </div>
-              <Link href={s.href ?? "#"} className="text-[14px] font-medium leading-snug text-ink hover:underline decoration-ink-4 underline-offset-2">{s.title}</Link>
+              <Link href={s.href ?? "#"} className="text-[13px] font-medium leading-snug text-ink hover:underline decoration-ink-4 underline-offset-2">{s.title}</Link>
               {s.body && <p className="mt-1 text-[13px] leading-relaxed text-ink-3">{s.body}</p>}
               {s.recommendation && <p className="mt-1.5 text-[12.5px] text-ink-2"><span className="text-violet">→</span> {s.recommendation}</p>}
               {!readOnly && (

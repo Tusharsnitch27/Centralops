@@ -43,8 +43,8 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
       <Card className="flex flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4">
         <div>
           <div className="eyebrow mb-1">{fmtMonth(next)} projections</div>
-          <div className="font-serif text-[24px] leading-none text-ink">
-            {nextCells.length - nextOpen.length}<span className="text-ink-4"> / {nextCells.length}</span> <span className="text-[15px] text-ink-3">received</span>
+          <div className="font-serif text-[20px] leading-none text-ink">
+            {nextCells.length - nextOpen.length}<span className="text-ink-4"> / {nextCells.length}</span> <span className="text-[14px] text-ink-3">received</span>
           </div>
         </div>
         <div className="text-[13px] text-ink-2">
@@ -136,7 +136,7 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
 
       {/* guidelines */}
       <details className="card group">
-        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13.5px] font-semibold text-ink">
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13px] font-semibold text-ink">
           <BookOpen size={15} className="text-ink-3" />Methodology & guidelines
           <span className="text-[12px] font-normal text-ink-3">· from the S&OP workbook</span>
           <ChevronDown size={14} className="ml-auto text-ink-4 transition group-open:rotate-180" />

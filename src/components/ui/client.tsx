@@ -21,20 +21,20 @@ export function Modal({ open, onClose, title, description, children, footer, wid
   }, [open, onClose]);
   if (!open || !mounted) return null;
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-[10vh]">
-      <div className="fixed inset-0 bg-ink/25 backdrop-blur-[2px] animate-fade-in" onClick={onClose} />
-      <div role="dialog" aria-modal className={cn("relative w-full rounded-2xl border border-line bg-surface animate-rise", className)} style={{ maxWidth: width, boxShadow: "var(--shadow-pop)" }}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto sm:items-start sm:p-4 sm:pt-[10vh]">
+      <div className="fixed inset-0 bg-ink/30 animate-fade-in" onClick={onClose} />
+      <div role="dialog" aria-modal className={cn("pb-safe relative max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-line bg-surface animate-rise sm:max-h-none sm:overflow-visible sm:rounded-xl", className)} style={{ maxWidth: width, boxShadow: "var(--shadow-pop)" }}>
         {(title || description) && (
           <div className="flex items-start justify-between gap-4 px-5 pt-4 pb-2">
             <div>
-              {title && <h2 className="text-[15px] font-semibold text-ink">{title}</h2>}
+              {title && <h2 className="text-[14px] font-semibold text-ink">{title}</h2>}
               {description && <p className="mt-0.5 text-[12.5px] text-ink-3">{description}</p>}
             </div>
             <button onClick={onClose} className="rounded-md p-1 text-ink-3 hover:bg-subtle hover:text-ink" aria-label="Close"><X size={16} /></button>
           </div>
         )}
         <div className="px-5 pb-4">{children}</div>
-        {footer && <div className="flex items-center justify-end gap-2 rounded-b-2xl border-t border-line bg-subtle/50 px-5 py-3">{footer}</div>}
+        {footer && <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-subtle/50 px-5 py-3 sm:rounded-b-xl">{footer}</div>}
       </div>
     </div>,
     document.body,

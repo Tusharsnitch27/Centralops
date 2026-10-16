@@ -18,7 +18,7 @@ export function TaskRow({ t, showProject = true, showOwner = true, extra, classN
       <PriorityIcon priority={t.priority} className="shrink-0" />
       <span className="w-14 shrink-0 font-mono text-[11px] text-ink-4">CO-{t.number}</span>
       <Link href={`/tasks/${t.id}`} className="flex min-w-0 flex-1 items-center gap-2 py-2">
-        <span className={cn("truncate text-[13.5px]", t.status === "completed" ? "text-ink-3 line-through decoration-ink-4" : "text-ink")}>{t.title}</span>
+        <span className={cn("truncate text-[13px]", t.status === "completed" ? "text-ink-3 line-through decoration-ink-4" : "text-ink")}>{t.title}</span>
         {t.status === "blocked" && <Badge tone="red"><AlertOctagon size={11} />Blocked</Badge>}
         {t.status === "waiting" && <Badge tone="amber"><Hourglass size={11} />{t.waiting_on_name ? `Waiting on ${t.waiting_on_name}` : "Waiting"}</Badge>}
         {t.open_followups > 0 && <span title={`${t.open_followups} open follow-up`} className="text-warn"><MessageCircleQuestion size={13} /></span>}
@@ -35,7 +35,7 @@ export function TaskRow({ t, showProject = true, showOwner = true, extra, classN
       </span>
       {showOwner && (
         <span className="w-6 shrink-0">
-          {t.owner_name ? <Avatar name={t.owner_name} color={t.owner_color} size={22} /> : t.owner_team_name ? <span title={t.owner_team_name} className="flex size-[22px] items-center justify-center rounded-md bg-muted text-[9px] font-semibold text-ink-2">{t.owner_team_name.slice(0, 2).toUpperCase()}</span> : <Avatar name={null} size={22} />}
+          {t.owner_name ? <Avatar name={t.owner_name} color={t.owner_color} size={22} /> : t.owner_team_name ? <span title={t.owner_team_name} className="flex size-[22px] items-center justify-center rounded-md bg-muted text-[10px] font-semibold text-ink-2">{t.owner_team_name.slice(0, 2).toUpperCase()}</span> : <Avatar name={null} size={22} />}
         </span>
       )}
     </div>

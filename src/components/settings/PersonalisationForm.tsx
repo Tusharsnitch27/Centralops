@@ -93,7 +93,7 @@ export function PersonalisationForm({ prefs, programs }: { prefs: Preferences; p
         </div>
       </Section>
 
-      <div className="sticky bottom-4 mt-2 flex justify-end">
+      <div className="sticky bottom-[72px] mt-2 flex justify-end lg:bottom-4">
         <div className={cn("flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2 transition-opacity", dirty ? "opacity-100" : "pointer-events-none opacity-0")} style={{ boxShadow: "var(--shadow-pop)" }}>
           <span className="text-[12.5px] text-ink-3">Unsaved changes</span>
           <Button variant="ghost" size="sm" onClick={() => { setP(prefs); setOrder([...prefs.dashboard.sections, ...DASHBOARD_SECTIONS.map((s) => s.key).filter((k) => !prefs.dashboard.sections.includes(k))]); setVisible(new Set(prefs.dashboard.sections)); }}>Discard</Button>

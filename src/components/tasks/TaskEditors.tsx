@@ -43,11 +43,11 @@ export function TitleEditor({ id, title, readOnly }: { id: string; title: string
       <textarea autoFocus value={val} rows={1} onChange={(e) => setVal(e.target.value)} onBlur={save}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); save(); } if (e.key === "Escape") { setVal(title); setEditing(false); } }}
         ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
-        className="-mx-2 w-[calc(100%+16px)] resize-none rounded-lg bg-subtle px-2 py-1 font-serif text-[28px] leading-[1.2] tracking-[-0.01em] text-ink outline-none ring-1 ring-line-strong" />
+        className="-mx-2 w-[calc(100%+16px)] resize-none rounded-lg bg-subtle px-2 py-1 font-serif text-[22px] leading-[1.2] tracking-[-0.01em] text-ink outline-none ring-1 ring-line-strong" />
     );
   return (
     <h1 onClick={() => !readOnly && setEditing(true)}
-      className={cn("-mx-2 rounded-lg px-2 py-1 font-serif text-[28px] leading-[1.2] tracking-[-0.01em] text-ink", !readOnly && "cursor-text hover:bg-subtle/70")}>
+      className={cn("-mx-2 rounded-lg px-2 py-1 font-serif text-[22px] leading-[1.2] tracking-[-0.01em] text-ink", !readOnly && "cursor-text hover:bg-subtle/70")}>
       {val}
     </h1>
   );
@@ -64,7 +64,7 @@ export function DescriptionEditor({ id, description, readOnly }: { id: string; d
       <div>
         <textarea autoFocus value={val} onChange={(e) => setVal(e.target.value)} rows={5} placeholder="Add context, acceptance criteria, links…"
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { setEditing(false); run(() => patchTask(id, { description: val.trim() || null })); } if (e.key === "Escape") { setVal(description ?? ""); setEditing(false); } }}
-          className="field min-h-28 resize-y text-[13.5px] leading-relaxed" />
+          className="field min-h-28 resize-y text-[13px] leading-relaxed" />
         <div className="mt-2 flex items-center justify-end gap-2">
           <span className="mr-auto text-[11.5px] text-ink-4">⌘ Enter to save</span>
           <Button size="xs" variant="ghost" onClick={() => { setVal(description ?? ""); setEditing(false); }}>Cancel</Button>
@@ -74,7 +74,7 @@ export function DescriptionEditor({ id, description, readOnly }: { id: string; d
     );
   return (
     <div onClick={() => !readOnly && setEditing(true)}
-      className={cn("-mx-2 whitespace-pre-wrap rounded-lg px-2 py-1.5 text-[13.5px] leading-relaxed", val ? "text-ink-2" : "text-ink-4", !readOnly && "cursor-text hover:bg-subtle/70")}>
+      className={cn("-mx-2 whitespace-pre-wrap rounded-lg px-2 py-1.5 text-[13px] leading-relaxed", val ? "text-ink-2" : "text-ink-4", !readOnly && "cursor-text hover:bg-subtle/70")}>
       {val || (readOnly ? "No description." : "Add a description…")}
     </div>
   );
@@ -111,7 +111,7 @@ export function TaskProperties({ t, options, readOnly }: { t: PropsTask; options
   const people: Option[] = options.people.map((p) => ({ value: p.id, label: p.name, hint: p.title ?? undefined, icon: <Avatar name={p.name} color={p.color} size={18} /> }));
   const owners: Option[] = [
     ...people,
-    ...options.teams.map((tm) => ({ value: `team:${tm.id}`, label: `${tm.name}`, hint: "Team", icon: <span className="flex size-[18px] items-center justify-center rounded-[5px] bg-muted text-[8.5px] font-semibold text-ink-2">{tm.name.slice(0, 2).toUpperCase()}</span> })),
+    ...options.teams.map((tm) => ({ value: `team:${tm.id}`, label: `${tm.name}`, hint: "Team", icon: <span className="flex size-[18px] items-center justify-center rounded-[5px] bg-muted text-[9.5px] font-semibold text-ink-2">{tm.name.slice(0, 2).toUpperCase()}</span> })),
   ];
   const ownerValue = t.owner_id ?? (t.owner_team_id ? `team:${t.owner_team_id}` : null);
   const statusOpts: Option[] = (Object.keys(TASK_STATUS) as TaskStatus[]).map((k) => ({ value: k, label: TASK_STATUS[k].label, icon: toneDot(TASK_STATUS[k].tone) }));

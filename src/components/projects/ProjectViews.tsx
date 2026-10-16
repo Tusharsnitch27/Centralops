@@ -41,7 +41,7 @@ export function ProjectCard({ p }: { p: ProjectListItem }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="mb-0.5 flex items-center gap-2 font-mono text-[11px] text-ink-4">{p.code ?? "—"}{p.status !== "active" && <ProjectStatusBadge status={p.status} />}</div>
-          <div className="line-clamp-2 text-[14px] font-medium leading-snug text-ink group-hover:underline group-hover:decoration-line-strong group-hover:underline-offset-4">{p.name}</div>
+          <div className="line-clamp-2 text-[13px] font-medium leading-snug text-ink group-hover:underline group-hover:decoration-line-strong group-hover:underline-offset-4">{p.name}</div>
         </div>
         <HealthBadge health={p.health} className="shrink-0" />
       </div>

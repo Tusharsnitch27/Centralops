@@ -4,7 +4,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Bell, Plus, Search } from "lucide-react";
 import * as Icons from "lucide-react";
-import { NAV } from "@/lib/nav";
 import { Kbd } from "@/components/ui";
 import { Popover } from "@/components/ui/client";
 import { ago } from "@/lib/dates";
@@ -17,50 +16,26 @@ import { LogoMark } from "./Logo";
 
 interface Note { id: string; kind: string; title: string; body: string | null; href: string | null; read_at: string | null; created_at: string; actor_name: string | null }
 
-type IconCmp = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
 
-/** Floating top bar: brand · primary navigation · search · actions. */
-export function Topbar({ unread, counts, user }: { unread: number; counts: Record<string, number>; user: { name: string; title: string | null } }) {
-  const path = usePathname();
-  const items = NAV.flatMap((g) => g.items);
-  const isActive = (href: string, match: string[] = []) => (href === "/" ? path === "/" : [href, ...match].some((h) => path === h || path.startsWith(`${h}/`)));
+/** Top bar: page breadcrumb · search · actions. Navigation lives in the sidebar (desktop) / bottom bar (mobile). */
+export function Topbar({ unread, user }: { unread: number; counts?: Record<string, number>; user: { name: string; title: string | null } }) {
   return (
-    <div className="sticky top-0 z-30 pt-3">
-      <div className="mx-auto flex h-[64px] items-center gap-3 rounded-[22px] border border-white bg-white/85 px-3 shadow-[0_1px_2px_rgb(17_18_20/0.04),0_10px_30px_-12px_rgb(17_18_20/0.12)] backdrop-blur-xl md:px-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5 pr-2 lg:hidden">
-          <LogoMark size={36} />
-          <span className="hidden leading-tight sm:block">
-            <span className="block text-[15.5px] font-bold tracking-[-0.02em] text-ink">Central Ops</span>
-            <span className="block text-[11px] font-medium text-ink-3">Program Manager 2.0</span>
-          </span>
+    <div className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-md">
+      <div className="flex h-14 items-center gap-2 px-4 md:px-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2 lg:hidden">
+          <LogoMark size={26} />
         </Link>
         <PageTitle />
-        <nav className="mx-auto flex items-center gap-1 overflow-x-auto rounded-full bg-subtle p-1 [scrollbar-width:none] lg:hidden">
-          {items.map((it) => {
-            const Icon = ((Icons as unknown as Record<string, IconCmp>)[it.icon] ?? Icons.Circle) as IconCmp;
-            const on = isActive(it.href, it.match);
-            const n = it.countKey ? counts[it.countKey] ?? 0 : 0;
-            return (
-              <Link key={it.href} href={it.href} prefetch={false}
-                className={cn("relative flex h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-[13.5px] font-semibold transition-all", on ? "text-white shadow-[0_6px_16px_-8px_var(--color-accent)]" : "text-ink-3 hover:bg-white hover:text-ink")}
-                style={on ? { background: "linear-gradient(135deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 70%, var(--color-accent-2)))" } : undefined}>
-                <Icon size={16} strokeWidth={2} />
-                <span className="hidden md:inline">{it.label}</span>
-                {n > 0 && <span className={cn("min-w-[18px] rounded-full px-1.5 text-center text-[10.5px] font-bold tabular", on ? "bg-white/25 text-white" : it.countKey === "overdue" ? "bg-bad text-white" : "bg-accent-soft text-accent-ink")}>{n}</span>}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button onClick={() => openPalette()} title="Search (⌘K)" className="flex h-10 items-center gap-2.5 rounded-full border border-line bg-subtle/60 px-4 text-[13.5px] text-ink-3 transition-colors hover:border-line-strong hover:bg-white hover:text-ink lg:w-[340px]">
-            <Search size={16} /><span className="hidden flex-1 text-left lg:inline">Search tasks, meetings, AOP lines…</span><span className="hidden items-center gap-0.5 xl:flex"><Kbd>⌘</Kbd><Kbd>K</Kbd></span>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          <button onClick={() => openPalette()} title="Search (⌘K)" className="flex h-8 items-center gap-2 rounded-lg px-2 text-[12.5px] text-ink-4 transition-colors hover:bg-subtle hover:text-ink md:w-[280px] md:border md:border-line md:bg-surface md:px-3">
+            <Search size={15} /><span className="hidden flex-1 text-left md:inline">Search…</span><span className="hidden items-center gap-0.5 md:flex"><Kbd>⌘</Kbd><Kbd>K</Kbd></span>
           </button>
           <ThemePicker />
           <Notifications unread={unread} />
-          <button onClick={() => openQuickAdd()} title="Quick add (C)" className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink-2">
-            <Plus size={15} strokeWidth={2.4} /><span className="hidden sm:inline">New</span>
+          <button onClick={() => openQuickAdd()} title="Quick add (C)" className="ml-1 flex h-8 items-center gap-1.5 rounded-lg bg-ink px-2.5 text-[12.5px] font-medium text-white transition-colors hover:bg-ink-2 sm:px-3">
+            <Plus size={14} strokeWidth={2.2} /><span className="hidden sm:inline">New</span>
           </button>
-          <span className="lg:hidden"><UserMenu user={user} /></span>
+          <span className="ml-1 lg:hidden"><UserMenu user={user} /></span>
         </div>
       </div>
     </div>
@@ -75,10 +50,10 @@ function PageTitle() {
   const path = usePathname();
   const hit = TITLES.find(([re]) => re.test(path));
   return (
-    <div className="hidden min-w-0 items-center gap-2 pl-2 lg:flex">
-      <span className="text-[13px] font-medium text-ink-4">{hit?.[1]}</span>
-      <span className="text-ink-4">/</span>
-      <span className="text-[14px] font-bold text-ink">{hit?.[2]}</span>
+    <div className="flex min-w-0 items-center gap-1.5">
+      <span className="hidden text-[12.5px] text-ink-4 sm:inline">{hit?.[1]}</span>
+      <span className="hidden text-ink-4/60 sm:inline">/</span>
+      <span className="truncate text-[13px] font-semibold text-ink">{hit?.[2]}</span>
     </div>
   );
 }
@@ -86,12 +61,12 @@ function PageTitle() {
 function UserMenu({ user }: { user: { name: string; title: string | null } }) {
   return (
     <Popover align="end" className="w-[220px]" trigger={({ toggle }) => (
-      <button onClick={toggle} className="flex size-9 items-center justify-center rounded-full text-[13px] font-bold text-white ring-2 ring-white" style={{ background: "linear-gradient(135deg, var(--color-ink-2), var(--color-ink))" }} title={user.name}>
+      <button onClick={toggle} className="flex size-7 items-center justify-center rounded-full bg-ink text-[11.5px] font-semibold text-white" title={user.name}>
         {user.name.slice(0, 1)}
       </button>
     )}>
       <div className="px-2 pb-2 pt-1.5">
-        <div className="text-[13.5px] font-semibold text-ink">{user.name}</div>
+        <div className="text-[13px] font-semibold text-ink">{user.name}</div>
         <div className="text-[12px] text-ink-3">{user.title}</div>
       </div>
       <Link href="/settings" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink-2 hover:bg-subtle hover:text-ink"><Icons.Settings size={14} /> Settings</Link>
@@ -110,11 +85,11 @@ function Notifications({ unread }: { unread: number }) {
   useEffect(() => setCount(unread), [unread]);
   const load = () => fetch("/api/notifications").then((r) => r.json()).then((d) => setItems(d.items ?? []));
   return (
-    <Popover align="end" className="w-[380px] p-0" onOpenChange={(o) => o && load()}
+    <Popover align="end" className="w-[min(380px,calc(100vw-24px))] p-0" onOpenChange={(o) => o && load()}
       trigger={({ toggle }) => (
-        <button onClick={toggle} className="relative flex size-9 items-center justify-center rounded-full border border-line bg-white text-ink-3 hover:border-line-strong hover:text-ink" title="Notifications">
-          <Bell size={16} />
-          {count > 0 && <span className="absolute right-1 top-1 flex min-w-[15px] items-center justify-center rounded-full bg-bad px-1 text-[9.5px] font-semibold text-white">{count > 9 ? "9+" : count}</span>}
+        <button onClick={toggle} className="relative flex size-8 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-subtle hover:text-ink" title="Notifications">
+          <Bell size={15} />
+          {count > 0 && <span className="absolute right-1 top-1 flex min-w-[15px] items-center justify-center rounded-full bg-bad px-1 text-[10px] font-semibold text-white">{count > 9 ? "9+" : count}</span>}
         </button>
       )}>
       {(close) => (

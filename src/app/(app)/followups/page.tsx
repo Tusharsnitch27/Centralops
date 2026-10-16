@@ -151,7 +151,7 @@ function Kpi({ href, label, value, hint, tone }: { href: string; label: string; 
   return (
     <a href={href} className="group block px-5 py-4 transition-colors hover:bg-subtle/50">
       <div className="eyebrow mb-1.5 flex items-center justify-between">{label}<ArrowRight size={12} className="text-ink-4 opacity-0 transition-opacity group-hover:opacity-100" /></div>
-      <div className="font-serif text-[28px] leading-none tabular text-ink">{value}</div>
+      <div className="font-serif text-[22px] leading-none tabular text-ink">{value}</div>
       <div className={cn("mt-1.5 text-[12px]", tone === "red" ? "text-bad" : tone === "amber" ? "text-warn" : "text-ink-3")}>{hint}</div>
     </a>
   );
@@ -180,11 +180,11 @@ function QueueRow({ i }: { i: FollowupItem }) {
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <span className="relative mt-0.5 shrink-0">
           {t.owner_name ? <Avatar name={t.owner_name} color={t.owner_color} size={28} />
-            : <span className="flex size-7 items-center justify-center rounded-lg bg-muted text-[10px] font-semibold text-ink-2">{(t.owner_team_name ?? "?").slice(0, 2).toUpperCase()}</span>}
+            : <span className="flex size-7 items-center justify-center rounded-lg bg-muted text-[10.5px] font-semibold text-ink-2">{(t.owner_team_name ?? "?").slice(0, 2).toUpperCase()}</span>}
           <span className={cn("absolute -right-0.5 -top-0.5 size-2.5 rounded-full ring-2 ring-surface", s.dot)} title={`${s.label} severity`} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[13.5px] leading-snug text-ink">{i.reason}</p>
+          <p className="text-[13px] leading-snug text-ink">{i.reason}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-3">
             <Link href={`/tasks/${t.id}`} className="font-mono text-[11px] text-ink-4 hover:text-ink">CO-{t.number}</Link>
             <span>·</span>

@@ -45,17 +45,17 @@ export default async function CommandCentre() {
       {/* Header */}
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <h1 className="text-[34px] font-extrabold leading-[1.08] tracking-[-0.04em]">{greeting()}, <span className="text-gradient">{first}</span></h1>
-          <p className="mt-2 text-[14.5px] font-medium text-ink-3">
+          <h1 className="text-[26px] font-semibold leading-[1.08] tracking-[-0.02em]">{greeting()}, <span className="text-gradient">{first}</span></h1>
+          <p className="mt-2 text-[13.5px] font-medium text-ink-3">
             {items.length ? <>Here’s what needs your attention today — <span className="text-ink-2">{plural(items.length, "item")}</span>, most important first.</> : "Nothing needs your attention right now. Enjoy the calm."}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink-2 shadow-[var(--shadow-card)]">
-          <CalendarClock size={15} className="text-accent" /> {fmtDate(today(), { dow: true })}
+        <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-3">
+          <CalendarClock size={14} /> {fmtDate(today(), { dow: true })}
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <StatCard label="Open tasks" value={stats.openTasks} href="/tasks" icon={<ListChecks size={15} />} bars={series.completed.map((d) => d.value)}
           badge={`${sum(series.completed)} done this week`} foot="Completed per day · 14 days" />
         <StatCard label="Overdue" value={stats.overdue} href="/tasks?view=overdue" icon={<AlarmClock size={15} />}
@@ -69,18 +69,18 @@ export default async function CommandCentre() {
       </div>
 
       {!u.onboarded_at && (
-        <Link href="/welcome" className="group flex items-center gap-4 rounded-xl border border-line bg-surface px-5 py-4 transition-colors hover:border-line-strong" style={{ boxShadow: "var(--shadow-card)" }}>
-          <span className="flex size-10 items-center justify-center rounded-xl bg-ink text-canvas"><Rocket size={17} /></span>
+        <Link href="/welcome" className="card group flex items-center gap-3 px-4 py-3 transition-colors hover:border-line-strong">
+          <span className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-ink-3 sm:flex"><Rocket size={15} /></span>
           <div className="flex-1">
-            <div className="text-[14px] font-semibold">Capture everything you’re working on</div>
+            <div className="text-[13px] font-semibold">Capture everything you’re working on</div>
             <div className="text-[12.5px] text-ink-3">Dump your open actions, recurring meetings and the people you’re waiting on — Central Ops structures it and tracks from today.</div>
           </div>
           <span className="flex items-center gap-1 text-[13px] font-medium text-ink">Start <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" /></span>
         </Link>
       )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="min-w-0 space-y-6">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="min-w-0 space-y-5">
           {/* Attention */}
           <Card className="overflow-hidden">
             <CardHeader title="Needs your attention" subtitle="Ranked across tasks, follow-ups, meetings, decisions, AOP and S&OP" />
@@ -106,7 +106,7 @@ export default async function CommandCentre() {
                       <div className={cn("w-[2px] shrink-0 rounded-full", live ? "bg-ok" : past ? "bg-line-strong" : "bg-ink-2")} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-[13.5px] font-medium">{m.title}</span>
+                          <span className="truncate text-[13px] font-medium">{m.title}</span>
                           {live && <Badge tone="green" dot>Now</Badge>}
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-[12px] text-ink-3">

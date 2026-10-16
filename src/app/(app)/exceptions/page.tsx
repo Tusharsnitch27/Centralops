@@ -109,7 +109,7 @@ export default async function ExceptionsPage() {
       {!live.length && (
         <div className="card flex flex-col items-center px-6 py-16 text-center">
           <span className="mb-3 flex size-10 items-center justify-center rounded-xl border border-line bg-subtle text-ok"><CircleCheck size={18} /></span>
-          <div className="text-[14px] font-medium">All clear</div>
+          <div className="text-[13px] font-medium">All clear</div>
           <p className="mt-1 max-w-sm text-[13px] text-ink-3">No overdue work, slipped milestones, budget overspends or late inputs.</p>
         </div>
       )}
@@ -119,10 +119,10 @@ export default async function ExceptionsPage() {
             <header className="flex items-center gap-3 border-b border-line px-4 py-3">
               <span className={cn("flex size-7 items-center justify-center rounded-lg border border-line", g.tone === "red" ? "text-bad" : g.tone === "amber" ? "text-warn" : "text-info")}>{g.icon}</span>
               <div className="min-w-0 flex-1">
-                <h2 className="truncate text-[13.5px] font-semibold text-ink">{g.title}</h2>
+                <h2 className="truncate text-[13px] font-semibold text-ink">{g.title}</h2>
                 <p className="text-[12px] text-ink-3">{plural(g.count, g.unit)}</p>
               </div>
-              <span className={cn("font-serif text-[24px] leading-none tabular", g.tone === "red" ? "text-bad" : "text-warn")}>{g.count}</span>
+              <span className={cn("font-serif text-[20px] leading-none tabular", g.tone === "red" ? "text-bad" : "text-warn")}>{g.count}</span>
             </header>
             <ul className="divide-y divide-line/70">
               {g.rows.map((r) => {

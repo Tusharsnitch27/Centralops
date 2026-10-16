@@ -66,7 +66,7 @@ export function InboxList({ items, readOnly }: { items: InboxItem[]; readOnly?: 
               <div className="flex items-center gap-2 text-[11.5px] text-ink-4">
                 <span className={cn("font-medium", k.tone)}>{k.label}</span>·<span>{ago(it.created_at)}</span>
               </div>
-              <Link href={it.href ?? "#"} className="mt-0.5 block text-[13.5px] font-medium text-ink hover:underline decoration-ink-4 underline-offset-2">{it.title}</Link>
+              <Link href={it.href ?? "#"} className="mt-0.5 block text-[13px] font-medium text-ink hover:underline decoration-ink-4 underline-offset-2">{it.title}</Link>
               {it.body && <p className="mt-0.5 text-[12.5px] text-ink-3">{it.body}</p>}
             </div>
             {!readOnly && (

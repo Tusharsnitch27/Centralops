@@ -13,7 +13,7 @@ export function MeetingRow({ m, me, showDay }: { m: Row; me: string; showDay?: b
       className="group relative grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 border-b border-line/70 px-4 py-3 transition-colors last:border-0 hover:bg-subtle/60 md:grid-cols-[minmax(0,1fr)_150px_110px_150px_150px]">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <Link href={`/meetings/${m.id}`} className="truncate text-[13.5px] font-medium text-ink before:absolute before:inset-0 before:content-[''] group-hover:underline group-hover:decoration-line-strong group-hover:underline-offset-4">{m.title}</Link>
+          <Link href={`/meetings/${m.id}`} className="truncate text-[13px] font-medium text-ink before:absolute before:inset-0 before:content-[''] group-hover:underline group-hover:decoration-line-strong group-hover:underline-offset-4">{m.title}</Link>
         </div>
         <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-3">
           {showDay && <span>{dayLabel(m.starts_at)}</span>}

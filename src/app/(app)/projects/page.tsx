@@ -78,7 +78,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: SP 
             {atRisk.slice(0, 3).map((p) => (
               <Card key={p.id} className="flex flex-col gap-2 p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <Link href={`/projects/${p.id}`} className="min-w-0 text-[13.5px] font-medium leading-snug text-ink hover:underline hover:decoration-line-strong hover:underline-offset-4">{p.name}</Link>
+                  <Link href={`/projects/${p.id}`} className="min-w-0 text-[13px] font-medium leading-snug text-ink hover:underline hover:decoration-line-strong hover:underline-offset-4">{p.name}</Link>
                   <HealthBadge health={p.health} className="shrink-0" />
                 </div>
                 <ul className="space-y-1 text-[12.5px] text-ink-2">
@@ -122,7 +122,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: SP 
               <section key={g.id ?? "none"}>
                 <div className="mb-3 flex items-center gap-2.5">
                   <span className="size-2.5 rounded-[3px]" style={{ background: g.color ?? "#a1a1aa" }} />
-                  {g.id ? <Link href={`/programs/${g.id}`} className="text-[14px] font-semibold text-ink hover:underline hover:underline-offset-4">{g.name}</Link> : <span className="text-[14px] font-semibold text-ink">{g.name}</span>}
+                  {g.id ? <Link href={`/programs/${g.id}`} className="text-[13px] font-semibold text-ink hover:underline hover:underline-offset-4">{g.name}</Link> : <span className="text-[13px] font-semibold text-ink">{g.name}</span>}
                   {g.code && <span className="font-mono text-[11px] text-ink-4">{g.code}</span>}
                   <span className="text-[12px] text-ink-3">{plural(g.items.length, "project")}{risky ? <> · <span className="text-warn">{risky} at risk</span></> : null}</span>
                 </div>

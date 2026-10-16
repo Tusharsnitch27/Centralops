@@ -36,7 +36,7 @@ export default async function SopOverview() {
           <div className="eyebrow mb-2 flex items-center gap-1.5"><ClipboardList size={12} />Inputs · {fmtMonth(o.next)}</div>
           {pendingStreams.length ? (
             <>
-              <div className="font-serif text-[22px] leading-tight text-ink">{pendingStreams.length} of {nextCells.length} streams pending</div>
+              <div className="font-serif text-[19px] leading-tight text-ink">{pendingStreams.length} of {nextCells.length} streams pending</div>
               <p className="mt-1 text-[12.5px] text-ink-3">{nextDue ? <>Due {fmtDate(nextDue)} · <span className={cn(nextDue < o.td && "text-bad")}>{dueLabel(nextDue, o.td)}</span></> : null}</p>
               <div className="mt-3 flex items-center gap-2">
                 <AvatarStack people={pendingStreams.map((s) => ({ name: s.poc_name ?? s.poc_label ?? "?", color: s.poc_color }))} max={5} />
@@ -44,7 +44,7 @@ export default async function SopOverview() {
               </div>
             </>
           ) : (
-            <div className="font-serif text-[22px] leading-tight text-ink">All {nextCells.length} streams in</div>
+            <div className="font-serif text-[19px] leading-tight text-ink">All {nextCells.length} streams in</div>
           )}
           {o.curLate.length > 0 && (
             <p className="mt-2 text-[12px] text-bad">{o.curLate.map((c) => streamById.get(c.stream_id)?.name).join(", ")} still missing for {fmtMonth(o.cur)}</p>
@@ -58,7 +58,7 @@ export default async function SopOverview() {
         <Card className="flex flex-col p-4">
           <div className="eyebrow mb-2 flex items-center gap-1.5"><Gauge size={12} />Accuracy · {fmtMonth(o.lastClosed)}</div>
           <div className="flex items-baseline gap-2">
-            <span className="font-serif text-[30px] leading-none"><AccuracyText a={o.overall.accuracy} threshold={th} /></span>
+            <span className="font-serif text-[24px] leading-none"><AccuracyText a={o.overall.accuracy} threshold={th} /></span>
             {o.overall.bias != null && <span className="text-[12.5px] text-ink-3">{o.overall.bias > 0 ? "under" : "over"}-projected by {pct(Math.abs(o.overall.bias))}</span>}
           </div>
           {o.overall.demo && <DemoBadge long className="mt-2 self-start" />}
@@ -78,7 +78,7 @@ export default async function SopOverview() {
           <div className="eyebrow mb-2 flex items-center gap-1.5"><Warehouse size={12} />Capacity · next 3 months</div>
           {o.breaches.length ? (
             <>
-              <div className="font-serif text-[22px] leading-tight text-ink">{plural(o.breaches.length, "breach", "breaches")}</div>
+              <div className="font-serif text-[19px] leading-tight text-ink">{plural(o.breaches.length, "breach", "breaches")}</div>
               <p className="mt-1 text-[12.5px] text-ink-3">Required &gt; available in {breachMonths.map((p) => fmtMonth(p, false)).join(", ")}</p>
               {topBreach && (
                 <p className="mt-3 text-[12.5px] text-ink-2">
@@ -86,7 +86,7 @@ export default async function SopOverview() {
                 </p>
               )}
             </>
-          ) : <div className="font-serif text-[22px] leading-tight text-ink">No breaches</div>}
+          ) : <div className="font-serif text-[19px] leading-tight text-ink">No breaches</div>}
           <div className="mt-auto flex items-center gap-2 pt-4">
             <ButtonLink href={`/sop/capacity${topBreach ? `?month=${topBreach.period}` : ""}`} size="xs" variant={o.breaches.length ? "primary" : "secondary"}>Plan capacity</ButtonLink>
           </div>
@@ -96,7 +96,7 @@ export default async function SopOverview() {
           <div className="eyebrow mb-2 flex items-center gap-1.5"><CalendarClock size={12} />Next review</div>
           {o.nextReview ? (
             <>
-              <div className="font-serif text-[22px] leading-tight text-ink">{relDay(dateOf(o.nextReview.starts_at), o.td)}, {fmtTime(o.nextReview.starts_at)}</div>
+              <div className="font-serif text-[19px] leading-tight text-ink">{relDay(dateOf(o.nextReview.starts_at), o.td)}, {fmtTime(o.nextReview.starts_at)}</div>
               <p className="mt-1 text-[12.5px] text-ink-3">{o.nextReview.title} · {fmtDate(dateOf(o.nextReview.starts_at), { dow: true })}</p>
               <p className="mt-3 text-[12.5px] text-ink-2">{o.nextReview.attendees} attendees{o.nextReview.mom_owner_name ? ` · MoM by ${o.nextReview.mom_owner_name}` : ""}</p>
               <p className="text-[12.5px] text-ink-3">{plural(o.actions.length, "open action")} carried in</p>
@@ -120,7 +120,7 @@ export default async function SopOverview() {
               <Card key={s.id} className="flex flex-col">
                 <div className="flex items-start justify-between gap-2 px-4 pt-3.5">
                   <div className="min-w-0">
-                    <Link href={`/sop/projections?stream=${s.id}`} className="block truncate text-[14px] font-semibold text-ink hover:underline">{s.name}</Link>
+                    <Link href={`/sop/projections?stream=${s.id}`} className="block truncate text-[13px] font-semibold text-ink hover:underline">{s.name}</Link>
                     <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-3">
                       <Avatar name={s.poc_name ?? s.poc_label} color={s.poc_color} size={16} />{s.poc_name ?? s.poc_label ?? "No POC"}
                       <span className="text-ink-4">·</span><span className="capitalize">{s.area}</span>
@@ -129,9 +129,9 @@ export default async function SopOverview() {
                   {c.next && <SubChip cell={c.next} />}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 border-y border-line/70 bg-subtle/40 px-4 py-2.5">
-                  <div><div className="text-[10.5px] uppercase tracking-[0.06em] text-ink-4">Projection</div><div className="tabular text-[15px] text-ink">{num(c.closed.proj)}</div></div>
-                  <div><div className="text-[10.5px] uppercase tracking-[0.06em] text-ink-4">Actual</div><div className={cn("tabular text-[15px]", c.closed.demo ? "text-warn" : "text-ink")}>{num(c.closed.act)}</div></div>
-                  <div><div className="text-[10.5px] uppercase tracking-[0.06em] text-ink-4">Variance</div><div className="text-[15px]"><Variance v={c.closed.variance} threshold={th} /></div></div>
+                  <div><div className="text-[10.5px] uppercase tracking-[0.06em] text-ink-4">Projection</div><div className="tabular text-[14px] text-ink">{num(c.closed.proj)}</div></div>
+                  <div><div className="text-[10.5px] uppercase tracking-[0.06em] text-ink-4">Actual</div><div className={cn("tabular text-[14px]", c.closed.demo ? "text-warn" : "text-ink")}>{num(c.closed.act)}</div></div>
+                  <div><div className="text-[10.5px] uppercase tracking-[0.06em] text-ink-4">Variance</div><div className="text-[14px]"><Variance v={c.closed.variance} threshold={th} /></div></div>
                 </div>
                 <div className="flex-1 space-y-1.5 px-4 py-2.5 text-[12.5px]">
                   <div className="flex items-center justify-between text-ink-3">

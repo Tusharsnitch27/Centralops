@@ -37,7 +37,7 @@ export function VarianceGrid({ tree }: { tree: SummaryTree }) {
     <div className="card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div>
-          <div className="text-[16px] font-bold tracking-[-0.01em] text-ink">Monthly variance</div>
+          <div className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">Monthly variance</div>
           <div className="text-[12px] text-ink-3">{mode === "mom" ? `${L.actual} change vs previous month, like-for-like lines` : `${L.actual} vs ${mode === "plan" ? L.plan : L.forecast}, reported lines only`}</div>
         </div>
         <div className="seg">
@@ -49,7 +49,7 @@ export function VarianceGrid({ tree }: { tree: SummaryTree }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-[12.5px]">
           <thead>
-            <tr className="thead-hl border-b border-line text-[11px] font-bold uppercase tracking-[0.08em]">
+            <tr className="thead-hl border-b border-line text-[11px] font-semibold uppercase tracking-[0.08em]">
               <th className="px-4 py-2 text-left font-medium">Function</th>
               {months.map((p) => <th key={p} className="px-3 py-2 text-right font-medium">{monShort(p)}</th>)}
             </tr>

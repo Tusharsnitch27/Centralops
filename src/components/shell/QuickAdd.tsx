@@ -80,7 +80,7 @@ export function QuickAdd() {
       </div>
       <input autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder={k.placeholder}
         onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-        className="w-full bg-transparent py-1 text-[17px] font-medium outline-none placeholder:font-normal placeholder:text-ink-4" />
+        className="w-full bg-transparent py-1 text-[15px] font-medium outline-none placeholder:font-normal placeholder:text-ink-4" />
       <div className="mt-2 flex min-h-6 flex-wrap items-center gap-1.5">
         {owner && <Chip icon={<Avatar name={owner.name} color={owner.color} size={16} />}>{owner.name}</Chip>}
         {!owner && parsed.owner && <Chip icon={<User size={12} />}>@{parsed.owner} (team or unknown)</Chip>}

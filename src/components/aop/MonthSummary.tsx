@@ -82,23 +82,23 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
           <div>
             <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-white/50">Opex · {span.label}</div>
             <div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1">
-              <span className="text-[44px] font-extrabold leading-none tracking-[-0.035em] tabular text-white">{total.hasActual ? inr(total.actual) : "—"}</span>
+              <span className="text-[32px] font-semibold leading-none tracking-[-0.02em] tabular text-white">{total.hasActual ? inr(total.actual) : "—"}</span>
               {total.hasActual && total.planReported > 0 && (
-                <span className={cn("mb-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-bold", total.actual > total.planReported ? "bg-[#ff6b6b]/20 text-[#ffb3b3]" : "text-white")}
+                <span className={cn("mb-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold", total.actual > total.planReported ? "bg-[#ff6b6b]/20 text-[#ffb3b3]" : "text-white")}
                   style={total.actual <= total.planReported ? { background: "color-mix(in srgb, var(--color-accent) 45%, transparent)" } : undefined}>
                   {pct((total.actual - total.planReported) / total.planReported, 1, true)} vs {L.plan.toLowerCase()}
                 </span>
               )}
             </div>
-            <div className="mt-1.5 text-[14px] font-medium text-white/60">{L.actual} · {L.plan} {inr(total.plan)}</div>
-            <p className="mt-4 max-w-[560px] text-[14px] leading-relaxed text-white/80">
-              {total.hasActual ? <>Reported lines are <b className="font-bold text-white">{inr(Math.abs(total.actual - total.planReported))} {total.actual > total.planReported ? `over ${L.plan.toLowerCase()}` : `under ${L.plan.toLowerCase()}`}</b>. </> : null}
-              {total.missing ? <><b className="font-bold text-white">{total.missing} line{total.missing === 1 ? "" : "s"}</b> still to report {L.actual.toLowerCase()}. </> : closed ? "Every line has reported. " : null}
-              {devs.length ? <><b className="font-bold text-white">{devs.length} item{devs.length === 1 ? "" : "s"}</b> flagged for review.</> : null}
+            <div className="mt-1.5 text-[13px] font-medium text-white/60">{L.actual} · {L.plan} {inr(total.plan)}</div>
+            <p className="mt-4 max-w-[560px] text-[13px] leading-relaxed text-white/80">
+              {total.hasActual ? <>Reported lines are <b className="font-semibold text-white">{inr(Math.abs(total.actual - total.planReported))} {total.actual > total.planReported ? `over ${L.plan.toLowerCase()}` : `under ${L.plan.toLowerCase()}`}</b>. </> : null}
+              {total.missing ? <><b className="font-semibold text-white">{total.missing} line{total.missing === 1 ? "" : "s"}</b> still to report {L.actual.toLowerCase()}. </> : closed ? "Every line has reported. " : null}
+              {devs.length ? <><b className="font-semibold text-white">{devs.length} item{devs.length === 1 ? "" : "s"}</b> flagged for review.</> : null}
             </p>
           </div>
           <div>
-            <div className="mb-2 flex justify-between text-[12px] font-medium text-white/60"><span>{L.actual} vs {L.plan}</span><span className="font-bold text-white">{total.plan ? pct(total.actual / total.plan, 0) : "—"}</span></div>
+            <div className="mb-2 flex justify-between text-[12px] font-medium text-white/60"><span>{L.actual} vs {L.plan}</span><span className="font-semibold text-white">{total.plan ? pct(total.actual / total.plan, 0) : "—"}</span></div>
             <div className="h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full" style={{ width: `${Math.min(100, total.plan ? (total.actual / total.plan) * 100 : 0)}%`, background: "linear-gradient(90deg, var(--color-accent), var(--color-accent-2))" }} />
             </div>
@@ -123,10 +123,10 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
 
       <div className="space-y-5">
         {/* Function table */}
-        <div className="card min-w-0 overflow-visible">
+        <div className="card min-w-0 overflow-x-auto lg:overflow-visible">
           <table className="w-full border-collapse text-[13px]">
             <thead>
-              <tr className="thead-hl border-b border-line text-[11px] font-bold uppercase tracking-[0.08em]">
+              <tr className="thead-hl border-b border-line text-[11px] font-semibold uppercase tracking-[0.08em]">
                 <th className="px-4 py-2.5 text-left font-medium">Function · line</th>
                 <th className="px-3 py-2.5 text-right font-medium">{L.plan}</th>
                 <th className="px-3 py-2.5 text-right font-medium">{L.forecast}</th>
@@ -181,7 +181,7 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
         <div className="card">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <div>
-              <div className="text-[16px] font-bold tracking-[-0.01em] text-ink">Key items to review</div>
+              <div className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">Key items to review</div>
               <div className="text-[12px] text-ink-3">{span.label} · {devs.length} deviation{devs.length === 1 ? "" : "s"}</div>
             </div>
             <Link href={`${reviewHref}${reviewHref.includes("?") ? "&" : "?"}period=${period}`} className="flex items-center gap-1 text-[12px] text-ink-3 hover:text-ink">Review <ArrowUpRight size={12} /></Link>
@@ -277,7 +277,7 @@ function Kpi({ label, value, hint, hintTone }: { label: string; value: React.Rea
   return (
     <div className="min-w-0 border-b border-line md:border-b-0">
       <div className="eyebrow mb-1.5 truncate">{label}</div>
-      <div className="whitespace-nowrap font-serif text-[24px] leading-none tabular text-ink">{value}</div>
+      <div className="whitespace-nowrap font-serif text-[20px] leading-none tabular text-ink">{value}</div>
       {hint && <div className={cn("mt-1.5 truncate text-[11.5px]", hintTone === "warn" ? "text-warn" : "text-ink-3")}>{hint}</div>}
     </div>
   );
@@ -318,7 +318,7 @@ function HeroTile({ label, value, hint, tone }: { label: string; value: React.Re
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
       <div className="text-[11.5px] font-semibold text-white/55">{label}</div>
-      <div className={cn("mt-2 text-[26px] font-extrabold leading-none tracking-[-0.03em] tabular", tone === "bad" ? "text-[#ffb3b3]" : "text-white")}
+      <div className={cn("mt-2 text-[22px] font-semibold leading-none tracking-[-0.02em] tabular", tone === "bad" ? "text-[#ffb3b3]" : "text-white")}
         style={tone === "ok" ? { color: "var(--color-accent-2)" } : undefined}>{value}</div>
       {hint && <div className="mt-2 truncate text-[11.5px] font-medium text-white/50">{hint}</div>}
     </div>

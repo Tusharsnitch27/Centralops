@@ -19,8 +19,8 @@ export function MonthlySpendChart({ tree, selected }: { tree: SummaryTree; selec
   return (
     <div className="card p-5">
       <div className="mb-1 flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-xl bg-accent-soft text-accent"><BarChart3 size={16} /></span>
-        <div className="text-[16px] font-bold tracking-[-0.01em]">Monthly spend</div>
+        <span className="flex items-center justify-center text-ink-4"><BarChart3 size={16} /></span>
+        <div className="text-[14.5px] font-semibold tracking-[-0.01em]">Monthly spend</div>
       </div>
       <div className="mb-3 ml-10 flex flex-wrap gap-x-4 gap-y-1 text-[12px] font-medium text-ink-3">
         <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-muted" />{L.plan}</span>
@@ -65,17 +65,17 @@ export function FunctionBars({ tree, periods }: { tree: SummaryTree; periods: st
   return (
     <div className="card p-5">
       <div className="mb-4 flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-xl bg-accent-soft text-accent"><Layers size={16} /></span>
-        <div className="text-[16px] font-bold tracking-[-0.01em]">By function</div>
+        <span className="flex items-center justify-center text-ink-4"><Layers size={16} /></span>
+        <div className="text-[14.5px] font-semibold tracking-[-0.01em]">By function</div>
         <span className="ml-auto text-[12px] font-medium text-ink-3">{L.actual} vs {L.plan.toLowerCase()}</span>
       </div>
       <div className="space-y-4">
         {rows.map((r) => (
           <div key={r.name}>
             <div className="mb-1.5 flex items-baseline justify-between gap-2">
-              <span className="text-[13.5px] font-semibold text-ink">{r.name}</span>
-              <span className="text-[13px] tabular"><b className="font-bold text-ink">{inr(r.actual)}</b> <span className="text-ink-4">/ {inr(r.plan)}</span>
-                {r.gap != null && <span className={r.gap > 0.005 ? "ml-2 font-bold text-bad" : "ml-2 font-bold text-accent-ink"}>{pct(r.gap, 0, true)}</span>}</span>
+              <span className="text-[13px] font-semibold text-ink">{r.name}</span>
+              <span className="text-[13px] tabular"><b className="font-semibold text-ink">{inr(r.actual)}</b> <span className="text-ink-4">/ {inr(r.plan)}</span>
+                {r.gap != null && <span className={r.gap > 0.005 ? "ml-2 font-semibold text-bad" : "ml-2 font-semibold text-accent-ink"}>{pct(r.gap, 0, true)}</span>}</span>
             </div>
             <div className="relative h-2.5 overflow-hidden rounded-full bg-muted">
               <div className="absolute inset-y-0 left-0 rounded-full bg-line-strong/70" style={{ width: `${(r.plan / max) * 100}%` }} />

@@ -118,7 +118,7 @@ export function InputsForm({ cycleId, period, kind, ownerId, rows, labels: L, th
           </div>
         ))}
       </div>
-      <div className="sticky bottom-0 mt-4 flex items-center gap-3 rounded-xl border border-line bg-surface/95 px-4 py-3 backdrop-blur" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="sticky bottom-[64px] mt-4 flex flex-wrap items-center gap-3 lg:bottom-0 rounded-xl border border-line bg-surface/95 px-4 py-3 backdrop-blur" style={{ boxShadow: "var(--shadow-card)" }}>
         <CheckCircle2 size={16} className={filled === rows.length ? "text-ok" : "text-ink-4"} />
         <span className="text-[13px] text-ink-2"><b className="tabular font-semibold text-ink">{filled}</b> of {rows.length} lines have {kind === "actuals" ? L.actual.toLowerCase() : L.forecast.toLowerCase()}</span>
         <span className="hidden text-[12px] text-ink-4 md:inline">Values in ₹ — “12.5L” and “1.2Cr” also work</span>

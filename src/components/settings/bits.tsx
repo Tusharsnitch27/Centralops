@@ -35,7 +35,7 @@ export function Section({ title, description, children, action }: { title: React
   return (
     <section className="grid gap-4 border-b border-line py-6 first:pt-0 last:border-0 md:grid-cols-[240px_minmax(0,1fr)]">
       <div>
-        <h2 className="text-[13.5px] font-semibold text-ink">{title}</h2>
+        <h2 className="text-[13px] font-semibold text-ink">{title}</h2>
         {description && <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3">{description}</p>}
         {action && <div className="mt-3">{action}</div>}
       </div>

@@ -67,7 +67,7 @@ export function CommandPalette() {
         <div className="flex items-center gap-2.5 border-b border-line px-4">
           <Icons.Search size={16} className="text-ink-4" />
           <Command.Input autoFocus value={query} onValueChange={setQuery} placeholder="Search tasks, projects, meetings, people… or type a command"
-            className="h-12 flex-1 bg-transparent text-[14px] outline-none placeholder:text-ink-4" />
+            className="h-12 flex-1 bg-transparent text-[13px] outline-none placeholder:text-ink-4" />
         </div>
         <Command.List className="max-h-[400px] overflow-y-auto p-1.5 scroll-thin [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.06em] [&_[cmdk-group-heading]]:text-ink-4">
           <Command.Empty className="px-3 py-8 text-center text-[13px] text-ink-3">

@@ -70,7 +70,7 @@ export default async function RisksPage({ searchParams }: { searchParams: SP }) 
               <Link key={l.key} href={keep({ level: on ? null : l.key, p: null, i: null })} scroll={false}
                 className={`card flex flex-col justify-between p-4 transition-colors hover:border-line-strong ${on ? "ring-2 ring-ink/80" : ""}`}>
                 <span className="eyebrow">{l.label}</span>
-                <span className={`mt-2 font-serif text-[30px] leading-none tabular ${n ? tone : "text-ink-4"}`}>{n}</span>
+                <span className={`mt-2 font-serif text-[24px] leading-none tabular ${n ? tone : "text-ink-4"}`}>{n}</span>
                 <span className="mt-2 text-[11.5px] text-ink-4">score {LEVEL_RANGE[l.key][0]}–{LEVEL_RANGE[l.key][1]}</span>
               </Link>
             );

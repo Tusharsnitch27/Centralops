@@ -36,7 +36,7 @@ export function EodReview({ completed, open, meetings, followups }: Props) {
         <div className="flex items-center gap-2">
           <Moon size={15} className="text-ink-3" />
           <div>
-            <h2 className="text-[13.5px] font-semibold text-ink">End-of-day review</h2>
+            <h2 className="text-[13px] font-semibold text-ink">End-of-day review</h2>
             <p className="text-[12px] text-ink-3">{completed.length} done today · {open.length} still open · {meetings.length} MoM{meetings.length === 1 ? "" : "s"} owed</p>
           </div>
         </div>

@@ -77,7 +77,7 @@ async function AiRead({ items }: { items: Suggestion[] }) {
   return (
     <div className="rounded-xl border border-violet/15 bg-violet-soft/40 px-4 py-3.5">
       <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-violet"><Sparkles size={12} />{r.engine === "claude" ? "AI read" : "The read"}</div>
-      <p className="text-[13.5px] leading-relaxed text-ink-2">{r.text}</p>
+      <p className="text-[13px] leading-relaxed text-ink-2">{r.text}</p>
     </div>
   );
 }

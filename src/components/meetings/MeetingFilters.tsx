@@ -21,9 +21,9 @@ export function MeetingFilters({ reviews, programs, projects }: { reviews: Opt[]
   const any = sp.get("review") || sp.get("program") || sp.get("project");
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
-      <Combobox size="sm" className="w-[190px]" value={sp.get("review")} placeholder="All reviews" onChange={(v) => set("review", v)} options={reviews.map((r) => ({ value: r.id, label: r.name }))} />
-      <Combobox size="sm" className="w-[190px]" value={sp.get("program")} placeholder="All programs" onChange={(v) => set("program", v)} options={programs.map((r) => ({ value: r.id, label: r.name, hint: r.code ?? undefined }))} />
-      <Combobox size="sm" className="w-[190px]" value={sp.get("project")} placeholder="All projects" onChange={(v) => set("project", v)} options={projects.map((r) => ({ value: r.id, label: r.name, hint: r.code ?? undefined }))} />
+      <Combobox size="sm" className="min-w-0 flex-1 sm:w-[190px] sm:flex-none" value={sp.get("review")} placeholder="All reviews" onChange={(v) => set("review", v)} options={reviews.map((r) => ({ value: r.id, label: r.name }))} />
+      <Combobox size="sm" className="min-w-0 flex-1 sm:w-[190px] sm:flex-none" value={sp.get("program")} placeholder="All programs" onChange={(v) => set("program", v)} options={programs.map((r) => ({ value: r.id, label: r.name, hint: r.code ?? undefined }))} />
+      <Combobox size="sm" className="min-w-0 flex-1 sm:w-[190px] sm:flex-none" value={sp.get("project")} placeholder="All projects" onChange={(v) => set("project", v)} options={projects.map((r) => ({ value: r.id, label: r.name, hint: r.code ?? undefined }))} />
       {any && (
         <button type="button" onClick={() => { const p = new URLSearchParams(sp.toString()); ["review", "program", "project"].forEach((k) => p.delete(k)); start(() => router.replace(`${path}?${p}`, { scroll: false })); }}
           className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[12.5px] text-ink-3 hover:bg-subtle hover:text-ink"><X size={13} />Clear</button>
