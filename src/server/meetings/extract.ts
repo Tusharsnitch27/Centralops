@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { aiStructured } from "../ai/provider";
 import { listPeople, listProjectsLite, listTeams, matchPerson, matchTeam } from "../core/people";
+import { goalOptions, projectOptions } from "../goals/queries";
 import { addDays, today, weekStart } from "@/lib/dates";
 import type { Priority } from "@/lib/meta";
 
@@ -42,6 +43,13 @@ export interface SuggestionPayload {
   probability?: number;
   impact?: number;
   mitigation?: string | null;
+  // task structure: the goal the action serves, people working on it with the owner, and what it is blocked on
+  goal_id?: string | null;
+  assignee_ids?: string[];
+  assignee_names?: string[];        // named in the minutes but not matched to the directory
+  blocker?: string | null;
+  blocker_on_id?: string | null;
+  blocker_on_name?: string | null;
 }
 export interface ExtractResult {
   engine: "claude" | "rules";
@@ -63,7 +71,11 @@ const MomSchema = z.object({
     team_name: z.string().nullable().describe("Team when the action is owned by a team rather than a person"),
     due_date: z.string().nullable().describe("YYYY-MM-DD or null"),
     priority: priorityZ,
-    project_hint: z.string().nullable(),
+    project_hint: z.string().nullable().describe("Exact project name from the list, only when the action clearly belongs to it"),
+    goal_hint: z.string().nullable().describe("Exact goal title from the list, only when the action clearly moves that goal"),
+    co_owner_names: z.array(z.string()).describe("Other people named as working on it with the owner (not the owner)"),
+    blocker: z.string().nullable().describe("What the action is stuck on, if the minutes say it is blocked / waiting"),
+    blocker_on_name: z.string().nullable().describe("Person or function it is blocked on"),
     dependency: z.string().nullable(),
   })),
   risks: z.array(z.object({
@@ -75,13 +87,14 @@ const MomSchema = z.object({
 type MomAI = z.infer<typeof MomSchema>;
 
 async function extractWithAI(text: string, ctx: ExtractCtx): Promise<MomAI | null> {
-  const [people, teams, projects] = await Promise.all([listPeople(), listTeams(), listProjectsLite()]);
+  const [people, teams, projects, goals] = await Promise.all([listPeople(), listTeams(), projectOptions(), goalOptions()]);
   const prompt = [
     `Today is ${today()} (IST). The meeting "${ctx.meetingTitle ?? "Meeting"}" happened on ${ctx.meetingDate}. Resolve relative dates ("by Friday", "next Wednesday", "by 25th", "this week", "EOD") from the meeting date.`,
     ctx.attendees?.length ? `Attendees: ${ctx.attendees.join(", ")}` : "",
     `People (use these exact names for owners): ${people.map((p) => `${p.name}${p.team_name ? ` (${p.team_name})` : ""}`).join("; ")}`,
     `Teams: ${teams.map((t) => t.name).join("; ")}`,
-    `Projects: ${projects.map((p) => `${p.name}${p.code ? ` [${p.code}]` : ""}`).join("; ")}`,
+    `Goals: ${goals.map((g) => g.title).join("; ") || "none"}`,
+    `Projects: ${projects.map((p) => `${p.name}${p.goal_id ? ` (goal: ${goals.find((g) => g.id === p.goal_id)?.title ?? "—"})` : ""}`).join("; ") || "none"}`,
     "",
     "Minutes of meeting:",
     "<<<",
@@ -92,7 +105,9 @@ async function extractWithAI(text: string, ctx: ExtractCtx): Promise<MomAI | nul
     system:
       "You are the program management office of Snitch (Indian menswear retailer), Central Operations. Extract a precise, de-duplicated set of " +
       "action items, decisions, risks and follow-ups from meeting minutes. Only include what the minutes actually say — never invent owners or dates. " +
-      "Actions are concrete deliverables with an owner (a person, or a team when no individual is named). Follow-ups are things someone is waiting on " +
+      "Actions are concrete deliverables with an owner (a person, or a team when no individual is named); list everyone else named on it as co-owners, " +
+      "link it to a goal / project from the lists only when the minutes make the link clear, and record a blocker when the minutes say it is stuck or waiting on someone. " +
+      "Follow-ups are things someone is waiting on " +
       "from another person/function (confirmations, approvals, inputs). Decisions are things that were agreed. Risks are threats to plan/timeline/cost.",
     prompt,
     tool: { name: "record_mom", description: "Record the structured extraction of the minutes" },
@@ -207,7 +222,7 @@ const MENTION_RX = /@([A-Za-z][\w.]*)/;
 const FOLLOW_RX = /^(?:need|needs|awaiting|waiting (?:on|for)|pending|get|chase)\s+(confirmation|input|inputs|approval|sign[- ]?off|response|update|numbers|data|clarity|go-ahead)\s+(?:from|with)\s+(?:the\s+)?([A-Za-z&][\w&.' -]*?)\s+(?:on|for|regarding|about|re)\s+(.+)$/i;
 const RISK_WORDS = /\b(slips?|slipping|slipped|delay(?:ed|s)?|at risk|shortage|breach(?:es)?|could (?:delay|impact|affect|hit)|may (?:delay|impact|slip|breach)|risk of)\b/i;
 
-interface RawAction { title: string; owner_name: string | null; due_date: string | null; priority: Priority; dependency: string | null; project_hint: string | null }
+interface RawAction { title: string; owner_name: string | null; due_date: string | null; priority: Priority; dependency: string | null; project_hint: string | null; goal_hint?: string | null; co_owner_names?: string[]; blocker?: string | null; blocker_on_name?: string | null }
 interface RawExtraction {
   summary: string; discussion: string[];
   decisions: { title: string; context: string | null; decision_maker_name: string | null }[];
@@ -382,14 +397,33 @@ async function toSuggestions(r: RawExtraction, ctx: ExtractCtx): Promise<Extract
   const projects = await listProjectsLite();
   const projectFromText = (t: string) => projects.find((p) => p.code && new RegExp(`\\b${p.code}\\b`).test(t))?.id;
 
+  const [goals, projOpts] = await Promise.all([goalOptions(), projectOptions()]);
+  const matchGoal = (hint: string | null | undefined) => {
+    if (!hint) return null;
+    const h = hint.toLowerCase().trim();
+    return goals.find((g) => g.title.toLowerCase() === h)?.id ?? goals.find((g) => g.title.toLowerCase().includes(h) || h.includes(g.title.toLowerCase()))?.id ?? null;
+  };
   for (const a of r.actions) {
-    const names = (a.owner_name ?? "").split(/\s(?:&|and)\s/);
+    // "Iqbal & Malhar to …": the first name owns it, the rest work on it with them
+    const names = (a.owner_name ?? "").split(/\s*(?:&|,|\band\b)\s*/).filter(Boolean);
     const person = await matchPerson(names[0]);
     const team = person ? null : await matchTeam(a.owner_name);
     const { due, note } = clampDue(a.due_date);
+    const projectId = (await matchProject(a.project_hint, null)) ?? projectFromText(a.title) ?? ctx.projectId ?? null;
+    const others = [...new Set([...(person ? names.slice(1) : []), ...(a.co_owner_names ?? [])])];
+    const assignees: string[] = [], unmatched: string[] = [];
+    for (const n of others) { const x = await matchPerson(n); if (x && x.id !== person?.id) assignees.push(x.id); else if (!x) unmatched.push(n); }
+    // rules engine: "… blocked on / waiting on Iqbal" in the line itself
+    const bm = !a.blocker ? a.title.match(/\b(?:blocked|stuck|waiting)\s+(?:on|by|for)\s+([A-Z][\w.]*(?:\s[A-Z][\w.]*)?)/) : null;
+    if (bm) { a.blocker = bm[0]; a.blocker_on_name = bm[1]; }
+    const blockerOn = a.blocker_on_name ? await matchPerson(a.blocker_on_name) : null;
     out.push({ kind: "action", payload: {
       title: a.title, owner_id: person?.id ?? null, owner_name: person?.name ?? (team ? null : a.owner_name), team_id: team?.id ?? null, team_name: team?.name ?? null,
-      due_date: due, due_note: note, priority: a.priority, project_id: (await matchProject(a.project_hint, null)) ?? projectFromText(a.title) ?? ctx.projectId ?? null,
+      due_date: due, due_note: note, priority: a.priority, project_id: projectId,
+      // goal: named in the minutes, else the goal its project serves
+      goal_id: matchGoal(a.goal_hint) ?? projOpts.find((p) => p.id === projectId)?.goal_id ?? null,
+      assignee_ids: [...new Set(assignees)], assignee_names: unmatched,
+      blocker: a.blocker ?? null, blocker_on_id: blockerOn?.id ?? null, blocker_on_name: blockerOn?.name ?? a.blocker_on_name ?? null,
       dependency: a.dependency,
     } });
   }
@@ -431,7 +465,7 @@ export async function extractMom(text: string, ctx: ExtractCtx): Promise<Extract
     const raw: RawExtraction = {
       summary: ai.summary, discussion: ai.discussion,
       decisions: ai.decisions,
-      actions: ai.actions.map((a) => ({ title: a.title, owner_name: a.owner_name ?? a.team_name, due_date: a.due_date && validIso(a.due_date) ? a.due_date : (a.due_date ? findDue(a.due_date, ctx.meetingDate).date : null), priority: a.priority, dependency: a.dependency, project_hint: a.project_hint })),
+      actions: ai.actions.map((a) => ({ title: a.title, owner_name: a.owner_name ?? a.team_name, goal_hint: a.goal_hint, co_owner_names: a.co_owner_names, blocker: a.blocker, blocker_on_name: a.blocker_on_name, due_date: a.due_date && validIso(a.due_date) ? a.due_date : (a.due_date ? findDue(a.due_date, ctx.meetingDate).date : null), priority: a.priority, dependency: a.dependency, project_hint: a.project_hint })),
       risks: ai.risks,
       followups: ai.followups.map((f) => ({ ...f, due_date: f.due_date && validIso(f.due_date) ? f.due_date : null })),
     };

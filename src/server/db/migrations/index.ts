@@ -25,6 +25,7 @@ import { sql as sopLock } from "./046_sop_lock";
 import { sql as sopDaywise } from "./047_sop_daywise";
 import { sql as sopActualsSf } from "./048_sop_actuals_snowflake";
 import { sql as permScope } from "./061_permissions_scope";
+import { sql as meetingBrief } from "./062_meeting_ai_brief";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -51,4 +52,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 47, name: "sop_daywise", sql: sopDaywise },
   { version: 48, name: "sop_actuals_snowflake", sql: sopActualsSf },
   { version: 61, name: "permissions_scope", sql: permScope },
+  { version: 62, name: "meeting_ai_brief", sql: meetingBrief },
 ];

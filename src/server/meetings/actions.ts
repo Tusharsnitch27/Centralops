@@ -304,8 +304,14 @@ export async function distributeMom(meetingId: string, input: { pmFeedback: stri
           title: p.title, description: descr(s), ownerId: p.owner_id ?? (isFollow ? u.id : null), ownerTeamId: p.owner_id ? null : p.team_id ?? null, requesterId: u.id,
           priority: p.priority ?? "medium", status: isFollow ? "waiting" : "not_started", dueDate: fixDue(p.due_date), projectId: p.project_id ?? m.project_id ?? null,
           programId: p.project_id || m.project_id ? null : m.program_id, meetingId, source: isFollow ? "followup" : "meeting", waitingOnId: isFollow ? p.waiting_on_id ?? null : null,
-          dependsOn: dep ? [dep] : [],
+          dependsOn: dep ? [dep] : [], goalId: p.goal_id ?? null, assigneeIds: isFollow ? [] : p.assignee_ids ?? [],
         }, { tx: x });
+        // blocker named in the minutes → raised on the person, cleared from the task like any other blocker
+        if (!isFollow && p.blocker?.trim()) {
+          await x.q(`insert into task_blockers (task_id, body, on_user_id, on_label, raised_by) values ($1,$2,$3,$4,$5)`,
+            [t.id, p.blocker.trim(), p.blocker_on_id ?? null, p.blocker_on_id ? null : p.blocker_on_name ?? null, u.id]);
+          if (p.blocker_on_id) await notify({ userId: p.blocker_on_id, kind: "blocker", title: `You’re blocking: ${p.title}`, body: p.blocker.trim(), entityType: "task", entityId: t.id, href: `/tasks/${t.id}`, actorId: u.id }, x);
+        }
         created.set(s.id, t.id);
         await x.q(`update meeting_suggestions set created_entity_type = 'task', created_entity_id = $2 where id = $1`, [s.id, t.id]);
         let owner = p.owner_id ?? null;
@@ -375,5 +381,16 @@ export async function moveTasksToTomorrow(ids: string[]): Promise<ActionResult<{
     }
     refresh();
     return ok({ moved }, `${moved} task${moved === 1 ? "" : "s"} moved to tomorrow`);
+  } catch (e) { return fail(e); }
+}
+
+/** (Re)write the AI pre-meeting brief for anyone who can open the meeting. */
+export async function generateMeetingBrief(meetingId: string): Promise<ActionResult<{ text: string; engine: string }>> {
+  try {
+    await requireUser();
+    const { buildMeetingBrief } = await import("./aiBrief");
+    const r = await buildMeetingBrief(meetingId);
+    revalidatePath(`/meetings/${meetingId}`);
+    return ok(r, r.engine === "claude" ? "Brief written by AI" : "Brief ready (rules — AI not configured)");
   } catch (e) { return fail(e); }
 }

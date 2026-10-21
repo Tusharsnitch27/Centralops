@@ -6,6 +6,9 @@ import { TaskList } from "@/components/tasks/TaskRow";
 import { requireUser, canManage, canEdit } from "@/server/auth";
 import { getMeeting, getMeetingBrief, getMomNote, getSuggestions, meetingOutcomes } from "@/server/meetings/queries";
 import { listPeople, listProjectsLite, listTeams } from "@/server/core/people";
+import { goalOptions } from "@/server/goals/queries";
+import { storedBrief } from "@/server/meetings/aiBrief";
+import { AiBrief } from "@/components/meetings/AiBrief";
 import { MomStepper } from "@/components/meetings/MomStepper";
 import { MomWorkspace } from "@/components/meetings/MomWorkspace";
 import { ReviewPanel } from "@/components/meetings/ReviewPanel";
@@ -38,6 +41,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
   const peopleLite = people.map((p) => ({ id: p.id, name: p.name, color: p.avatar_color, team_name: p.team_name }));
   const owner = m.mom_owner_id ? peopleLite.find((p) => p.id === m.mom_owner_id) ?? { id: m.mom_owner_id, name: m.mom_owner_name ?? "Owner", color: m.mom_owner_color } : null;
   const ownerFirst = m.mom_owner_name?.split(" ")[0] ?? "the owner";
+  const aiBrief = await storedBrief(id);
   const mins = durationMins(m.starts_at, m.ends_at);
   const isAttendee = m.attendees.some((a) => a.user_id === u.id);
 
@@ -95,7 +99,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
         </Card>
         {isPM ? (
           <ReviewPanel meetingId={id} items={items} engine={note.ai_engine} ownerName={note.author_name ?? m.mom_owner_name}
-            opts={{ people: peopleLite, teams: teams.map((t) => ({ id: t.id, name: t.name })), projects }} />
+            opts={{ people: peopleLite, teams: teams.map((t) => ({ id: t.id, name: t.name })), projects, goals: await goalOptions() }} />
         ) : (
           <Card className="px-5 py-4">
             <div className="flex items-start gap-3">
@@ -168,6 +172,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
           {main}
+          {phase !== "ended" && <AiBrief meetingId={id} initial={aiBrief?.ai_brief ?? null} engine={aiBrief?.ai_brief_engine ?? null} at={aiBrief?.ai_brief_at ?? null} auto />}
           {brief && (phase !== "ended" || s === "pending" || s === "draft") && <BriefCard brief={brief} />}
         </div>
         <aside className="space-y-5">

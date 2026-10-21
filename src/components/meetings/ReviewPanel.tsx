@@ -15,6 +15,7 @@ interface Opts {
   people: { id: string; name: string; color: string | null; team_name?: string | null }[];
   teams: { id: string; name: string }[];
   projects: { id: string; name: string; code: string | null }[];
+  goals?: { id: string; title: string }[];
 }
 
 const KIND: Record<SuggestionKind, { label: string; icon: React.ReactNode }> = {
@@ -75,6 +76,7 @@ export function ReviewPanel({ meetingId, items: initial, opts, engine, ownerName
     ...opts.teams.map((t) => ({ value: `t:${t.id}`, label: t.name, hint: "Team", icon: <span className="flex size-[18px] items-center justify-center rounded-[5px] bg-muted text-ink-3"><Users size={11} /></span> })),
   ], [opts.people, opts.teams]);
   const projects: Option[] = useMemo(() => opts.projects.map((p) => ({ value: p.id, label: p.name, hint: p.code ?? undefined })), [opts.projects]);
+  const goals: Option[] = useMemo(() => (opts.goals ?? []).map((g) => ({ value: g.id, label: g.title })), [opts.goals]);
 
   const groups: SuggestionKind[] = ["action", "followup", "decision", "risk"];
   return (
@@ -104,7 +106,7 @@ export function ReviewPanel({ meetingId, items: initial, opts, engine, ownerName
             </div>
             <div className="space-y-2 px-3 pb-3 pt-1.5">
               {list.map((it) => (
-                <Card key={it.id} it={it} patch={(f) => patch(it.id, f)} decide={(s) => decide(it.id, s)} people={people} assignees={assignees} projects={projects}
+                <Card key={it.id} it={it} patch={(f) => patch(it.id, f)} decide={(s) => decide(it.id, s)} people={people} assignees={assignees} projects={projects} goals={goals}
                   actions={items.filter((x) => x.kind === "action" && x.id !== it.id && x.status !== "ignored")} />
               ))}
             </div>
@@ -137,9 +139,9 @@ export function ReviewPanel({ meetingId, items: initial, opts, engine, ownerName
   );
 }
 
-function Card({ it, patch, decide, people, assignees, projects, actions }: {
+function Card({ it, patch, decide, people, assignees, projects, goals, actions }: {
   it: ReviewItem; patch: (f: (i: ReviewItem) => ReviewItem) => void; decide: (s: ReviewItem["status"]) => void;
-  people: Option[]; assignees: Option[]; projects: Option[]; actions: ReviewItem[];
+  people: Option[]; assignees: Option[]; projects: Option[]; goals: Option[]; actions: ReviewItem[];
 }) {
   const p = it.payload;
   const setP = (q: Partial<SuggestionPayload>) => patch((i) => ({ ...i, payload: { ...i.payload, ...q } }));
@@ -216,9 +218,40 @@ function Card({ it, patch, decide, people, assignees, projects, actions }: {
                   <Combobox size="sm" value={p.project_id ?? null} options={projects} placeholder="No project" onChange={(v) => setP({ project_id: v })} />
                 </div>
                 <div className="col-span-2 md:col-span-2">
+                  <span className={tinyLabel}>Goal</span>
+                  <Combobox size="sm" value={p.goal_id ?? null} options={goals} placeholder="No goal" onChange={(v) => setP({ goal_id: v })} />
+                </div>
+                <div className="col-span-2 md:col-span-2">
                   <span className={tinyLabel}>Depends on</span>
                   <Combobox size="sm" value={p.depends_on ?? null} placeholder={p.dependency ? `“${p.dependency}”` : "Nothing"} onChange={(v) => setP({ depends_on: v })}
                     options={actions.map((a) => ({ value: a.id, label: a.payload.title || "Untitled action" }))} />
+                </div>
+                <div className="col-span-2 md:col-span-2">
+                  <span className={tinyLabel}>Also working on it</span>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {(p.assignee_ids ?? []).map((id) => (
+                      <span key={id} className="inline-flex items-center gap-1 rounded-md bg-subtle px-1.5 py-0.5 text-[12px]">
+                        {people.find((x) => x.value === id)?.label ?? "—"}
+                        <button type="button" aria-label="Remove" onClick={() => setP({ assignee_ids: (p.assignee_ids ?? []).filter((x) => x !== id) })} className="text-ink-4 hover:text-ink"><X size={11} /></button>
+                      </span>
+                    ))}
+                    {(p.assignee_names ?? []).map((n) => <span key={n} className="rounded-md px-1.5 py-0.5 text-[12px] text-ink-4 ring-1 ring-inset ring-line" title="Named in the MoM, not in the directory">{n}?</span>)}
+                    <div className="min-w-[120px] flex-1">
+                      <Combobox size="sm" value={null} placeholder="Add person…" options={people.filter((x) => x.value !== p.owner_id && !(p.assignee_ids ?? []).includes(x.value))}
+                        onChange={(v) => v && setP({ assignee_ids: [...(p.assignee_ids ?? []), v] })} />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-span-2 md:col-span-2">
+                  <span className={tinyLabel}>Blocker {p.blocker ? "(raised on create)" : ""}</span>
+                  <div className="flex gap-1.5">
+                    <input value={p.blocker ?? ""} onChange={(e) => setP({ blocker: e.target.value || null })} placeholder="Stuck on…"
+                      className="h-8 min-w-0 flex-1 rounded-md border border-line bg-surface px-2 text-[12.5px] outline-none focus:border-ink-3" />
+                    <div className="w-[130px] shrink-0">
+                      <Combobox size="sm" value={p.blocker_on_id ?? null} options={people} placeholder={p.blocker_on_name ? `${p.blocker_on_name}?` : "On whom"}
+                        onChange={(v) => setP({ blocker_on_id: v, blocker_on_name: people.find((x) => x.value === v)?.label ?? null })} />
+                    </div>
+                  </div>
                 </div>
               </>
             )}
