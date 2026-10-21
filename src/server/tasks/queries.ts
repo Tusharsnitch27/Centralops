@@ -11,6 +11,7 @@ export interface TaskListItem {
   health: Health;
   priority: Priority;
   due_date: string | null;
+  start_date: string | null;
   original_due_date: string | null;
   owner_id: string | null;
   owner_name: string | null;
@@ -99,7 +100,7 @@ export async function listTasks(f: TaskFilter = {}): Promise<TaskListItem[]> {
   }[f.order ?? "due"];
   p.push(f.limit ?? 500);
   return q<TaskListItem>(
-    `select t.id, t.number, t.title, t.status, t.health, t.priority, t.due_date, t.original_due_date,
+    `select t.id, t.number, t.title, t.status, t.health, t.priority, t.due_date, t.start_date, t.original_due_date,
             t.owner_id, ou.name as owner_name, ou.avatar_color as owner_color, t.owner_team_id, tm.name as owner_team_name,
             t.requester_id, ru.name as requester_name, t.waiting_on_id, wu.name as waiting_on_name,
             t.project_id, pr.name as project_name, pr.code as project_code, t.meeting_id, m.title as meeting_title,

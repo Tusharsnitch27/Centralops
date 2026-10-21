@@ -86,7 +86,7 @@ export async function draftTask(raw: string, cur?: DraftInput): Promise<TaskDraf
     const person = await directoryPoc(pocName);
     const due = dueFixed ?? (ai.due_date && ai.due_date >= t ? ai.due_date : p.due ?? null);
     return {
-      raw, title: ai.title || p.title, details: ai.details.trim(), outcome: ai.outcome, nextStep: ai.next_step, dueDate: due, dueLabel: due ? fmtDate(due, { dow: true }) : null,
+      raw, title: ai.title || p.title, details: ai.details.trim(), outcome: ai.outcome, nextStep: ai.next_step, dueDate: due, startDate: null, dueLabel: due ? fmtDate(due, { dow: true }) : null,
       pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority: ai.priority, questions: ai.questions, tips: ai.tips, engine: "claude",
     };
   }
@@ -110,7 +110,7 @@ export async function draftTask(raw: string, cur?: DraftInput): Promise<TaskDraf
   if (/\b(vendor|contract|rate|negotiat|po\b|invoice)/i.test(raw)) tips.push("Note the current rate or baseline so the saving or change can be measured.");
   if (days != null && days <= 2) tips.push("This is due very soon — block time on your calendar for it today.");
   return {
-    raw, title, details: details.map((x) => `- ${cap(x)}`).join("\n"), outcome: "", nextStep: "", dueDate: due, dueLabel: due ? fmtDate(due, { dow: true }) : null,
+    raw, title, details: details.map((x) => `- ${cap(x)}`).join("\n"), outcome: "", nextStep: "", dueDate: due, startDate: null, dueLabel: due ? fmtDate(due, { dow: true }) : null,
     pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority, questions: questions.slice(0, 3), tips: tips.slice(0, 2), engine: "rules",
   };
 }
@@ -121,8 +121,9 @@ export function myPending(userId: string) {
 }
 
 /** Rule-based "what to focus on" from the pending list. */
-export function ruleFocus(tasks: TaskListItem[], userId: string): FocusBrief {
+export function ruleFocus(all: TaskListItem[], userId: string): FocusBrief {
   const t = today();
+  const tasks = all.filter((x) => !x.start_date || x.start_date <= t);
   const scored: (FocusItem & { score: number })[] = [];
   for (const x of tasks) {
     const pr = { urgent: 30, high: 20, medium: 10, low: 0 }[x.priority];
@@ -158,8 +159,9 @@ const FocusOut = z.object({
 });
 
 /** Claude's take on the same list: picks the 3 that matter most and says why. */
-export async function aiFocus(tasks: TaskListItem[], userId: string): Promise<FocusBrief> {
+export async function aiFocus(all: TaskListItem[], userId: string): Promise<FocusBrief> {
   const t = today();
+  const tasks = all.filter((x) => !x.start_date || x.start_date <= t);
   const lines = tasks.slice(0, 60).map((x) => `#${x.number} | ${x.title} | due ${x.due_date ?? "none"} | ${x.priority} | owner ${x.owner_id === userId ? "me" : x.owner_name ?? x.owner_team_name ?? "none"} | ${x.days_since_update}d since update${x.next_step ? ` | next: ${x.next_step}` : ""}`);
   const ai = await aiStructured({
     system: `${COACH}\n\nNow act as the user's chief of staff for the day: pick the three tasks that matter most today (deadline, business impact, unblocking others), say why in one short line each and the concrete action. Prefer closing overdue work and unblocking delegated work.`,

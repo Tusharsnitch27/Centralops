@@ -6,6 +6,7 @@ import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/client";
 import { refineTask, saveCapturedTask } from "@/server/tasks/capture-actions";
 import { fmtDate, today } from "@/lib/dates";
+import { cn } from "@/lib/cn";
 import type { Priority, TaskDraft } from "@/lib/taskDraft";
 
 interface PersonOpt { id: string; name: string; title: string | null }
@@ -33,13 +34,13 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
     if (!r.ok || !r.data) { if (!r.ok) toast(r.error, "error"); return; }
     const n = r.data;
     // keep what the user set explicitly; take the sharper wording and suggestions
-    setD((x) => x && { ...n, pocName: x.pocName, dueDate: x.dueDate, dueLabel: x.dueLabel, outcome: n.outcome || x.outcome, nextStep: n.nextStep || x.nextStep });
+    setD((x) => x && { ...n, pocName: x.pocName, dueDate: x.dueDate, startDate: x.startDate, dueLabel: x.dueLabel, outcome: n.outcome || x.outcome, nextStep: n.nextStep || x.nextStep });
   });
   const reset = () => { setD(null); setText(""); setTimeout(() => inputRef.current?.focus(), 0); };
   const save = (skip: boolean) => d && startSave(async () => {
     const r = await saveCapturedTask(skip
-      ? { title: d.title, dueDate: d.dueDate, pocName: d.pocName, priority: d.priority, engine: d.engine }
-      : { title: d.title, details: d.details, outcome: d.outcome, nextStep: d.nextStep, dueDate: d.dueDate, pocName: d.pocName, priority: d.priority, engine: d.engine });
+      ? { title: d.title, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, engine: d.engine }
+      : { title: d.title, details: d.details, outcome: d.outcome, nextStep: d.nextStep, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, engine: d.engine });
     if (!r.ok) { toast(r.error, "error"); return; }
     toast(skip ? "Task added" : "Task added with details", "success");
     reset();
@@ -92,11 +93,16 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
             )}
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="block">
-              <span className="label">Due date?</span>
-              <input type="date" className="field" min={today()} value={d.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value || null)} />
-              {d.dueDate && <span className="mt-1 block text-[11.5px] text-ink-4">{fmtDate(d.dueDate, { dow: true })}</span>}
+              <span className="label">Due date <span className="text-bad">*</span></span>
+              <input type="date" required className={cn("field", !d.dueDate && "border-bad/50")} min={d.startDate ?? today()} value={d.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value || null)} />
+              <span className={cn("mt-1 block text-[11.5px]", d.dueDate ? "text-ink-4" : "text-bad")}>{d.dueDate ? fmtDate(d.dueDate, { dow: true }) : "Required — you can change it later"}</span>
+            </label>
+            <label className="block">
+              <span className="label">Start date <span className="font-normal text-ink-4">(optional)</span></span>
+              <input type="date" className="field" min={today()} max={d.dueDate ?? undefined} value={d.startDate ?? ""} onChange={(e) => set("startDate", e.target.value || null)} />
+              <span className="mt-1 block text-[11.5px] text-ink-4">{d.startDate && d.startDate > today() ? `Hidden until ${fmtDate(d.startDate, { dow: true })}` : "Blank = starts now"}</span>
             </label>
             <label className="block">
               <span className="label">POC</span>
@@ -131,8 +137,8 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
           )}
 
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button variant="ghost" disabled={saving} onClick={() => save(true)}>Skip details, just add</Button>
-            <Button variant="primary" disabled={saving || !d.title.trim()} onClick={() => save(false)}>{saving ? "Adding…" : <>Add task <ArrowRight size={13} /></>}</Button>
+            <Button variant="ghost" disabled={saving || !d.dueDate} onClick={() => save(true)}>Skip details, just add</Button>
+            <Button variant="primary" disabled={saving || !d.title.trim() || !d.dueDate} onClick={() => save(false)}>{saving ? "Adding…" : <>Add task <ArrowRight size={13} /></>}</Button>
           </div>
         </div>
       )}

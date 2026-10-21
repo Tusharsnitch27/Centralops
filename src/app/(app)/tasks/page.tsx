@@ -4,6 +4,7 @@ import { Avatar, EmptyState, PageHeader, PriorityIcon } from "@/components/ui";
 import { TaskCapture } from "@/components/tasks/TaskCapture";
 import { FocusPanel } from "@/components/tasks/FocusPanel";
 import { TaskCheck } from "@/components/tasks/TaskCheck";
+import { Collapsible } from "@/components/ui/Collapsible";
 import { requireUser } from "@/server/auth";
 import { listPeople } from "@/server/core/people";
 import { myPending, ruleFocus } from "@/server/tasks/coach";
@@ -16,8 +17,11 @@ export const metadata = { title: "Tasks" };
 
 export default async function MyTasks() {
   const u = await requireUser();
-  const [tasks, people] = await Promise.all([myPending(u.id), listPeople()]);
+  const [all, people] = await Promise.all([myPending(u.id), listPeople()]);
   const t = today();
+  // a start date keeps a task off the active list until then — a clean charter for today
+  const tasks = all.filter((x) => !x.start_date || x.start_date <= t);
+  const scheduled = all.filter((x) => x.start_date && x.start_date > t).sort((a, b) => a.start_date!.localeCompare(b.start_date!));
   const weekEnd = addDays(weekStart(t), 6);
   const buckets: { key: string; label: string; items: TaskListItem[]; tone?: string }[] = [
     { key: "overdue", label: "Overdue", items: [], tone: "text-bad" },
@@ -37,12 +41,12 @@ export default async function MyTasks() {
   return (
     <div>
       <PageHeader title="My tasks"
-        subtitle={<>{tasks.length} pending{overdue ? <> · <span className="font-medium text-bad">{overdue} overdue</span></> : null} · sorted by due date</>} />
+        subtitle={<>{tasks.length} active{scheduled.length ? ` · ${scheduled.length} scheduled` : ""}{overdue ? <> · <span className="font-medium text-bad">{overdue} overdue</span></> : null} · sorted by due date</>} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-5">
           <TaskCapture meId={u.id} people={people.map((p) => ({ id: p.id, name: p.name, title: p.title }))} />
-          <div className="xl:hidden"><FocusPanel initial={ruleFocus(tasks, u.id)} aiOn={aiConfigured()} /></div>
-          {tasks.length ? (
+          <div className="xl:hidden"><FocusPanel initial={ruleFocus(all, u.id)} aiOn={aiConfigured()} /></div>
+          {all.length ? (
             <div className="space-y-5">
               {buckets.filter((b) => b.items.length).map((b) => (
                 <section key={b.key}>
@@ -54,13 +58,18 @@ export default async function MyTasks() {
                   </div>
                 </section>
               ))}
+              {scheduled.length > 0 && (
+                <Collapsible id="tasks:scheduled" title={`Scheduled · ${scheduled.length}`} sub="Starts later — joins the active list on its start date">
+                  <div className="divide-y divide-line/70">{scheduled.map((x) => <Row key={x.id} x={x} me={u.id} />)}</div>
+                </Collapsible>
+              )}
               <Link href="/tasks/all" className="flex items-center gap-1 px-1 text-[12.5px] text-ink-3 hover:text-ink">Delegated, waiting and done tasks are in All views <ArrowRight size={12} /></Link>
             </div>
           ) : (
             <div className="card"><EmptyState icon={<Inbox size={18} />} title="Nothing pending" body="Write your first task above — just the way you’d say it." /></div>
           )}
         </div>
-        <aside className="hidden xl:block"><div className="sticky top-20"><FocusPanel initial={ruleFocus(tasks, u.id)} aiOn={aiConfigured()} /></div></aside>
+        <aside className="hidden xl:block"><div className="sticky top-20"><FocusPanel initial={ruleFocus(all, u.id)} aiOn={aiConfigured()} /></div></aside>
       </div>
     </div>
   );
@@ -78,9 +87,10 @@ function Row({ x, me }: { x: TaskListItem; me: string }) {
           <PriorityIcon priority={x.priority} className="shrink-0" />
           <span className="truncate text-[13px] text-ink">{x.title}</span>
         </span>
-        {(x.next_step || other || x.poc_name) && (
+        {(x.next_step || other || x.poc_name || (x.start_date && x.start_date > today())) && (
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] text-ink-4">
             {other && <span className="flex items-center gap-1"><Avatar name={x.owner_name ?? x.owner_team_name} color={x.owner_color} size={14} />{x.owner_name ?? x.owner_team_name ?? "Unassigned"}</span>}
+            {x.start_date && x.start_date > today() && <span>Starts {fmtDate(x.start_date, { dow: true })}</span>}
             {x.poc_name && <span>POC: {x.poc_name}</span>}
             {x.next_step && <span className="truncate">Next: {x.next_step}</span>}
           </span>

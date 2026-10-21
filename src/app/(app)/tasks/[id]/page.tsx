@@ -152,7 +152,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           <SideCard title="Properties">
             <TaskProperties readOnly={readOnly}
               t={{ id: t.id, status: t.status, health: t.health, priority: t.priority, owner_id: t.owner_id, owner_team_id: t.owner_team_id, requester_id: t.requester_id,
-                due_date: t.due_date, original_due_date: t.original_due_date, project_id: t.project_id, program_id: t.program_id, program_name: t.program_name,
+                due_date: t.due_date, start_date: t.start_date, original_due_date: t.original_due_date, project_id: t.project_id, program_id: t.program_id, program_name: t.program_name,
                 waiting_on_id: t.waiting_on_id, next_step: t.next_step, blocker: t.blocker }}
               options={{
                 people: people.map((p) => ({ id: p.id, name: p.name, color: p.avatar_color, title: p.title })),

@@ -40,6 +40,7 @@ export async function quickAdd(i: QuickInput): Promise<ActionResult<{ href: stri
     let href = "/";
     switch (i.kind) {
       case "task": {
+        if (!i.dueDate) throw new Error("Add a due date — every task needs one (you can change it later)");
         const t = await createTask(u.id, { title, ownerId: ownerId ?? (ownerTeamId ? null : u.id), ownerTeamId, dueDate: i.dueDate, priority: i.priority, projectId: i.projectId, tags: i.tags, description: i.notes });
         href = `/tasks/${t.id}`;
         break;

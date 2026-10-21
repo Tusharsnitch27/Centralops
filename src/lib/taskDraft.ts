@@ -7,6 +7,7 @@ export interface TaskDraft {
   outcome: string;          // definition of done
   nextStep: string;         // first concrete step
   dueDate: string | null;
+  startDate: string | null;  // optional — task stays out of the active list until then
   dueLabel: string | null;
   pocName: string;          // free text — anyone, in the directory or not ("" = just me)
   ownerId: string | null;   // set when the POC matches a directory user

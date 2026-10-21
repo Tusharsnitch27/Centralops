@@ -83,7 +83,7 @@ export function DescriptionEditor({ id, description, readOnly }: { id: string; d
 /* ---------- Properties ---------- */
 export interface PropsTask {
   id: string; status: TaskStatus; health: Health; priority: Priority; owner_id: string | null; owner_team_id: string | null; requester_id: string | null;
-  due_date: string | null; original_due_date: string | null; project_id: string | null; program_id: string | null; program_name: string | null;
+  due_date: string | null; start_date?: string | null; original_due_date: string | null; project_id: string | null; program_id: string | null; program_name: string | null;
   waiting_on_id: string | null; next_step: string | null; blocker: string | null;
 }
 export interface PickerOptions {
@@ -149,8 +149,12 @@ export function TaskProperties({ t, options, readOnly }: { t: PropsTask; options
           onChange={(v) => !dis && run(() => setTaskRequester(t.id, v))} />
       </Row>
       <Row label="Due date">
-        <DueDate value={t.due_date} min={td} disabled={dis} onChange={(d) => patch({ dueDate: d }, d ? `Due ${relDay(d).toLowerCase()}` : "Due date cleared")} />
+        <DueDate value={t.due_date} min={td} disabled={dis} clearable={false} onChange={(d) => d && patch({ dueDate: d }, `Due ${relDay(d).toLowerCase()}`)} />
         {slipped && <div className="px-2 pb-1 text-[11.5px] text-warn">Originally {fmtDate(t.original_due_date)}</div>}
+      </Row>
+      <Row label="Start date">
+        <DueDate value={t.start_date ?? null} min={td} disabled={dis} empty="Starts now" label="Start date"
+          onChange={(d) => patch({ startDate: d }, d ? `Starts ${relDay(d).toLowerCase()}` : "Start date cleared")} />
       </Row>
       <Row label="Project">
         <Combobox size="sm" className={ghost} options={projectOpts} value={t.project_id} placeholder="No project" onChange={(v) => !dis && patch({ projectId: v })} />
@@ -173,7 +177,7 @@ export function TaskProperties({ t, options, readOnly }: { t: PropsTask; options
   );
 }
 
-function DueDate({ value, min, onChange, disabled }: { value: string | null; min: string; onChange: (v: string | null) => void; disabled?: boolean }) {
+function DueDate({ value, min, onChange, disabled, clearable = true, empty = "No due date", label = "Due date" }: { value: string | null; min: string; onChange: (v: string | null) => void; disabled?: boolean; clearable?: boolean; empty?: string; label?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   const overdue = value && value < min;
   return (
@@ -181,12 +185,12 @@ function DueDate({ value, min, onChange, disabled }: { value: string | null; min
       <button type="button" disabled={disabled} onClick={() => { const el = ref.current; if (el) { try { el.showPicker(); } catch { el.focus(); } } }}
         className={cn("flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-[13px] hover:bg-subtle", overdue ? "font-medium text-bad" : value ? "text-ink" : "text-ink-4")}>
         <CalendarDays size={14} className="text-ink-4" />
-        {value ? <>{fmtDate(value, { dow: true })}<span className="text-[11.5px] font-normal text-ink-4">· {relDay(value)}</span></> : "No due date"}
+        {value ? <>{fmtDate(value, { dow: true })}<span className="text-[11.5px] font-normal text-ink-4">· {relDay(value)}</span></> : empty}
       </button>
-      <input ref={ref} type="date" min={min} value={value ?? ""} tabIndex={-1} aria-label="Due date"
+      <input ref={ref} type="date" min={min} value={value ?? ""} tabIndex={-1} aria-label={label}
         onChange={(e) => { const v = e.target.value || null; if (v !== value) onChange(v); }}
         className="pointer-events-none absolute inset-0 opacity-0" />
-      {value && !disabled && <button type="button" onClick={() => onChange(null)} className="absolute right-1.5 rounded p-0.5 text-ink-4 hover:text-ink" aria-label="Clear due date"><X size={12} /></button>}
+      {value && !disabled && clearable && <button type="button" onClick={() => onChange(null)} className="absolute right-1.5 rounded p-0.5 text-ink-4 hover:text-ink" aria-label={`Clear ${label.toLowerCase()}`}><X size={12} /></button>}
     </div>
   );
 }

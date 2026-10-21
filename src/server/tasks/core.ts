@@ -86,6 +86,7 @@ export interface TaskPatch {
   ownerId?: string | null;
   ownerTeamId?: string | null;
   dueDate?: string | null;
+  startDate?: string | null;
   projectId?: string | null;
   blocker?: string | null;
   nextStep?: string | null;
@@ -95,7 +96,7 @@ export interface TaskPatch {
 
 type TaskRow = {
   id: string; title: string; status: TaskStatus; health: Health; priority: Priority; owner_id: string | null; owner_team_id: string | null;
-  due_date: string | null; project_id: string | null; blocker: string | null; requester_id: string | null; created_by: string | null;
+  due_date: string | null; start_date: string | null; project_id: string | null; blocker: string | null; requester_id: string | null; created_by: string | null;
 };
 
 /** Apply a patch and record each change in the task journey + audit trail. */
@@ -127,8 +128,14 @@ export async function updateTask(actorId: string, id: string, p: TaskPatch) {
     }
     if (p.priority && p.priority !== cur.priority) { set("priority", p.priority); await hist("priority_changed", cur.priority, p.priority); }
     if (p.health && p.health !== cur.health) { set("health", p.health); await hist("updated", cur.health, p.health, "Health"); }
+    if (p.startDate !== undefined && p.startDate !== cur.start_date) {
+      if (p.startDate) assertFutureDate(p.startDate, "Start date");
+      set("start_date", p.startDate);
+      await hist("updated", cur.start_date, p.startDate, "Start date");
+    }
     if (p.dueDate !== undefined && p.dueDate !== cur.due_date) {
-      if (p.dueDate) assertFutureDate(p.dueDate);
+      if (!p.dueDate) throw new TaskError("Due date is required — change it instead of clearing it");
+      assertFutureDate(p.dueDate);
       set("due_date", p.dueDate);
       await hist("due_changed", cur.due_date, p.dueDate, p.note);
       await notifyPeople(`Due date changed: ${cur.title}`);
