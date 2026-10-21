@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/client";
 import { cn } from "@/lib/cn";
 import { ago, fmtDate } from "@/lib/dates";
 import { describeRule, type DeadlineConfig, type DeadlineRule, type Measure } from "@/server/aop/deadlines";
+import { saveEmailConfig } from "@/server/weekly/actions";
 import { generateWebhookSecret, runRemindersNow, saveDeadlines, saveMyWhatsApp, saveWhatsAppConfig, sendTestWhatsApp } from "@/server/integrations/waActions";
 import type { IntegrationsData } from "@/server/integrations/queries";
 import type { WaProvider } from "@/server/integrations/whatsapp";
@@ -113,6 +114,7 @@ export function IntegrationsAdmin({ d }: { d: IntegrationsData }) {
       </Section>
 
       {/* ---------- Deadlines & cadence ---------- */}
+      <EmailCard d={d} />
       {d.cycle && <DeadlinesCard cycleId={d.cycle.id} cycleName={d.cycle.name} initial={d.cycle.deadlines} functions={d.cycle.functions} />}
 
       {/* ---------- What's late right now ---------- */}
@@ -239,6 +241,39 @@ function DeadlinesCard({ cycleId, cycleName, initial, functions }: { cycleId: st
           </div>
         </div>
       </div>
+    </Section>
+  );
+}
+
+function EmailCard({ d }: { d: IntegrationsData }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [f, setF] = useState({ webhookUrl: d.email.webhookUrl, secret: "", recipients: d.email.recipients, cc: d.email.cc });
+  const sample = JSON.stringify({ event: "weekly_update", to: "ceo@snitch.com, coo@snitch.com", cc: "", subject: "Central Ops Weekly Updates - 26th Oct", html: "<div>…</div>", from_name: "Tushar Gupta",
+    attachments: [{ cid: "…", filename: "Logistics 1.png", mime: "image/png", base64: "…" }] }, null, 2);
+  return (
+    <Section icon={<Send size={17} />} title="Weekly update email (n8n)" sub="Sends the approved weekly update to leadership from Weekly updates › Compile & review"
+      right={d.email.webhookUrl && d.email.recipients ? <Badge tone="green" dot>Ready</Badge> : <Badge tone="neutral">Not set up</Badge>}>
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="block"><span className="label">n8n webhook URL</span><input className="field" value={f.webhookUrl} onChange={(e) => setF({ ...f, webhookUrl: e.target.value })} placeholder="https://n8n…/webhook/central-ops-weekly" /></label>
+        <label className="block"><span className="label">Shared secret {d.email.hasSecret && <span className="text-ink-4">(set — leave blank to keep)</span>}</span><input className="field" type="password" value={f.secret} onChange={(e) => setF({ ...f, secret: e.target.value })} placeholder="Sent as x-central-ops-secret" /></label>
+        <label className="block"><span className="label">Leadership recipients</span><input className="field" value={f.recipients} onChange={(e) => setF({ ...f, recipients: e.target.value })} placeholder="name@snitch.com, name@snitch.com" /></label>
+        <label className="block"><span className="label">CC</span><input className="field" value={f.cc} onChange={(e) => setF({ ...f, cc: e.target.value })} placeholder="central-ops@snitch.com" /></label>
+      </div>
+      <div className="mt-3 flex justify-end"><Button variant="primary" disabled={pending} onClick={() => start(async () => { const r = await saveEmailConfig(f); if (!r.ok) return toast(r.error, "error"); toast(r.message ?? "Saved", "success"); router.refresh(); })}>Save</Button></div>
+      <details className="mt-4 rounded-lg bg-subtle/60 px-3 py-2 text-[12.5px] text-ink-2">
+        <summary className="cursor-pointer font-medium">How to set it up in n8n</summary>
+        <ol className="mt-2 list-decimal space-y-1 pl-5">
+          <li><b>Webhook</b> node · POST · copy its production URL above.</li>
+          <li><b>IF</b> node: header <code>x-central-ops-secret</code> equals your secret (reject otherwise).</li>
+          <li><b>Code</b> node: turn each item of <code>attachments</code> into binary (base64 → binary, keep <code>filename</code>).</li>
+          <li><b>Gmail → Send</b>: To <code>{"{{$json.to}}"}</code>, CC <code>{"{{$json.cc}}"}</code>, Subject <code>{"{{$json.subject}}"}</code>, Email type HTML, Message <code>{"{{$json.html}}"}</code>, attachments = the binaries. Inline images use <code>cid:</code> = attachment cid.</li>
+          <li><b>Respond to Webhook</b> with 200.</li>
+        </ol>
+        <pre className="mt-2 overflow-x-auto rounded-md bg-surface p-2 text-[11.5px]">{sample}</pre>
+        <p className="mt-2 text-ink-3">No n8n yet? Use <b>Copy for email</b> on the document and paste into Gmail, then <b>Mark as sent</b>.</p>
+      </details>
     </Section>
   );
 }

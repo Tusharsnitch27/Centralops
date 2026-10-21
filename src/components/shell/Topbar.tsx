@@ -20,7 +20,7 @@ interface Note { id: string; kind: string; title: string; body: string | null; h
 /** Top bar: page breadcrumb · search · actions. Navigation lives in the sidebar (desktop) / bottom bar (mobile). */
 export function Topbar({ unread, user }: { unread: number; counts?: Record<string, number>; user: { name: string; title: string | null } }) {
   return (
-    <div className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-md">
+    <div className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-md print:hidden">
       <div className="flex h-14 items-center gap-2 px-4 md:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 lg:hidden">
           <LogoMark size={26} />
@@ -43,7 +43,7 @@ export function Topbar({ unread, user }: { unread: number; counts?: Record<strin
 }
 
 const TITLES: [RegExp, string, string][] = [
-  [/^\/$/, "Home", "Summary"], [/^\/tasks/, "Work", "Tasks"], [/^\/followups/, "Work", "Follow-ups"], [/^\/meetings/, "Work", "Meetings"],
+  [/^\/$/, "Home", "Summary"], [/^\/tasks/, "Work", "Tasks"], [/^\/followups/, "Work", "Follow-ups"], [/^\/meetings/, "Work", "Meetings"], [/^\/weekly/, "Work", "Weekly updates"],
   [/^\/decisions/, "Work", "Decisions"], [/^\/aop/, "Programs", "AOP"], [/^\/sop/, "Programs", "S&OP"], [/^\/settings/, "Account", "Settings"], [/^\/welcome/, "Home", "Get started"],
 ];
 function PageTitle() {

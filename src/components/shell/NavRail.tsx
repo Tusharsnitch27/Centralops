@@ -27,7 +27,7 @@ export function NavRail({ counts, user }: { counts: Record<string, number>; user
     );
   };
   return (
-    <aside className="sticky top-0 hidden h-dvh w-[220px] shrink-0 flex-col border-r border-line px-3 py-4 lg:flex">
+    <aside className="sticky top-0 hidden h-dvh print:!hidden w-[220px] shrink-0 flex-col border-r border-line px-3 py-4 lg:flex">
       <Link href="/" className="mb-6 flex items-center gap-2.5 px-1.5">
         <LogoMark size={30} />
         <span className="leading-tight">
@@ -65,7 +65,7 @@ export function BottomNav({ counts }: { counts: Record<string, number> }) {
   const path = usePathname();
   const items = NAV.flatMap((g) => g.items);
   return (
-    <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden">
+    <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 print:hidden border-t border-line bg-surface/95 backdrop-blur-md lg:hidden">
       <div className="mx-auto grid max-w-[560px]" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((it) => {
           const Icon = navIcon(it.icon);
@@ -78,7 +78,7 @@ export function BottomNav({ counts }: { counts: Record<string, number> }) {
                 <Icon size={19} strokeWidth={on ? 2.2 : 1.8} className={on ? "text-accent" : undefined} />
                 {n > 0 && <span className={cn("absolute -right-2.5 -top-1.5 min-w-[16px] rounded-full px-1 text-center text-[9.5px] font-semibold leading-[16px] tabular text-white", it.countKey === "overdue" ? "bg-bad" : "bg-ink-3")}>{n > 99 ? "99+" : n}</span>}
               </span>
-              {it.label}
+              {it.short ?? it.label}
             </Link>
           );
         })}

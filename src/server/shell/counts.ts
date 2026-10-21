@@ -2,6 +2,7 @@ import "server-only";
 import { one } from "../db";
 import { today } from "@/lib/dates";
 import type { User } from "../auth";
+import { weeklyPendingCount } from "../weekly/model";
 
 /** Sidebar badge counts — cheap aggregate queries. */
 export async function navCounts(u: User): Promise<Record<string, number>> {
@@ -20,5 +21,5 @@ export async function navCounts(u: User): Promise<Record<string, number>> {
        (select count(*)::int from notifications where user_id = $1 and read_at is null) as notifications`,
     [u.id, t, u.joined_at, u.role === "admin" || u.role === "pm"],
   );
-  return r ?? {};
+  return { ...(r ?? {}), weekly: await weeklyPendingCount(u).catch(() => 0) };
 }

@@ -3,7 +3,7 @@ import { q, type Tx } from "../db";
 
 export type EntityType =
   | "task" | "project" | "program" | "meeting" | "decision" | "risk" | "milestone"
-  | "aop_cycle" | "aop_section" | "aop_item" | "sop_stream" | "sop_line" | "user" | "team" | "followup" | "integration" | "review";
+  | "aop_cycle" | "aop_section" | "aop_item" | "sop_stream" | "sop_line" | "user" | "team" | "followup" | "integration" | "review" | "weekly_report" | "weekly_entry";
 
 export interface ActivityInput {
   actorId: string | null;

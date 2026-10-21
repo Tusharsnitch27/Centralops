@@ -5,6 +5,7 @@ import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
+import { seedWeekly } from "./weekly";
 
 const mk = (rawQ: RunQ) => ({
   setting: async (key: string) => (await rawQ<{ value: unknown }>(`select value from app_settings where key = $1`, [key]))[0]?.value ?? null,
@@ -60,6 +61,19 @@ export async function bootstrap(rawQ: RunQ) {
     await seedSopReview(rawQ);
     await setSetting("seed.sop_review", "v1");
     console.log("[seed] S&OP monthly review (Sep 2026) loaded");
+  }
+
+  if ((await setting("seed.weekly")) !== "v1") {
+    await rawQ("begin");
+    try {
+      await seedWeekly(rawQ, admin);
+      await setSetting("seed.weekly", "v1");
+      await rawQ("commit");
+      console.log("[seed] weekly update sections + 19 Oct 2026 report loaded");
+    } catch (e) {
+      await rawQ("rollback");
+      throw e;
+    }
   }
 
   if ((process.env.SEED_DEMO ?? "false") === "true" && !(await setting("seed.demo"))) {

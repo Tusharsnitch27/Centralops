@@ -1,0 +1,338 @@
+{
+ "week_of": "2026-10-19",
+ "title": "Central Ops Weekly Updates - 19th Oct",
+ "compiled_by": "Pradhyum Shivhare",
+ "exec_summary": "Snitch Quick (Hritik Kumar): Clocked ₹5.46M GMV across 2,716 orders (11% online share) driven by a 63% Delhi surge post-Lajpat Nagar launch, alongside sharp cut-size reductions and a finalized OND plan; next week centers on diagnosing Gurgaon/Ahmedabad dips, the Yelahanka BTL pilot, and OND tech/expansion roadmaps.\n\nLong Tail (Pratik Agrawal, Tushar Gupta): Delivered ₹1.24 Cr weekly revenue (+9% WoW, 56% target achievement; MTD ₹3.05 Cr at 55%) led by Stores (81%), with immediate focus on deploying selective discounting, redistribution, and festive VM to recover the ₹1.60 Cr MTD Shoe deficit and lagging Online/Marketplace sales.\n\nExperience (Uraza Arif Shamsi): Rolled out RTO/Lost Order cancellation comms, resolved Unfulfillable cancellation/refund breaks, and revamped CX/NPR Slack reporting; next steps focus on automating Lost order refunds, WPR defect bifurcation, and Clickpost NPR configurations.\n\nDistribution (Malhar Murhekar): B2B Forward delivered 1,889 shipments at 81.6% on-time (3.8-day avg) despite steep B2B Reverse drops in same-day pickups (44.64%) and 5-day P2D (10.71%); upcoming focus covers November rulebook revisions, Delhi milk-run feasibility, M Express train cargo routing, and store outwards data automation.\n\nRetail & Store Tech (Mohd Faisal Jamal Kidwai): Deployed Pan-India Replenishment, concluded BORIS training, cleared L1 UAT for Logic ERP Store Inwards APIs, and launched Omni pendency alerts; immediate line items include rolling out Store Inwards, launching Pan-India BORIS, iterating replenishment modules, and configuring DSR tracking.\n\nPLM - WAM (Mohd Faisal Jamal Kidwai, Aniket Khot): Scaled WAM inward adoption to ~86% (2.21L units; North 87%, South 85%), automated Direct RTS allocations, and enhanced QA validation; upcoming focus targets pre-arrival ASN/pre-pack creation and resolving inward bottlenecks from modified or cancelled POs.\n\nFin Ops (Mohd Faisal Jamal Kidwai): Planned the multi-city BORIS scale-up across Delhi, NCR, Pune, Mumbai, and Hyderabad, with execution currently pending final Finance alignment.\n\nSnitch AI Labs (Sajja Sai Karthik, Hritik Kumar): Closed 0-to-1 NSO scoping, integrated Logic ERP into Recon, and unified Myntra/Flipkart pricing and audit workflows; next steps focus on building Marketplace Recon, aligning NSO with Retail Ops, and measuring the GP and revenue impact of price changes.\n\nRFID (Nitin Manke): Scaled the network to ~108 doors with 7 new store launches while maintaining 83% RFID GRN adherence (1,157 of 1,392 invoices) despite a 28% volume surge, with immediate operational focus on curbing shrinkage risks across 9 chronic 0% stores (primarily in Mumbai/Pune) and executing upcoming NSO rollouts in Nagpur and Jaipur.\n\nLogistics (Iqbal C): Implemented performance based allocation for festive peak loads, completed Lajpat Nagar Quick HLD setup, and optimized critical B2B freight routes (Raipur NDD, Kolkata FTL/Air); next week's focus centers on finalizing M Express train onboarding, redesigning the Control Tower, and resolving persistent Flipkart error order backlogs.\n\nWarehouse (Manish Charan): Sustained 99%+ forward B2C fulfillment across both facilities despite South marketplace label glitches and B2B FIFO-driven SLA drops, while managing 12.8K North NF units and WAM inward bottlenecks; upcoming focus centers on aligning B2B FIFO execution with rulebook metrics, driving aggressive missing stock reductions across South WH1 and WH2.\n\nERP (Sagar Kumar): Activated key Logic ERP APIs (Store Inward, Journal, Save GR Details) and Mysa integrations, aligned Berrylush GST rates (18% to 5%), while pending leadership sign-off on the OND Godown Transfer customization and vendor resolution for bulk PO imports.",
+ "sections": [
+  {
+   "key": "quick",
+   "name": "Snitch Quick",
+   "group": "Special Projects",
+   "owners": [
+    "Hritik Kumar"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "Clocked ₹5.46M GMV (+0.6% WoW) across 2,716 orders (steady at ~2.7K) at ₹2.06K AOV (+2%), pushing online share to 11% (+1.4 pts) and serviceable city penetration to a 4-week high of 35.1% (+1.7 pts), outperforming non-Quick metros (-38.6%) and RoI (-40.9%) by ~25 pts despite a -13.4% YoY city base. By city:\n- Delhi: Quick orders grew 63% WoW, taking share to 20.4%, with the Lajpat Nagar store live since 13 Oct.\n- Gurgaon: Quick’s share of the city is the highest at 52.8%, but Quick orders fell 8.4% WoW along with the city (-13.7%).\n- Ahmedabad: Quick fell 21% WoW and is the weakest city at 15.8% share.\n- Bengaluru (42%) and Hyderabad (29%) were broadly steady.",
+    "updates": "- Lajpat Nagar went live on Tuesday 13 Oct, Quick’s second store in Delhi, and it’s already driving Delhi’s growth.\n- Cut sizes are down sharply across Quick stores after replen resumed:\n- Indiranagar from 63% to 30%, Janakpuri from 73% to 49% and CG Road from 61% to 43%.\n- Sector 29 from 29% to 19%, HSR from 33% to 26% and Hyderabad MFC from 20% to 16%.\n- Lajpat Nagar opened clean at 5%.\n- Behind it: a manual SO for best-seller shoes, outwards to Janakpuri and CG Road, and replen restarted after a pause for overstocking.\n- The OND plan for Quick is locked and shared with the pod. It covers priorities, milestones and owners across supply, micromarkets, the Quick experience, demand and expansion. A weekly review starts Tuesday 20 Oct, with a Monday pre-read.\n- Quick’s own sort is live, and we’re now tracking its impact on CVR.\n- The Yelahanka micromarket pilot is planned for Nov wk 1 or 2, with a store-led BTL push through 7CC.",
+    "ahead": "- Yelahanka: lock the store opening date, store readiness, exact geos, the BTL creatives, and commercials with 7CC.\n- Perf: get week-on-week visibility on spend, ROAS and creative performance by city.\n- Supply: bring Janakpuri’s cut size down (still ~49% on 2.6K units). Baseline top 500 hero-size availability by city.\n- Tech: finalise the OND priority stack, including distance-based EDD and home page.\n- Expansion: decide on new cities for OND by the end of October.",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "longtail",
+   "name": "Long Tail",
+   "group": "Special Projects",
+   "owners": [
+    "Tushar Gupta"
+   ],
+   "owner_labels": [
+    "Pratik Agrawal"
+   ],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- Overall Performance: Weekly revenue stood at ₹1.24 Cr (+9.0% WoW), achieving 56% of the ₹2.23 Cr target, with a shortfall of ₹98.37L. MTD revenue reached ₹3.05 Cr (+14.9% YoY), achieving 55% of the ₹5.59 Cr target, leaving a gap of ₹2.54 Cr.\n- Channel Performance: Stores continue to lead at ₹60.12L (+13.9% WoW), achieving 81% of weekly target. Online grew 17.5% WoW but remains at 48% achievement, while Marketplace declined 14.6% WoW, achieving just 38% of target. MTD, Stores are at 79%, Online at 45% and Marketplace at 38% achievement.\n- Shoes Remain the Largest Concern: Weekly revenue stood at ₹71.59L (+14% WoW), achieving 55% of target. MTD revenue reached ₹1.67 Cr (+19.6% YoY), but achievement remains at 51%, with a shortfall of ~₹1.60 Cr. Shoes contribute 53% of MTD revenue, making recovery critical.\n- Perfumes Performance: Weekly revenue stood at ₹38.17L (+2.7% WoW), achieving 61% of target. MTD revenue reached ₹1.01 Cr (+17% YoY), but achievement remains at 64%, indicating significant headroom despite positive growth.\n- Other Categories: Bags (43%), Belts (47%) and Sunglasses (55%) remain below weekly targets. Accessories declined 23% YoY MTD, while Bags declined 8%. Trolleys generated ₹8.78L MTD, down 12.6% YoY.\n- Key Focus Ahead: Accelerate recovery through selective discounting (25–50% on Shoes, Flat ₹500/₹1,000 on Perfumes), festive VM, targeted CRM and store incentives. Prioritize omnichannel inventory exposure, store redistribution and liquidation of slow-moving inventory, alongside stronger Online and Marketplace execution.",
+    "ahead": "",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "experience",
+   "name": "Experience",
+   "group": "Special Projects",
+   "owners": [
+    "Uraza Arif Shamsi"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [
+     {
+      "label": "Forward NPS",
+      "value": "38",
+      "target": "50+"
+     },
+     {
+      "label": "Return NPS",
+      "value": "13",
+      "target": "35+"
+     },
+     {
+      "label": "CIR rate",
+      "value": "19%",
+      "target": "<15%"
+     },
+     {
+      "label": "RTO rate",
+      "value": "7%",
+      "target": "6%"
+     },
+     {
+      "label": "NPR conversion",
+      "value": "2%",
+      "target": "15%+"
+     },
+     {
+      "label": "Contact Rate",
+      "value": "22%",
+      "target": "< 15%"
+     }
+    ],
+    "metricsNote": "",
+    "updates": "Overall WPR Summary\n- Amount raised for dispute to Courier Partners - 2.51 CR\n- Amount accepted by Courier Partners - 15 Lacs\n- Amount Rejected by Courier Partners - 51 Lacs\n- Amount Raised for Revalidation - 12.11 Lacs\n- Amount open for Closure (Under Investigation) - 1.70 CR\n\nOther activities\n- Weekly activity for Contacts on WISMO & RVP\nhttps://cxdeck.snitch-workflow.com/\n- Comms for RTO and Lost Orders to be built on Order Cancellation. - Deployed.\n- Lost Order Refunds - For Lost orders, refunds should be automated (where applicable) as soon as the order is marked as Cancelled on ODP.  - WIP\n- SOPs for Omni Forward Escalations to be set - Completed\n- NPR Alerts to be revamped - Completed\n- Slack reports to be revamped for Omni channel snitch and Customer Experience - Completed\n- Goal setting for Customer Experience - Completed",
+    "ahead": "",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "distribution",
+   "name": "Distribution",
+   "group": "Special Projects",
+   "owners": [
+    "Malhar Murhekar"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "",
+    "ahead": "- November Rulebook Revision: Updating base stock levels and integrating new stores.\n- Reverse Rulebook Optimization: Reworking processes and aligning with the Merchandising team.\n- Delhi Milk-Run Analysis: Benchmarking Bangalore data to prepare a cost-benefit analysis for an own-vehicle milk-run in Delhi.\n- New Forward Partner Alignment: Exploring train distribution with M Express Cargo to reduce transit times on high-TAT road routes.\n- Data Pipeline Automation: Streamlining reporting infrastructure to connect directly with store outwards data.",
+    "blockers": "",
+    "tables": [
+     {
+      "title": "B2B Forward",
+      "columns": [
+       "Metric",
+       "SEP '26",
+       "28 SEP - 4 OCT",
+       "5-11 OCT",
+       "12-18 OCT"
+      ],
+      "rows": [
+       [
+        "On-time Delivery %",
+        "81%",
+        "85.3%",
+        "79.1%",
+        "81.6%"
+       ],
+       [
+        "Weekend Delivery %",
+        "12.2%",
+        "24.3%",
+        "27.2%",
+        "16.3%"
+       ],
+       [
+        "P90 Delivery Days",
+        "6",
+        "6",
+        "5",
+        "6"
+       ],
+       [
+        "Average Delivery Days",
+        "3.4",
+        "3.4",
+        "2.8",
+        "3.8"
+       ],
+       [
+        "Shipments Delivered",
+        "4174",
+        "860",
+        "1505",
+        "1889"
+       ]
+      ]
+     },
+     {
+      "title": "B2B Reverse",
+      "columns": [
+       "Metric",
+       "SEP '26",
+       "28 SEP - 4 OCT",
+       "5-11 OCT",
+       "12-18 OCT"
+      ],
+      "rows": [
+       [
+        "On-time Picked % (Same-day)",
+        "60.20%",
+        "57.04%",
+        "74.63%",
+        "44.64%"
+       ],
+       [
+        "P2D <= 5 Days",
+        "65.85%",
+        "70.42%",
+        "59.70%",
+        "10.71%"
+       ]
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "key": "retail_tech",
+   "name": "Retail & Store Tech",
+   "group": "Product",
+   "owners": [
+    "Mohd Faisal Jamal Kidwai",
+    "Uraza Arif Shamsi"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- Pan India Replenishment training and deployment - Completed\n- Pan India training for BORIS - Completed\n- Procurement of API from logic ERP for store Inwards - Completed\n- Retail Tracking dashboard for Replenishment - Completed\n- Store Inwards first level UAT - Completed\n- Omni Processing Pendency Alerts in omnichannel-snitch- Completed",
+    "ahead": "- Store Inwards\n- PAN India BORIS Deployment\n- Feedback and changes for Replenishment Module\n- DSR",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "plm_wam",
+   "name": "PLM & WAM",
+   "group": "Product",
+   "owners": [
+    "Mohd Faisal Jamal Kidwai",
+    "Aniket Appasaheb Khot"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- WAM adoption has increased significantly across both North and South warehouses, with the majority of inward transactions now being processed through WAM.\n- As per the latest inward report, 2,20,891 units have been inwarded through WAM, representing approximately 86% adoption.\n- Warehouse-wise WAM adoption:\n- North Warehouse: 88,242 units - 87% adoption.\n- South Warehouse: 1,32,649 units - 85% adoption.\n- Direct RTS adoption completed internally, with allocations now being processed directly through RTS. Allocation communication is currently being sent through the BOT.\n- All required Pre-Packs have been created, and ASN creation is being managed proactively. Any missing ASN is now created within 10 minutes of the warehouse team raising the request.\n- Winterwear inward has been successfully processed through WAM, expanding its usage across product categories.\n- Item Master creation has been made independent within WAM, reducing manual dependencies.\n- A confirmation pop-up has been introduced when scanned quantity (PUV) exceeds QA-approved quantity (FI) to improve quantity validation.\n- Issue Tracker updated: A new process has been introduced for cases where invoice quantity is lower than QC-passed quantity, reducing manual intervention.",
+    "ahead": "- Increase WAM adoption further and target maximum inward processing through WAM across both warehouses.\n- Ensure ASN and Pre-Pack creation before shipment arrival to prevent delays at the warehouse.\n- Strengthen coordination between the Category, Production, QC and Warehouse teams to ensure all required data is available before inward.\n- Track WAM exceptions, manual interventions and warehouse-wise adoption to identify further process improvements.",
+    "blockers": "- PO Changed After Goods Arrival: In some cases, the PO number is changed after goods reach the warehouse. Since the QC report is unavailable against the new PO number, the warehouse team is unable to complete the inward.\n- Cancelled PO – Goods Received: Vendors are dispatching goods against POs that have already been cancelled. As a result, goods reach the warehouse against an invalid PO, preventing inward processing.\n- Cross-Team Dependencies: Timely PO updates, revised QC reports and accurate shipment details are dependent on the Production, Category and other relevant teams.",
+    "tables": []
+   }
+  },
+  {
+   "key": "finops",
+   "name": "Fin Ops",
+   "group": "Product",
+   "owners": [
+    "Mohd Faisal Jamal Kidwai"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- BORIS scale-up planned across Delhi, NCR, Pune, Mumbai, and Hyderabad, with finance alignment pending.",
+    "ahead": "",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "automations",
+   "name": "Automations & Tools",
+   "group": "Snitch AI Labs",
+   "owners": [
+    "Sajja Sai Karthik"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- NSO Tool (0 to 1): Completed end-to-end Product scoping and Business Development alignment for the 0-to-1 build.\n- Logic ERP Integration: Successfully integrated Logic ERP into the central Reconciliation tool pipeline.\n- Marketplace Reconciliation: Finalized feature scoping for marketplace recon, with active development kicking off this week.",
+    "ahead": "- Retail Ops Integration: Align with Devender on the NSO Tool to map and integrate Retail Operations workflows.\n- Marketplace Recon Build: Begin development of the marketplace reconciliation module.",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "mp_pricing",
+   "name": "Marketplace Pricing",
+   "group": "Snitch AI Labs",
+   "owners": [
+    "Hritik Kumar"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "Myntra-based pricing flow streamlined, Flipkart uploads and catalogue history. PPMP and SOR recommendations, price checks and audit records sit in one tool.",
+    "ahead": "Refine pricing logic and measure the sales, revenue and GP impact of previous price changes.",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "rfid",
+   "name": "RFID",
+   "group": "Functions",
+   "owners": [
+    "Nitin Pramod Manke"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- Store Network Expansion: Total operational store count reached ~108 doors following the onboarding of 7 new locations (Trion, EVA, Earth Euphoria, Prozone Mall, Kolhapur, SGS Mall, and City Center Nashik).\n- Inbound Inventory Accuracy: Network-wide RFID GRN adoption dropped slightly from 85% to 83%, driven by a 28% WoW surge in volume and the integration of new store go-lives. Out of 1,392 total inbound invoices, 1,157 were processed via RFID while 235 were created manually. Performance remains solid overall, with 50+ stores achieving 100% RFID compliance, including turnaround recoveries at Bannerghatta and HLP Mohali Mall.\n- Operational Risks & Escalations: A major operational risk was identified across 9 stores that recorded 0% RFID adoption, processing 100% of inward stock manually. This significantly elevates risk regarding stock discrepancies and inventory shrinkage. Notably, 7 of these doors belong to the Mumbai/Pune regional cluster and have shown zero RFID activity since launch (3-4 weeks back), requiring immediate operational intervention. Additionally, the weekly Global Count stockroom audit export experienced compliance gaps at source.",
+    "ahead": "- NSO Onboarding : Nagpur , Jaipur",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "logistics",
+   "name": "Logistics",
+   "group": "Functions",
+   "owners": [
+    "Iqbal Akram Choudhary"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- B2B - M Express: Onboarding for train movement from both warehouses is in progress, with completion expected in 2 weeks. Ifham Syed\n- Quick: Lajpat Nagar store added to Quick. HLD go-live setup completed. Pidge being analysed as an option in QCom operations. Aman JainHritik kumarIqbal cMohd faisal Jamal Kidwai\n- Performance-Based Allocation: Implemented performance-based allocation for festive season loads, optimizing SDD/NDD shipments, maximizing Air movement, and shifting higher volumes to better-performing courier partners.Pradhyum Shivhare\n- Time-Based Allocation: Tested in ClickPost for pincode 201301 wherein it became possible to allocate a pincode to two different partners based on time slots. More testing to be done ahead. Pradhyum ShivhareIqbal c",
+    "ahead": "- Dashboard for Day-wise TAT bucket for pincode level performance KPI tracking to be made. Pradhyum Shivhare Iqbal c\n- Prioritizing Bismill shipments to ensure timely processing and dispatch. Ifham Syed\n- North NCR Own Vehicle Proposal - Analysing CPU and preparing a proposal for own vehicle deployment in North NCR.Ifham Syed\n- Quick HLD Planning: Planning to extend Quick operations to the Yelahanka store. Aman JainHritik kumarIqbal cMohd faisal Jamal Kidwai\n- Redesigning the Control Tower to align with the deployed HLD system, integrate essential logistics dashboards, and introduce new features such as automated customer communications for delivery delays in coordination with the Product Ops team.Aman JainHritik kumar",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "warehouse",
+   "name": "Warehouse",
+   "group": "Functions",
+   "owners": [
+    "Manish Charan"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "- B2C Operations: North delivered a 99.70% overall SLA (Shopify 99.49%, MP 99.90%) with 2.99h O2M, while South hit 99.28% forward SLA but fell to 86.11% on Marketplaces due to Flipkart label/system errors (373 units, 58 UF), leaving ~1.9K combined stuck return shipments (1.4K North pending UC mapping, 531 South).\n- B2B Operations: North processed 1.10L items at 99.73% fulfillment and 100% RFID adoption (80.65% SLA; 80% Return SLA), whereas South processed 24.3K return units at 55% SLA and recorded a 28.85% forward SLA due to strict FIFO prioritization against rulebook calculations and store-level shortages.\n- Inward & Inventory: South achieved 90% Inward SLA, inwarded 23K perfumes, and reduced WH2 Not Found (NF) stock by 7,293 units across 1.35L audited units, while North recorded a 62.4% Fresh Inward SLA (52.8K units breached out of 140.6K received due to WAM Pre-Pack and invoice errors) with 12.8K NF units and 10.3K sellable/non-sellable floor pendency.\n- Admin & HR: South completed e-waste disposal and installed celebration displays, while North scaled active Quess headcount to 323, hosted a blood donation camp.",
+    "ahead": "- B2C Operations: Sustain 99%+ forward SLA across both facilities (North O2M <3h), conduct RCA to resolve North recurring NF-UF/Error orders, clear 383 South error orders (373 MP / 10 Shopify), and close 150 manual returns alongside 3K washing product QC in South.\n- B2B Operations: Align FIFO execution with rulebook metrics to push North SLA past 80.65%, sustain 100% RFID compliance, clear scheduled South MP dispatches on time, dispatch 3K pending washing units, and resolve 27 stuck marketplace invoices with Finance.\n- Inward & Inventory: Accelerate North Inward SLA by resolving 5.6K invoice errors and WAM Pre-Pack issues to clear 10.3K floor pendency, while South dispatches 400 vendor QC rejects and targets missing stock reductions of 18K in WH2 and 8.4K in WH1.\n- Admin & HR: Maintain peak workforce deployment and attendance monitoring across both warehouses, audit North Non-Trading stock for month-end Logic ERP adjustments.",
+    "blockers": "",
+    "tables": []
+   }
+  },
+  {
+   "key": "erp",
+   "name": "ERP",
+   "group": "Functions",
+   "owners": [
+    "E Sagar Kumar Patra"
+   ],
+   "owner_labels": [],
+   "entry": {
+    "metrics": [],
+    "metricsNote": "",
+    "updates": "1. Logic ERP – APIs, Licenses and Vendor Coordination\n- Done:\n- Purchased and activated the Push Journal Purchase / Purchase Return APIs following PI, including payment and license key activation, along with the Save GR Details API.\n- Pending:\n- Discuss the OND requirements, including the ₹38,950 Godown Transfer → UC customisation, with Maddy Sir in the upcoming meeting.\n2. Mysa Integration\n- Done:\n- Activated both Journal APIs and informed Hanvith.\n- Waiting:\n- Hanvith’s test call, scheduled for Thursday, 22 October.\n3. Berrylush\n- Done:\n- Updated the GST rate from 18% to 5% in both Logic and UC.\n- Granted PO access to Gubin and Deepak.\n6. Team and Administration\n- Done:\n- Shared the June–August incentive details with HR.\n- Waiting:\n- IT to provision a ChatGPT license by 20th October.",
+    "ahead": "",
+    "blockers": "",
+    "tables": []
+   }
+  }
+ ]
+}

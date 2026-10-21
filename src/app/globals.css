@@ -137,3 +137,11 @@ html[data-theme="mono"]   { --color-accent: #1c1c1c; --color-accent-2: #6b6b6b; 
   /* any card holding a table scrolls sideways on phones */
   .card:has(table) { overflow-x: auto; }
 }
+
+/* ---------- Print / PDF ---------- */
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+  body { background: #fff !important; font-size: 11.5px; }
+  .card { box-shadow: none !important; }
+  .break-inside-avoid-page { break-inside: avoid-page; }
+}

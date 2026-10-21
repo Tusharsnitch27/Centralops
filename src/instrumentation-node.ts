@@ -18,6 +18,12 @@ if (enabled && process.env.DATABASE_URL && !g.__reminderTimer) {
       const { runAopReminders } = await import("./server/aop/reminders");
       const run = await runAopReminders();
       console.log(`[reminders] ${day}: ${run.checked} late/due inputs, ${run.sent.length} messages (${run.provider})`);
+      // Monday: nudge owners whose weekly update isn't in yet (due 12:00 IST)
+      if (new Date(`${day}T00:00:00Z`).getUTCDay() === 1) {
+        const { remindWeeklyOwners } = await import("./server/weekly/delivery");
+        const n = await remindWeeklyOwners(day, null);
+        console.log(`[reminders] weekly update: reminded ${n} owners`);
+      }
     } catch (e) {
       console.error("[reminders] run failed", e instanceof Error ? e.message : e);
     }

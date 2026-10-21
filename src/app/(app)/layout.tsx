@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <NavRail counts={counts} user={{ name: user.name, title: user.title }} />
         <div className="min-w-0 flex-1">
           <Topbar unread={counts.notifications ?? 0} user={{ name: user.name, title: user.title }} />
-          <main className="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-5 md:px-6 md:pt-6 lg:pb-14">{children}</main>
+          <main className="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-5 md:px-6 md:pt-6 lg:pb-14 print:p-0">{children}</main>
         </div>
       </div>
       <BottomNav counts={counts} />
