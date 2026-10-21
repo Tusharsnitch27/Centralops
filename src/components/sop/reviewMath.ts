@@ -70,6 +70,8 @@ export function viewInsights(v: ViewDef, raw: RawRow[], wh: { South: WhPoint | n
   const utilBump = (w: "South" | "North", units: number) => { const c = whAt(w); return c && c.capacity ? units / c.capacity : null; };
   const domWh = (r: Row, sign: 1 | -1): "South" | "North" => (sign * (r.sa - r.sp) >= sign * (r.na - r.np) ? "South" : "North");
   const out: Insight[] = [];
+  // actuals come only from Snowflake: no feed yet is a data gap, not "nothing moved" on every row
+  if (total.ta === 0 && total.tp > 0) return [{ key: "noactuals", tone: "info", score: 1, title: [{ b: "No actuals yet" }], impact: [`Actuals come only from the Snowflake pipelines — they appear after the next refresh${v.key === "liquidation" ? " (liquidation has no query yet)" : ""}.`] }];
 
   for (const r of rows) {
     const what = v.weekly ? r.label.replace("Wk_0", "Week ").replace("Wk_", "Week ") : r.label;

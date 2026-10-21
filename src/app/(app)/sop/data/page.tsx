@@ -35,7 +35,7 @@ export default async function DataSources() {
     { q: "Category-wise inward has no is_trading filter (Category inward does), so their totals can differ. Keep as is?", status: "open" },
     { q: "Returns: North = Warehouse Name containing NORTH, everything else counts as South (including any non-SAPL warehouse). Limit to the three SAPL warehouses?", status: "open" },
     { q: "B2B-MP has a planned row “Amazon Cocoblu”. With AMAZON/COCOBLU treated as B2C, should that B2B plan move to B2C or stay as a B2B channel?", status: "open" },
-    { q: "Liquidation actuals: no query yet (still from the workbook).", status: "open" },
+    { q: "Liquidation actuals: no Snowflake query yet — liquidation shows plan only until one is added.", status: "open" },
     { q: `Day-level plans exist for: ${plans.map((p) => `${p.view_key === "b2c" ? "B2C" : "Retail"} (${p.months})`).join("; ") || "none"}. B2B-MP has no FY27 daily plan; B2C has none from Nov; Pre-pack only Sep (weekly). Others are spread evenly from the week / month plan.`, status: "open" },
     { q: "Retail daily plan only has store-dispatch days (~22 a month); dispatch on other days shows as unplanned. Is that the intent (fixed dispatch days)?", status: "open" },
     { q: "Orders are captured for B2C only. Do you want order counts for B2B-MP and Retail too?", status: "open" },
