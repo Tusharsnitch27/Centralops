@@ -15,6 +15,7 @@ export const NAV: NavGroup[] = [
   { label: "Programs", items: [
     { href: "/aop", label: "AOP", icon: "Wallet", countKey: "aop", hue: "#ea580c" },
     { href: "/sop", label: "S&OP", icon: "PackageSearch", countKey: "sop", hue: "#0891b2" },
+    { href: "/library", label: "SOP Library & Handbook", short: "Library", icon: "LibraryBig", hue: "#4b5563" },
   ] },
 ];
 

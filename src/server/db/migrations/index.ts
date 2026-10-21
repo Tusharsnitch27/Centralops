@@ -7,6 +7,7 @@ import { sql as directory } from "./003_directory";
 import { sql as taskPoc } from "./010_task_poc";
 import { sql as weekly } from "./012_weekly";
 import { sql as taskLinks } from "./013_task_links";
+import { sql as library } from "./051_library";
 import { sql as aopScope } from "./030_aop_scope";
 import { sql as aopOwners } from "./031_aop_owners";
 import { sql as aopDeadlines } from "./032_aop_deadlines";
@@ -21,6 +22,7 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 10, name: "task_poc", sql: taskPoc },
   { version: 12, name: "weekly", sql: weekly },
   { version: 13, name: "task_links", sql: taskLinks },
+  { version: 51, name: "library", sql: library },
   { version: 30, name: "aop_scope", sql: aopScope },
   { version: 31, name: "aop_owners", sql: aopOwners },
   { version: 32, name: "aop_deadlines", sql: aopDeadlines },

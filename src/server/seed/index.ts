@@ -6,6 +6,7 @@ import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
 import { seedWeekly } from "./weekly";
+import { seedLibrary } from "./library";
 
 const mk = (rawQ: RunQ) => ({
   setting: async (key: string) => (await rawQ<{ value: unknown }>(`select value from app_settings where key = $1`, [key]))[0]?.value ?? null,
@@ -74,6 +75,12 @@ export async function bootstrap(rawQ: RunQ) {
       await rawQ("rollback");
       throw e;
     }
+  }
+
+  if ((await setting("seed.library")) !== "v1") {
+    await seedLibrary(rawQ);
+    await setSetting("seed.library", "v1");
+    console.log("[seed] library sources loaded");
   }
 
   if ((process.env.SEED_DEMO ?? "false") === "true" && !(await setting("seed.demo"))) {
