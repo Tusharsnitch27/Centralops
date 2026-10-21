@@ -5,7 +5,7 @@ import { canManage, requireUser } from "@/server/auth";
 import { listLibrary } from "@/server/library/queries";
 import { cn } from "@/lib/cn";
 
-export const metadata = { title: "Ops Handbook" };
+export const metadata = { title: "References" };
 
 /** Google Docs / Sheets / Slides → their embeddable preview (renders for anyone signed in to Google with access). */
 function embedUrl(url: string | null) {
@@ -17,7 +17,7 @@ function embedUrl(url: string | null) {
   return `https://docs.google.com/${m[1]}/d/${m[2]}/preview${m[1] === "document" && tab ? `?tab=${tab}` : m[1] === "spreadsheets" && gid ? `?gid=${gid}` : ""}`;
 }
 
-export default async function Handbook({ searchParams }: { searchParams: Promise<{ doc?: string }> }) {
+export default async function References({ searchParams }: { searchParams: Promise<{ doc?: string }> }) {
   const u = await requireUser();
   const sp = await searchParams;
   const docs = await listLibrary("handbook");
@@ -26,7 +26,7 @@ export default async function Handbook({ searchParams }: { searchParams: Promise
   return (
     <div className="space-y-4">
       {docs.length > 1 && (
-        <div className="seg">{docs.map((d) => <Link key={d.id} href={`/library/handbook?doc=${d.id}`} data-on={d.id === cur?.id} className="seg-item">{d.title}</Link>)}</div>
+        <div className="seg">{docs.map((d) => <Link key={d.id} href={`/library/references?doc=${d.id}`} data-on={d.id === cur?.id} className="seg-item">{d.title}</Link>)}</div>
       )}
       {cur && (
         <div className="card overflow-hidden">
@@ -42,8 +42,8 @@ export default async function Handbook({ searchParams }: { searchParams: Promise
         </div>
       )}
       <details className="group">
-        <summary className="cursor-pointer px-1 text-[12.5px] text-ink-3 hover:text-ink">Manage handbook documents</summary>
-        <div className="mt-3"><LibraryList kind="handbook" label="Handbook docs" items={docs} manage={canManage(u)} /></div>
+        <summary className="cursor-pointer px-1 text-[12.5px] text-ink-3 hover:text-ink">All reference documents</summary>
+        <div className="mt-3"><LibraryList kind="handbook" label="Reference docs" items={docs} manage={canManage(u)} /></div>
       </details>
     </div>
   );

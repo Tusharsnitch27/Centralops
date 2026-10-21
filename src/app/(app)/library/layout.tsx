@@ -6,8 +6,8 @@ export default async function LibraryLayout({ children }: { children: React.Reac
   const c = await libraryCounts();
   return (
     <div>
-      <PageHeader eyebrow="Programs" title="SOP Library & Ops Handbook" subtitle="Every SOP, the handbook, and the dashboards and tools the team runs on — in one place" />
-      <LibraryTabs counts={{ sop: c.sop, tools: (c.dashboard ?? 0) + (c.tool ?? 0) }} />
+      <PageHeader eyebrow="Programs" title="Ops Handbook" subtitle="Every SOP by function, the dashboards and tools the team runs on, and reference docs — in one place" />
+      <LibraryTabs counts={{ sop: c.sop, tools: (c.dashboard ?? 0) + (c.tool ?? 0), refs: c.handbook }} />
       {children}
     </div>
   );

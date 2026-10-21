@@ -9,34 +9,23 @@ import type { LibraryItem, LibraryKind } from "@/server/library/queries";
 import { linkLabel } from "@/lib/links";
 import { cn } from "@/lib/cn";
 import { Importer } from "./Importer";
+import { functionOf, functionOrder } from "@/lib/opsFunctions";
 
 /** Searchable, filterable list of library links. `layout` table for SOPs, cards for dashboards/tools. */
-export function LibraryList({ kind, items, manage, label, layout = "table" }: { kind: LibraryKind; items: LibraryItem[]; manage: boolean; label: string; layout?: "table" | "cards" }) {
+export function LibraryList({ kind, items: all, manage, label, layout = "table" }: { kind: LibraryKind; items: LibraryItem[]; manage: boolean; label: string; layout?: "table" | "cards" }) {
   const [qy, setQy] = useState("");
   const [cat, setCat] = useState("");
   const [edit, setEdit] = useState<LibraryItem | "new" | null>(null);
-  const cats = useMemo(() => [...new Set(items.map((i) => i.category || i.function_name).filter(Boolean))].sort(), [items]);
-  const shown = items.filter((i) => (!cat || i.category === cat || i.function_name === cat)
+  // the register sheets themselves sit apart from the individual entries
+  const sources = all.filter((i) => i.category === "Source");
+  const items = useMemo(() => all.filter((i) => i.category !== "Source").map((i) => ({ ...i, fn: functionOf(i) })), [all]);
+  const cats = useMemo(() => [...new Set(items.map((i) => i.fn))].sort((a, b) => functionOrder(a) - functionOrder(b) || a.localeCompare(b)), [items]);
+  const shown = items.filter((i) => (!cat || i.fn === cat)
     && (!qy || `${i.title} ${i.description} ${i.owner} ${i.category} ${i.function_name} ${Object.values(i.extra).join(" ")}`.toLowerCase().includes(qy.toLowerCase())));
-  return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="relative min-w-0 flex-1 sm:max-w-[320px]">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-          <input className="field h-9 pl-8" placeholder={`Search ${label.toLowerCase()}…`} value={qy} onChange={(e) => setQy(e.target.value)} />
-        </label>
-        {cats.length > 1 && (
-          <select className="field h-9 w-auto" value={cat} onChange={(e) => setCat(e.target.value)}>
-            <option value="">All categories</option>{cats.map((c) => <option key={c}>{c}</option>)}
-          </select>
-        )}
-        {manage && <span className="ml-auto flex gap-2"><Importer kind={kind} label={label} /><Button size="sm" variant="primary" onClick={() => setEdit("new")}><Plus size={13} />Add</Button></span>}
-      </div>
-
-      {!shown.length ? <div className="card"><EmptyState title={items.length ? "Nothing matches" : `No ${label.toLowerCase()} yet`} body={items.length ? "Try another search." : manage ? "Import them from the source sheet or add one by hand." : undefined} /></div>
-        : layout === "cards" ? (
+  function Group({ list }: { list: typeof shown }) {
+    return layout === "cards" ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {shown.map((i) => (
+            {list.map((i) => (
               <div key={i.id} className="card group flex flex-col p-4">
                 <div className="flex items-start gap-2">
                   <a href={i.url ?? undefined} target="_blank" rel="noopener noreferrer" className={cn("min-w-0 flex-1 text-[13.5px] font-semibold text-ink", i.url && "hover:underline")}>{i.title}</a>
@@ -55,8 +44,8 @@ export function LibraryList({ kind, items, manage, label, layout = "table" }: { 
         ) : (
           <div className="card overflow-hidden">
             <table className="table-base">
-              <thead><tr><th>Title</th><th className="hidden md:table-cell">Category</th><th className="hidden md:table-cell">Function</th><th className="hidden lg:table-cell">Owner</th><th className="hidden lg:table-cell">Updated</th><th className="w-10" /></tr></thead>
-              <tbody>{shown.map((i) => (
+              <thead><tr><th>Title</th><th className="hidden md:table-cell">Category</th><th className="w-[150px]">Link</th><th className="hidden lg:table-cell">Owner</th><th className="hidden lg:table-cell">Updated</th><th className="w-10" /></tr></thead>
+              <tbody>{list.map((i) => (
                 <tr key={i.id} className="group">
                   <td className="py-2">
                     <div className="flex items-center gap-1.5">
@@ -68,7 +57,7 @@ export function LibraryList({ kind, items, manage, label, layout = "table" }: { 
                     <div className="text-[11.5px] text-ink-4 md:hidden">{[i.category, i.function_name, i.owner].filter(Boolean).join(" · ")}</div>
                   </td>
                   <td className="hidden text-ink-3 md:table-cell">{i.category}</td>
-                  <td className="hidden text-ink-3 md:table-cell">{i.function_name}</td>
+                  <td>{i.url ? <a href={i.url} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-[150px] items-center gap-1 text-[12px] text-info hover:underline"><span className="truncate">{linkLabel(i.url)}</span><ExternalLink size={11} className="shrink-0" /></a> : <span className="text-[12px] text-ink-4">No link</span>}</td>
                   <td className="hidden text-ink-3 lg:table-cell">{i.owner}</td>
                   <td className="hidden whitespace-nowrap text-ink-4 lg:table-cell">{i.updated_on}</td>
                   <td>{manage && <RowActions i={i} onEdit={() => setEdit(i)} />}</td>
@@ -76,8 +65,52 @@ export function LibraryList({ kind, items, manage, label, layout = "table" }: { 
               ))}</tbody>
             </table>
           </div>
+        );
+  }
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <label className="relative min-w-0 flex-1 sm:max-w-[320px]">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+          <input className="field h-9 pl-8" placeholder={`Search ${label.toLowerCase()}…`} value={qy} onChange={(e) => setQy(e.target.value)} />
+        </label>
+        {cats.length > 1 && (
+          <select className="field h-9 w-auto" value={cat} onChange={(e) => setCat(e.target.value)}>
+            <option value="">All functions</option>{cats.map((c) => <option key={c}>{c}</option>)}
+          </select>
         )}
-      <p className="mt-2 px-1 text-[11.5px] text-ink-4">{shown.length} of {items.length}</p>
+        {manage && <span className="ml-auto flex gap-2"><Importer kind={kind} label={label} /><Button size="sm" variant="primary" onClick={() => setEdit("new")}><Plus size={13} />Add</Button></span>}
+      </div>
+
+      {sources.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-[12px]">
+          <span className="text-ink-4">Source {sources.length > 1 ? "sheets" : "sheet"}:</span>
+          {sources.map((x) => (
+            <span key={x.id} className="group flex items-center gap-1">
+              <a href={x.url ?? undefined} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-md px-2 py-1 text-info ring-1 ring-inset ring-line hover:bg-info-soft">{x.title}<ExternalLink size={11} /></a>
+              {manage && <RowActions i={x} onEdit={() => setEdit(x)} />}
+            </span>
+          ))}
+        </div>
+      )}
+      {!shown.length ? <div className="card"><EmptyState title={items.length ? "Nothing matches" : `No ${label.toLowerCase()} listed yet`} body={items.length ? "Try another search." : manage ? "Import them from the source sheet (copy the rows, paste in Import from sheet) or add one by hand." : undefined} /></div> : (
+        <>
+          {cats.length > 1 && !cat && !qy && (
+            <nav className="mb-4 flex flex-wrap gap-1.5">
+              {cats.map((c) => <a key={c} href={`#${kind}-${slug(c)}`} className="rounded-md bg-surface px-2 py-1 text-[12px] text-ink-2 ring-1 ring-inset ring-line hover:ring-line-strong">{c} <span className="text-ink-4">{items.filter((i) => i.fn === c).length}</span></a>)}
+            </nav>
+          )}
+          <div className="space-y-6">
+            {cats.filter((c) => shown.some((i) => i.fn === c)).map((c) => (
+              <section key={c} id={`${kind}-${slug(c)}`} className="scroll-mt-20">
+                <h3 className="mb-2 flex items-baseline gap-2 px-1 text-[13px] font-semibold text-ink">{c}<span className="text-[11.5px] font-normal text-ink-4">{shown.filter((i) => i.fn === c).length}</span></h3>
+                <Group list={shown.filter((i) => i.fn === c)} />
+              </section>
+            ))}
+          </div>
+        </>
+      )}
+      <p className="mt-3 px-1 text-[11.5px] text-ink-4">{shown.length} of {items.length}</p>
       {edit && <EditModal kind={kind} item={edit === "new" ? null : edit} onClose={() => setEdit(null)} />}
     </div>
   );
@@ -118,3 +151,5 @@ function EditModal({ kind, item, onClose }: { kind: LibraryKind; item: LibraryIt
     </Modal>
   );
 }
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
