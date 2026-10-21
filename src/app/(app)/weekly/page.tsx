@@ -5,6 +5,8 @@ import { Collapsible, ExpandAll } from "@/components/ui/Collapsible";
 import { EntryBody } from "@/components/weekly/EntryBody";
 import { SectionEditor } from "@/components/weekly/SectionEditor";
 import { RemindButton } from "@/components/weekly/WeeklyActions";
+import { WeeklyTabs } from "@/components/weekly/WeeklyTabs";
+import { Suspense } from "react";
 import { STATUS_LABEL, STATUS_TONE } from "@/components/weekly/meta";
 import { canManage, requireUser } from "@/server/auth";
 import { currentWeekOf, ensureReport, listReports, loadReport, type ReportView } from "@/server/weekly/model";
@@ -50,6 +52,7 @@ export default async function WeeklyPage({ searchParams }: { searchParams: Promi
         subtitle="Every Monday by 12 PM · compiled and sent to leadership"
         actions={<ButtonLink href={`/weekly/document?week=${weekOf}`} variant="primary"><FileText size={14} />{manage ? "Compile & review" : "View document"}</ButtonLink>} />
 
+      <Suspense><WeeklyTabs /></Suspense>
       <div className="seg mb-4">
         <span className="seg-label">Week of</span>
         {weeks.map((w) => <Link key={w} href={`/weekly?week=${w}`} data-on={w === weekOf} className="seg-item">{fmtDate(w)}{w === cur ? " · next" : ""}</Link>)}
