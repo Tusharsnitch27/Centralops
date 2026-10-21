@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import type { RunQ } from "../db";
 import { hashPassword } from "../auth/passwords";
 import { seedReference } from "./reference";
@@ -8,6 +9,7 @@ import { seedSopReview } from "./sopReview";
 import { seedSopHistory } from "./sopHistory";
 import { seedWeekly } from "./weekly";
 import { seedLibrary } from "./library";
+import { seedOrgChart } from "./orgChart";
 
 const mk = (rawQ: RunQ) => ({
   setting: async (key: string) => (await rawQ<{ value: unknown }>(`select value from app_settings where key = $1`, [key]))[0]?.value ?? null,
@@ -47,9 +49,14 @@ export async function bootstrap(rawQ: RunQ) {
        on conflict (username) do update set email = excluded.email, role = 'admin', password_hash = excluded.password_hash, active = true`,
       [username, email, process.env.ADMIN_NAME || "Tushar", await hashPassword(pw)]);
     console.log(`[seed] admin account ${email} created`);
-  } else if (mine.length && pw && (!mine[0].password_hash || process.env.ADMIN_RESET_PASSWORD === "true")) {
-    await rawQ(`update users set password_hash = $2, role = 'admin', active = true, failed_logins = 0, locked_until = null where id = $1`, [mine[0].id, await hashPassword(pw)]);
-    console.log(`[seed] admin password for ${email} set from ADMIN_PASSWORD`);
+  } else if (mine.length && pw) {
+    // ADMIN_PASSWORD changed in Coolify (or never applied) → apply it once to the admin account, and unlock it
+    const fp = createHash("sha256").update(`${email}:${pw}`).digest("hex");
+    if (!mine[0].password_hash || process.env.ADMIN_RESET_PASSWORD === "true" || (await setting("admin.password_fp")) !== fp) {
+      await rawQ(`update users set password_hash = $2, role = 'admin', active = true, failed_logins = 0, locked_until = null where id = $1`, [mine[0].id, await hashPassword(pw)]);
+      await setSetting("admin.password_fp", fp);
+      console.log(`[seed] admin password for ${email} set from ADMIN_PASSWORD`);
+    }
   }
   const admin = (await rawQ<{ id: string }>(`select id from users where role = 'admin' order by (lower(email) = $1) desc, created_at limit 1`, [email]))[0]!.id;
 
@@ -77,6 +84,12 @@ export async function bootstrap(rawQ: RunQ) {
     await seedSopReview(rawQ);
     await setSetting("seed.sop_review", "v1");
     console.log("[seed] S&OP monthly review (Sep 2026) loaded");
+  }
+
+  if ((await setting("seed.org")) !== "v1") {
+    await seedOrgChart(rawQ);
+    await setSetting("seed.org", "v1");
+    console.log("[seed] org chart + roles set (Mahadevan/Tushar admin, Pradhyum PM)");
   }
 
   if ((await setting("seed.sop_history")) !== "v1") {

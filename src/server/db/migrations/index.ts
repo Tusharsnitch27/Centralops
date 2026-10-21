@@ -5,6 +5,7 @@ import { sql as core } from "./001_core";
 import { sql as plans } from "./002_plans";
 import { sql as directory } from "./003_directory";
 import { sql as loginLock } from "./004_login_lock";
+import { sql as orgGoals } from "./005_org_goals";
 import { sql as taskPoc } from "./010_task_poc";
 import { sql as weekly } from "./012_weekly";
 import { sql as taskLinks } from "./013_task_links";
@@ -22,6 +23,7 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 2, name: "plans", sql: plans },
   { version: 3, name: "directory", sql: directory },
   { version: 4, name: "login_lock", sql: loginLock },
+  { version: 5, name: "org_goals", sql: orgGoals },
   { version: 10, name: "task_poc", sql: taskPoc },
   { version: 12, name: "weekly", sql: weekly },
   { version: 13, name: "task_links", sql: taskLinks },

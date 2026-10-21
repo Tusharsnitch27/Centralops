@@ -1,4 +1,5 @@
 import "server-only";
+import { taskScope, visibleSql } from "../org/queries";
 import { one, q } from "../db";
 import { canManage, type User } from "../auth";
 import { addDays, today, weekStart } from "@/lib/dates";
@@ -95,7 +96,7 @@ export const weekEnd = (d = today()) => addDays(weekStart(d), 6);
 /** The base filter for a view, scoped to the user. */
 export function viewFilter(view: TaskViewKey, u: Pick<User, "id" | "role">): TaskFilter {
   const td = today();
-  const scope: TaskFilter = canManage(u) ? {} : { involving: u.id };
+  const scope: TaskFilter = {}; // visibility is applied by the org scope in listTasksForParams
   switch (view) {
     case "mine": return { ownerId: u.id, open: true };
     case "delegated": return { delegatedBy: u.id, open: true };
@@ -112,6 +113,8 @@ export function viewFilter(view: TaskViewKey, u: Pick<User, "id" | "role">): Tas
 /** View + URL filters → TaskFilter. Owner/team filters are applied after the query when needed. */
 export async function listTasksForParams(p: TaskParams, u: Pick<User, "id" | "role">): Promise<TaskListItem[]> {
   const f: TaskFilter = { ...viewFilter(p.view, u) };
+  const ids = await taskScope(u);
+  if (ids) f.visibleTo = { me: u.id, ids };
   let ownerTeam: string | undefined;
   if (p.owner === "me") f.ownerId = u.id;
   else if (p.owner?.startsWith("team:")) ownerTeam = p.owner.slice(5);
@@ -137,7 +140,8 @@ export type ViewCounts = Record<TaskViewKey, number> & { blocked: number; staleO
 /** All tab counts in one round trip. Mirrors viewFilter(). */
 export async function taskViewCounts(u: Pick<User, "id" | "role">): Promise<ViewCounts> {
   const td = today();
-  const scope = canManage(u) ? "true" : `(t.owner_id = $1 or t.requester_id = $1 or t.waiting_on_id = $1 or t.created_by = $1)`;
+  const ids = await taskScope(u);
+  const scope = ids ? visibleSql("$5", "$1") : "true";
   const open = `t.status not in ('completed','cancelled')`;
   const delegated = `(t.requester_id = $1 or t.created_by = $1) and t.owner_id is distinct from t.requester_id and coalesce(t.owner_id::text, '') <> $1::text`;
   const stale = `coalesce(t.last_update_at, t.created_at) < now() - make_interval(days => ${STALE_DAYS})`;
@@ -156,7 +160,7 @@ export async function taskViewCounts(u: Pick<User, "id" | "role">): Promise<View
        count(*) filter (where ${scope} and ${open} and t.due_date < $2::date and ${stale})::int as "staleOverdue",
        count(*) filter (where ${delegated} and t.status = 'not_started' and t.acknowledged_at is null and t.created_at < now() - interval '2 days')::int as unacknowledged
      from tasks t`,
-    [u.id, td, weekEnd(td), addDays(td, -DONE_WINDOW_DAYS)],
+    [u.id, td, weekEnd(td), addDays(td, -DONE_WINDOW_DAYS), ids ?? []],
   );
   return r as unknown as ViewCounts;
 }

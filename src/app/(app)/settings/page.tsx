@@ -20,6 +20,7 @@ const ALL_TABS = [
   { key: "profile", label: "Profile", admin: false },
   { key: "personalisation", label: "Personalisation", admin: false },
   { key: "users", label: "Users & access", admin: true },
+  { key: "org", label: "Org chart", admin: true },
   { key: "permissions", label: "Permissions", admin: true },
   { key: "teams", label: "Teams", admin: true },
   { key: "templates", label: "Templates", admin: true },
@@ -31,7 +32,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const user = await requireUser();
   const sp = await searchParams;
   const manager = canManage(user);
-  const tabs = ALL_TABS.filter((t) => manager || !t.admin);
+  const isAdmin = user.role === "admin";
+  const tabs = ALL_TABS.filter((t) => isAdmin || !t.admin);
   const tab = tabs.find((t) => t.key === sp.tab)?.key ?? "profile";
 
   return (
@@ -52,6 +54,12 @@ async function renderTab(tab: string, userId: string, isAdmin: boolean, manager:
     case "users": {
       const [users, teams] = await Promise.all([listUsersAdmin(), listTeamsAdmin()]);
       return <UsersAdmin users={users} teams={teams.map((t) => ({ id: t.id, name: t.name }))} today={today()} focus={focusUser} isAdmin={isAdmin} />;
+    }
+    case "org": {
+      if (!isAdmin) return null;
+      const { orgPeople } = await import("@/server/org/queries");
+      const { OrgChart } = await import("@/components/org/OrgChart");
+      return <OrgChart people={await orgPeople()} />;
     }
     case "permissions": {
       const [rows, people, teams, entities] = await Promise.all([listPermissions(), listPeople(), listTeamsAdmin(), permissionEntities()]);

@@ -31,6 +31,8 @@ export interface NewTask {
   nextStep?: string | null;
   pocName?: string | null;
   links?: TaskLink[];
+  assigneeIds?: string[];   // more people working on it besides the owner
+  goalId?: string | null;
   tags?: string[];
   dependsOn?: string[];
 }
@@ -60,6 +62,12 @@ export async function createTask(actorId: string | null, t: NewTask, opts: { all
     const id = row!.id;
     if (t.pocName?.trim()) await x.q(`update tasks set poc_name = $2 where id = $1`, [id, t.pocName.trim()]);
     if (t.links?.length) await x.q(`update tasks set links = $2 where id = $1`, [id, JSON.stringify(cleanLinks(t.links))]);
+    if (t.goalId) await x.q(`update tasks set goal_id = $2 where id = $1`, [id, t.goalId]);
+    for (const a of new Set(t.assigneeIds ?? [])) {
+      if (!a || a === t.ownerId) continue;
+      await x.q(`insert into task_assignees (task_id, user_id, added_by) values ($1,$2,$3) on conflict do nothing`, [id, a, actorId]);
+      if (a !== actorId) await notify({ userId: a, kind: "task_assigned", title: `Added to: ${t.title}`, body: t.dueDate ? `Due ${t.dueDate}` : null, entityType: "task", entityId: id, href: `/tasks/${id}`, actorId }, x);
+    }
     // program follows project when not given
     if (!t.programId && t.projectId) await x.q(`update tasks set program_id = (select program_id from projects where id = $2) where id = $1`, [id, t.projectId]);
     await x.q(`insert into task_history (task_id, actor_id, event, to_value, note) values ($1,$2,'created',$3,$4)`, [id, actorId, t.source ?? "manual", t.meetingId ? "From meeting" : null]);
@@ -91,6 +99,7 @@ export interface TaskPatch {
   dueDate?: string | null;
   startDate?: string | null;
   links?: TaskLink[];
+  goalId?: string | null;
   projectId?: string | null;
   blocker?: string | null;
   nextStep?: string | null;
@@ -125,6 +134,7 @@ export async function updateTask(actorId: string, id: string, p: TaskPatch) {
     if (p.description !== undefined) set("description", p.description);
     if (p.nextStep !== undefined) set("next_step", p.nextStep);
     if (p.links !== undefined) set("links", JSON.stringify(cleanLinks(p.links)));
+    if (p.goalId !== undefined) set("goal_id", p.goalId);
     if (p.waitingOnId !== undefined) set("waiting_on_id", p.waitingOnId);
     if (p.projectId !== undefined && p.projectId !== cur.project_id) {
       set("project_id", p.projectId);
@@ -158,6 +168,9 @@ export async function updateTask(actorId: string, id: string, p: TaskPatch) {
       const event = p.status === "completed" ? "completed" : p.status === "cancelled" ? "cancelled" : p.status === "blocked" ? "blocked"
         : cur.status === "completed" || cur.status === "cancelled" ? "reopened" : cur.status === "blocked" ? "unblocked" : "status_changed";
       if (p.status === "completed") set("completed_at", new Date().toISOString());
+      // master status: closing the task or moving it out of Blocked clears every open blocker on it
+      if (p.status !== "blocked")
+        await x.q(`update task_blockers set status = 'cleared', cleared_by = $2, cleared_at = now() where task_id = $1 and status = 'open'`, [id, actorId]);
       else if (cur.status === "completed") set("completed_at", null);
       await hist(event, TASK_STATUS[cur.status].label, TASK_STATUS[p.status].label, p.note ?? (p.status === "blocked" ? p.blocker : null));
       if (actorId === cur.owner_id && cur.status === "not_started" && p.status !== "cancelled") set("acknowledged_at", new Date().toISOString());

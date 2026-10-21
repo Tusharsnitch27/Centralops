@@ -15,7 +15,12 @@ import { extractLinks, linkLabel } from "@/lib/links";
 interface PersonOpt { id: string; name: string; title: string | null }
 
 /** Write a task in plain words → get a sharper version with prompts for the missing details → add it (or skip the details). */
-export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: string }) {
+export interface LinkOpts { goals: { id: string; title: string }[]; projects: { id: string; name: string; goal_id: string | null }[] }
+
+export function TaskCapture({ people, meId, links: linkOpts }: { people: PersonOpt[]; meId: string; links?: LinkOpts }) {
+  const [assignees, setAssignees] = useState<string[]>([]);
+  const [goalId, setGoalId] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [text, setText] = useState("");
   const [d, setD] = useState<TaskDraft | null>(null);
   const [thinking, startThink] = useTransition();
@@ -46,11 +51,11 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
     // keep what the user set explicitly; take the sharper wording and suggestions
     setD((x) => x && { ...n, pocName: x.pocName, dueDate: x.dueDate, startDate: x.startDate, dueLabel: x.dueLabel, links: x.links, outcome: n.outcome || x.outcome, nextStep: n.nextStep || x.nextStep });
   });
-  const reset = () => { setD(null); setText(""); setTimeout(() => inputRef.current?.focus(), 0); };
+  const reset = () => { setD(null); setText(""); setAssignees([]); setGoalId(""); setProjectId(""); setTimeout(() => inputRef.current?.focus(), 0); };
   const save = (skip: boolean) => d && startSave(async () => {
     const r = await saveCapturedTask(skip
-      ? { title: d.title, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, links: d.links, engine: d.engine }
-      : { title: d.title, details: d.details, outcome: d.outcome, nextStep: d.nextStep, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, links: d.links, engine: d.engine });
+      ? { title: d.title, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, links: d.links, engine: d.engine, assigneeIds: assignees, goalId, projectId }
+      : { title: d.title, details: d.details, outcome: d.outcome, nextStep: d.nextStep, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, links: d.links, engine: d.engine, assigneeIds: assignees, goalId, projectId });
     if (!r.ok) { toast(r.error, "error"); return; }
     toast(skip ? "Task added" : "Task added with details", "success");
     reset();
@@ -136,6 +141,27 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
                 <option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
               </select>
             </label>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="sm:col-span-3">
+              <span className="label">Also working on <span className="font-normal text-ink-4">(optional — add more later)</span></span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {assignees.map((id) => { const p = people.find((x) => x.id === id); return (
+                  <span key={id} className="flex items-center gap-1 rounded-md bg-surface py-0.5 pl-2 pr-1 text-[12px] ring-1 ring-line">{p?.name ?? "?"}<button type="button" onClick={() => setAssignees((a) => a.filter((x) => x !== id))} className="rounded p-0.5 text-ink-4 hover:text-bad" aria-label="Remove"><X size={11} /></button></span>
+                ); })}
+                <select className="field h-8 w-auto py-0 text-[12.5px]" value="" onChange={(e) => e.target.value && setAssignees((a) => [...new Set([...a, e.target.value])])}>
+                  <option value="">+ Add person</option>
+                  {people.filter((p) => !assignees.includes(p.id) && p.id !== d.ownerId).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+            </div>
+            {linkOpts && <>
+              <label className="block"><span className="label">Goal <span className="font-normal text-ink-4">(optional)</span></span>
+                <select className="field" value={goalId} onChange={(e) => setGoalId(e.target.value)}><option value="">—</option>{linkOpts.goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></label>
+              <label className="block"><span className="label">Project <span className="font-normal text-ink-4">(optional)</span></span>
+                <select className="field" value={projectId} onChange={(e) => { setProjectId(e.target.value); const pr = linkOpts.projects.find((x) => x.id === e.target.value); if (pr?.goal_id && !goalId) setGoalId(pr.goal_id); }}><option value="">—</option>{linkOpts.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+            </>}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

@@ -17,7 +17,7 @@ export async function refineTask(raw: string, cur?: DraftInput): Promise<ActionR
   } catch (e) { return fail(e); }
 }
 
-export async function saveCapturedTask(d: { title: string; details?: string; outcome?: string; nextStep?: string; dueDate?: string | null; startDate?: string | null; pocName?: string; links?: TaskLink[]; priority?: Priority; engine?: "claude" | "rules" }): Promise<ActionResult<{ id: string }>> {
+export async function saveCapturedTask(d: { title: string; details?: string; outcome?: string; nextStep?: string; dueDate?: string | null; startDate?: string | null; pocName?: string; links?: TaskLink[]; assigneeIds?: string[]; goalId?: string | null; projectId?: string | null; priority?: Priority; engine?: "claude" | "rules" }): Promise<ActionResult<{ id: string }>> {
   try {
     const u = await requireUser();
     if (!canEdit(u)) throw new Error("Read-only access");
@@ -29,7 +29,7 @@ export async function saveCapturedTask(d: { title: string; details?: string; out
     const poc = await directoryPoc(d.pocName);
     const row = await createTask(u.id, {
       title: d.title, description, nextStep: d.nextStep?.trim() || null, dueDate: d.dueDate, startDate: d.startDate || null, ownerId: poc?.id ?? u.id, requesterId: u.id,
-      pocName: poc ? null : d.pocName?.trim() || null, links: d.links ?? [],
+      pocName: poc ? null : d.pocName?.trim() || null, links: d.links ?? [], assigneeIds: d.assigneeIds ?? [], goalId: d.goalId || null, projectId: d.projectId || null,
       priority: d.priority ?? "medium", source: d.engine === "claude" ? "ai" : "manual",
     });
     revalidatePath("/", "layout");

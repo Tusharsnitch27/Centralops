@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, ExternalLink, Inbox } from "lucide-react";
 import { Avatar, EmptyState, PageHeader, PriorityIcon } from "@/components/ui";
-import { TaskCapture } from "@/components/tasks/TaskCapture";
+import { CreateTabs } from "@/components/tasks/CreateTabs";
+import { goalOptions, projectOptions } from "@/server/goals/queries";
+import { blockersOnMe } from "@/server/tasks/people";
+import { orgPeople, taskScope } from "@/server/org/queries";
+import { listTasks } from "@/server/tasks/queries";
 import { FocusPanel } from "@/components/tasks/FocusPanel";
 import { TaskCheck } from "@/components/tasks/TaskCheck";
 import { Collapsible } from "@/components/ui/Collapsible";
@@ -15,9 +19,13 @@ import { cn } from "@/lib/cn";
 
 export const metadata = { title: "Tasks" };
 
-export default async function MyTasks() {
+export default async function MyTasks({ searchParams }: { searchParams: Promise<{ view?: string; person?: string; dept?: string }> }) {
+  const sp = await searchParams;
   const u = await requireUser();
-  const [all, people] = await Promise.all([myPending(u.id), listPeople()]);
+  const [all, people, goals, projects, onMe, scope] = await Promise.all([myPending(u.id), listPeople(), goalOptions(), projectOptions(), blockersOnMe(u.id), taskScope(u)]);
+  // a team view for admins / program managers (everyone) and anyone with people reporting to them
+  const canTeam = scope === null || scope.length > 1;
+  if (canTeam && sp.view === "team") return <TeamView me={u.id} scope={scope} person={sp.person} dept={sp.dept} />;
   const t = today();
   // a start date keeps a task off the active list until then — a clean charter for today
   const tasks = all.filter((x) => !x.start_date || x.start_date <= t);
@@ -40,11 +48,26 @@ export default async function MyTasks() {
 
   return (
     <div>
+      {canTeam && <ScopeTabs active="mine" />}
       <PageHeader title="My tasks"
         subtitle={<>{tasks.length} active{scheduled.length ? ` · ${scheduled.length} scheduled` : ""}{overdue ? <> · <span className="font-medium text-bad">{overdue} overdue</span></> : null} · sorted by due date</>} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-5">
-          <TaskCapture meId={u.id} people={people.map((p) => ({ id: p.id, name: p.name, title: p.title }))} />
+          <CreateTabs meId={u.id} people={people.map((p) => ({ id: p.id, name: p.name, title: p.title }))} links={{ goals, projects }} />
+          {onMe.length > 0 && (
+            <section>
+              <h2 className="mb-1.5 flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-bad">Blocked on you<span className="font-medium text-ink-4">{onMe.length}</span></h2>
+              <div className="card divide-y divide-line/70 overflow-hidden border-bad/20">
+                {onMe.map((b) => (
+                  <Link key={b.id} href={`/tasks/${b.task_id}`} className="flex items-start gap-3 px-3 py-2.5 hover:bg-subtle/50">
+                    <span className="mt-1 size-2 shrink-0 rounded-full bg-bad" />
+                    <span className="min-w-0 flex-1"><span className="block truncate text-[13px] text-ink">{b.task_title}</span><span className="block text-[11.5px] text-ink-3">{b.body}{b.raised_by_name ? ` · raised by ${b.raised_by_name}` : ""}</span></span>
+                    {b.due_date && <span className="shrink-0 text-[12px] text-ink-3">{relDay(b.due_date)}</span>}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
           <div className="xl:hidden"><FocusPanel initial={ruleFocus(all, u.id)} aiOn={aiConfigured()} /></div>
           {all.length ? (
             <div className="space-y-5">
@@ -109,6 +132,71 @@ function Row({ x, me }: { x: TaskListItem; me: string }) {
       <span className={cn("shrink-0 pt-0.5 text-right text-[12px] tabular", late ? "font-medium text-bad" : x.due_date === t ? "font-medium text-warn" : "text-ink-3")} title={x.due_date ? fmtDate(x.due_date, { dow: true }) : undefined}>
         {x.due_date ? (late ? `${diffDays(t, x.due_date)}d late` : relDay(x.due_date)) : "—"}
       </span>
+    </div>
+  );
+}
+
+function ScopeTabs({ active }: { active: "mine" | "team" }) {
+  return (
+    <div className="seg mb-4">
+      <Link href="/tasks" data-on={active === "mine"} className="seg-item">My tasks</Link>
+      <Link href="/tasks?view=team" data-on={active === "team"} className="seg-item">Team &amp; departments</Link>
+    </div>
+  );
+}
+
+/** Admin / PM: everyone. Managers: the people below them. Grouped by person, soonest due first. */
+async function TeamView({ me, scope, person, dept }: { me: string; scope: string[] | null; person?: string; dept?: string }) {
+  const t = today();
+  const org = await orgPeople();
+  const team = org.filter((p) => p.id !== me && (scope === null || scope.includes(p.id)));
+  const depts = [...new Set(team.map((p) => p.org_function).filter(Boolean))].sort() as string[];
+  const shown = team.filter((p) => (!person || p.id === person) && (!dept || p.org_function === dept));
+  const ids = shown.map((p) => p.id);
+  const tasks = ids.length ? await listTasks({ open: true, order: "due", limit: 800 }).then((r) => r.filter((x) => x.owner_id && ids.includes(x.owner_id))) : [];
+  const by = shown.map((p) => {
+    const ts = tasks.filter((x) => x.owner_id === p.id);
+    return { p, ts, overdue: ts.filter((x) => x.due_date && x.due_date < t).length, blocked: ts.filter((x) => x.status === "blocked").length, week: ts.filter((x) => x.due_date && x.due_date >= t && x.due_date <= addDays(t, 7)).length };
+  }).sort((a, b) => b.overdue - a.overdue || b.ts.length - a.ts.length || a.p.name.localeCompare(b.p.name));
+  const qs = (k: string, v: string | undefined) => { const u = new URLSearchParams({ view: "team" }); const cur = { person, dept, [k]: v }; for (const [a, b] of Object.entries(cur)) if (b) u.set(a, b); return `/tasks?${u}`; };
+  const total = tasks.length, overdue = tasks.filter((x) => x.due_date && x.due_date < t).length;
+  return (
+    <div>
+      <ScopeTabs active="team" />
+      <PageHeader title="Team & department tasks" subtitle={<>{shown.length} people · {total} open{overdue ? <> · <span className="font-medium text-bad">{overdue} overdue</span></> : null}{scope === null ? " · everyone" : " · people reporting to you"}</>} />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <div className="seg"><span className="seg-label">Dept</span>
+          <Link href={qs("dept", undefined)} data-on={!dept} className="seg-item">All</Link>
+          {depts.map((d) => <Link key={d} href={qs("dept", d)} data-on={dept === d} className="seg-item">{d}</Link>)}
+        </div>
+        {person && <Link href={qs("person", undefined)} className="seg-item rounded-lg border border-line bg-surface">Clear person ×</Link>}
+      </div>
+      <div className="card mb-5 overflow-hidden">
+        <div className="table-wrap">
+          <table className="table-base min-w-[640px]">
+            <thead><tr><th>Person</th><th>Function</th><th className="text-right">Open</th><th className="text-right">Overdue</th><th className="text-right">Next 7 days</th><th className="text-right">Blocked</th></tr></thead>
+            <tbody>{by.map(({ p, ts, overdue, blocked, week }) => (
+              <tr key={p.id}>
+                <td><Link href={qs("person", p.id)} className="flex items-center gap-2 font-medium hover:underline"><Avatar name={p.name} color={p.avatar_color} size={20} />{p.name}</Link></td>
+                <td className="text-ink-3">{p.org_function ?? "—"}</td>
+                <td className="text-right tabular">{ts.length}</td>
+                <td className={cn("text-right tabular", overdue && "font-semibold text-bad")}>{overdue || "—"}</td>
+                <td className="text-right tabular">{week || "—"}</td>
+                <td className={cn("text-right tabular", blocked && "text-warn")}>{blocked || "—"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {by.filter((x) => x.ts.length).map(({ p, ts, overdue }) => (
+          <Collapsible key={p.id} id={`team:${p.id}`} title={p.name} sub={[p.title, p.org_function].filter(Boolean).join(" · ")}
+            summary={<><span className="text-ink-3">{ts.length} open</span>{overdue > 0 && <span className="font-semibold text-bad">{overdue} overdue</span>}</>}>
+            <div className="divide-y divide-line/70">{ts.map((x) => <Row key={x.id} x={x} me={me} />)}</div>
+          </Collapsible>
+        ))}
+        {!tasks.length && <div className="card"><EmptyState icon={<Inbox size={18} />} title="No open tasks" body="Nobody in this view has open tasks." /></div>}
+      </div>
     </div>
   );
 }

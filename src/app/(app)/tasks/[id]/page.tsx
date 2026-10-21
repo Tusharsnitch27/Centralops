@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { TaskLinks } from "@/components/tasks/TaskLinks";
+import { TaskPeoplePanel } from "@/components/tasks/TaskPeoplePanel";
+import { taskPeople } from "@/server/tasks/people";
+import { goalOptions } from "@/server/goals/queries";
 import { notFound } from "next/navigation";
 import { AlertOctagon, ArrowUpRight, BellRing, CalendarClock, ChevronRight, CornerDownRight, Hourglass, MessageCircleQuestion, Route } from "lucide-react";
 import { Avatar, Badge, HealthBadge, PriorityIcon, StatusBadge } from "@/components/ui";
@@ -9,6 +12,7 @@ import { TaskJourney, journeySummary } from "@/components/tasks/TaskJourney";
 import { CloseFollowupButton } from "@/components/tasks/FollowupActions";
 import { TaskCheck } from "@/components/tasks/TaskCheck";
 import { requireUser, canEdit } from "@/server/auth";
+import { canSeeTask } from "@/server/org/queries";
 import { listPeople, listProgramsLite, listProjectsLite, listTeams } from "@/server/core/people";
 import { taskDetailBundle } from "@/server/tasks/detail";
 import { listTags } from "@/server/tasks/views";
@@ -27,8 +31,9 @@ const CHANNEL: Record<string, string> = { in_app: "In-app", email: "Email", slac
 export default async function TaskPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const u = await requireUser();
-  const [b, people, teams, projects, programs, tags] = await Promise.all([
-    taskDetailBundle(id), listPeople(), listTeams(), listProjectsLite(), listProgramsLite(), listTags(),
+  if (!/^[0-9a-f-]{36}$/i.test(id) || !(await canSeeTask(u, id))) notFound();
+  const [b, people, teams, projects, programs, tags, tp, goals] = await Promise.all([
+    taskDetailBundle(id), listPeople(), listTeams(), listProjectsLite(), listProgramsLite(), listTags(), taskPeople(id), goalOptions(),
   ]);
   if (!b) notFound();
   const { task: t, journey, thread, attachments, deps, related, followups } = b;
@@ -150,6 +155,10 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
 
         {/* properties sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <SideCard title="People & blockers">
+            <TaskPeoplePanel taskId={t.id} ownerId={t.owner_id} assignees={tp.assignees} blockers={tp.blockers} goalId={t.goal_id} goals={goals} readOnly={readOnly}
+              people={people.map((p) => ({ id: p.id, name: p.name, color: p.avatar_color }))} />
+          </SideCard>
           <SideCard title="Links">
             <TaskLinks id={t.id} links={t.links ?? []} readOnly={readOnly} />
           </SideCard>

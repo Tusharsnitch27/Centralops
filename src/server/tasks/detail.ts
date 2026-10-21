@@ -37,6 +37,7 @@ export interface TaskDetail {
   blocker: string | null;
   next_step: string | null;
   poc_name: string | null;
+  goal_id: string | null;
   links: { url: string; label: string }[];
   last_update_at: string | null;
   last_update_note: string | null;
@@ -76,7 +77,7 @@ export async function getTask(id: string): Promise<TaskDetail | null> {
             t.requester_id, ru.name as requester_name, cu.name as created_by_name, t.waiting_on_id, wu.name as waiting_on_name,
             t.project_id, pr.name as project_name, t.program_id, pg.name as program_name,
             t.meeting_id, m.title as meeting_title, m.starts_at as meeting_starts_at,
-            t.source, t.blocker, t.next_step, t.poc_name, t.links, t.last_update_at, t.last_update_note, t.acknowledged_at, t.completed_at, t.created_at, t.updated_at,
+            t.source, t.blocker, t.next_step, t.poc_name, t.links, t.goal_id, t.last_update_at, t.last_update_note, t.acknowledged_at, t.completed_at, t.created_at, t.updated_at,
             extract(day from now() - coalesce(t.last_update_at, t.created_at))::int as days_since_update
      from tasks t
      left join users ou on ou.id = t.owner_id

@@ -52,9 +52,10 @@ export async function POST(req: Request) {
     }
 
     await q(`update users set failed_logins = 0, locked_until = null, last_seen_at = now() where id = $1`, [u.id]);
-    const res = redirectTo(next);
+    // go through /api/auth/check: it confirms the browser kept the cookie, and says so if it didn't
+    const res = redirectTo(`/api/auth/check?next=${encodeURIComponent(next)}`);
     res.cookies.set(SESSION_COOKIE, await signSession({ uid: u.id, name: u.name }), {
-      httpOnly: true, sameSite: "lax", secure: secureCookies(), path: "/", maxAge: SESSION_SECONDS,
+      httpOnly: true, sameSite: "lax", secure: secureCookies(req), path: "/", maxAge: SESSION_SECONDS,
     });
     return res;
   } catch (e) {

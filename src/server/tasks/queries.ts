@@ -1,6 +1,7 @@
 import "server-only";
 import { q } from "../db";
 import { today } from "@/lib/dates";
+import { visibleSql } from "../org/queries";
 import type { Health, Priority, TaskStatus } from "@/lib/meta";
 
 export interface TaskListItem {
@@ -45,7 +46,8 @@ export interface TaskFilter {
   ownerId?: string;
   requesterId?: string;          // tasks I created/requested
   delegatedBy?: string;          // requested by X but owned by someone else
-  involving?: string;            // owner OR requester OR waiting-on
+  involving?: string;            // owner OR requester OR waiting-on OR co-assignee
+  visibleTo?: { me: string; ids: string[] }; // org scope: only these people's tasks (+ ones I created/asked for)
   waitingOnOthersFor?: string;   // waiting status / waiting_on someone else, for this user
   projectId?: string;
   programId?: string;
@@ -75,7 +77,11 @@ export async function listTasks(f: TaskFilter = {}): Promise<TaskListItem[]> {
   if (f.ownerId) add(`t.owner_id = $?`, f.ownerId);
   if (f.requesterId) add(`(t.requester_id = $? or t.created_by = $?)`, f.requesterId);
   if (f.delegatedBy) add(`(t.requester_id = $? or t.created_by = $?) and t.owner_id is distinct from t.requester_id and coalesce(t.owner_id::text, '') <> $?::text`, f.delegatedBy);
-  if (f.involving) add(`(t.owner_id = $? or t.requester_id = $? or t.waiting_on_id = $? or t.created_by = $?)`, f.involving);
+  if (f.involving) add(`(t.owner_id = $? or t.requester_id = $? or t.waiting_on_id = $? or t.created_by = $? or exists (select 1 from task_assignees ta where ta.task_id = t.id and ta.user_id = $?))`, f.involving);
+  if (f.visibleTo) {
+    p.push(f.visibleTo.ids, f.visibleTo.me);
+    where.push(visibleSql(`$${p.length - 1}`, `$${p.length}::uuid`));
+  }
   if (f.waitingOnOthersFor) add(`((t.owner_id = $? and (t.status = 'waiting' or t.waiting_on_id is not null)))`, f.waitingOnOthersFor);
   if (f.projectId) add(`t.project_id = $?`, f.projectId);
   if (f.programId) add(`t.program_id = $?`, f.programId);

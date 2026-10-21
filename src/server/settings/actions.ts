@@ -16,7 +16,8 @@ const refresh = () => revalidatePath("/", "layout");
 
 async function requireManager() {
   const u = await requireUser();
-  if (!canManage(u)) throw new Error("Only admins and program managers can do that");
+  // settings are admin-only (program managers run the work but don't change settings)
+  if (u.role !== "admin") throw new Error("Only admins can change settings");
   return u;
 }
 const str = (v: unknown, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");

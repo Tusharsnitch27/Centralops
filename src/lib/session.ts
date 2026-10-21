@@ -13,7 +13,12 @@ function secret() {
   return new TextEncoder().encode(s);
 }
 
-export const secureCookies = () => {
+/** Mark the cookie Secure only when the browser actually reached us over https (Coolify's proxy says so in
+ *  x-forwarded-proto). A Secure cookie on a plain-http visit is silently dropped — sign-in would loop with no error. */
+export const secureCookies = (req?: Request) => {
+  const fwd = req?.headers.get("x-forwarded-proto")?.split(",")[0].trim();
+  if (fwd) return fwd === "https";
+  if (req) { try { return new URL(req.url).protocol === "https:"; } catch { /* fall through */ } }
   const url = (process.env.NEXTAUTH_URL ?? "").trim();
   return url ? !url.startsWith("http://") : process.env.NODE_ENV === "production";
 };
