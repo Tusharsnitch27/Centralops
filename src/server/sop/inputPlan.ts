@@ -9,8 +9,8 @@ import { viewOf } from "./sync";
  * Actuals are never touched.
  */
 const FEED: Record<string, (line: { name: string; metric: string | null }) => { feed: string; label: string } | null> = {
-  "b2c-sf": (l) => (l.metric === "items" ? { feed: "b2c", label: "shopify" } : null),
-  "b2c-mp": (l) => (l.metric === "items" ? { feed: "b2c", label: l.name.split("·")[0]!.trim() } : null),
+  "b2c-sf": (l) => (l.metric === "items" ? { feed: "b2c", label: "shopify" } : l.metric === "orders" ? { feed: "b2c_orders", label: "Shopify" } : null),
+  "b2c-mp": (l) => (l.metric === "items" || l.metric === "orders" ? { feed: l.metric === "items" ? "b2c" : "b2c_orders", label: l.name.split("·")[0]!.trim() } : null),
   "b2b-mp": (l) => ({ feed: "b2b_mp", label: l.name }),
   "retail-forward": (l) => (l.metric === "units" ? { feed: "retail", label: "" } : null),
   "inbound-category-wise": () => ({ feed: "category_inward", label: "" }),
@@ -39,20 +39,23 @@ export async function applyInputsToPlan(streamId: string, period: string) {
     const prepack = /^pre-?pack/i.test(r.dimension);
     const feed = prepack ? "prepack" : f.feed;
     const region = /north/i.test(r.dimension) ? "north" : "south";
-    const target = feed === "liquidation" ? { view: "liquidation", label: weekOfMonth(r.day) } : viewOf(feed, f.label, r.day, known);
+    const target = feed === "liquidation" ? { view: "liquidation", label: weekOfMonth(r.day) }
+      : feed === "b2c_orders" ? { view: "b2c_orders", label: f.label }
+      : viewOf(feed, f.label, r.day, known);
     if (!target) continue;
-    const dayRow = target.view === "b2c" || target.view === "b2b_mp" ? target.label : "";
+    const dayRow = ["b2c", "b2b_mp", "b2c_orders"].includes(target.view) ? target.label : "";
     bump(daily, `${target.view}|${dayRow}|${r.day}`, () => ({ view: target.view, row: dayRow, day: r.day, south: 0, north: 0 }), region, r.v);
-    bump(review, `${target.view}|${target.label}`, () => ({ view: target.view, row: target.label, south: 0, north: 0 }), region, r.v);
+    // order plans only drive the day-level order comparison; the monthly review stays item-level
+    if (target.view !== "b2c_orders") bump(review, `${target.view}|${target.label}`, () => ({ view: target.view, row: target.label, south: 0, north: 0 }), region, r.v);
     // category inward also feeds the category-wise view, one row per category
     if (s!.code === "inbound-category-wise" && !prepack)
       bump(review, `category_view|${r.name}`, () => ({ view: "category_view", row: r.name, south: 0, north: 0 }), region, r.v);
   }
-  const views = [...new Set([...review.values()].map((x) => x.view))];
+  const views = [...new Set([...review.values(), ...daily.values()].map((x) => x.view))];
   for (const view of views) {
     // this stream now owns the month's plan for these views: drop the workbook day plan first
     await q(`delete from sop_plan_daily where view_key = $1 and date_trunc('month', day)::date = $2::date
-             and ($1 not in ('b2c','b2b_mp') or row_label = any($3::text[]))`,
+             and ($1 not in ('b2c','b2b_mp','b2c_orders') or row_label = any($3::text[]))`,
       [view, period, [...daily.values()].filter((d) => d.view === view).map((d) => d.row)]);
   }
   for (const d of daily.values())

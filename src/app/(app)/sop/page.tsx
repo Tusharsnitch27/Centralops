@@ -33,7 +33,7 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
   if (!per.sel) return <EmptyState title="No S&OP data yet" />;
   const [b, fwd] = await Promise.all([leaderBrief(per.sel.months, per.label), forwardLook(2)]);
   const { d, outward, inward } = b;
-  const outDaily = b.daily.views.filter((v) => v.flow === "Outwards").reduce((a, v) => ({ off: a.off + v.total.up + v.total.down, n: a.n + v.total.judged }), { off: 0, n: 0 });
+  const outDaily = b.daily.views.filter((v) => v.flow === "Outwards" && v.metric !== "orders").reduce((a, v) => ({ off: a.off + v.total.up + v.total.down, n: a.n + v.total.judged }), { off: 0, n: 0 });
   const wh = (w: "South" | "North") => d.wh[w].filter((p) => p.util != null && per.sel.months.includes(p.period)).at(-1) ?? d.wh[w].filter((p) => p.util != null).at(-1);
   const s = wh("South"), n = wh("North");
   return (
@@ -50,7 +50,7 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Outward accuracy" value={pc(outward?.acc)} tone={accTone(outward?.acc)} sub={outward ? <>plan {L(outward.tp)} · actual {L(outward.ta)}</> : null} />
         <Kpi label="Inward accuracy" value={pc(inward?.acc)} tone={accTone(inward?.acc)} sub={inward ? <>plan {L(inward.tp)} · actual {L(inward.ta)}</> : null} />
-        <Kpi label="Outward days off plan (>15%)" value={outDaily.n ? `${outDaily.off} / ${outDaily.n}` : "—"} tone={outDaily.n ? (outDaily.off / outDaily.n >= 0.4 ? "bad" : outDaily.off / outDaily.n >= 0.2 ? "warn" : "ok") : undefined}
+        <Kpi label="Outward days off plan (>20%, items)" value={outDaily.n ? `${outDaily.off} / ${outDaily.n}` : "—"} tone={outDaily.n ? (outDaily.off / outDaily.n >= 0.4 ? "bad" : outDaily.off / outDaily.n >= 0.2 ? "warn" : "ok") : undefined}
           sub={outDaily.n ? "flow-days across B2C, B2B-MP, Retail" : "needs daily actuals (Snowflake)"} />
         <Kpi label="Warehouse utilisation" value={`${pc(s?.util)} · ${pc(n?.util)}`} tone={(s?.util ?? 0) >= 0.95 || (n?.util ?? 0) >= 0.95 ? "bad" : (s?.util ?? 0) >= 0.85 || (n?.util ?? 0) >= 0.85 ? "warn" : "ok"}
           sub={<>South · North{s ? ` · ${MON(s.period)}` : ""} · pre-packs held separately</>} />

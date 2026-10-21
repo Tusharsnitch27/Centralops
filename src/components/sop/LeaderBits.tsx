@@ -10,7 +10,7 @@ const TYPE_TONE: Record<string, string> = {
 };
 
 export function ProblemsList({ items, max = 6 }: { items: Problem[]; max?: number }) {
-  if (!items.length) return <div className="card px-4 py-6 text-center text-[13px] text-ok">Nothing off plan beyond the thresholds — all flows within ±15% and no capacity alerts.</div>;
+  if (!items.length) return <div className="card px-4 py-6 text-center text-[13px] text-ok">Nothing off plan beyond the thresholds — all flows within ±20% and no capacity alerts.</div>;
   return (
     <div className="card divide-y divide-line/70 overflow-hidden">
       {items.slice(0, max).map((p, i) => (
@@ -33,8 +33,8 @@ export function ProblemsList({ items, max = 6 }: { items: Problem[]; max?: numbe
 const cell = (dev: number | null, plan: number, actual: number) => {
   if (plan <= 0) return actual > 0 ? "bg-warn" : "bg-muted";
   const d = dev ?? 0;
-  if (d > 0.3) return "bg-[#2563eb]"; if (d > 0.15) return "bg-[#93b4f5]";
-  if (d < -0.3) return "bg-bad"; if (d < -0.15) return "bg-[#f1a3a3]";
+  if (d > 0.4) return "bg-[#2563eb]"; if (d > 0.2) return "bg-[#93b4f5]";
+  if (d < -0.4) return "bg-bad"; if (d < -0.2) return "bg-[#f1a3a3]";
   return "bg-ok/70";
 };
 const fmt = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
@@ -50,7 +50,7 @@ function Strip({ s }: { s: DaySeries }) {
   );
 }
 
-/** Day-by-day plan vs actual: one coloured square per day; counts of days beyond ±15%. */
+/** Day-by-day plan vs actual: one coloured square per day; counts of days beyond ±20%. */
 export function DailyGrid({ views }: { views: DailyView[] }) {
   const days = views[0]?.total.days ?? [];
   if (!days.length) return null;
@@ -76,7 +76,7 @@ export function DailyGrid({ views }: { views: DailyView[] }) {
         ])}</tbody>
       </table>
       <div className="flex flex-wrap items-center gap-3 border-t border-line px-3 py-2 text-[11.5px] text-ink-4">
-        {[["bg-ok/70", "within ±15%"], ["bg-[#93b4f5]", "15–30% above"], ["bg-[#2563eb]", ">30% above"], ["bg-[#f1a3a3]", "15–30% below"], ["bg-bad", ">30% below"], ["bg-warn", "volume with no plan"], ["bg-muted", "no plan, no volume"]].map(([c, l]) => (
+        {[["bg-ok/70", "within ±20%"], ["bg-[#93b4f5]", "20–40% above"], ["bg-[#2563eb]", ">40% above"], ["bg-[#f1a3a3]", "20–40% below"], ["bg-bad", ">40% below"], ["bg-warn", "volume with no plan"], ["bg-muted", "no plan, no volume"]].map(([c, l]) => (
           <span key={l} className="flex items-center gap-1"><span className={cn("h-3 w-3 rounded-[2px]", c)} />{l}</span>
         ))}
         <span>· hover a square for plan vs actual</span>

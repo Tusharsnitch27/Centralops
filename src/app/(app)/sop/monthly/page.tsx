@@ -32,7 +32,7 @@ export default async function SopMonthlyReview({ searchParams }: { searchParams:
         {!daily.hasActuals
           ? <div className="card px-4 py-5 text-[12.5px] text-ink-3">Day-level alerts need daily actuals — they start with the first Snowflake refresh (Settings › Integrations). Day plans are already loaded for B2C (by channel) and Retail.</div>
           : single
-            ? <Collapsible id="sop:daily" title="Days beyond ±15% of plan" sub="One square per day — even an on-plan month can hide swings that strain SLA and staffing">
+            ? <Collapsible id="sop:daily" title="Days beyond ±20% of plan" sub="One square per day — even an on-plan month can hide swings that strain SLA and staffing">
                 <div className="p-3"><DailyGrid views={daily.views} /></div>
               </Collapsible>
             : <div className="card overflow-x-auto"><table className="table-base min-w-[560px]"><thead><tr><th>Flow</th><th className="text-right">Days above</th><th className="text-right">Days below</th><th className="text-right">On plan</th></tr></thead>

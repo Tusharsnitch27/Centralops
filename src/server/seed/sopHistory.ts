@@ -3,6 +3,7 @@ import type { RunQ } from "../db";
 import data from "../../db/seed/sop-history-fy27.json";
 import plan from "../../db/seed/sop-fy27.json";
 import planDaily from "../../db/seed/sop-plan-daily-fy27.json";
+import planDailyOrders from "../../db/seed/sop-plan-daily-orders-fy27.json";
 
 /** Apr–Oct 2026 plan vs actual, inventory flow, returns, outbound capacity and meeting call-outs
  *  from "(Plan vs Actual) S&OP_FY'26-27.xlsx". Idempotent upserts. */
@@ -64,8 +65,9 @@ export async function seedSopHistory(S: RunQ) {
 }
 
 /** Day-level plans from the projection workbook (B2C per channel × WH, retail per WH). */
-export async function seedSopPlanDaily(S: RunQ) {
-  const rows = planDaily.rows as [string, string, string, number, number][];
+export async function seedSopPlanDaily(S: RunQ, which: "items" | "orders" = "items") {
+  // items: B2C per channel (item level) + retail; orders: B2C per channel from the order-level sheet (view b2c_orders)
+  const rows = (which === "orders" ? planDailyOrders.rows : planDaily.rows) as [string, string, string, number, number][];
   for (let i = 0; i < rows.length; i += 500) {
     const c = rows.slice(i, i + 500);
     await S(`insert into sop_plan_daily (day, view_key, row_label, south, north, source)

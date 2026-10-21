@@ -14,7 +14,7 @@ const mon = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { 
 export function UtilChip({ u, plan, actual, strong }: { u: number | null; plan: number; actual: number; strong?: boolean }) {
   if (plan === 0) return actual > 0 ? <span className="rounded-full bg-warn-soft px-2 py-0.5 text-[11.5px] font-semibold text-warn">Unplanned</span> : <span className="text-ink-4">—</span>;
   const v = u ?? 0;
-  const cls = v >= 1.4 ? "bg-bad text-white" : v >= 1.15 ? "bg-bad-soft text-bad" : v >= 0.9 ? "bg-accent-soft text-accent-ink" : v >= 0.7 ? "bg-warn-soft text-warn" : v > 0 ? "bg-bad-soft text-bad" : "bg-bad text-white";
+  const cls = v >= 1.5 ? "bg-bad text-white" : v > 1.2 ? "bg-bad-soft text-bad" : v >= 0.8 ? "bg-accent-soft text-accent-ink" : v > 0.5 ? "bg-bad-soft text-bad" : "bg-bad text-white";
   return <span className={cn("inline-block min-w-[52px] rounded-full px-2 py-0.5 text-center text-[12px] font-semibold tabular", cls, strong && "ring-2 ring-white")}>{pc(u)}</span>;
 }
 
@@ -24,7 +24,7 @@ function Rich({ segs }: { segs: Seg[] }) {
 }
 
 function InsightCards({ items }: { items: Insight[] }) {
-  if (!items.length) return <div className="rounded-2xl bg-accent-soft/60 px-4 py-3 text-[13px] font-medium text-accent-ink">No material deviation — plan and actual are within ±15%.</div>;
+  if (!items.length) return <div className="rounded-2xl bg-accent-soft/60 px-4 py-3 text-[13px] font-medium text-accent-ink">No material deviation — plan and actual are within ±20%.</div>;
   return (
     <div className="grid gap-3 md:grid-cols-3">
       {items.map((i, n) => (
@@ -240,7 +240,7 @@ export function MonthlyReviewView({ d }: { d: Data }) {
       ))}
       <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-3">
         <span className="font-semibold text-ink-2">Utilisation key:</span>
-        <UtilChip u={0.95} plan={1} actual={1} /> within ±10% <UtilChip u={0.78} plan={1} actual={1} /> 70–90% <UtilChip u={0.5} plan={1} actual={1} /> below 70% <UtilChip u={1.2} plan={1} actual={1} /> 115–140% <UtilChip u={1.5} plan={1} actual={1} /> 140%+ · Totals are calculated from the South + North figures.
+        <UtilChip u={1} plan={1} actual={1} /> within ±20% <UtilChip u={0.7} plan={1} actual={1} /> 50–80% <UtilChip u={0.4} plan={1} actual={1} /> below 50% <UtilChip u={1.3} plan={1} actual={1} /> 120–150% <UtilChip u={1.6} plan={1} actual={1} /> 150%+ · Totals are calculated from the South + North figures.
       </div>
     </div>
   );
@@ -356,7 +356,7 @@ function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string })
                     <td className="text-right tabular">{fmt(r.tp)}</td>
                     <td className="text-right tabular">{fmt(r.ta)}</td>
                     <td className={cn("text-right tabular", r.dev < 0 ? "text-bad" : r.dev > 0 ? "text-warn" : "text-ink-3")}>{r.dev > 0 ? "+" : r.dev < 0 ? "−" : ""}{fmt(Math.abs(r.dev))}</td>
-                    <td className={cn("text-right tabular", r.devPct == null ? "text-ink-4" : Math.abs(r.devPct) >= 0.25 ? "text-bad" : Math.abs(r.devPct) >= 0.1 ? "text-warn" : "text-ok")}>{r.devPct == null ? "—" : `${r.devPct > 0 ? "+" : ""}${Math.round(r.devPct * 100)}%`}</td>
+                    <td className={cn("text-right tabular", r.devPct == null ? "text-ink-4" : Math.abs(r.devPct) > 0.2 ? "font-semibold text-bad" : "text-ink-2")}>{r.devPct == null ? "—" : `${r.devPct > 0 ? "+" : ""}${Math.round(r.devPct * 100)}%`}</td>
                     <td className="text-right">{accCell(r.acc, true)}</td>
                     <td className="text-right">{accCell(r.sAcc)}</td>
                     <td className="text-right">{accCell(r.nAcc)}</td>

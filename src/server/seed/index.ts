@@ -109,6 +109,11 @@ export async function bootstrap(rawQ: RunQ) {
     await setSetting("seed.sop_plan_daily", "v1");
     console.log("[seed] S&OP daily plans (B2C, retail) loaded");
   }
+  if ((await setting("seed.sop_plan_daily_orders")) !== "v1") {
+    await seedSopPlanDaily(rawQ, "orders");
+    await setSetting("seed.sop_plan_daily_orders", "v1");
+    console.log("[seed] S&OP daily order-level plans (B2C) loaded");
+  }
 
   if ((await setting("seed.weekly")) !== "v1") {
     await rawQ("begin");

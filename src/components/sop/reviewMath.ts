@@ -52,6 +52,8 @@ export const latestUtil = (s: WhPoint[]) => [...s].reverse().find((x) => x.util 
 
 /* ---------- insights ---------- */
 export type Seg = string | { b: string; tone?: "bad" | "good" | "warn" };
+/** Plan vs actual is highlighted only beyond ±20% — for a flow, a channel / marketplace row, or a day. */
+export const DEV_BAND = 0.2;
 export interface Insight { key: string; tone: "bad" | "warn" | "good" | "info"; title: Seg[]; impact: Seg[]; score: number }
 
 const n = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
@@ -62,7 +64,7 @@ const sgn = (v: number) => `${v >= 0 ? "+" : "−"}${k(Math.abs(v))}`;
 export function viewInsights(v: ViewDef, raw: RawRow[], wh: { South: WhPoint | null; North: WhPoint | null }): Insight[] {
   const rows = raw.map((r) => enrich(r));
   const total = sumRows(raw, "Total", "total");
-  const min = Math.max(1000, total.tp * 0.01);
+  const min = Math.max(300, total.tp * 0.005); // small marketplaces still get called out
   const unit = v.flow === "inbound" ? "units" : v.key === "b2c" ? "items" : "units";
   const whAt = (w: "South" | "North") => wh[w];
   const utilBump = (w: "South" | "North", units: number) => { const c = whAt(w); return c && c.capacity ? units / c.capacity : null; };
@@ -87,17 +89,17 @@ export function viewInsights(v: ViewDef, raw: RawRow[], wh: { South: WhPoint | n
       continue;
     }
     if (r.tp > 0 && r.tu != null && Math.abs(r.gap) >= min) {
-      if (r.tu >= 1.15) {
+      if (r.tu > 1 + DEV_BAND) {
         const w = domWh(r, 1), bump = utilBump(w, v.flow === "inbound" ? Math.max(0, w === "South" ? r.sa - r.sp : r.na - r.np) : 0);
         const wU = w === "South" ? r.su : r.nu;
-        out.push({ key: `${r.label}:over`, tone: r.tu >= 1.4 ? "bad" : "warn", score: r.gap * (r.tu >= 1.4 ? 1.2 : 1),
+        out.push({ key: `${r.label}:over`, tone: r.tu >= 1.5 ? "bad" : "warn", score: r.gap * (r.tu >= 1.5 ? 1.2 : 1),
           title: [{ b: what }, ` at `, { b: pc(r.tu), tone: "bad" }, ` of plan (`, { b: sgn(r.gap) }, ` ${unit}), led by ${w} (`, { b: pc(wU) }, `)`],
           impact: v.flow === "inbound"
             ? ([`Extra inward lifts ${w} WH utilisation by ~`, { b: pc(bump), tone: "warn" }, ...(whAt(w)?.util != null ? [` — already at `, { b: pc(whAt(w)!.util), tone: ((whAt(w)!.util ?? 0) > 0.9 ? "bad" : "warn") as "bad" | "warn" }, `.`] : ["."])] as Seg[])
             : [`Pick/pack load above plan at ${w} — check manpower/OT and dispatch SLA; raise next month’s projection.`] });
-      } else if (r.tu <= 0.85) {
+      } else if (r.tu < 1 - DEV_BAND) {
         const w = domWh(r, -1);
-        out.push({ key: `${r.label}:under`, tone: r.tu <= 0.6 ? "bad" : "warn", score: -r.gap * (r.tu <= 0.6 ? 1.15 : 1),
+        out.push({ key: `${r.label}:under`, tone: r.tu <= 0.5 ? "bad" : "warn", score: -r.gap * (r.tu <= 0.5 ? 1.15 : 1),
           title: [{ b: what }, ` at `, { b: pc(r.tu), tone: "bad" }, ` of plan (`, { b: sgn(r.gap) }, ` ${unit}), weakest in ${w} (`, { b: pc(w === "South" ? r.su : r.nu) }, `)`],
           impact: v.flow === "inbound"
             ? [`Inward behind plan — stock for these SKUs may run short; chase vendor/PO timelines.`]

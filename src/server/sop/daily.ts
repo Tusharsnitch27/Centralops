@@ -4,16 +4,19 @@ import { viewOf } from "./sync";
 import { weekOfMonth } from "@/lib/sopWeeks";
 
 /** A day is "off plan" when actual is more than this far from that day's plan. */
-export const DAY_BAND = 0.15;
+export const DAY_BAND = 0.2;
 export type Basis = "daily" | "weekly" | "monthly";
 export interface DayPoint { day: string; plan: number; actual: number; dev: number | null }
 export interface DaySeries { days: DayPoint[]; judged: number; up: number; down: number; ok: number; unplanned: number; basis: Basis; worstUp: DayPoint | null; worstDown: DayPoint | null }
-export interface DailyView { key: string; title: string; flow: "Outwards" | "Inwards"; total: DaySeries; rows: { label: string; series: DaySeries }[] }
+export interface DailyView { key: string; title: string; metric: "items" | "orders" | "units"; flow: "Outwards" | "Inwards"; total: DaySeries; rows: { label: string; series: DaySeries }[] }
 
 const shopify = (l: string) => /^shopify/i.test(l);
-const VIEWS: { key: string; src?: string; match?: (label: string) => boolean; title: string; flow: "Outwards" | "Inwards"; weekly: boolean; byLabel: boolean }[] = [
-  { key: "b2c_sf", src: "b2c", match: shopify, title: "B2C · Shopify", flow: "Outwards", weekly: false, byLabel: true },
-  { key: "b2c_mp", src: "b2c", match: (l) => !shopify(l), title: "B2C · Marketplaces", flow: "Outwards", weekly: false, byLabel: true },
+// Like is compared with like: item plans vs items dispatched, order plans vs orders. Order views are judged only on days with an order-level plan.
+const VIEWS: { key: string; src?: string; match?: (label: string) => boolean; title: string; flow: "Outwards" | "Inwards"; weekly: boolean; byLabel: boolean; metric?: "items" | "orders"; dailyOnly?: boolean }[] = [
+  { key: "b2c_sf", src: "b2c", match: shopify, title: "B2C · Shopify (items)", flow: "Outwards", weekly: false, byLabel: true, metric: "items" },
+  { key: "b2c_mp", src: "b2c", match: (l) => !shopify(l), title: "B2C · Marketplaces (items)", flow: "Outwards", weekly: false, byLabel: true, metric: "items" },
+  { key: "b2c_sf_orders", src: "b2c_orders", match: shopify, title: "B2C · Shopify (orders)", flow: "Outwards", weekly: false, byLabel: true, metric: "orders", dailyOnly: true },
+  { key: "b2c_mp_orders", src: "b2c_orders", match: (l) => !shopify(l), title: "B2C · Marketplaces (orders)", flow: "Outwards", weekly: false, byLabel: true, metric: "orders", dailyOnly: true },
   { key: "b2b_mp", title: "B2B · Marketplace", flow: "Outwards", weekly: false, byLabel: true },
   { key: "retail_fwd", title: "B2B · Retail stores", flow: "Outwards", weekly: true, byLabel: false },
   { key: "category_inward", title: "Category inward", flow: "Inwards", weekly: true, byLabel: false },
@@ -42,7 +45,7 @@ function summarise(days: DayPoint[], basis: Basis): DaySeries {
  */
 export async function dailyDeviation(months: string[]): Promise<{ hasActuals: boolean; through: Record<string, number>; views: DailyView[] }> {
   const [facts, plansDaily, review, periods, known] = await Promise.all([
-    q<{ day: string; feed: string; label: string; region: string; units: number }>(`select day::text as day, feed, label, region, units::float8 as units from sop_actuals_daily where date_trunc('month', day)::date = any($1::date[])`, [months]),
+    q<{ day: string; feed: string; label: string; region: string; units: number; orders: number | null }>(`select day::text as day, feed, label, region, units::float8 as units, orders::float8 as orders from sop_actuals_daily where date_trunc('month', day)::date = any($1::date[])`, [months]),
     q<{ day: string; view_key: string; row_label: string; south: number; north: number }>(`select day::text as day, view_key, row_label, south::float8 as south, north::float8 as north from sop_plan_daily where date_trunc('month', day)::date = any($1::date[])`, [months]),
     q<{ period: string; view_key: string; row_label: string; sp: number; np: number }>(`select period::text as period, view_key, row_label, coalesce(south_plan,0)::float8 as sp, coalesce(north_plan,0)::float8 as np from sop_review_rows where period = any($1::date[])`, [months]),
     q<{ period: string; through_day: number }>(`select period::text as period, through_day from sop_review_periods where period = any($1::date[])`, [months]),
@@ -57,6 +60,8 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
     if (!m || f.region === "other") continue;
     const label = VIEWS.find((v) => (v.src ?? v.key) === m.view)?.byLabel ? m.label : "";
     act.set(`${m.view}|${label}|${f.day}`, (act.get(`${m.view}|${label}|${f.day}`) ?? 0) + Number(f.units));
+    // B2C orders (distinct order names) sit beside items, on the channel name without "(Items)"
+    if (m.view === "b2c" && f.orders != null) { const ok = `b2c_orders|${m.label.replace(/\s*\(items\)$/i, "")}|${f.day}`; act.set(ok, (act.get(ok) ?? 0) + Number(f.orders)); }
     const p = `${f.day.slice(0, 7)}-01`;
     if (!lastFact.get(p) || f.day > lastFact.get(p)!) lastFact.set(p, f.day);
   }
@@ -87,6 +92,7 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
         const weekPlan = (wk: string) => { const r = review.find((x) => x.view_key === src && x.period === p && x.row_label === wk); return r ? r.sp + r.np : null; };
         const wkDays = (wk: string) => Array.from({ length: daysIn(p) }, (_, i) => `${p.slice(0, 8)}${String(i + 1).padStart(2, "0")}`).filter((d) => weekOfMonth(d) === wk).length;
         const useDaily = hasDaily(src, p);
+        if (v.dailyOnly && !useDaily) continue;
         basis = useDaily ? "daily" : v.weekly ? "weekly" : "monthly";
         for (const d of dayList(p, n)) {
           let plan: number;
@@ -102,7 +108,7 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
       if (v.byLabel && pts.some((x) => x.plan > 0 || x.actual > 0)) rows.push({ label, series: summarise(pts, basis) });
     }
     const tot = [...totals.values()].sort((a, b) => a.day.localeCompare(b.day)).map((t) => ({ ...t, dev: t.plan > 0 ? (t.actual - t.plan) / t.plan : null }));
-    if (tot.length) out.push({ key: v.key, title: v.title, flow: v.flow, total: summarise(tot, basis), rows: rows.sort((a, b) => (b.series.up + b.series.down) - (a.series.up + a.series.down)) });
+    if (tot.length) out.push({ key: v.key, title: v.title, metric: v.metric ?? "units", flow: v.flow, total: summarise(tot, basis), rows: rows.sort((a, b) => (b.series.up + b.series.down) - (a.series.up + a.series.down)) });
   }
   return { hasActuals: facts.length > 0, through, views: out };
 }
