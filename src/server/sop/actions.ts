@@ -1,4 +1,5 @@
 "use server";
+import { applyInputsToPlan } from "./inputPlan";
 import { revalidatePath } from "next/cache";
 import { one, q, tx } from "../db";
 import { requireUser, canEdit, canManage, type User } from "../auth";
@@ -131,6 +132,7 @@ export async function submitProjections(input: { streamId: string; period: strin
       const review = await x.one<{ owner_id: string | null }>(`select owner_id from reviews where module = 'sop' and active order by created_at limit 1`);
       await notify({ userId: review?.owner_id, kind: "sop_input", title: `${s.name} submitted ${fmtMonth(input.period)} projections`, body: revised ? `${revised} in-month revision${revised === 1 ? "" : "s"} vs baseline` : null, entityType: "sop_stream", entityId: s.id, href: `/sop/projections?stream=${s.id}`, actorId: u.id }, x);
     });
+    await applyInputsToPlan(s.id, input.period);
     refresh();
     return ok({ changed, revised }, revised ? `Submitted · ${revised} revised vs baseline` : `Submitted ${fmtMonth(input.period)} projections`);
   } catch (e) { return fail(e); }

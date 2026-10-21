@@ -14,6 +14,6 @@ export function listLibrary(kind?: LibraryKind) {
 }
 
 export async function libraryCounts() {
-  const rows = await q<{ kind: LibraryKind; n: number }>(`select kind, count(*)::int as n from library_items group by kind`);
+  const rows = await q<{ kind: LibraryKind; n: number }>(`select kind, count(*)::int as n from library_items where category <> 'Source' group by kind`);
   return Object.fromEntries(rows.map((r) => [r.kind, r.n])) as Partial<Record<LibraryKind, number>>;
 }

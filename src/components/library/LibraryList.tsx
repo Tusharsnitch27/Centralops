@@ -12,14 +12,15 @@ import { Importer } from "./Importer";
 import { functionOf, functionOrder } from "@/lib/opsFunctions";
 
 /** Searchable, filterable list of library links. `layout` table for SOPs, cards for dashboards/tools. */
-export function LibraryList({ kind, items: all, manage, label, layout = "table" }: { kind: LibraryKind; items: LibraryItem[]; manage: boolean; label: string; layout?: "table" | "cards" }) {
+export function LibraryList({ kind, items: all, manage, label, layout = "table", groupBy = "function", anchor = kind }: { kind: LibraryKind; items: LibraryItem[]; manage: boolean; label: string; layout?: "table" | "cards"; groupBy?: "function" | "category"; anchor?: string }) {
   const [qy, setQy] = useState("");
   const [cat, setCat] = useState("");
   const [edit, setEdit] = useState<LibraryItem | "new" | null>(null);
   // the register sheets themselves sit apart from the individual entries
   const sources = all.filter((i) => i.category === "Source");
-  const items = useMemo(() => all.filter((i) => i.category !== "Source").map((i) => ({ ...i, fn: functionOf(i) })), [all]);
-  const cats = useMemo(() => [...new Set(items.map((i) => i.fn))].sort((a, b) => functionOrder(a) - functionOrder(b) || a.localeCompare(b)), [items]);
+  const items = useMemo(() => all.filter((i) => i.category !== "Source").map((i) => ({ ...i, fn: groupBy === "category" ? i.category || "Other" : functionOf(i) })), [all, groupBy]);
+  const order = (c: string) => (groupBy === "category" ? (/^(unassigned|other)$/i.test(c) ? 1 : 0) : functionOrder(c));
+  const cats = useMemo(() => [...new Set(items.map((i) => i.fn))].sort((a, b) => order(a) - order(b) || a.localeCompare(b)), [items]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = items.filter((i) => (!cat || i.fn === cat)
     && (!qy || `${i.title} ${i.description} ${i.owner} ${i.category} ${i.function_name} ${Object.values(i.extra).join(" ")}`.toLowerCase().includes(qy.toLowerCase())));
   function Group({ list }: { list: typeof shown }) {
@@ -34,7 +35,9 @@ export function LibraryList({ kind, items: all, manage, label, layout = "table" 
                 </div>
                 {i.description && <p className="mt-1 line-clamp-2 text-[12.5px] text-ink-3">{i.description}</p>}
                 <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-3 text-[11.5px] text-ink-4">
-                  {(i.category || i.function_name) && <span className="rounded-md bg-subtle px-1.5 py-0.5">{i.category || i.function_name}</span>}
+                  {(i.function_name || (groupBy !== "category" && i.category)) && <span className="rounded-md bg-subtle px-1.5 py-0.5">{i.function_name || i.category}</span>}
+                  {i.extra?.number && <span className="tabular-nums">#{i.extra.number}</span>}
+                  {i.extra?.users && <span>{i.extra.users} users</span>}
                   {i.owner && <span>{i.owner}</span>}
                   {i.url && <a href={i.url} target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1 text-info hover:underline">{linkLabel(i.url)}<ExternalLink size={11} /></a>}
                 </div>
@@ -70,13 +73,13 @@ export function LibraryList({ kind, items: all, manage, label, layout = "table" 
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="relative min-w-0 flex-1 sm:max-w-[320px]">
+        <label className="relative min-w-0 basis-full sm:flex-1 sm:basis-auto sm:max-w-[320px]">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
           <input className="field h-9 pl-8" placeholder={`Search ${label.toLowerCase()}…`} value={qy} onChange={(e) => setQy(e.target.value)} />
         </label>
         {cats.length > 1 && (
           <select className="field h-9 w-auto" value={cat} onChange={(e) => setCat(e.target.value)}>
-            <option value="">All functions</option>{cats.map((c) => <option key={c}>{c}</option>)}
+            <option value="">{groupBy === "category" ? "All groups" : "All functions"}</option>{cats.map((c) => <option key={c}>{c}</option>)}
           </select>
         )}
         {manage && <span className="ml-auto flex gap-2"><Importer kind={kind} label={label} /><Button size="sm" variant="primary" onClick={() => setEdit("new")}><Plus size={13} />Add</Button></span>}
@@ -97,12 +100,12 @@ export function LibraryList({ kind, items: all, manage, label, layout = "table" 
         <>
           {cats.length > 1 && !cat && !qy && (
             <nav className="mb-4 flex flex-wrap gap-1.5">
-              {cats.map((c) => <a key={c} href={`#${kind}-${slug(c)}`} className="rounded-md bg-surface px-2 py-1 text-[12px] text-ink-2 ring-1 ring-inset ring-line hover:ring-line-strong">{c} <span className="text-ink-4">{items.filter((i) => i.fn === c).length}</span></a>)}
+              {cats.map((c) => <a key={c} href={`#${anchor}-${slug(c)}`} className="rounded-md bg-surface px-2 py-1 text-[12px] text-ink-2 ring-1 ring-inset ring-line hover:ring-line-strong">{c} <span className="text-ink-4">{items.filter((i) => i.fn === c).length}</span></a>)}
             </nav>
           )}
           <div className="space-y-6">
             {cats.filter((c) => shown.some((i) => i.fn === c)).map((c) => (
-              <section key={c} id={`${kind}-${slug(c)}`} className="scroll-mt-20">
+              <section key={c} id={`${anchor}-${slug(c)}`} className="scroll-mt-20">
                 <h3 className="mb-2 flex items-baseline gap-2 px-1 text-[13px] font-semibold text-ink">{c}<span className="text-[11.5px] font-normal text-ink-4">{shown.filter((i) => i.fn === c).length}</span></h3>
                 <Group list={shown.filter((i) => i.fn === c)} />
               </section>
@@ -121,7 +124,7 @@ function RowActions({ i, onEdit }: { i: LibraryItem; onEdit: () => void }) {
   const toast = useToast();
   const router = useRouter();
   return (
-    <span className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+    <span className="flex shrink-0 gap-0.5 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
       <button onClick={onEdit} className="rounded p-1 text-ink-4 hover:bg-subtle hover:text-ink" aria-label="Edit"><Pencil size={12} /></button>
       <button disabled={pending} onClick={() => confirm(`Remove “${i.title}”?`) && start(async () => { const r = await deleteLibraryItem(i.id); if (!r.ok) toast(r.error, "error"); else router.refresh(); })}
         className="rounded p-1 text-ink-4 hover:bg-subtle hover:text-bad" aria-label="Remove"><Trash2 size={12} /></button>

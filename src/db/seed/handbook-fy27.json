@@ -1,0 +1,2291 @@
+{
+ "sops": [
+  {
+   "function": "Warehouse",
+   "stream": "Forward / Outward",
+   "channel": "Retail",
+   "title": "Outward & Inward Shipment Handling SOP",
+   "objective": "Store dispatch & receiving",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1SPZBN7q6TDKJ9321iAVPuOqInH8t9dpSTq1cXqPEnu8/edit?tab=t.0",
+   "link_text": "Outward & Inward Shipment Handling_SOP",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Forward / Outward",
+   "channel": "Retail",
+   "title": "B2B Forward SOP",
+   "objective": "B2B Order Processing",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1q7xHIb97YNk6dHr_SyAsyEQ8z5XGvBfN9rEQ2Lx9z9E/edit?usp=sharing",
+   "link_text": "FINAL-B2B-SOP",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Forward / Outward",
+   "channel": "Marketplace",
+   "title": "Forward Order Escalation SOP",
+   "objective": "Escalation management",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1yZkYcFC9ByH_aY0AEkyFg6hxnAD3gubMdhtPDJyEdcA/edit",
+   "link_text": "Forward Order Escalation - SOP",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Forward / Outward",
+   "channel": "B2C",
+   "title": "B2C Order Processing SOP",
+   "objective": "B2C Order Processing",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1k55Oo0aE6oRlU0y01_wg5aWels6rTVSv/edit?usp=sharing&ouid=110479529266710656733&rtpof=true&sd=true",
+   "link_text": "B2C Forward - SOP.docx",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Forward / Outward",
+   "channel": "All / Generic",
+   "title": "Forward SOP",
+   "objective": "Generic forward flow",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1rgEE_fFKeoxEOE5CtTVEI9vlAGuYew5o/edit",
+   "link_text": "Fwd SOP.docx",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Returns",
+   "channel": "All / Generic",
+   "title": "Returns Order Process – WH",
+   "objective": "Generic returns flow",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1CeHcWGBEkV1aaGVaWF7fCPjHIPHvbBij/edit",
+   "link_text": "Return SOP_V2.docx",
+   "version": "V2",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Returns",
+   "channel": "All / Generic",
+   "title": "Return Shipment Tracking SOP",
+   "objective": "Tracking returns till closure",
+   "status": "Outdated",
+   "url": "https://docs.google.com/document/d/1u2Sk-S5GENLuaU0FdSBKRSSBgwSOLwmsZQldbhg-qX0/edit",
+   "link_text": "Return Shipment Tracking - SOP",
+   "version": "Old SOP, Not relevant",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Return Shipment Tracking - SOP-Multiple Returns SOP, Old SOP, Not relevant"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Forward / Outward",
+   "channel": "B2B Marketplace",
+   "title": "B2B Marketplace Fulfilment & Returns SOP",
+   "objective": "Covers entire B2B marketplace lifecycle",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1z-v-Q_AzZWhI5ucenVW2dUs1FpB1RT-QhfS6uYzZGzU/edit?usp=sharing",
+   "link_text": "Marketplace Ops SOP",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "Retail",
+   "title": "Retail Store Goods Requirement Process SOP",
+   "objective": "Store replenishment demand plan",
+   "status": "Outdated",
+   "url": "https://docs.google.com/document/d/1Mw7KPvkw8nHR25WofmtajdjUL_EadikTKkaqAbG5ywY/edit?pli=1",
+   "link_text": "SOP -Retail Store Goods Requirement Process",
+   "version": "Old SOP, Not relevant (Already Covered in Final-B2B-SOP)",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Old SOP, Not relevant (Already Covered in Final-B2B-SOP)"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Night Shift Implementation Plan",
+   "objective": "Shift change management",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1HVwQnDRPZPqivNRENy7r3v7fq1j9qobrL9knT2OObrs/edit?tab=t.0",
+   "link_text": "Night Shift Implementation Plan",
+   "version": "Add to forward SOP",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Inventory Management & Reporting SOP",
+   "objective": "Inventory control & reporting",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1S6979DcTS2EEfK9fmlDpiYe3yBriVd6BiCovvTwx1Ho/edit?tab=t.0",
+   "link_text": "Inventory Management and Reporting SOP Version 3",
+   "version": "V3 Updated",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Warehouse Support SOP",
+   "objective": "Support functions",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1bidyHUuHdC3YSGhY3Gh0iqahAwvpK0RyYQvP5SUwehI/edit",
+   "link_text": "SOP Warehouse support",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Returns",
+   "channel": "Retail",
+   "title": "Retail Return Finalised SOP",
+   "objective": "Store return reception",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1vBErjyS2l5m0R0ho8NSUGTnZOFGplKNL/edit",
+   "link_text": "Retail Return SOP",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done, G-Sheet link needs to be updated"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Returns",
+   "channel": "All / Generic",
+   "title": "Returns Quality Check SOP",
+   "objective": "QC for return items",
+   "status": "Outdated",
+   "url": "https://docs.google.com/document/d/16tZ85gFpMUc0_JYoyyt3PovYbEtHn80G/edit",
+   "link_text": "Returns Quality Check SOP",
+   "version": "Old SOP, Not relevant",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Old SOP, Not relevant"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Inwards",
+   "channel": "All / Generic",
+   "title": "Inward Ratio & Putaway SOP",
+   "objective": "Putaway efficiency tracking",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1jKIaBG33yLiSnX8IvDPqi3-xHgWGJLdq/edit",
+   "link_text": "Inward Ratio & Putaway SOP",
+   "version": "",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done, G-Sheet link needs to be updated"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Washing & Ironing Process SOP",
+   "objective": "Process for vendor-managed washing and ironing",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1HHv0lH3bF3Flp6CdQeYy60YThDlr41EkXGzESQ31Uzs/edit?usp=drive_link",
+   "link_text": "SOP: Washing and Ironing Process",
+   "version": "1.0",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Packaging Procurement SOP",
+   "objective": "structured procurement process for monthly packaging materials across warehouses",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1CrLdOwx7QJiF9QrRVMd1T93C-QHW7CIP/edit?usp=sharing&ouid=110479529266710656733&rtpof=true&sd=true",
+   "link_text": "SOP-WH Packaging Procurement_V1.docx",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "WH Employee Exit SOP",
+   "objective": "To ensure all employee exits are handled in a fair, compliant, and documented manner",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1zNRqtrbcmtjdFKobGGprt-lsExetj4-y/edit?usp=sharing&ouid=110479529266710656733&rtpof=true&sd=true",
+   "link_text": "WH Employee Exit_SOP_V1.docx",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Warehouse",
+   "stream": "Inwards",
+   "channel": "All / Generic",
+   "title": "Inventory Management and Reporting SOP",
+   "objective": "Processes for managing factory, inventory, and reporting in a structured manner",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1S6979DcTS2EEfK9fmlDpiYe3yBriVd6BiCovvTwx1Ho/edit?usp=sharing",
+   "link_text": "Inventory Management and Reporting SOP Version 3",
+   "version": "Duplicate SOP, Review DOne, V3",
+   "poc": "Manish Charan, Sudarshan G, Sriram P",
+   "poc_email": "manish.c@snitch.com",
+   "remark": "Review Done"
+  },
+  {
+   "function": "RFID",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "RFID – Tag Procurement SOP",
+   "objective": "Process for purchasing and tracking RFID tags",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1WOVf_6AEwWrEFf9aMYxgeJubfH8lFCQ-C60HL2jeN-o/edit?usp=sharing",
+   "link_text": "TAGID Procurement SOP",
+   "version": "",
+   "poc": "Nitin Manke, Uraza Arif Shamsi",
+   "poc_email": "nitin.m@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "RFID",
+   "stream": "Inwards",
+   "channel": "All / Generic",
+   "title": "RFID – Store Inward Process SOP",
+   "objective": "Tag scanning and mapping during inward",
+   "status": "Active",
+   "url": "https://docs.google.com/presentation/d/12wk4US-KazGhffHY0YOQQO7sW0sw_nlW/edit?usp=sharing&ouid=110479529266710656733&rtpof=true&sd=true",
+   "link_text": "STORE RFID INWARD SOP.pptx",
+   "version": "",
+   "poc": "Nitin Manke, Uraza Arif Shamsi",
+   "poc_email": "nitin.m@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "RFID",
+   "stream": "Forward / Outward",
+   "channel": "All / Generic",
+   "title": "RFID – Outward Process SOP (Warehouse)",
+   "objective": "Tag validation during dispatch",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1asMz_87WUEgXPz4likMrrK0IMMNbM6II1odWy-VrcmE/edit?usp=sharing",
+   "link_text": "RFID Outward SOP",
+   "version": "",
+   "poc": "Nitin Manke, Uraza Arif Shamsi",
+   "poc_email": "nitin.m@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "RFID",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "RFID - Encoding SOP",
+   "objective": "Defines the standard RFID encoding process in TAGID",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1HssrnVhMOvWqMDBYHgHyyF5u_x2gSlun-eCtJ4i_Nek/edit?usp=sharing",
+   "link_text": "RFID ENCODING SOP",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "RFID",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Global Count SOP",
+   "objective": "Defines the RFID-based physical stock counting process using TAGID handhelds",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1YZfbsWjjGF4h4u2rwZJUpuZ3X7MdSaJFADgaddoDc1w/edit?usp=sharing",
+   "link_text": "Global Count Process – SOP",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Logic ERP – B2B Corporate Channel Party Outward Process",
+   "objective": "Defines ERP workflow for B2B dispatches, sale bills, and reconciliation",
+   "status": "Active",
+   "url": null,
+   "link_text": "",
+   "version": "Drive link to be added",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Logic ERP – RFID Inward Process",
+   "objective": "RFID-based inward scanning and tag mapping in ERP",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1YsSVxjL95DDQWZwhSlMK8f4EYKzfllQHsYwYFAB-8YY/edit?usp=sharing",
+   "link_text": "Logic - RFID Inward Process SOP",
+   "version": "Done",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Logic ERP – Samples Inward & Outward Process",
+   "objective": "Samples issue and return process tracking in Logic ERP",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1dzBpYt_ajuh6-SB7UWMcijjZ-DEMPmLAHFmvX-KrbXg/edit?usp=sharing",
+   "link_text": "Samples Inward & Outward Process Logic ERP - SOP",
+   "version": "Drive link to be added",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Forward / Outward",
+   "channel": "Retail",
+   "title": "Shortage / Excess Reporting & Adjustment Process",
+   "objective": "Standardize process for reporting, verifying, and adjusting shortage or excess inventory",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1maXcF0WLO78EjvDWt5cJSrKdf3hi7oPxLfV-pmEbRug/edit?usp=sharing",
+   "link_text": "SOP: Shortage / Excess Reporting & Adjustment Process",
+   "version": "Done",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Forward / Outward",
+   "channel": "Retail",
+   "title": "Logic ERP – Warehouse to Store and Reverse",
+   "objective": "Warehouse to store stock transfer and reverse inward process with flowcharts - B2B Outward",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1DZ5PZ6YBYtV5XRtdBfS6xZEGuNWJR-s5LZkGdZIEy9I/edit?usp=sharing",
+   "link_text": "WAREHOUSE TO STORE AND REVERSE - SOP",
+   "version": "Done",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Logic ERP – Washing Product Outward & Inward",
+   "objective": "Movement of goods to washing vendors and ERP reconciliation",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1PEqHEJkSZ5r7ZeMCNDEgFOwbpNuDAB0oiahpQq8xRUM/edit?usp=sharing",
+   "link_text": "Washing Inwards & Outwards Logic ERP - SOP",
+   "version": "Done",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Returns",
+   "channel": "All / Generic",
+   "title": "Logic ERP – WBC Product Handling & Inward",
+   "objective": "Inward and reconciliation of WBC category items",
+   "status": "Active",
+   "url": null,
+   "link_text": "",
+   "version": "",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "",
+   "channel": "Retail",
+   "title": "NSO Playbook",
+   "objective": "",
+   "status": "Active",
+   "url": null,
+   "link_text": "",
+   "version": "",
+   "poc": "Sagar Kumar",
+   "poc_email": "sagar.kumar@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "",
+   "channel": "Retail",
+   "title": "Retail Return Process at Warehouse",
+   "objective": "",
+   "status": "",
+   "url": null,
+   "link_text": "",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Forward / Outward",
+   "channel": "B2B Marketplace",
+   "title": "Noon Process Flow",
+   "objective": "",
+   "status": "",
+   "url": null,
+   "link_text": "",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Returns",
+   "channel": "B2B Marketplace",
+   "title": "B2B MP Return Process at Warehouse",
+   "objective": "",
+   "status": "",
+   "url": "https://docs.google.com/document/d/1pWXjuNPOcDq6hrS2-FZ7XyUBhQBDU8FN/edit?usp=sharing&ouid=110479529266710656733&rtpof=true&sd=true",
+   "link_text": "Logic ERP SOP MP Returns.docx",
+   "version": "Done",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "ERP",
+   "stream": "Support / Enablers",
+   "channel": "Retail",
+   "title": "Store Inventory Audit SOP",
+   "objective": "Store Inventory Audit SOP",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1js6bRHfM0f1amiXfJ5WgP97p2ytdCWfgbx1iP2vXz_Q/edit?usp=sharing",
+   "link_text": "Store Inventory Audit SOP",
+   "version": "",
+   "poc": "Deepesh Nair",
+   "poc_email": "deepesh@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "B2B",
+   "title": "Outward & Inward Shipment Handling SOP",
+   "objective": "Logistics handover B2B",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1SPZBN7q6TDKJ9321iAVPuOqInH8t9dpSTq1cXqPEnu8/edit?usp=sharing",
+   "link_text": "Outward & Inward Shipment Handling_SOP",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "B2B",
+   "title": "Store Outward Shipments SOP",
+   "objective": "Store dispatch process",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/17F5KtgGiC1-uhO30vEg4Cws9YKaaQTg7VGxtB4Gzs28/edit?tab=t.0",
+   "link_text": "(SOP) – Store Outward Shipments",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "B2B",
+   "title": "B2B Shipment Journey SOP",
+   "objective": "Shipment tracking journey",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1pWjvnBA62vkkQSG-11uy85qJnV68B93ZhSZ7bhgEDbs/edit?usp=sharing",
+   "link_text": "B2B Shipment Journey SOP",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "B2C",
+   "title": "B2C Forward SOP",
+   "objective": "Consumer dispatch process",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1A9i1Qc2mLYdneGv0CfYL1mbM8nMwojy6/edit",
+   "link_text": "FWD SOP.docx",
+   "version": "",
+   "poc": "Jyothi S G",
+   "poc_email": "jyothi@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "B2C",
+   "title": "Manifest SOP",
+   "objective": "Manifest generation",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1paYTQOV2vO_jlEneq-Z46VEFMMRSd75W/edit?tab=t.0",
+   "link_text": "Manifest SOP.docx",
+   "version": "",
+   "poc": "Upasna S",
+   "poc_email": "upasna@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "All / Generic",
+   "title": "SOP RMS",
+   "objective": "RMS handling & handover",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1R--7CJCXV0KlaAAwfTztP5S1uFX75VEW/edit?usp=drive_link&ouid=108778415551633025974&rtpof=true&sd=true",
+   "link_text": "SOP RMS.docx",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Returns",
+   "channel": "B2C",
+   "title": "B2C RVP SOP",
+   "objective": "Reverse pickup workflow",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1uqosQXKHAvQ3xGzaE-OMFgZu96jFCNqx/edit?tab=t.0",
+   "link_text": "SOP RVP.docx",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Support / Enablers",
+   "channel": "B2B",
+   "title": "B2B Insurance Claim Process",
+   "objective": "Claims workflow",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/12uTeuzlVwtVewvkZwqeH8KI9ol6VCxuhUBBfubp72AY/edit?tab=t.0",
+   "link_text": "Insurance claim Step-by-Step Process",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "In-transit Insurance Claim SOP",
+   "objective": "Generic claims flow",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/11iGbwU-g9o17i1bPUQHdPqQIW48hG48NMI3J23c7yj4/edit?usp=sharing",
+   "link_text": "In-transit Insurance Claim SOP",
+   "version": "",
+   "poc": "Ifham Syed",
+   "poc_email": "ifhamsyed@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Missing Product SOP",
+   "objective": "Lost shipment process",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1YRahHpOO9nYVBi3zWMc49FEnrhXLVqyF/edit?tab=t.0",
+   "link_text": "Missing Product (SOP).docx",
+   "version": "",
+   "poc": "Ifham Syed",
+   "poc_email": "ifhamsyed@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "Logistics",
+   "stream": "Forward / Outward",
+   "channel": "B2C",
+   "title": "Snitch Quick SOP",
+   "objective": "Quick commerce process flow",
+   "status": "To be created",
+   "url": null,
+   "link_text": "",
+   "version": "",
+   "poc": "Puja Kumar Addi",
+   "poc_email": "puja.ka@snitch.com",
+   "remark": ""
+  },
+  {
+   "function": "Central Ops",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Control Tower – Q1 Task Management",
+   "objective": "Task tracking framework",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1JoyEOpKObd5shH0-5Zm2RT3gvwGEEylE---AYRF9fD4/edit?tab=t.8fpzcd2mjygl",
+   "link_text": "Control Tower - Q1 Task Management",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Central Ops",
+   "stream": "Support / Enablers",
+   "channel": "All / Generic",
+   "title": "Q1 – Central Ops SOP",
+   "objective": "Central ops coordination",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1GN67EWqMxTrr9gg8qgykqcyBSjxzb4XQBREdfUAir-w/edit?tab=t.6sdilzle0c6a",
+   "link_text": "Q1 - Central - OPS",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  },
+  {
+   "function": "Snitch Quick",
+   "stream": "Forward / Outward",
+   "channel": "All / Generic",
+   "title": "SOP for Qcom Inward",
+   "objective": "Standard process flow of order creation, processing, and inwards for quick commerce stores",
+   "status": "Active",
+   "url": "https://docs.google.com/document/d/1PMZnMZnQ_SxIAFq6Ma2U0NZcMIjnyK3Uz5UTRcYnNi4/edit?usp=sharing",
+   "link_text": "SOP for Qcom Inward",
+   "version": "",
+   "poc": "",
+   "poc_email": "",
+   "remark": ""
+  }
+ ],
+ "dashboards": [
+  {
+   "project": "Omni",
+   "title": "Leadership overview",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/50-omni-dashboard?area_manager=&cluster=&date_range=&omni_manager=&process_date=&tab=16-leadership-overview",
+   "description": "Omnichannel Leadership Overview: Weekly trends across Fulfillment %, TAT SLA Fulfillment %, Error %, Return %, Omni NPS Score, and Omni Revenue Share %."
+  },
+  {
+   "project": "Omni",
+   "title": "Live & Scorecards",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/50-omni-dashboard?area_manager=&cluster=&date_range=&omni_manager=&process_date=&tab=14-live-%26-scorecards",
+   "description": "Visibility into store order activity (order vs no-order stores by date), live store tracking, Omni Manager & Area Manager scorecards, cluster scorecards, monthly store live-days, and store scorecards."
+  },
+  {
+   "project": "Omni",
+   "title": "In Store-Ops",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/50-omni-dashboard?area_manager=&cluster=&date_range=&omni_manager=&process_date=&tab=10-in-store-ops",
+   "description": "In Store Omni Operations - Total store pendency, non-dispatched orders, store-wise pendency, TAT/SLA performance, store OPS summary, daily cancellations, and current pendency."
+  },
+  {
+   "project": "Omni",
+   "title": "In Store Inventory and Capping",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/50-omni-dashboard?area_manager=&cluster=&date_range=&omni_manager=&process_date=&tab=12-in-store-inventory-%26-capping",
+   "description": "End-to-end visibility into total Omni inventory, exposed inventory, branch-level back-office vs exposed inventory, and store-wise buffer distribution."
+  },
+  {
+   "project": "Omni",
+   "title": "Experience (Returns & NPS)",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/50-omni-dashboard?area_manager=&cluster=&date_range=&omni_manager=&process_date=&tab=11-experience-%28returns-%26-nps%29",
+   "description": "Visibility into Store Wise Return%, Store Wise NPS, WoW Omni Return%, OVerall NPS Score, WPR/ Quality issue Return%, Store Wise Return Reason Breakdown, Omni weekly Return Reason Breakdown, Monthly OMni NPS, and NPS Detractors Feedback"
+  },
+  {
+   "project": "QCOM (Master-Dashboard)",
+   "title": "Live Summary",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/49-q-com-master-dashboard?branch_name=&tab=5-live-summary",
+   "description": "Provides end-to-end visibility into branch-wise status as of date, Items by Hour (overall Q-Com), L7 performance for Bangalore and Gurgaon, today's Performance and yesterday O2D"
+  },
+  {
+   "project": "QCOM (Master-Dashboard)",
+   "title": "Overall Metrics",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/49-q-com-master-dashboard?branch_name=&tab=6-overall-metrics",
+   "description": "Provides a comprehensive view of QCOM performance across revenue, order volume, item volume, deliveries, AOV, returns, conversion metrics, SLA adherence, NPS, and weekly distance-based O2D—along with WoW trends for 60/75-min delivery performance, channel-wise OS split, and returns distribution."
+  },
+  {
+   "project": "QCOM (Master-Dashboard)",
+   "title": "In Store OPS",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/49-q-com-master-dashboard?branch_name=&tab=7-in-store-ops",
+   "description": "Provides visibility into Daily Not Found %, daily/hourly/weekly order processing performance, store-wise fulfillment %, and O2M performance across BOH and Dedicated operations."
+  },
+  {
+   "project": "QCOM (Master-Dashboard)",
+   "title": "Inventory",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/49-q-com-master-dashboard?branch_name=&tab=8-inventory",
+   "description": "Provides visibility into total Q-COM inventory, DOI across stores, store-wise inventory sales mix, store-wise and category-wise cut-size %, category inventory price bracket distribution, QCOM vs non-QCOM SKU conversion %, and sold SKUs."
+  },
+  {
+   "project": "QCOM (Master-Dashboard)",
+   "title": "Customer Support",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/49-q-com-master-dashboard?branch_name=&tab=9-customer-support",
+   "description": "Q-COM CS Escalations"
+  },
+  {
+   "project": "Snitch X Loyalty",
+   "title": "Onboarding",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/52-snitchx-loyalty?tab=17-onboarding",
+   "description": "Insights into Daily enrollments by Channel and monthly acquisition"
+  },
+  {
+   "project": "Snitch X Loyalty",
+   "title": "ACV Growth",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/52-snitchx-loyalty?tab=18-acv-growth",
+   "description": "Provides a comprehensive overview of Snitch X membership, membership base by channel, daily online and offline summaries, and FY25–26 loyalty metrics such as loyalty order%, loyalty revenue%, and loyalty user base."
+  },
+  {
+   "project": "Snitch X Loyalty",
+   "title": "Features Offtake",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/52-snitchx-loyalty?tab=19-features-offtake",
+   "description": "Provides Insights into % of X Members with Birthdays and Welcome Points redemption and transactions"
+  },
+  {
+   "project": "Snitch X Loyalty",
+   "title": "Auto Enrollment",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/52-snitchx-loyalty?tab=26-auto-enrollment",
+   "description": "Visibility for DoD Auto Enrollments and Conversions of Auto Enrolled members"
+  },
+  {
+   "project": "Snitch X Loyalty",
+   "title": "Fraud",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/52-snitchx-loyalty?tab=28-fraud",
+   "description": ""
+  },
+  {
+   "project": "Reverse Escalation",
+   "title": "Summary",
+   "url": "https://48vbsufhyd.ap-south-1.awsapprunner.com/dashboard/58-reverse-escalation?tab=22-summary",
+   "description": "Provides visibility into Weekly and monthly Returns & Exchanges and Failures, Reson-Wise Returns & Exchange%, Order Delivered too Return Request, 7+ Days Return Cases, Users with Exchange to Return Request and Regenerated AWBs."
+  },
+  {
+   "project": "Reverse Escalation",
+   "title": "Reasons & Sub-Reasons",
+   "url": "https://48vbsufhyd.ap-south-1.awsapprunner.com/dashboard/58-reverse-escalation?tab=23-reasons-%26-sub-reasons",
+   "description": ""
+  },
+  {
+   "project": "Reverse Escalation",
+   "title": "Operations",
+   "url": "https://48vbsufhyd.ap-south-1.awsapprunner.com/dashboard/58-reverse-escalation?tab=24-operations",
+   "description": ""
+  },
+  {
+   "project": "Reverse Escalation",
+   "title": "Control Tower",
+   "url": "https://48vbsufhyd.ap-south-1.awsapprunner.com/dashboard/58-reverse-escalation?tab=25-control-tower",
+   "description": ""
+  },
+  {
+   "project": "NPR",
+   "title": "NPR Dashboard",
+   "url": "https://mqtpcr8gyp.ap-south-1.awsapprunner.com/dashboard/59-npr-dashboard",
+   "description": ""
+  }
+ ],
+ "trackers": [
+  {
+   "group": "Logic AI Tracker",
+   "title": "Logic AI Tracker",
+   "url": "https://docs.google.com/spreadsheets/d/1Uln4rEj9cMUQ4OjfJRWBNtVgwW_tZf8USIKzgicDVNk/edit?gid=0",
+   "description": "ERP AI Tracker"
+  },
+  {
+   "group": "Store Goods Tracker New",
+   "title": "Store Goods Tracker New",
+   "url": "https://docs.google.com/spreadsheets/d/1_JYOF5JYNBIVnc38rXxrOYZh7l0JrNEhVmt1CJA6wHQ/edit?gid=1378705244",
+   "description": ""
+  },
+  {
+   "group": "Wh Cost",
+   "title": "Warehouse Planning",
+   "url": "https://docs.google.com/spreadsheets/d/1w3bxJXnsNTN9M3sL0L6hCEe2bYAEm6fKhkKf907P6-4/edit?gid=1648212527",
+   "description": ""
+  },
+  {
+   "group": "Interim Demand Plan",
+   "title": "Interim Demand Plan - May 23, 2025",
+   "url": "https://docs.google.com/spreadsheets/d/1iluUnzIdq9tlWLt97QdvxeAmCeYrLBjuMBI5QNwtu3I/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Interim Demand Plan",
+   "title": "Audit YLK -2 Plan",
+   "url": "https://docs.google.com/spreadsheets/d/1ZgV08cWQ7O5_H1XRFTM7ck-hxmXeI6egP3UxPO_obFE/edit?gid=960749518",
+   "description": ""
+  },
+  {
+   "group": "Product Ops Tracker",
+   "title": "EMIZA Bin Costing Projection",
+   "url": "https://docs.google.com/spreadsheets/d/1eoxOxQIK1XI8OZ7D3tRkWo6jrULNwndPGHxsQ28g8Z4/edit?gid=1994243924",
+   "description": ""
+  },
+  {
+   "group": "Product Ops Tracker",
+   "title": "Retail Planning and Fulfilment",
+   "url": "https://docs.google.com/spreadsheets/d/1UeKVH5XgtlVxPyOE0umQGR2vV77mGqR3fD-MeuDkxr4/edit?gid=958465437",
+   "description": ""
+  },
+  {
+   "group": "Product Ops Tracker",
+   "title": "CT Metrics - Snitch",
+   "url": "https://docs.google.com/spreadsheets/d/1-4R0R6oS6aOZmqArl6b4Ko_LmlTd6q2X29pIgZpLalk/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "HSK Returns",
+   "title": "Return Shipments Snitch <> HSK WH",
+   "url": "https://docs.google.com/spreadsheets/d/1i5fLfEiFiBSM5HyQrBgaNfYz5K92Ir0DI-j9Z0X87R4/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Warehouse Locations - Snitch",
+   "url": "https://docs.google.com/spreadsheets/d/1c51unjIXLkpFVcViAbEjGJrXNqQCPPA2mlQ8s-axp0M/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Emiza Inventory Sheet - Snitch",
+   "url": "https://docs.google.com/spreadsheets/d/1sI8-4_rdwn5X8XKbFq8riXfybCSNrQz4zIsbSGXTBQM/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "HSKT Inventory Sheet - Snitch",
+   "url": "https://docs.google.com/spreadsheets/d/12gJ2_xwmdXMmXmkBjNqj7xsOOCDdymenA1cTNzbLGvQ/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Error Orders",
+   "url": "https://docs.google.com/spreadsheets/d/1RP1pnGMadgW2VQDRMK7l5uGrdX1Lf1x4hdV8-i5QLG8/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "WH Data",
+   "url": "https://docs.google.com/spreadsheets/d/1JhRdK5REgmT9MPhMcKSNmkH7V4wX2Pt3D6dYrqDd4pU/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Return shipments Snitch <> Emiza WH",
+   "url": "https://docs.google.com/spreadsheets/d/1HYtB8vQhPByjTXyd8jz7D-TEakuWrLLvuyqvUUAdMxs/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Unfulfillable/ CANCELLED- WH ALL (Refund)",
+   "url": "https://docs.google.com/spreadsheets/d/1QEWir16fHNwsrA-NrdCSbY_GF7VEIo_wTEe89sukbSI/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Return Shipment Snitch <> Yelhanka WH",
+   "url": "https://docs.google.com/spreadsheets/d/122FbGucP4pZRDSwcA7lyfXb_wVEihEtrS9wIRKz5HoE/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "ONLINE GOODS - TO DISPATCH - Factory",
+   "url": "https://docs.google.com/spreadsheets/d/1o8wK6Zy6a1Yfb-aFxxQLB7r7P8lRzg7Pg47O-H5iZvg/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Snitch >< Bluedart - CS",
+   "url": "https://docs.google.com/spreadsheets/d/1tw1emlg2GpVDdPvYD--Odtx6fEdb9pYCNnQ79qsuMso/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Snitch >< Delhivery - CS",
+   "url": "https://docs.google.com/spreadsheets/d/1-_HlxFEAy6mniB351GX3f6_LsWFMuiGLoi2ihQ33rAI/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Snitch <> Shiprocket",
+   "url": "https://docs.google.com/spreadsheets/d/1K3K6cOrHV0rfJPSJXzpmp86guoRXyrJ5DQ35nxoVOpk/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Retail Store Goods Requirement - Form (Responses)",
+   "url": "https://docs.google.com/spreadsheets/d/1sLvW4mC5EsTAmTu6oW3-UYijNpEQFdzBGpP26Q_Cbs4/edit?resourcekey",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Warehouse Escalation Sheet",
+   "url": "https://docs.google.com/spreadsheets/d/10CC5TT-VIv48rT_gZmq7I5MtlKVoliaM01_A1zNu0OQ/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "YLKWH Inventory - Snitch",
+   "url": "https://docs.google.com/spreadsheets/d/1iIIUvtH8mrY0nOjYxoNOT2ioK3IOl0SUp8CE-Qr9OY8/edit",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "warehouse Productivity V/s Manpower",
+   "url": "https://docs.google.com/spreadsheets/d/1yerUZnZ91eY1u-lAPH19BSkCvfQjJqLsW3QrrkFQNpw/edit?gid=738853013",
+   "description": ""
+  },
+  {
+   "group": "WH Data",
+   "title": "Non Sellable Tracker",
+   "url": "https://docs.google.com/spreadsheets/d/1taOLVHXuMRUNCBG5ViWME3DIp_hD1FOYUTiUISqqM3A/edit?gid=140800034",
+   "description": ""
+  },
+  {
+   "group": "SAPL-WH2 AUDIT REPORTS",
+   "title": "Audit Report driver",
+   "url": "https://drive.google.com/drive/folders/1CXCSfwtF1V2wMbdxKYBpx3tgvxg6fBgK",
+   "description": ""
+  },
+  {
+   "group": "SAPL-WH2 AUDIT REPORTS",
+   "title": "LOGIC <> SNITCH I PROGRAM TRACKER",
+   "url": "https://docs.google.com/spreadsheets/d/1X77S4RWm0B0yLHyIQl8zBb64vtZAtAu4ccECorXm4zg/edit?gid=535465164",
+   "description": ""
+  },
+  {
+   "group": "WH-Store Stock Discrepancy Tracker",
+   "title": "Stock Discrepancy Tracker-WH",
+   "url": "https://docs.google.com/spreadsheets/d/1ns1CQxRqWhGarkLA2WAfo4h1LxbJcDZ2EfT4aKSXhDo/edit?gid=2076873305",
+   "description": "Tracking Stock Discrepancies Accross Logistics Movement"
+  },
+  {
+   "group": "Photoshoot-WH Tracker",
+   "title": "PHOTOSHOOT>< WH TRACKER",
+   "url": "https://docs.google.com/spreadsheets/d/1GzB-Rr1t8E_HfLHMZNKNPEcSdKPSw3QURJUNedl0U_g/edit?gid=0",
+   "description": "Tracking Stock Movements from WH to HQ"
+  },
+  {
+   "group": "Omni Error & Cancellation",
+   "title": "OMNI - Error and Cancellation",
+   "url": "https://docs.google.com/spreadsheets/d/1odwv8KiI4EYUt4fGjylw8k16JYYR46b7LKdbJEtGX0g/edit?gid=389212581",
+   "description": "Tracking Omni Errors & UF"
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Warehouse & logistic Expenses FY 25-26",
+   "url": "https://docs.google.com/spreadsheets/d/1QWJRPOcmUjzXHMS-NnFv3SSJ28Ez4bLptKeZIJyQG68/edit?gid=1771307043",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Operations_AOP Cost Sheet",
+   "url": "https://docs.google.com/spreadsheets/d/1i_DEjothySz-O86wnmtNIR7xHpf3O46xMiqzkfz63vE/edit?gid=638351841",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "JAS'25 Planning",
+   "url": "https://docs.google.com/spreadsheets/d/1_85Ayyqr5z--diWvr039YejJ11-22lMcyDa3NIF7R54/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Central Ops -Task Tracker'25",
+   "url": "https://docs.google.com/spreadsheets/d/1Zk7-9vj5U08wvNxQlbC8Mq2AEQ0PMdD1wG-1AIEVw_w/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Q1 - Daily updates",
+   "url": "https://docs.google.com/spreadsheets/d/1sXoyz80mD_mDSKVBq74UZdQurXnE9P9v-lmsW6QQr6Q/edit?gid=1706992139",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Store Goods Tracker - Inward (New)",
+   "url": "https://docs.google.com/spreadsheets/d/1_JYOF5JYNBIVnc38rXxrOYZh7l0JrNEhVmt1CJA6wHQ/edit?gid=1520648452",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Store Goods Tracker - Inward",
+   "url": "https://docs.google.com/spreadsheets/d/1NzpUHzSci5u4_kkqT8Oi2iHg47jzdApSAn-W7r_2fLQ/edit?gid=1378705244",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "B2B Logistic Summary",
+   "url": "https://docs.google.com/spreadsheets/d/1qCBw4DZc7kxgpVFEEp9ZAU01SQXK073VJGYgShlP8j8/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "new_pos_erp_standpoint",
+   "url": "https://docs.google.com/spreadsheets/d/1rlyL2aRam4vMwxakTboqGzCmLUybxL6BwKsrruQg8eg/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Snitch_RFID Program",
+   "url": "https://docs.google.com/spreadsheets/d/1ti6eP0COfHGL6PzFyrOsNsQz3tJ1AVK8bmoENh3AHAk/edit?gid=36015039",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Warehouse Manpower Modelling-North WH-Calculation",
+   "url": "https://docs.google.com/spreadsheets/d/12MXvZGscB2OvFGBMNeYA5YmZdJYQmof5AzY7VOVJTCI/edit?gid=1762143849",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Snitch Attendance Tracker Tauru GGN",
+   "url": "https://docs.google.com/spreadsheets/d/1Bt40WkTRm2Z-eWVwu0Wxe66DWkLCR1d5PLwpFzLv6oY/edit?gid=1649897285",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "North updates",
+   "url": "https://docs.google.com/spreadsheets/d/156j7A-i3pQSKfGKqxTwg2P-Rgw5k7geURimYUtD9aU0/edit?gid=52243273",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Snitch_North_Warehouse Expansion .xlsx",
+   "url": "https://docs.google.com/spreadsheets/d/1jZt-NKWbgkgTLy3Ha9uz9LngIEumNBpa/edit?gid=920169645",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "marketplace_details",
+   "url": "https://docs.google.com/spreadsheets/d/1P1c0sMQyliFK6VdZiwAV1aIrrJRUsTNKSha79dReml4/edit?gid=1403032612",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "S&OP_Sales/Inventory Projection_Q2+Q3_FY'26",
+   "url": "https://docs.google.com/spreadsheets/d/18lXvrCtEu-hOimkEN4xldz037x3aiIUbBns9aUUw2HU/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "B2B_Engine",
+   "url": "https://docs.google.com/spreadsheets/d/1jAEfy_5AjT9PRXazLuCAaSd82pNgiCIRm4KK32Vv7Cc/edit?gid=2022915580",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "Quess Hiring & Exit-Tauru Warehouse-North",
+   "url": "https://docs.google.com/spreadsheets/d/1fKygQUwRU82Uj-RNK6zk9-rEwE7CvisueGNjmtIOGG4/edit?gid=0",
+   "description": ""
+  },
+  {
+   "group": "Planning & program sheets",
+   "title": "North Capex Cost",
+   "url": "https://docs.google.com/spreadsheets/d/17iCbXKlgJX4Zl0ZlWalhrnl4iFEnfhxQH30KgqEIj6I/edit?gid=0",
+   "description": ""
+  }
+ ],
+ "tools": [
+  {
+   "title": "Long Tail & Plus",
+   "url": "https://longtail.snitch-workflow.com/",
+   "usecase": "Long-tail & Plus business: products, allocation, performance",
+   "owner": "Tushar Gupta",
+   "function": "Long Tail & Plus",
+   "users": ""
+  },
+  {
+   "title": "B2B Retail Forward",
+   "url": "https://retailjourney.snitch-workflow.com/",
+   "usecase": "B2B Forward Order to Delivery Journey on a single system",
+   "owner": "Malhar Murhekar",
+   "function": "Warehouse+Logistics",
+   "users": "15"
+  },
+  {
+   "title": "Marketplace Tool",
+   "url": "https://www.marketplace.snitch-workflow.com/",
+   "usecase": "MP Pricing Uploads & Audit Trail",
+   "owner": "Hritik kumar",
+   "function": "Marketplace",
+   "users": ""
+  },
+  {
+   "title": "Quick Control Tower",
+   "url": "https://controltower.snitch-workflow.com/",
+   "usecase": "Quick-com CT",
+   "owner": "Hritik kumar",
+   "function": "Quick Commerce",
+   "users": ""
+  },
+  {
+   "title": "Self-Delivery Tool",
+   "url": "https://self-delivery.snitch-workflow.com/",
+   "usecase": "Self delivery tracking updates",
+   "owner": "Hritik kumar",
+   "function": "Logistics",
+   "users": ""
+  },
+  {
+   "title": "Snitch Recon Tool",
+   "url": "https://recon.snitch-workflow.com/",
+   "usecase": "CP, UC, etc invoice reco",
+   "owner": "Sajja Sai Karthik",
+   "function": "Operations",
+   "users": ""
+  },
+  {
+   "title": "Store Snag",
+   "url": "https://storesnag.snitch-workflow.com/login",
+   "usecase": "Store Requirements tool",
+   "owner": "Hritik kumar",
+   "function": "Retail",
+   "users": ""
+  },
+  {
+   "title": "WH Attendance Management",
+   "url": "https://wh-attendance.snitch-workflow.com/",
+   "usecase": "WH attendance management system",
+   "owner": "Malhar Murhekar",
+   "function": "Warehouse",
+   "users": ""
+  },
+  {
+   "title": "WH Gate Register",
+   "url": "https://wh-gate-register.snitch-workflow.com/",
+   "usecase": "WH paper register replacement",
+   "owner": "Malhar Murhekar",
+   "function": "Warehouse",
+   "users": "8"
+  },
+  {
+   "title": "WH Visitor Entry",
+   "url": "https://wh-visitor.snitch-workflow.com/",
+   "usecase": "WH visitor entry software",
+   "owner": "Malhar Murhekar",
+   "function": "Warehouse",
+   "users": "6"
+  },
+  {
+   "title": "YLK 2",
+   "url": "https://ylk2.snitch-workflow.com/returns",
+   "usecase": "PSLJ and Returns Inwarding scanning",
+   "owner": "Sajja Sai Karthik",
+   "function": "Production + Shoot + Warehouse",
+   "users": "25"
+  },
+  {
+   "title": "Retail NSO",
+   "url": "https://retailnso.snitch-workflow.com/app#/guide",
+   "usecase": "NSO, VM and Store Snag*",
+   "owner": "Sajja Sai Karthik",
+   "function": "BD + Legal + Operations + Projects",
+   "users": "TBD"
+  },
+  {
+   "title": "WH Retail Return",
+   "url": "https://retailreturn.snitch-workflow.com/",
+   "usecase": "Store returns, delivery to putaway tracking",
+   "owner": "Malhar Murhekar",
+   "function": "Warehouse",
+   "users": ""
+  },
+  {
+   "title": "Retail LMS",
+   "url": "https://retail-lms.snitch-workflow.com/",
+   "usecase": "LMS for store employees",
+   "owner": "Malhar Murhekar",
+   "function": "HR + Retail",
+   "users": ""
+  }
+ ],
+ "glossary": [
+  {
+   "n": 1,
+   "term": "Individual Productivity Performance (IPP)",
+   "abbr": "IPP",
+   "definition": "A metric evaluating the operational efficiency of an individual warehouse worker by tracking their specific throughput against standard working hours.",
+   "formula": "(Total units Processed by worker / Total Logged work hours)",
+   "section": "Warehouse"
+  },
+  {
+   "n": 2,
+   "term": "Pre-Pack (PP)",
+   "abbr": "PP",
+   "definition": "An inwarding strategy where vendors ship goods bundled in specific size ratios that can be scanned and processed as a single unit kit to accelerate receiving.",
+   "formula": "Kit Quantity = ∑(Ratio of Size A + Ratio of Size B + Ratio of Size C)",
+   "section": "Warehouse"
+  },
+  {
+   "n": 3,
+   "term": "Goods Receipt Note (GRN) Adherence",
+   "abbr": "",
+   "definition": "The % of physical goods received at the dock that are successfully verified and systematically added to live inventory within SLA.",
+   "formula": "(Total Invoices Systematically GRN'd within SLA / Total Invoices physically received) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 4,
+   "term": "Gemba Walk Action Rate",
+   "abbr": "",
+   "definition": "A continuous improvement metric tracking the % of operational inefficiencies identified during leadership floor observations that are successfully resolved.",
+   "formula": "(Total Gemba Issues Resolved / Total Gemba Issues Identified) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 5,
+   "term": "Floor Pendency (Sellable)",
+   "abbr": "",
+   "definition": "Backlog volume of physically unpacked, and sellable inventory lying on the staging floor waiting to be putaway into pick bins.",
+   "formula": "Total Sellable Units Unpacked - Total Sellable units Systemically Put Away in Bins",
+   "section": "Warehouse"
+  },
+  {
+   "n": 6,
+   "term": "Floor Pendency (Non-Sellable)",
+   "abbr": "",
+   "definition": "Backlog volume of defective, missing or blocked inventory on the warehouse floor waiting for vendor return, liquidation or adjustment.",
+   "formula": "Total Received Units - (Total Sellable Units + Total Rejected units processed out)",
+   "section": "Warehouse"
+  },
+  {
+   "n": 7,
+   "term": "Warehouse Fulfillment (WHF)",
+   "abbr": "WHF",
+   "definition": "A North Star metric indicating the % of all assigned B2C & B2B orders successfully manifested by facility.",
+   "formula": "(Total orders successfully manifested / Total orders allocated to facility) x 100",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 8,
+   "term": "Shrinkage (SHK)",
+   "abbr": "SHK",
+   "definition": "Quantified loss of inventory by internal theft, systemic mismatches, unrecorded damage or fake returns identified during audits.",
+   "formula": "((System Inventory Value - Physical Audited Inventory Value) / System Inventory Value) x 100",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 9,
+   "term": "Putaway (PA) Efficiency",
+   "abbr": "",
+   "definition": "The speed and accuracy at which an item is moved from the inwarding dock and systematically scanned into its final bin.",
+   "formula": "(Total Items Put Away within SLA / Total Items GRN'd) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 10,
+   "term": "Holding Rack / High-Density Rack (HDR) Utilization",
+   "abbr": "",
+   "definition": "The capacity efficiency of bulk storage zones dedicated to holding large inventory reserves before consolidation into active picking zones.",
+   "formula": "(Total Volume of goods currently in HDR / Total HDR Volumetric Capacity) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 11,
+   "term": "Advance Shipping Notice (ASN) Accuracy",
+   "abbr": "",
+   "definition": "The variance between the digital inbound freight details transmitted by the supplier in the system and the actual physical goods received at the dock.",
+   "formula": "(Total ASN Quantities Matching Physical GRN / Total ASN Quantities Submitted) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 12,
+   "term": "Cubic Feet / Volumetric Weight (CFT)",
+   "abbr": "CFT",
+   "definition": "Dimensional weight utilized by logistics partners to bill freight for boxes that are large in volume but light in physical dead weight.",
+   "formula": "(L x W x H in cm) / Contracted volumetric divisor",
+   "section": "Logistics"
+  },
+  {
+   "n": 13,
+   "term": "Full Truckload (FTL) Utilization",
+   "abbr": "",
+   "definition": "Volumetric efficiency of a dedicated B2B linehaul truck reserved entirely for the brand's inter-facility or store dispatches.",
+   "formula": "(Total CFT Volume of Loaded Shipments / Total CFT capacity of Truck) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 14,
+   "term": "Partial Truckload (PTL) Consolidation Ratio",
+   "abbr": "",
+   "definition": "Measure of how effectively smaller shipments are grouped together into shared trucks to optimize linehaul freight costs.",
+   "formula": "Total Consolidated Shipment Volume / Total PTL Truck Capacity",
+   "section": "Logistics"
+  },
+  {
+   "n": 15,
+   "term": "Linehaul (LH) Transit Efficiency",
+   "abbr": "",
+   "definition": "The reliability of bulk freight moving between major central nodes before it is broken down for last-mile delivery.",
+   "formula": "(Total Linehaul Runs completed within SLA / Total Linehaul Runs Scheduled) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 16,
+   "term": "RFID Retail Outward Adaption",
+   "abbr": "",
+   "definition": "The compliance rate of retail store dispatches and B2B shipments outwarded seamlessly using RFID tunnels rather than manual barcode scanning.",
+   "formula": "(Total EPC units outwarded via RFID / Total units outwarded) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 17,
+   "term": "Billing Cavity Sync Accuracy",
+   "abbr": "",
+   "definition": "The precision rate at which retail RFID hardware correctly identifies tags and syncs the exact sale to OMS without ghost reads.",
+   "formula": "(Total Accurate RFID Till Invoices / Total Invoices Processed via RFID Till) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 18,
+   "term": "Days of Inventory (DOI)",
+   "abbr": "DOI",
+   "definition": "An advanced inventory health metric calculating exactly how many days the current on hand stock will last based on the trailing sales run rate.",
+   "formula": "Current Inventory Units / Average Daily Units Sold",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 19,
+   "term": "Sell Through Rate (STR)",
+   "abbr": "STR",
+   "definition": "Productivity metric indicating the % of received inbound inventory that has been successfully sold through to end consumers.",
+   "formula": "(Total Units Sold / Total Units Received at Warehouse) x 100",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 20,
+   "term": "Cross-Docking (XD) Efficiency",
+   "abbr": "",
+   "definition": "The speed at which incoming bulk shipments are unloaded from an inbound truck and loaded directly onto an outbound truck, bypassing storage.",
+   "formula": "(Total Units Cross-Docked / Total Units Received) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 21,
+   "term": "Slotting Optimization Index (SOI)",
+   "abbr": "SOI",
+   "definition": "A measure of how efficiently fast-moving SKUs are placed in easily accessible primary pick faces compared to slow moving inventory.",
+   "formula": "(Total Picks from Primary Strike Zones / Total Overall Picks) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 22,
+   "term": "Wave Picking Efficiency (WPE)",
+   "abbr": "WPE",
+   "definition": "The speed and accuracy at which consolidated batches of orders (waves) are collected by pickers before being routed to sorting stations.",
+   "formula": "Total Units Picked in Wave / Total Time Taken for wave",
+   "section": "Warehouse"
+  },
+  {
+   "n": 23,
+   "term": "Honeycombing Factor (HF)",
+   "abbr": "HF",
+   "definition": "The measure of wasted, unusable space inside a storage bin or rack caused by storing partially depleted pallets or non-stackable SKUs.",
+   "formula": "(Total Empty Space in Active Bins / Total Cubic Capacity of Active Bins) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 24,
+   "term": "Order Fill Rate (OFR)",
+   "abbr": "OFR",
+   "definition": "The % of customer orders that can be completely fulfilled from available stock on hand without backorders or cancellations.",
+   "formula": "(Total Orders shipped complete / Total orders placed) x 100",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 25,
+   "term": "Perfect Order Index (POI)",
+   "abbr": "POI",
+   "definition": "A strict compounded quality metric tracking orders that are picked accurately, packed securely, manifested on time, and shipped without any defects.",
+   "formula": "(% orders on-time) x (% orders complete) x (% orders damage-free) x (% orders accurately documented)",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 26,
+   "term": "Cube Utilization Rate (CUR)",
+   "abbr": "CUR",
+   "definition": "The % of total available vertical and horizontal warehouse space that is actively occupied by physical inventory.",
+   "formula": "(Total cubic volume of stored goods / Total Warehouse cubic storage capacity) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 27,
+   "term": "Receiving Dock-to-Stock (D2S)",
+   "abbr": "D2S",
+   "definition": "The total cycle time it takes for an inbound shipment to move from the receiving dock door to being fully available for order allocation in WMS.",
+   "formula": "Timestamp of Inventory Live in systems - Timestamp of Truck Unloading",
+   "section": "Warehouse"
+  },
+  {
+   "n": 28,
+   "term": "Kitting Cycle Time (KCT)",
+   "abbr": "KCT",
+   "definition": "The average time required to assemble components or pre-packs into a final bundled SKU ready for dispatch.",
+   "formula": "Total time Assembling Kits / Total Number of Kits Produced",
+   "section": "Warehouse"
+  },
+  {
+   "n": 29,
+   "term": "On-Time In-Full (OTIF)",
+   "abbr": "OTIF",
+   "definition": "Strict compliance metric ensuring a retail store or B2B partner receives exact requested inventory quantities on the scheduled delivery date.",
+   "formula": "(Total B2B Shipments Delivered Complete and On Time / Total B2B shipments dispatched) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 30,
+   "term": "Load Factor (LF)",
+   "abbr": "LF",
+   "definition": "The ratio of the actual weight or volume, carried by logistics fleet vehicle compared to its maximum permissible payload capacity.",
+   "formula": "(Actual Payload Weight or Volume / Max Vehicle capacity) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 31,
+   "term": "Route Density Index (RDI)",
+   "abbr": "RDI",
+   "definition": "The logistical efficiency of a delivery route, measured by the physical concentration of successful delivery drops within a specific geographic radius.",
+   "formula": "Total Number of successful drops / Total Route KMs driven",
+   "section": "Logistics"
+  },
+  {
+   "n": 32,
+   "term": "Deadhead Miles (DHM)",
+   "abbr": "DHM",
+   "definition": "The wasted logistical distance and fuel consumed when a dedicated B2B fleet vehicle returns empty after completing all scheduled drops.",
+   "formula": "Total KMs driven empty / Total Fleet KMs driven",
+   "section": "Logistics"
+  },
+  {
+   "n": 33,
+   "term": "Drop Size Optimization (DSO)",
+   "abbr": "DSO",
+   "definition": "The strategic maximizing of the average unit count or volume delivered per stop on a consolidated regional milk route to lower the cost per delivery.",
+   "formula": "Total units dispatched on Route / Total number of store drops",
+   "section": "Logistics"
+  },
+  {
+   "n": 34,
+   "term": "Freight Class Variance",
+   "abbr": "",
+   "definition": "Financial discrepancy occurring when a carrier reclassifies a shipment's freight class during transit, leading to unexpected billing surcharges.",
+   "formula": "Actual Billed Freight Cost - System Estimated Freight Cost",
+   "section": "Logistics"
+  },
+  {
+   "n": 35,
+   "term": "Multi-Stop Routing Efficiency (MSRE)",
+   "abbr": "MSRE",
+   "definition": "Metric evaluating the courier's routing algorithm in minimizing the distance driven between individual customer drops within a delivery zone.",
+   "formula": "Optimal Algorithm Route Distance / Actual KMs driven by driver",
+   "section": "Logistics"
+  },
+  {
+   "n": 36,
+   "term": "Hub Bypass Rate (HBR)",
+   "abbr": "HBR",
+   "definition": "The % of shipments routed directly from the origin warehouse to the destination last-mile hub, completely skipping intermediate sorting facilities.",
+   "formula": "(Total shipments bypassing Sort Hubs / Total network shipment) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 37,
+   "term": "Carrier Capacity Utilization (CCU)",
+   "abbr": "CCU",
+   "definition": "A network measure ensuring that contracted 3PL partners are being fed the exact volume of daily shipments they committed to handling without breaching cut-offs.",
+   "formula": "(Total shipments handed to carrier / Carrier contracted daily capacity) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 38,
+   "term": "Milk Run Efficiency (MRE)",
+   "abbr": "MRE",
+   "definition": "Adherence of a dedicated vehicle loop to its scheduled delivery timeline across multiple retail stores without delays or missed handovers.",
+   "formula": "(Total Drops completed on Time) / (Total Scheduled Drops) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 39,
+   "term": "First Attempt Strike Rate (FASR)",
+   "abbr": "FASR",
+   "definition": "% of orders successfully handed to the end customer on the very first physical attempt.",
+   "formula": "(Total Deliveries Succeeded on Attempt 1 / Total deliveries attempted) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 40,
+   "term": "Hub-to-Hub (H2H) Transit Variance",
+   "abbr": "",
+   "definition": "The deviation in pure linehaul transit duration measuring how consistently freight moves between origin processing center and the destination city hub.",
+   "formula": "Actual H2H Transit Time - Contracted Lane SLA Time",
+   "section": "Logistics"
+  },
+  {
+   "n": 41,
+   "term": "Pincode Serviceability Index (PSI)",
+   "abbr": "PSI",
+   "definition": "The % of national postal codes the brand can actively deliver to based on the combined network reach of all dynamically onboarded courier partners.",
+   "formula": "(Serviceable pincodes in order allocation / Total National Pincodes) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 42,
+   "term": "Geo fence Breach Rate (GBR)",
+   "abbr": "GBR",
+   "definition": "A logistics fraud metric tracking how often a rider marks a delivery as failed or completed while being outside the GPS radius of customer address.",
+   "formula": "(Total updates logged outside geofence / Total status Updates) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 43,
+   "term": "Reverse Logistics Recovery Rate",
+   "abbr": "",
+   "definition": "% of customer return requests that are successfully picked up, transported, inwarded back at the warehouse without loss in transit.",
+   "formula": "(Total returns inwarded / Total return requests) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 44,
+   "term": "RTO Salvage Rate",
+   "abbr": "",
+   "definition": "Proportion of RTOs that arrive back at the warehouse that can be re-inventoried for sale.",
+   "formula": "(RTO marked sellable / Total RTOs received) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 45,
+   "term": "Freight Density",
+   "abbr": "",
+   "definition": "The weight of a shipment relative to its volume, to determine exact freight class and identify instances where packages are shipping too much empty air.",
+   "formula": "Total Shipment Weight / Total Shipment Volume",
+   "section": "Logistics"
+  },
+  {
+   "n": 46,
+   "term": "Driver Turnaround Time (DTAT)",
+   "abbr": "DTAT",
+   "definition": "Total time a vehicle spends idling at the warehouse dispatch dock during the unloading of returns and loading of fresh forward stock.",
+   "formula": "Timestamp of Vehicle Gate Out - Timestamp of Vehicle Gate In",
+   "section": "Logistics"
+  },
+  {
+   "n": 47,
+   "term": "Yard dwell time (YDT)",
+   "abbr": "YDT",
+   "definition": "Duration a loaded carrier trailer sits parked in the facility's yard before being dispatched onto the road network.",
+   "formula": "Timestamp of Final Dispatch - Timestamp of Trailer Sealing",
+   "section": "Logistics"
+  },
+  {
+   "n": 48,
+   "term": "Route Deviation Rate (RDR)",
+   "abbr": "RDR",
+   "definition": "Frequency at which last mile driver deviates from system optimized route leading to delayed deliveries and wasted fuel.",
+   "formula": "(Total KMs driven off-route / Total planned KMs) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 49,
+   "term": "Payload Utilization",
+   "abbr": "",
+   "definition": "The ratio of the actual freight weight compared to the maximum legally allowable gross weight of the linehaul vehicle.",
+   "formula": "(Actual Freight Weight / Max legal gross vehicle weight allowed) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 50,
+   "term": "Volumetric Divisor Penalty",
+   "abbr": "",
+   "definition": "Excess freight cost incurred when couriers apply a stricter volumetric divisor for large, lightweight B2B boxes.",
+   "formula": "Billed Volumetric Freight Cost - Standard Dead Weight Freight Cost",
+   "section": "Logistics"
+  },
+  {
+   "n": 51,
+   "term": "Weight Capture Discrepency",
+   "abbr": "",
+   "definition": "Variance between the weight recorded by warehouse dispatch scales vs the weight audited by the courier's hub.",
+   "formula": "(Courier Billed Weight - WH Captured Weight) / WH Captured Weight",
+   "section": "Logistics"
+  },
+  {
+   "n": 52,
+   "term": "Order Batching Efficiency",
+   "abbr": "",
+   "definition": "The WMS logic efficiency of grouping orders with similar SKUs or destination zones to minimize floor picker travel distance.",
+   "formula": "Total Distance Saved via Batching / Total Standard Single-Order Pick Distance",
+   "section": "Warehouse"
+  },
+  {
+   "n": 53,
+   "term": "Expedited Freight Ratio",
+   "abbr": "",
+   "definition": "% of total freight shipped via premium express methods to recover from delays or meet strict commitments.",
+   "formula": "(Total Expedited Shipments / Total Shipments) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 54,
+   "term": "Returns Processing Cycle Time",
+   "abbr": "",
+   "definition": "Duration to receive a return, execute QC and systemically make it available for resale.",
+   "formula": "Timestamp of Inventory Live for Sale - Timestamp of RVP Unloading at Dock",
+   "section": "Warehouse"
+  },
+  {
+   "n": 55,
+   "term": "Final Salvage Yield",
+   "abbr": "",
+   "definition": "Financial recovery from washing or refurbishing damaged B2C returns into sellable states.",
+   "formula": "(Revenue from Salvaged Stock / Original COGS of damaged stock) x 100",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 56,
+   "term": "COGS Ageing Metric",
+   "abbr": "",
+   "definition": "Metric evaluating the number of days a dispatched shipment sits stagnant in the courier network without tracking updates.",
+   "formula": "Current Date - Timestamp of Last Courier Milestone Update",
+   "section": "Logistics"
+  },
+  {
+   "n": 57,
+   "term": "Manifest Void Rate",
+   "abbr": "",
+   "definition": "% of labels generated by the system that are cancelled before handover to the courier.",
+   "formula": "(Total cancelled manifests / Total generated manifests) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 58,
+   "term": "Cartonization Efficiency",
+   "abbr": "",
+   "definition": "Effectiveness of WMS algorithms selecting the smallest possible shipping box to minimize volumetric freight costs.",
+   "formula": "(Total Volume of items in Box / Total Volume of selected box) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 59,
+   "term": "Split Shipment Rate",
+   "abbr": "",
+   "definition": "Frequency a single multi-item order must be fulfilled from different WHs or separate boxes.",
+   "formula": "(Total orders requiring multiple shipments / Total Multi-Item orders) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 60,
+   "term": "Order Consolidation Ratio",
+   "abbr": "",
+   "definition": "The success rate of holding early orders to combine with subsequent orders by the customer, reducing shipping costs.",
+   "formula": "(Total shipments consolidated / Total eligible orders placed in time window) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 61,
+   "term": "Network Balance Ratio",
+   "abbr": "",
+   "definition": "Evaluates the symmetry of freight moving between regions to ensure trucks aren't running full one way and empty the other.",
+   "formula": "Total outbound tonnage on lane / Total inbound tonnage on lane",
+   "section": "Logistics"
+  },
+  {
+   "n": 62,
+   "term": "Transit damage ratio (TDR)",
+   "abbr": "TDR",
+   "definition": "% of shipments arriving structurally damaged by the carrier partner.",
+   "formula": "(Total Shipments flagged damaged in transit / Total shipments handled) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 63,
+   "term": "Delivery Exception Rate",
+   "abbr": "",
+   "definition": "% of shipments encountering transit roadblocks like vehicle breakdowns etc.",
+   "formula": "(Total shipments logged in exception status / Total dispatched shipments) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 64,
+   "term": "Carrier Integration Uptime",
+   "abbr": "",
+   "definition": "Technical reliability of the API connection between the OMS and the 3PL's tracking system.",
+   "formula": "(Total mins API is fully operational / Total minutes in month) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 65,
+   "term": "Seller Protection Fund (SPF) Win Rate",
+   "abbr": "",
+   "definition": "The success rate of financial claims raised against courier partners for transit losses, fake returns or damages.",
+   "formula": "(Approved SPF Claim Value / Total raised SPF Value) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 66,
+   "term": "Dedicated Line Activation (DLA) Yield",
+   "abbr": "",
+   "definition": "Cost savings achieved by routing heavy B2B freight directly to a specific city via a dedicated truck.",
+   "formula": "Pre-DLA Standard Freight Cost - Current Dedicated Fleet Cost",
+   "section": "Logistics"
+  },
+  {
+   "n": 67,
+   "term": "Outbound Buffer Capacity",
+   "abbr": "",
+   "definition": "% of staged, packed inventory awaiting dispatch physically held on the dock before restricting picking operations.",
+   "formula": "Total Staged Pallets / Total Max Dock staging capacity",
+   "section": "Warehouse"
+  },
+  {
+   "n": 68,
+   "term": "Airline Offloading Rate",
+   "abbr": "",
+   "definition": "% at which air freight shipments are bumped off by airlines due to weight limits.",
+   "formula": "(Total shipments offloaded / Total shipments booked for air) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 69,
+   "term": "Virtual RTO Rate",
+   "abbr": "",
+   "definition": "Rate at which courier partners fraudulently mark a fwd shipment as RTO without making a physical attempt.",
+   "formula": "(Total RTOs with zero GPS proof of attempt / Total RTOs initiated) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 70,
+   "term": "COD Remittance TAT",
+   "abbr": "",
+   "definition": "Number of days it takes for a courier partner to deposit collected COD funds into the brand's bank account.",
+   "formula": "Timestamp of Bank Settlement - Timestamp of Successful COD Delivery",
+   "section": "Logistics"
+  },
+  {
+   "n": 71,
+   "term": "Rider Contact Rate",
+   "abbr": "",
+   "definition": "Measures how frequently the last-mile delivery rider has to physically call the customer to ask for directions or confirm availability before dropping the parcel.",
+   "formula": "(Total orders with Rider-to-Customer Calls / Total orders attempted) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 72,
+   "term": "Total Cost of Ownership (TCO)",
+   "abbr": "TCO",
+   "definition": "Financial impact including purchase, installation, operation and disposal costs.",
+   "formula": "Purchase Price + Acquisition Costs + Operating Costs + Maintenance Costs - Salvage Value",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 73,
+   "term": "Dead Stock Rate",
+   "abbr": "",
+   "definition": "Share of total inventory that shows zero demand over a specified duration.",
+   "formula": "(Value of Non-Moving Inventory / Total Inventory Value) x 100",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 74,
+   "term": "Stock-to-Sales Ratio",
+   "abbr": "",
+   "definition": "Quantity of physical inventory available to complete sales.",
+   "formula": "Beginning Inventory Value / Net units sold",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 75,
+   "term": "Gross margin Return On Inventory (GMROIT)",
+   "abbr": "GMROIT",
+   "definition": "Margin return earned on each unit of inventory over a period.",
+   "formula": "Gross Profit / Avg Inventory Cost",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 76,
+   "term": "Transit Hold Frequency",
+   "abbr": "",
+   "definition": "Rate at which the linehaul courier trucks are detained at state borders by authorities causing multi-day delays.",
+   "formula": "(Total Shipments Delayed by Border Holds / Total Interstate Shipments) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 77,
+   "term": "Fulfillment Cost Per Order",
+   "abbr": "",
+   "definition": "Cost to execute an order, including WH labor, packaging materials, facility overhead and shipping.",
+   "formula": "Total Fulfillment & Logistics Operational Cost / Total orders shipped",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 78,
+   "term": "System to Physical (S2P) Mismatch",
+   "abbr": "",
+   "definition": "The error rate where the WMS indicates stock is available in a bin, but physical verification proves it missing.",
+   "formula": "(Total units missing during audit / Total system units audited) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 79,
+   "term": "Blind Receiving Rate (BRR)",
+   "abbr": "BRR",
+   "definition": "% of inbound shipments arriving without an ASN, forcing manual identification and slowing GRN.",
+   "formula": "(Total shipments received without ASN / Total Inbound Shipments) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 80,
+   "term": "Backorder Cancellation Rate",
+   "abbr": "",
+   "definition": "% of out-of-stock items placed on backorder that are ultimately canceled by the customer before the stock is replenished.",
+   "formula": "(Total Backorders canceled / Total Backorders created) x 100",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 81,
+   "term": "Out of Stock Opportunity Loss",
+   "abbr": "",
+   "definition": "Estimated gross revenue lost over a specific period due to high-demand SKUs hitting zero inventory on the storefront.",
+   "formula": "Avg Daily Sales of SKU x Days out of stock x Unit selling price",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 82,
+   "term": "Purchase Order (PO) Fill Rate",
+   "abbr": "",
+   "definition": "% of the originally requested procurement quantity that the vendor actually delivers to the warehouse.",
+   "formula": "(Total Units Received / Total Units ordered on PO) x 100",
+   "section": "Inventory & planning"
+  },
+  {
+   "n": 83,
+   "term": "Inter-Store Transfers – TAT",
+   "abbr": "",
+   "definition": "Total time taken for inventory to be physically dispatched from one retail store and systematically received at another.",
+   "formula": "Timestamp of Destination Store GRN - Timestamp of Origin Store Dispatch",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 84,
+   "term": "Store Outward (SO) Compliance",
+   "abbr": "",
+   "definition": "Adherence rate of retail stores correctly scanning, documenting and dispatching B2B or customer returns via the mini OMS system.",
+   "formula": "(Total Store Dispatches Logged in OMS / Total Physical Store Dispatches) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 85,
+   "term": "Non-Trading PO (NTPO)",
+   "abbr": "NTPO",
+   "definition": "Approving, dispatching and inward purchase orders for operational warehouse consumables like corrugated boxes and tape.",
+   "formula": "Timestamp of Consumable GRN - Timestamp of NTPO Creation",
+   "section": "Warehouse"
+  },
+  {
+   "n": 86,
+   "term": "Re-stickering",
+   "abbr": "",
+   "definition": "WH process of applying new barcodes, MRP tags or market flow specific labels (Myntra SOR) to existing inventory to meet channel compliance before dispatch.",
+   "formula": "Total units successfully restickered / Total units requiring new labels",
+   "section": "Warehouse"
+  },
+  {
+   "n": 87,
+   "term": "RFID Encoding / Tagging",
+   "abbr": "",
+   "definition": "Operational process of physically attaching RFID tags to Non-RFID enabled inventory and linking the product data to the systemic Electronic Product Code (EPC) to ensure max coverage.",
+   "formula": "(Total units successfully encoded with RFID / Total Non-RFID units received) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 88,
+   "term": "Inter-Branch Transfer (IBT)",
+   "abbr": "IBT",
+   "definition": "The internal movement of inventory across different company branches or facilities, tracked systemically through sale bill APIs.",
+   "formula": "(Total IBT Units Successfully Reconciled / Total IBT Units Dispatched) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 89,
+   "term": "Purchase Voucher (PV)",
+   "abbr": "PV",
+   "definition": "A financial document generated in the ERP system to formally account for the inwarded stock after physical warehouse receiving matches Purchase Order.",
+   "formula": "Total Inwarded Quantity x Invoiced Unit Price",
+   "section": "Cost & performance"
+  },
+  {
+   "n": 90,
+   "term": "Buy Online Return In Store (BORIS)",
+   "abbr": "BORIS",
+   "definition": "An omnichannel capability enabling customers to return e-commerce purchases directly at the physical retail stores.",
+   "formula": "(Total Online Orders Returned at Retail POS / Total Online Returns) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 91,
+   "term": "Shortage / Excess",
+   "abbr": "",
+   "definition": "Operational variance identified when physical audit quantities or store inward counts do not match the systemic dispatch documents.",
+   "formula": "Total System Quantity Dispatched - Total Physical Quantity Received",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 92,
+   "term": "First In, First Out (FIFO) Adherence",
+   "abbr": "",
+   "definition": "Inventory prioritization method ensuring older orders are processed and dispatched before newer ones to prevent aging and maintain SLA compliance.",
+   "formula": "(Total Orders processed in chronological sequence / Total orders processed) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 93,
+   "term": "Milk Run",
+   "abbr": "",
+   "definition": "A consolidated logistics routing model where a dedicated vehicle completes multiple scheduled drops to specific retail or Qcom stores within a tight geographic area.",
+   "formula": "(Total number of successful store drops / Total scheduled route stops) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 94,
+   "term": "Bin-wise Cycle Count",
+   "abbr": "",
+   "definition": "A continuous, systematic auditing process of counting specific WH bins daily using handheld tool to maintain systemic inventory accuracy and reduce Not Found instances.",
+   "formula": "(|Physical Bin count - System Bin Count| / System Bin Count) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 95,
+   "term": "NPR Conversion",
+   "abbr": "",
+   "definition": "Re-engaging customers and completing a reverse pickup after the courier partner previously logged a failure or rejection reason.",
+   "formula": "(Total successful pickups post-NPR / Total NPR cases logged) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 96,
+   "term": "Endless Aisle (EA)",
+   "abbr": "EA",
+   "definition": "An omnichannel retail feature where a store out of a specific SKU can place an order directly from the central warehouse inventory on behalf of the walk-in customer.",
+   "formula": "(Total EA Invoices Generated / Total Retail Store Invoices) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 97,
+   "term": "Multi-Pickup Adherence",
+   "abbr": "",
+   "definition": "A logistical alignment ensuring courier partners deploy vehicles multiple times a day to the WH to speed up M2H.",
+   "formula": "(Total Executed Multi-Pickups / Total Scheduled Multi-Pickups) x 100",
+   "section": "Logistics"
+  },
+  {
+   "n": 98,
+   "term": "Direct Error Orders",
+   "abbr": "",
+   "definition": "Orders that fail instantly upon creation due to catalog misalignments, unresolved system sync delays between Shopify and Unicommerce or ghost inventory.",
+   "formula": "(Total Direct error orders / Total orders placed) x 100",
+   "section": "Retail & omnichannel"
+  },
+  {
+   "n": 99,
+   "term": "Vendor Item Master (VIM)",
+   "abbr": "VIM",
+   "definition": "A foundational database uploaded by the WH team into the WAM module, linking supplier product codes to internal SKUs to enable seamless scanning and inwarding.",
+   "formula": "(Total SKUs with active VIM records / Total procured SKUs) x 100",
+   "section": "Warehouse"
+  },
+  {
+   "n": 100,
+   "term": "Box Mapping",
+   "abbr": "",
+   "definition": "A systemic B2B distribution workflow that digitally ties specific outbound box barcodes from the warehouse directly to the receiving retail store's inwarding system.",
+   "formula": "(Total boxes successfully mapped to Inward / Total boxes dispatched) x 100",
+   "section": "Retail & omnichannel"
+  }
+ ],
+ "analytics": [
+  {
+   "title": "Catalog Summary Dashboard",
+   "number": "613",
+   "url": "https://analytics.maplemonk.com/dashboards/613",
+   "function": "Catalog",
+   "owner": "Yogitha Thyagaraj"
+  },
+  {
+   "title": "Warehouse Metrics - Overall",
+   "number": "744",
+   "url": "https://analytics.maplemonk.com/dashboards/744",
+   "function": "Warehouse",
+   "owner": "Sudarshan G"
+  },
+  {
+   "title": "Store updates",
+   "number": "834",
+   "url": "https://analytics.maplemonk.com/dashboards/834",
+   "function": "Retail",
+   "owner": "Devender Shekhawat"
+  },
+  {
+   "title": "Store Replenishment",
+   "number": "915",
+   "url": "https://analytics.maplemonk.com/dashboards/915",
+   "function": "Merchandising",
+   "owner": "medha"
+  },
+  {
+   "title": "Warehouse Returns Overall Metrics",
+   "number": "983",
+   "url": "https://analytics.maplemonk.com/dashboards/983",
+   "function": "Warehouse",
+   "owner": "Sudarshan G"
+  },
+  {
+   "title": "Ops Analytics Metrics",
+   "number": "1012",
+   "url": "https://analytics.maplemonk.com/dashboards/1012",
+   "function": "Warehouse",
+   "owner": "Tushar Gupta"
+  },
+  {
+   "title": "Design",
+   "number": "1015",
+   "url": "https://analytics.maplemonk.com/dashboards/1015",
+   "function": "Design",
+   "owner": "Monica Y"
+  },
+  {
+   "title": "Logistics Standup",
+   "number": "1019",
+   "url": "https://analytics.maplemonk.com/dashboards/1019",
+   "function": "Logistics",
+   "owner": "Iqbal c"
+  },
+  {
+   "title": "Warehouse B2B Dashboard",
+   "number": "1078",
+   "url": "https://analytics.maplemonk.com/dashboards/1078",
+   "function": "Warehouse",
+   "owner": "Sudarshan G"
+  },
+  {
+   "title": "Customer Support - Freshworks",
+   "number": "1080",
+   "url": "https://analytics.maplemonk.com/dashboards/1080",
+   "function": "CS",
+   "owner": "Jerrin Joseph"
+  },
+  {
+   "title": "Courier Partner Performance & EDD",
+   "number": "1158",
+   "url": "https://analytics.maplemonk.com/dashboards/1158",
+   "function": "Logistics",
+   "owner": "Iqbal c"
+  },
+  {
+   "title": "Warehouse Productivity",
+   "number": "1176",
+   "url": "https://analytics.maplemonk.com/dashboards/1176",
+   "function": "Warehouse",
+   "owner": "Sudarshan G"
+  },
+  {
+   "title": "CS Quality Analysis",
+   "number": "1209",
+   "url": "https://analytics.maplemonk.com/dashboards/1209",
+   "function": "CS",
+   "owner": "Vinay Balaji"
+  },
+  {
+   "title": "Inventory Analysis",
+   "number": "1231",
+   "url": "https://analytics.maplemonk.com/dashboards/1231",
+   "function": "Warehouse",
+   "owner": "Aniket Khot"
+  },
+  {
+   "title": "Logic Master",
+   "number": "1238",
+   "url": "https://analytics.maplemonk.com/dashboards/1238",
+   "function": "ERP",
+   "owner": "Sagar Kumar"
+  },
+  {
+   "title": "Category Summary",
+   "number": "1267",
+   "url": "https://analytics.maplemonk.com/dashboards/1267",
+   "function": "Catalog",
+   "owner": "Yogitha Thyagaraj"
+  },
+  {
+   "title": "Store Metrics - Omni Orders",
+   "number": "1271",
+   "url": "https://analytics.maplemonk.com/dashboards/1271",
+   "function": "Warehouse",
+   "owner": "Sriram P"
+  },
+  {
+   "title": "North Star Metrics",
+   "number": "1287",
+   "url": "https://analytics.maplemonk.com/dashboards/1287",
+   "function": "Overall",
+   "owner": "Tushar Gupta"
+  },
+  {
+   "title": "Logistics metrics control tower: Revised",
+   "number": "1310",
+   "url": "https://analytics.maplemonk.com/dashboards/1310",
+   "function": "Logistics",
+   "owner": "Iqbal c"
+  },
+  {
+   "title": "eShip Analysis Metrics",
+   "number": "1400",
+   "url": "https://analytics.maplemonk.com/dashboards/1400",
+   "function": "Logistics",
+   "owner": "Iqbal c"
+  },
+  {
+   "title": "NPS",
+   "number": "1480",
+   "url": "https://analytics.maplemonk.com/dashboards/1480",
+   "function": "CS",
+   "owner": "Jerrin Joseph"
+  },
+  {
+   "title": "Inventory Control",
+   "number": "1490",
+   "url": "https://analytics.maplemonk.com/dashboards/1490",
+   "function": "Inventory",
+   "owner": "Praveen H K"
+  },
+  {
+   "title": "Jerrin Dashboard",
+   "number": "1510",
+   "url": "https://analytics.maplemonk.com/dashboards/1510",
+   "function": "CS",
+   "owner": "Jerrin Joseph"
+  },
+  {
+   "title": "Category Management",
+   "number": "1570",
+   "url": "https://analytics.maplemonk.com/dashboards/1570",
+   "function": "Growth",
+   "owner": "Niketh U"
+  },
+  {
+   "title": "Products Inward and Inventory Overview",
+   "number": "1597",
+   "url": "https://analytics.maplemonk.com/dashboards/1597",
+   "function": "Warehouse",
+   "owner": ""
+  },
+  {
+   "title": "B2B Slots",
+   "number": "1614",
+   "url": "https://analytics.maplemonk.com/dashboards/1614",
+   "function": "Warehouse",
+   "owner": ""
+  },
+  {
+   "title": "TagID",
+   "number": "1631",
+   "url": "https://analytics.maplemonk.com/dashboards/1631",
+   "function": "RFID",
+   "owner": "Pulkit s"
+  },
+  {
+   "title": "YLK Returns Worklow",
+   "number": "1529",
+   "url": "https://analytics.maplemonk.com/dashboards/1519",
+   "function": "YLK Returns",
+   "owner": "Sudarshan G"
+  },
+  {
+   "title": "Ops Dummy Dashboard",
+   "number": "1292",
+   "url": "https://analytics.maplemonk.com/dashboards/1292",
+   "function": "Analytics",
+   "owner": "Tushar Gupta"
+  },
+  {
+   "title": "Economic order Quantity",
+   "number": "347",
+   "url": "https://analytics.maplemonk.com/dashboards/347",
+   "function": "Unassigned",
+   "owner": ""
+  },
+  {
+   "title": "Availability Master",
+   "number": "426",
+   "url": "https://analytics.maplemonk.com/dashboards/426",
+   "function": "Unassigned",
+   "owner": ""
+  },
+  {
+   "title": "Suspicious Orders",
+   "number": "434",
+   "url": "https://analytics.maplemonk.com/dashboards/434",
+   "function": "Unassigned",
+   "owner": ""
+  },
+  {
+   "title": "Inventory Dashboard Snitch",
+   "number": "323",
+   "url": "https://analytics.maplemonk.com/dashboards/323",
+   "function": "Unassigned",
+   "owner": ""
+  },
+  {
+   "title": "Wooqer",
+   "number": "1179",
+   "url": "https://analytics.maplemonk.com/dashboards/1179",
+   "function": "Unassigned",
+   "owner": ""
+  },
+  {
+   "title": "Ops Dashboard OTIF",
+   "number": "338",
+   "url": "https://analytics.maplemonk.com/dashboards/338",
+   "function": "Unassigned",
+   "owner": ""
+  }
+ ]
+}

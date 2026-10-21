@@ -1,6 +1,6 @@
 import "server-only";
 import { addMonths } from "@/lib/dates";
-import { weekLabels, weekSortKey, type Stream } from "./model";
+import { dayLabels, weekLabels, weekSortKey, type Stream } from "./model";
 import { getLines, getValues } from "./queries";
 
 export async function getStreamMonthForm(stream: Stream, period: string) {
@@ -8,7 +8,8 @@ export async function getStreamMonthForm(stream: Stream, period: string) {
   const [lines, values] = await Promise.all([getLines(stream.id), getValues(stream.id, prevP, period)]);
   const here = values.filter((v) => v.period === period);
   let labels = [""];
-  if (stream.granularity === "week") {
+  if (stream.granularity === "day") labels = dayLabels(period);
+  else if (stream.granularity === "week") {
     const existing = [...new Set(here.map((v) => v.period_label).filter(Boolean))].sort((a, b) => weekSortKey(a) - weekSortKey(b));
     // keep the stored labels, fill the missing week numbers with defaults so every week of the month can be entered
     const have = new Set(existing.map(weekSortKey));

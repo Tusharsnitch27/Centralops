@@ -59,7 +59,7 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
           {nextOpen.length ? <>{nextOpen.length} pending · due <span className="font-medium">{fmtDate(nextCells[0]?.due_date)}</span> <span className="text-ink-3">({dueLabel(nextCells[0]!.due_date, td)})</span></> : "All streams submitted"}
           {late.length > 0 && <div className="mt-0.5 text-bad">{late.length} late input{late.length === 1 ? "" : "s"} across months</div>}
         </div>
-        <p className="max-w-md text-[12.5px] text-ink-3">Projections for a month are due by the 21st of the previous month (week 3). Reminders go to the POC’s inbox and notifications.</p>
+        <p className="max-w-md text-[12.5px] text-ink-3">Enter projections day by day, North and South (download the template with dates filled, or type in the grid). Due by the 21st of the previous month; they lock 24 h after submission.</p>
         <div className="ml-auto"><RemindAllButton periods={[...new Set(allOpen.map((c) => c.period))]} count={allOpen.length} /></div>
       </Card>
 
@@ -83,7 +83,7 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
                 return (
                   <tr key={s.id} className="group">
                     <td><Link href={`/sop/projections?stream=${s.id}`} className="font-medium text-ink hover:underline">{s.name}</Link>
-                      <div className="text-[11.5px] text-ink-4">{s.granularity === "week" ? "Weekly" : "Monthly"}{s.dimensions.length ? ` · ${s.dimensions.join(" / ")}` : ""}</div></td>
+                      <div className="text-[11.5px] text-ink-4">{s.granularity === "day" ? "Day-wise" : s.granularity === "week" ? "Weekly" : "Monthly"}{s.dimensions.length ? ` · ${s.dimensions.join(" / ")}` : ""}</div></td>
                     <td><span className="flex items-center gap-1.5 text-ink-2"><Avatar name={s.poc_name ?? s.poc_label} color={s.poc_color} size={20} />{s.poc_name ?? s.poc_label ?? "—"}</span></td>
                     {periods.map((p) => {
                       const c = cell(s.id, p);
@@ -116,7 +116,7 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
 
       {/* submit form */}
       <Card id="submit" className="scroll-mt-6">
-        <CardHeader title="Enter projections" subtitle={defStream ? `${defStream.name} · ${fmtMonth(formPeriod)} · ${defStream.granularity === "week" ? "weekly rows" : "monthly"}${defStream.dimensions.length ? ` · by ${defStream.dimensions.join(" / ")}` : ""}` : undefined}
+        <CardHeader title="Enter projections" subtitle={defStream ? `${defStream.name} · ${fmtMonth(formPeriod)} · ${defStream.granularity === "day" ? "day by day" : defStream.granularity === "week" ? "weekly rows" : "monthly"}${defStream.dimensions.length ? ` · by ${defStream.dimensions.join(" / ")}` : ""}` : undefined}
           action={formCell && <SubChip cell={formCell} showDue />} />
         <div className="p-4">
           <form className="mb-4 flex flex-wrap items-end gap-3" action="/sop/inputs#submit">

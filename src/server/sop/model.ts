@@ -133,6 +133,12 @@ export function weekLabels(period: string) {
   for (let d = 1; d <= days; d++) if (new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 1) mondays++;
   return Array.from({ length: Math.max(4, mondays) }, (_, i) => `${MON[m - 1]}_WK_${pad2(i + 1)}`);
 }
+/** Every date of a month as 'YYYY-MM-DD' — the row labels of a day-wise stream. */
+export function dayLabels(period: string) {
+  const y = Number(period.slice(0, 4)), m = Number(period.slice(5, 7));
+  return Array.from({ length: new Date(Date.UTC(y, m, 0)).getUTCDate() }, (_, i) => `${period.slice(0, 7)}-${pad2(i + 1)}`);
+}
+export const isDayLabel = (l: string) => /^\d{4}-\d{2}-\d{2}$/.test(l);
 /** 'Sep_Week-01' / 'Oct_WK_02' → 'Wk 1' / 'Wk 2'. */
 export const weekShort = (label: string) => { const n = label.match(/(\d+)\s*$/); return n ? `Wk ${Number(n[1])}` : label; };
 export const weekSortKey = (label: string) => Number(label.match(/(\d+)\s*$/)?.[1] ?? 0);

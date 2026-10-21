@@ -8,7 +8,7 @@ import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
 import { seedSopHistory, seedSopPlanDaily } from "./sopHistory";
 import { seedWeekly } from "./weekly";
-import { seedLibrary } from "./library";
+import { seedHandbook, seedLibrary } from "./library";
 import { seedOrgChart } from "./orgChart";
 
 const mk = (rawQ: RunQ) => ({
@@ -127,6 +127,11 @@ export async function bootstrap(rawQ: RunQ) {
     await seedLibrary(rawQ);
     await setSetting("seed.library", "v1");
     console.log("[seed] library sources loaded");
+  }
+  if ((await setting("seed.handbook")) !== "v1") {
+    await seedHandbook(rawQ);
+    await setSetting("seed.handbook", "v1");
+    console.log("[seed] ops handbook rows loaded from source sheets");
   }
 
   if ((process.env.SEED_DEMO ?? "false") === "true" && !(await setting("seed.demo"))) {
