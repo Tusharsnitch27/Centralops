@@ -44,7 +44,7 @@ export default async function GoalsPage() {
                 {g.description && <p className="border-b border-line px-4 py-3 text-[12.5px] text-ink-2">{g.description}</p>}
                 {gp.map((p) => (
                   <div key={p.id} className="border-b border-line last:border-0">
-                    <div className="flex items-center gap-2 bg-subtle/40 px-4 py-2 text-[12.5px]"><FolderKanban size={13} className="text-ink-4" /><Link href={`/projects/${p.id}`} className="font-semibold hover:underline">{p.name}</Link><span className="text-ink-4">{p.owner_name}</span><span className="ml-auto">{bar(p.tasks_done, p.tasks_total)}</span></div>
+                    <div className="flex items-center gap-2 bg-subtle/40 px-4 py-2 text-[12.5px]"><FolderKanban size={13} className="text-ink-4" /><Link href={`/tasks/goals#project-${p.id}`} className="font-semibold hover:underline">{p.name}</Link><span className="text-ink-4">{p.owner_name}</span><span className="ml-auto">{bar(p.tasks_done, p.tasks_total)}</span></div>
                     {tasks.filter((x) => x.project_id === p.id).map((x) => <TaskLine key={x.id} x={x} />)}
                   </div>
                 ))}
@@ -58,7 +58,7 @@ export default async function GoalsPage() {
               <h2 className="label-caps mb-2 px-1">Projects without a goal</h2>
               <div className="card divide-y divide-line/70 overflow-hidden">
                 {loose.map((p) => (
-                  <Link key={p.id} href={`/projects/${p.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-subtle/50">
+                  <Link key={p.id} href={`/tasks/goals#project-${p.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-subtle/50">
                     <FolderKanban size={14} className="text-ink-4" /><span className="min-w-0 flex-1 truncate text-[13px] font-medium">{p.name}</span>
                     <span className="hidden text-[12px] text-ink-4 sm:inline">{p.owner_name}</span>{bar(p.tasks_done, p.tasks_total)}
                   </Link>

@@ -14,7 +14,7 @@ import type { TaskParams } from "./views";
 const refresh = (id?: string) => {
   if (id) revalidatePath(`/tasks/${id}`);
   revalidatePath("/tasks");
-  revalidatePath("/followups");
+  revalidatePath("/tasks/all?view=delegated");
   revalidatePath("/", "layout");
 };
 

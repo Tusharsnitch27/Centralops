@@ -7,7 +7,7 @@ import { fail, ok, type ActionResult } from "../core/result";
 import { today } from "@/lib/dates";
 import type { GoalStatus } from "./queries";
 
-const refresh = () => { revalidatePath("/tasks", "layout"); revalidatePath("/projects", "layout"); };
+const refresh = () => { revalidatePath("/tasks", "layout"); revalidatePath("/tasks/goals", "layout"); };
 async function editor() { const u = await requireUser(); if (!canEdit(u)) throw new Error("Read-only access"); return u; }
 const date = (d?: string | null) => { if (!d) return null; if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error("Invalid date"); if (d < today()) throw new Error("Dates can't be in the past"); return d; };
 

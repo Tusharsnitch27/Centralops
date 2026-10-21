@@ -10,7 +10,6 @@ import { ago } from "@/lib/dates";
 import { cn } from "@/lib/cn";
 import { markNotificationsRead } from "@/server/shell/actions";
 import { openPalette } from "./CommandPalette";
-import { openQuickAdd } from "./QuickAdd";
 import { ThemePicker } from "./ThemePicker";
 import { LogoMark } from "./Logo";
 
@@ -32,9 +31,6 @@ export function Topbar({ unread, user }: { unread: number; counts?: Record<strin
           </button>
           <ThemePicker />
           <Notifications unread={unread} />
-          <button onClick={() => openQuickAdd()} title="Quick add (C)" className="ml-1 flex h-8 items-center gap-1.5 rounded-lg bg-ink px-2.5 text-[12.5px] font-medium text-white transition-colors hover:bg-ink-2 sm:px-3">
-            <Plus size={14} strokeWidth={2.2} /><span className="hidden sm:inline">New</span>
-          </button>
           <span className="ml-1 lg:hidden"><UserMenu user={user} /></span>
         </div>
       </div>
@@ -44,7 +40,7 @@ export function Topbar({ unread, user }: { unread: number; counts?: Record<strin
 
 const TITLES: [RegExp, string, string][] = [
   [/^\/$/, "Home", "Summary"], [/^\/tasks/, "Work", "Tasks"], [/^\/followups/, "Work", "Follow-ups"], [/^\/meetings/, "Work", "Meetings"], [/^\/weekly/, "Work", "Weekly updates"],
-  [/^\/decisions/, "Work", "Decisions"], [/^\/aop/, "Programs", "AOP"], [/^\/sop/, "Programs", "S&OP"], [/^\/library/, "Programs", "Ops Handbook"], [/^\/settings/, "Account", "Settings"], [/^\/welcome/, "Home", "Get started"],
+  [/^\/aop/, "Programs", "AOP"], [/^\/sop/, "Programs", "S&OP"], [/^\/library/, "Programs", "Ops Handbook"], [/^\/settings/, "Account", "Settings"], [/^\/welcome/, "Home", "Get started"],
 ];
 function PageTitle() {
   const path = usePathname();

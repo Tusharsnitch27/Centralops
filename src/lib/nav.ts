@@ -8,8 +8,8 @@ export const NAV: NavGroup[] = [
     { href: "/", label: "Summary", icon: "LayoutGrid", countKey: "inbox", hue: "#16a34a" },
   ] },
   { label: "Work", items: [
-    { href: "/tasks", label: "Tasks", icon: "ListChecks", countKey: "overdue", match: ["/followups"], hue: "#2563eb" },
-    { href: "/meetings", label: "Meetings", icon: "Presentation", countKey: "mom", match: ["/decisions"], hue: "#7c3aed" },
+    { href: "/tasks", label: "Tasks", icon: "ListChecks", countKey: "overdue", hue: "#2563eb" },
+    { href: "/meetings", label: "Meetings", icon: "Presentation", countKey: "mom", hue: "#7c3aed" },
     { href: "/weekly", label: "Weekly updates", short: "Weekly", icon: "Newspaper", countKey: "weekly", hue: "#0f766e" },
   ] },
   { label: "Programs", items: [
@@ -21,6 +21,5 @@ export const NAV: NavGroup[] = [
 
 /** Sub-sections rendered as tabs at the top of a work area. */
 export const SECTION_TABS: Record<string, { href: string; label: string }[]> = {
-  tasks: [{ href: "/tasks", label: "My list" }, { href: "/tasks/goals", label: "Goals & projects" }, { href: "/tasks/all", label: "All views" }, { href: "/followups", label: "Follow-ups" }],
-  meetings: [{ href: "/meetings", label: "Meetings" }, { href: "/decisions", label: "Decisions" }],
+  tasks: [{ href: "/tasks", label: "My list" }, { href: "/tasks/goals", label: "Goals & projects" }, { href: "/tasks/all", label: "All views" }],
 };

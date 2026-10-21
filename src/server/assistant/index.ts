@@ -77,8 +77,8 @@ async function snapshot(s: Scope, question: string) {
     yesterdays_meetings: yday.map((m) => ({ href: `/meetings/${m.id}`, title: m.title, mom_status: m.mom_status, summary: m.summary, decisions: m.decisions, actions: m.actions.map((a) => `${a.title} (${a.owner ?? "—"})`) })),
     meetings_without_mom: noMom.map((m) => ({ href: `/meetings/${m.id}`, title: m.title, date: dateOf(m.starts_at), mom_owner: m.mom_owner_name })),
     moms_awaiting_review: review.map((m) => ({ href: `/meetings/${m.id}`, title: m.title, suggestions: m.open_suggestions })),
-    projects_at_risk: atRisk.map((p) => ({ href: `/projects/${p.id}`, name: p.name, health: p.health, owner: p.owner_name, blocker: p.last_blockers, overdue_tasks: p.overdue_tasks })),
-    milestone_slips: slips.map((m) => ({ href: `/projects/${m.project_id}`, project: m.project_code ?? m.project_name, milestone: m.title, slip_days: m.slip_days, overdue_days: m.overdue_days, owner: m.owner_name })),
+    projects_at_risk: atRisk.map((p) => ({ href: `/tasks/goals#project-${p.id}`, name: p.name, health: p.health, owner: p.owner_name, blocker: p.last_blockers, overdue_tasks: p.overdue_tasks })),
+    milestone_slips: slips.map((m) => ({ href: `/tasks/goals#project-${m.project_id}`, project: m.project_code ?? m.project_name, milestone: m.title, slip_days: m.slip_days, overdue_days: m.overdue_days, owner: m.owner_name })),
     aop: aop?.cycle ? {
       href: "/aop", cycle: aop.cycle.name, last_closed_month: aop.lastClosed, fy_budget: Math.round(aop.totals.fy_plan), ytd_budget_reported_lines: Math.round(aop.totals.ytd_plan_reported), ytd_actual: Math.round(aop.totals.ytd_actual),
       missing_inputs: aop.missing.filter((m) => m.days_late > 0 || m.due_date === t).map((m) => ({ function: m.function_name, owner: m.owner_name, month: m.period, kind: m.kind, days_late: m.days_late })),
@@ -92,10 +92,10 @@ async function snapshot(s: Scope, question: string) {
     pending_decisions: decisions.map((d) => ({ title: d.title, due: d.due_date, days_overdue: d.days_overdue, maker: d.maker_name })),
     open_followups: fus.slice(0, 15).map((f) => ({ title: f.title ?? f.message, person: f.person_name, days_open: f.days_open })),
     search_results_for_question: {
-      decisions: found.decisions.map((d) => ({ title: d.title, status: d.status, decided_on: d.decided_on, context: d.context, reason: d.reason, meeting: d.meeting, href: d.meeting_id ? `/meetings/${d.meeting_id}` : "/decisions" })),
+      decisions: found.decisions.map((d) => ({ title: d.title, status: d.status, decided_on: d.decided_on, context: d.context, reason: d.reason, meeting: d.meeting, href: d.meeting_id ? `/meetings/${d.meeting_id}` : "/meetings" })),
       meetings: found.meetings.map((m) => ({ title: m.title, date: dateOf(m.starts_at), summary: m.summary, href: `/meetings/${m.id}` })),
       tasks: found.tasks.map((x) => ({ ref: `CO-${x.number}`, title: x.title, status: x.status, owner: x.owner, due: x.due_date, href: `/tasks/${x.id}` })),
-      projects: found.projects.map((p) => ({ name: p.name, health: p.health, owner: p.owner, href: `/projects/${p.id}` })),
+      projects: found.projects.map((p) => ({ name: p.name, health: p.health, owner: p.owner, href: `/tasks/goals#project-${p.id}` })),
     },
   };
 }
@@ -130,11 +130,11 @@ async function rules(s: Scope, question: string): Promise<R> {
     const found = await search(w);
     if (!w.length || !found.decisions.length) {
       const recent = await q<{ title: string; decided_on: string | null }>(`select title, decided_on from decisions where status = 'made' order by decided_on desc nulls last limit 5`);
-      return { answer: `${w.length ? `I couldn't find a recorded decision about **${w.join(" ")}**. ` : ""}Most recent decisions:\n\n${bullets(recent.map((d) => `${d.title} (${fmtDate(d.decided_on)})`))}`, links: [{ label: "Decision log", href: "/decisions" }] };
+      return { answer: `${w.length ? `I couldn't find a recorded decision about **${w.join(" ")}**. ` : ""}Most recent decisions:\n\n${bullets(recent.map((d) => `${d.title} (${fmtDate(d.decided_on)})`))}`, links: [{ label: "Decision log", href: "/meetings" }] };
     }
     return {
       answer: `Here's what's on record about **${w.join(" ")}**:\n\n${bullets(found.decisions.map((d) => `**${d.title}** — ${d.status === "made" ? `decided ${fmtDate(d.decided_on)}` : d.status}${d.meeting ? ` in ${d.meeting}` : ""}${d.reason ? `. Why: ${d.reason}` : d.context ? `. Context: ${d.context}` : ""}`))}`,
-      links: [...found.decisions.filter((d) => d.meeting_id).slice(0, 3).map((d) => ({ label: d.meeting ?? "Meeting", href: `/meetings/${d.meeting_id}` })), { label: "Decision log", href: "/decisions" }],
+      links: [...found.decisions.filter((d) => d.meeting_id).slice(0, 3).map((d) => ({ label: d.meeting ?? "Meeting", href: `/meetings/${d.meeting_id}` })), { label: "Decision log", href: "/meetings" }],
     };
   }
   if (has("aop") && has("updated", "submitted", "haven't", "havent", "missing", "pending", "input")) {
@@ -154,29 +154,29 @@ async function rules(s: Scope, question: string): Promise<R> {
     const v = a.totals.ytd_plan_reported ? (a.totals.ytd_actual - a.totals.ytd_plan_reported) / a.totals.ytd_plan_reported : 0;
     return {
       answer: `**${a.cycle.name}** — YTD actuals ${inr(a.totals.ytd_actual)} vs ${inr(a.totals.ytd_plan_reported)} budget on reported lines (**${pct(v, 1, true)}**), through ${monthLong(a.lastClosed)}.\n\n**Top deviations (latest reported month)**\n${bullets(a.overspends.slice(0, 5).map((l) => `${l.function_name} · ${l.item} — ${fmtMonth(l.period)} ${inr(l.actual)} vs ${inr(l.plan)} (**${pct(l.variance_pct, 0, true)}**)${l.owner_name ? `, ${l.owner_name}` : ""}`))}${a.streaks.length ? `\n\n**Persistent:** ${a.streaks.map((g) => `${g.function_name} ${g.group_name} over budget ${g.months.length} months running`).join("; ")}.` : ""}${a.savings.length ? `\n\nBiggest saving: ${a.savings[0].function_name} · ${a.savings[0].item} (${inr(a.savings[0].variance, { sign: true })}).` : ""}`,
-      links: [{ label: "AOP", href: "/aop" }, { label: "AOP summary", href: "/reports/aop" }],
+      links: [{ label: "AOP", href: "/aop" }, { label: "AOP summary", href: "/aop" }],
     };
   }
   if (has("slipping", "slip", "at risk", "delayed", "behind")) {
     const [p, m] = await Promise.all([projectsAtRisk(s), milestoneSlips(s)]);
-    if (!p.length && !m.length) return { answer: "Nothing is slipping — all active projects are on track and no milestone has moved past its threshold.", links: [{ label: "Projects", href: "/projects" }] };
+    if (!p.length && !m.length) return { answer: "Nothing is slipping — all active projects are on track and no milestone has moved past its threshold.", links: [{ label: "Projects", href: "/tasks/goals" }] };
     const msLine = (x: (typeof m)[number]) => [x.overdue_days ? `${x.overdue_days}d overdue` : null, x.slip_days ? `slipped ${x.slip_days}d vs baseline` : null].filter(Boolean).join(", ");
     return {
       answer: [
         p.length ? `**${plural(p.length, "project")} at risk or delayed:**\n${bullets(p.map((x) => `**${x.name}** — ${x.health === "delayed" ? "delayed" : "at risk"}, owner ${x.owner_name ?? "—"}${x.last_blockers ? `; blocker: ${x.last_blockers}` : ""}${x.overdue_tasks ? `; ${x.overdue_tasks} overdue tasks` : ""}`))}` : "",
         m.length ? `**Milestones that moved:**\n${bullets(m.map((x) => `${x.project_code ?? x.project_name}: ${x.title} — ${msLine(x)}`))}` : "",
       ].filter(Boolean).join("\n\n"),
-      links: p.slice(0, 4).map((x) => ({ label: x.code ?? x.name, href: `/projects/${x.id}` })).concat([{ label: "Exceptions", href: "/exceptions#milestones" }]),
+      links: p.slice(0, 4).map((x) => ({ label: x.code ?? x.name, href: `/tasks/goals#project-${x.id}` })).concat([{ label: "Exceptions", href: "/exceptions#milestones" }]),
     };
   }
   if (has("follow up", "follow-up", "followup", "chase", "nudge")) {
     const [stale, fus, overdue] = await Promise.all([staleDelegated(s), openFollowups(s), overdueTasks(s)]);
     const waiting = new Set(fus.map((f) => f.entity_id));
     const chase = [...overdue.map((t) => ({ t, why: `${t.days_overdue}d overdue` })), ...stale.filter((t) => !overdue.some((o) => o.id === t.id)).map((t) => ({ t, why: `no update for ${t.days_since_update}d` }))];
-    if (!chase.length && !fus.length) return { answer: "No one needs chasing today — delegated work is current.", links: [{ label: "Follow-ups", href: "/followups" }] };
+    if (!chase.length && !fus.length) return { answer: "No one needs chasing today — delegated work is current.", links: [{ label: "Follow-ups", href: "/tasks/all?view=delegated" }] };
     return {
       answer: `**Follow up today (${chase.length}):**\n${bullets(chase.slice(0, 10).map(({ t, why }) => `${t.title} — ${t.owner_name ?? t.owner_team_name ?? "Unassigned"}, ${why}${waiting.has(t.id) ? " (already asked, no reply)" : ""}`))}${fus.length ? `\n\n**${plural(fus.length, "request")} still waiting for a reply**, oldest ${fus[0].days_open}d (${fus[0].person_name ?? "—"}).` : ""}`,
-      links: [{ label: "Request updates", href: "/exceptions#stale" }, { label: "Follow-ups", href: "/followups" }, ...chase.slice(0, 2).map(({ t }) => ({ label: `CO-${t.number}`, href: `/tasks/${t.id}` }))],
+      links: [{ label: "Request updates", href: "/exceptions#stale" }, { label: "Follow-ups", href: "/tasks/all?view=delegated" }, ...chase.slice(0, 2).map(({ t }) => ({ label: `CO-${t.number}`, href: `/tasks/${t.id}` }))],
     };
   }
   if (has("s&op", "sop", "projection", "capacity")) {
@@ -195,7 +195,7 @@ async function rules(s: Scope, question: string): Promise<R> {
     const c = b.counts;
     return {
       answer: `${b.greeting}. **${plural(c.meetings, "meeting")} today**, ${plural(c.overdue, "overdue task")}, ${plural(c.momPending, "MoM")} pending, ${plural(c.decisionsPending, "decision")} waiting.\n\n**Priorities**\n${b.priorities.map((p) => `- **${p.rank}. ${p.title}** — ${p.detail}`).join("\n") || "- Nothing urgent."}`,
-      links: b.priorities.slice(0, 4).map((p) => ({ label: p.title.length > 38 ? `${p.title.slice(0, 36)}…` : p.title, href: p.href })).concat([{ label: "Daily brief", href: "/reports/daily" }]),
+      links: b.priorities.slice(0, 4).map((p) => ({ label: p.title.length > 38 ? `${p.title.slice(0, 36)}…` : p.title, href: p.href })),
     };
   }
   // generic: keyword search
@@ -211,7 +211,7 @@ async function rules(s: Scope, question: string): Promise<R> {
   if (f.meetings.length) out.push(`**Meetings**\n${bullets(f.meetings.map((m) => `${m.title} (${fmtDate(dateOf(m.starts_at))})`))}`);
   return {
     answer: out.join("\n\n"),
-    links: [...f.projects.slice(0, 2).map((p) => ({ label: p.code ?? p.name, href: `/projects/${p.id}` })), ...f.tasks.slice(0, 2).map((t) => ({ label: `CO-${t.number}`, href: `/tasks/${t.id}` })), ...f.meetings.slice(0, 2).map((m) => ({ label: m.title, href: `/meetings/${m.id}` }))],
+    links: [...f.projects.slice(0, 2).map((p) => ({ label: p.code ?? p.name, href: `/tasks/goals#project-${p.id}` })), ...f.tasks.slice(0, 2).map((t) => ({ label: `CO-${t.number}`, href: `/tasks/${t.id}` })), ...f.meetings.slice(0, 2).map((m) => ({ label: m.title, href: `/meetings/${m.id}` }))],
   };
 }
 

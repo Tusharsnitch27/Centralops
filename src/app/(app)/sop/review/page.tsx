@@ -68,7 +68,7 @@ export default async function SopReview() {
               {b.prevDecisions.length > 0 && (
                 <div>
                   <div className="eyebrow mb-1.5">Decisions</div>
-                  <ul className="space-y-1">{b.prevDecisions.map((d) => <li key={d.id} className="flex gap-2 text-[13px] text-ink"><span className="text-ink-4">—</span><Link href={`/decisions?focus=${d.id}`} className="hover:underline">{d.title}</Link></li>)}</ul>
+                  <ul className="space-y-1">{b.prevDecisions.map((d) => <li key={d.id} className="flex gap-2 text-[13px] text-ink"><span className="text-ink-4">—</span><Link href={"/meetings"} className="hover:underline">{d.title}</Link></li>)}</ul>
                 </div>
               )}
               <div>

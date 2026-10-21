@@ -28,7 +28,7 @@ export async function attention(u: User): Promise<AttentionItem[]> {
   const out: AttentionItem[] = [];
   const push = (i: AttentionItem) => out.push(i);
 
-  const [mine, delegated, critToday, moms, aop, aopFns, sopPending, capacity, decisions, nextMeeting] = await Promise.all([
+  const [mine, delegated, critToday, moms, aop, aopFns, sopPending, capacity, nextMeeting] = await Promise.all([
     one<{ overdue: number; oldest: string | null; blocked: number }>(
       `select count(*) filter (where due_date < $2)::int as overdue, min(due_date) filter (where due_date < $2) as oldest, count(*) filter (where status = 'blocked')::int as blocked
        from tasks where owner_id = $1 and status in ('not_started','in_progress','waiting','blocked')`, [u.id, t]),
@@ -58,7 +58,6 @@ export async function attention(u: User): Promise<AttentionItem[]> {
     q<{ period: string; warehouse: string; department: string; short: number }>(
       `select period, warehouse, department, (required - available) as short from sop_capacity
        where required > available and period >= $1::date order by period, (required - available) desc limit 5`, [monthStart(t)]),
-    q<{ id: string; title: string; due_date: string | null }>(`select id, title, due_date from decisions where status in ('pending','proposed') and ($2 or decision_maker_id = $1) order by due_date nulls last`, [u.id, manager]),
     one<{ id: string; title: string; starts_at: string; review_module: string | null }>(
       `select m.id, m.title, m.starts_at, r.module as review_module from meetings m left join reviews r on r.id = m.review_id join meeting_attendees a on a.meeting_id = m.id and a.user_id = $1
        where not m.cancelled and m.starts_at > now() and m.starts_at < now() + interval '6 hours' order by m.starts_at limit 1`, [u.id]),
@@ -77,7 +76,7 @@ export async function attention(u: User): Promise<AttentionItem[]> {
     push({ key: "stale", area: "followups", severity: delegated.length >= 5 ? "high" : "medium", weight: 40 + delegated.length,
       title: `${plural(delegated.length, "delegated task")} need a follow-up`,
       detail: `${worst.owner ?? "Owner"} hasn’t updated “${worst.title}” in ${worst.days} days${worst.overdue ? " and it’s overdue" : ""}.`,
-      cta: { label: "Follow up", href: "/followups" } });
+      cta: { label: "Follow up", href: "/tasks/all?view=delegated" } });
   }
   if (mine && mine.blocked > 0)
     push({ key: "blocked", area: "tasks", severity: "medium", weight: 30, title: `${plural(mine.blocked, "of your tasks is", "of your tasks are")} blocked`, cta: { label: "Unblock", href: "/tasks/all?status=blocked" } });
@@ -148,12 +147,6 @@ export async function attention(u: User): Promise<AttentionItem[]> {
       detail: `${c.department}: ${num(c.short)} units/day short${capacity.length > 1 ? ` · ${capacity.length - 1} more breaches` : ""}.`, cta: { label: "Plan capacity", href: "/sop/capacity" } });
   }
 
-  // ---- decisions
-  if (decisions.length) {
-    const soon = decisions.filter((d) => d.due_date && d.due_date <= addDaysStr(t, 7));
-    push({ key: "decisions", area: "decisions", severity: soon.length ? "high" : "medium", weight: 34, title: `${plural(decisions.length, "decision")} pending`,
-      detail: decisions.slice(0, 2).map((d) => `${d.title}${d.due_date ? ` (by ${fmtDate(d.due_date)})` : ""}`).join(" · "), cta: { label: "Decide", href: "/decisions" } });
-  }
   if (nextMeeting) {
     const missing = nextMeeting.review_module === "sop" ? sopPending.length : nextMeeting.review_module === "aop" ? aopFns.length : 0;
     push({ key: "next-meeting", area: "meetings", severity: missing ? "medium" : "info", weight: 36,

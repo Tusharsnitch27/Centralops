@@ -71,7 +71,7 @@ export function DecisionList({ decisions }: { decisions: DecisionLite[] }) {
         <li key={d.id} className="flex gap-2.5">
           <Gavel size={13} className="mt-0.5 shrink-0 text-ink-4" />
           <div className="min-w-0">
-            <Link href={`/decisions?focus=${d.id}`} className="text-[13px] text-ink hover:underline">{d.title}</Link>
+            <Link href={"/meetings"} className="text-[13px] text-ink hover:underline">{d.title}</Link>
             {(d.context || d.decision_maker_name) && <div className="text-[12px] text-ink-3">{[d.decision_maker_name, d.context].filter(Boolean).join(" · ")}</div>}
           </div>
         </li>

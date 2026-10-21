@@ -47,9 +47,9 @@ export function LinkChips({ m, className }: { m: { review_id?: string | null; re
   const chip = "inline-flex max-w-[220px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[11.5px] text-ink-3 ring-1 ring-inset ring-line transition-colors hover:text-ink hover:ring-line-strong";
   return (
     <span className={cn("flex flex-wrap items-center gap-1.5", className)}>
-      {m.review_name && <Link href={`/reviews/${m.review_id}`} className={chip}><Repeat size={11} className="shrink-0" /><span className="truncate">{m.review_name}</span></Link>}
-      {m.project_name && <Link href={`/projects/${m.project_id}`} className={chip}><FolderKanban size={11} className="shrink-0" /><span className="truncate">{m.project_code ?? m.project_name}</span></Link>}
-      {m.program_name && !m.project_name && <Link href={`/programs/${m.program_id}`} className={chip}><Layers size={11} className="shrink-0" /><span className="truncate">{m.program_name}</span></Link>}
+      {m.review_name && <span className={chip}><Repeat size={11} className="shrink-0" /><span className="truncate">{m.review_name}</span></span>}
+      {m.project_name && <Link href={`/tasks/goals#project-${m.project_id}`} className={chip}><FolderKanban size={11} className="shrink-0" /><span className="truncate">{m.project_code ?? m.project_name}</span></Link>}
+      {m.program_name && !m.project_name && <span className={chip}><Layers size={11} className="shrink-0" /><span className="truncate">{m.program_name}</span></span>}
     </span>
   );
 }

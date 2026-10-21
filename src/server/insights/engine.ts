@@ -111,7 +111,7 @@ export async function generateSuggestions(userId: string): Promise<void> {
       const code = m.project_code ?? m.project_name;
       const what = m.slip_days > 0 ? `slipped ${plural(m.slip_days, "day")}` : `overdue by ${plural(m.overdue_days, "day")}`;
       out.push({
-        kind: "milestone_slip", severity: m.overdue_days > 0 ? "critical" : "warning", href: `/projects/${m.project_id}`, entity_type: "milestone", entity_id: m.id,
+        kind: "milestone_slip", severity: m.overdue_days > 0 ? "critical" : "warning", href: `/tasks/goals#project-${m.project_id}`, entity_type: "milestone", entity_id: m.id,
         title: `${m.title.toLowerCase().includes(code.toLowerCase()) ? m.title : `${code} · ${m.title}`} ${what}`,
         body: `Baseline ${fmtDate(m.baseline_date)}, now due ${fmtDate(m.due_date)}${m.overdue_days > 0 ? ` and ${plural(m.overdue_days, "day")} past due` : ""}. ${m.project_name}.`,
         recommendation: `Review with ${firstName(m.owner_name)}`,
@@ -154,7 +154,7 @@ export async function generateSuggestions(userId: string): Promise<void> {
   // Decisions past due
   for (const d of decisions.filter((x) => x.days_overdue > 0).slice(0, 3))
     out.push({
-      kind: "decision_due", severity: "warning", href: "/decisions", entity_type: "decision", entity_id: d.id,
+      kind: "decision_due", severity: "warning", href: "/meetings", entity_type: "decision", entity_id: d.id,
       title: `Decision overdue: ${d.title}`, body: `Was due ${fmtDate(d.due_date)}${d.project_name ? ` · ${d.project_name}` : ""}.`,
       recommendation: `Schedule a decision review${d.maker_name ? ` with ${firstName(d.maker_name)}` : ""}`, dedupe: `decision:${d.id}:${d.due_date}`,
       payload: { primary: "review", primaryLabel: "Schedule decision review", ownerId: d.maker_id, ownerName: d.maker_name },
@@ -163,10 +163,10 @@ export async function generateSuggestions(userId: string): Promise<void> {
   const wk = weekStart(t);
   for (const p of atRisk.filter((x) => !x.last_update_at || Date.now() - new Date(ymd(x.last_update_at)).getTime() > 7 * 864e5).slice(0, 3))
     out.push({
-      kind: "project_update", severity: "info", href: `/projects/${p.id}`, entity_type: "project", entity_id: p.id,
+      kind: "project_update", severity: "info", href: `/tasks/goals#project-${p.id}`, entity_type: "project", entity_id: p.id,
       title: `${p.name} is ${p.health === "delayed" ? "delayed" : "at risk"} with no update in a week`, body: `Owner ${p.owner_name ?? "—"} · ${p.open_tasks} open tasks${p.overdue_tasks ? `, ${p.overdue_tasks} overdue` : ""}.`,
       recommendation: `Ask ${firstName(p.owner_name)} for a status update`, dedupe: `project.noupdate:${p.id}:${wk}`,
-      payload: { primary: "nudge", primaryLabel: `Ask ${firstName(p.owner_name)} for an update`, nudge: p.owner_id ? [{ userId: p.owner_id, kind: "update_missing", title: `Status update needed: ${p.name}`, href: `/projects/${p.id}` }] : [] },
+      payload: { primary: "nudge", primaryLabel: `Ask ${firstName(p.owner_name)} for an update`, nudge: p.owner_id ? [{ userId: p.owner_id, kind: "update_missing", title: `Status update needed: ${p.name}`, href: `/tasks/goals#project-${p.id}` }] : [] },
     });
 
   for (const g of out) {

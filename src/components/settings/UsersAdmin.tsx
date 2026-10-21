@@ -116,7 +116,7 @@ export function UsersAdmin({ users, teams, today, focus, isAdmin }: { users: Adm
                     <div className="flex items-center gap-2.5">
                       <Avatar name={u.name} color={u.avatar_color} size={26} />
                       <div className="min-w-0">
-                        <Link href={`/people/${u.id}`} className="block truncate font-medium text-ink hover:underline">{u.name}</Link>
+                        <span className="block truncate font-medium text-ink">{u.name}</span>
                         <div className="truncate text-[12px] text-ink-3">{u.title ?? "—"}</div>
                       </div>
                     </div>

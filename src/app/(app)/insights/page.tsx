@@ -66,10 +66,10 @@ export default async function InsightsPage() {
 const AREAS = [
   { label: "AOP & cost", kinds: ["aop_overspend", "aop_missing"], href: "/aop" },
   { label: "S&OP & capacity", kinds: ["sop_late", "capacity"], href: "/sop" },
-  { label: "Projects & milestones", kinds: ["milestone_slip", "project_update"], href: "/projects" },
+  { label: "Projects & milestones", kinds: ["milestone_slip", "project_update"], href: "/tasks/goals" },
   { label: "Meetings & MoMs", kinds: ["mom_missing"], href: "/meetings" },
   { label: "Delegated tasks", kinds: ["stale_tasks"], href: "/exceptions#stale" },
-  { label: "Decisions", kinds: ["decision_due"], href: "/decisions" },
+  { label: "Decisions", kinds: ["decision_due"], href: "/meetings" },
 ];
 
 async function AiRead({ items }: { items: Suggestion[] }) {

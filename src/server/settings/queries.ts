@@ -49,7 +49,6 @@ export async function listTeamsAdmin() {
 /* ---------------- templates (app_settings) ---------------- */
 export const TEMPLATE_KEYS = {
   mom: { key: "template.mom", label: "MoM template", hint: "Pre-filled when a MoM owner starts writing minutes." },
-  project_update: { key: "template.project_update", label: "Project update template", hint: "Shown to project owners when posting a status update." },
   weekly_report: { key: "template.weekly_report", label: "Weekly report template", hint: "Intro and sign-off for the Weekly Program Manager Review." },
 } as const;
 export type TemplateKind = keyof typeof TEMPLATE_KEYS;
@@ -72,21 +71,6 @@ Risks / blockers
 -
 
 Next review:`,
-  project_update: `What changed since the last update
--
-
-Progress / % complete
-
-Blockers
--
-
-Decisions required
--
-
-Next steps (owner · date)
--
-
-Expected completion:`,
   weekly_report: `Hi all — here's the Central Ops program review for the week.
 
 {{report}}

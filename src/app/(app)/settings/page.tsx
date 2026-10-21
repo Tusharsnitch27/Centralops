@@ -1,10 +1,9 @@
 import { PageHeader, Tabs } from "@/components/ui";
 import { requireUser, canManage } from "@/server/auth";
-import { getPreferences } from "@/server/settings/prefs";
 import {
   DEFAULT_TEMPLATES, TEMPLATE_KEYS, getTemplates, getUserProfile, listInsightRules, listPermissions, listTeamsAdmin, listUsersAdmin, permissionEntities,
 } from "@/server/settings/queries";
-import { listPeople, listProgramsLite } from "@/server/core/people";
+import { listPeople } from "@/server/core/people";
 import { today } from "@/lib/dates";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { UsersAdmin } from "@/components/settings/UsersAdmin";
@@ -12,13 +11,11 @@ import { PermissionsAdmin } from "@/components/settings/PermissionsAdmin";
 import { TeamsAdmin } from "@/components/settings/TeamsAdmin";
 import { TemplatesForm } from "@/components/settings/TemplatesForm";
 import { RulesAdmin } from "@/components/settings/RulesAdmin";
-import { PersonalisationForm } from "@/components/settings/PersonalisationForm";
 
 export const metadata = { title: "Settings" };
 
 const ALL_TABS = [
   { key: "profile", label: "Profile", admin: false },
-  { key: "personalisation", label: "Personalisation", admin: false },
   { key: "users", label: "Users & access", admin: true },
   { key: "org", label: "Org chart", admin: true },
   { key: "permissions", label: "Permissions", admin: true },
@@ -47,10 +44,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
 async function renderTab(tab: string, userId: string, isAdmin: boolean, manager: boolean, focusUser?: string) {
   switch (tab) {
-    case "personalisation": {
-      const [prefs, programs] = await Promise.all([getPreferences(userId), listProgramsLite()]);
-      return <PersonalisationForm prefs={prefs} programs={programs} />;
-    }
     case "users": {
       const [users, teams] = await Promise.all([listUsersAdmin(), listTeamsAdmin()]);
       return <UsersAdmin users={users} teams={teams.map((t) => ({ id: t.id, name: t.name }))} today={today()} focus={focusUser} isAdmin={isAdmin} />;

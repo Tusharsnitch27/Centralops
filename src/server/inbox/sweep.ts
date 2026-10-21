@@ -37,12 +37,8 @@ export async function runSweeps(u: User, opts: { force?: boolean } = {}) {
   await q(`update inbox_items i set status = 'done', resolved_at = now() from tasks k
            where i.user_id = $1 and i.kind = 'task_assigned' and i.status = 'open' and k.id = i.entity_id and (k.acknowledged_at is not null or k.status <> 'not_started')`, [u.id]);
 
-  // 3 · decisions I must take soon
-  const decisions = await q<{ id: string; title: string; due_date: string | null }>(
-    `select id, title, due_date from decisions where status in ('pending','proposed') and decision_maker_id = $1 and (due_date is null or due_date <= $2::date + 5)`, [u.id, t]);
-  for (const d of decisions)
-    await toInbox({ userId: u.id, kind: "decision", title: `Decision required: ${d.title}`, body: d.due_date ? `Needed by ${d.due_date}.` : null, entityType: "decision", entityId: d.id, href: `/decisions?focus=${d.id}`, priority: 65, dedupeKey: `decision:${d.id}:required` });
-  await q(`update inbox_items i set status = 'done', resolved_at = now() from decisions d where i.user_id = $1 and i.kind = 'decision' and i.status = 'open' and d.id = i.entity_id and d.status not in ('pending','proposed')`, [u.id]);
+  // decisions and first-run onboarding are retired: close anything still open from them
+  await q(`update inbox_items set status = 'done', resolved_at = now() where user_id = $1 and kind in ('decision','onboarding') and status = 'open'`, [u.id]);
 
   // 4 · escalated risks (for PMs) and risks I own past target
   const risks = await q<{ id: string; title: string; status: string; owner_id: string | null }>(
@@ -64,10 +60,6 @@ export async function runSweeps(u: User, opts: { force?: boolean } = {}) {
     await toInbox({ userId: u.id, kind: "sop_submission", title: `S&OP projection due: ${s.name} · ${s.period.slice(0, 7)}`, body: `Due ${s.due_date}.`, entityType: "sop_stream", entityId: s.id, href: `/sop/inputs`, priority: s.due_date < t ? 72 : 58, dedupeKey: `sop:${s.id}` });
   await q(`update inbox_items i set status = 'done', resolved_at = now() from sop_submissions s where i.user_id = $1 and i.kind = 'sop_submission' and i.status = 'open' and s.id = i.entity_id and s.status not in ('pending','late')`, [u.id]);
 
-  // 6 · first-run capture
-  if (!u.onboarded_at)
-    await toInbox({ userId: u.id, kind: "onboarding", title: "Capture everything you're working on", body: "Open tasks, recurring meetings and people you're waiting on — so Central Ops can start tracking from today.", href: "/welcome", priority: 90, dedupeKey: "onboarding" });
-  else await q(`update inbox_items set status = 'done', resolved_at = now() where user_id = $1 and dedupe_key = 'onboarding' and status = 'open'`, [u.id]);
 
   // 7 · module sweeps
   await moduleSweeps(u);

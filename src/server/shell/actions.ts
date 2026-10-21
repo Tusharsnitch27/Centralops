@@ -55,7 +55,7 @@ export async function quickAdd(i: QuickInput): Promise<ActionResult<{ href: stri
         const r = await one<{ id: string }>(`insert into projects (name, owner_id, target_date, objective, created_by, start_date) values ($1,$2,$3,$4,$5,current_date) returning id`,
           [title, ownerId ?? u.id, i.dueDate ?? null, i.notes ?? null, u.id]);
         await logActivity({ actorId: u.id, entityType: "project", entityId: r!.id, action: "created", summary: title });
-        href = `/projects/${r!.id}`;
+        href = `/tasks/goals#project-${r!.id}`;
         break;
       }
       case "meeting": {
@@ -73,7 +73,7 @@ export async function quickAdd(i: QuickInput): Promise<ActionResult<{ href: stri
         const r = await one<{ id: string }>(`insert into decisions (title, context, decided_on, decision_maker_id, project_id, created_by, status) values ($1,$2,current_date,$3,$4,$5,'made') returning id`,
           [title, i.notes ?? null, ownerId ?? u.id, i.projectId ?? null, u.id]);
         await logActivity({ actorId: u.id, entityType: "decision", entityId: r!.id, action: "created", summary: title });
-        href = `/decisions?focus=${r!.id}`;
+        href = "/meetings";
         break;
       }
       case "risk": {

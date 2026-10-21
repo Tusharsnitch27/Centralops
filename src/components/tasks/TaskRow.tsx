@@ -26,7 +26,7 @@ export function TaskRow({ t, showProject = true, showOwner = true, extra, classN
       </Link>
       {extra}
       {showProject && t.project_name && (
-        <Link href={`/projects/${t.project_id}`} className="hidden max-w-[180px] truncate rounded-md px-1.5 py-0.5 text-[12px] text-ink-3 ring-1 ring-inset ring-line hover:text-ink md:block">
+        <Link href={`/tasks/goals#project-${t.project_id}`} className="hidden max-w-[180px] truncate rounded-md px-1.5 py-0.5 text-[12px] text-ink-3 ring-1 ring-inset ring-line hover:text-ink md:block">
           {t.project_code ?? t.project_name}
         </Link>
       )}

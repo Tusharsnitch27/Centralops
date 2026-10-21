@@ -1,6 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CircleCheck, FolderKanban, Target } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/client";
@@ -14,12 +14,13 @@ type Tab = "task" | "goal" | "project";
 
 /** Add a task (default), a goal or a project — they can link to each other, none is required. */
 export function CreateTabs({ people, meId, links }: { people: PersonOpt[]; meId: string; links: LinkOpts }) {
-  const [tab, setTab] = useState<Tab>("task");
+  const want = useSearchParams().get("create");
+  const [tab, setTab] = useState<Tab>(want === "goal" || want === "project" ? want : "task");
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: "task", label: "Task", icon: <CircleCheck size={13} /> }, { key: "goal", label: "Goal", icon: <Target size={13} /> }, { key: "project", label: "Project", icon: <FolderKanban size={13} /> },
   ];
   return (
-    <div>
+    <div id="capture" className="scroll-mt-20">
       <div className="seg mb-2">{TABS.map((t) => <button key={t.key} type="button" data-on={tab === t.key} onClick={() => setTab(t.key)} className="seg-item gap-1.5">{t.icon}{t.label}</button>)}</div>
       {tab === "task" && <TaskCapture people={people} meId={meId} links={links} />}
       {tab === "goal" && <GoalForm people={people} meId={meId} projects={links.projects} done={() => setTab("task")} />}

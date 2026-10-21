@@ -9,7 +9,7 @@ export function SectionTabs({ section }: { section: keyof typeof SECTION_TABS })
   const path = usePathname();
   const tabs = SECTION_TABS[section];
   // only on section roots; detail pages (e.g. /tasks/[id]) keep their own header
-  const active = tabs.find((t) => t.href === path)?.href;
+  const active = tabs?.find((t) => t.href === path)?.href;
   if (!active) return null;
   return (
     <div className="mb-5 inline-flex rounded-lg border border-line bg-subtle/60 p-0.5">

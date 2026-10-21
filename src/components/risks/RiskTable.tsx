@@ -55,7 +55,7 @@ function RiskRowView({ r, options, focused, editable, hideProject }: { r: RiskVi
             <span className="text-[13px] font-medium leading-snug text-ink">{r.title}</span>
           </div>
         </td>
-        {!hideProject && <td>{r.project_id ? <Link onClick={(e) => e.stopPropagation()} href={`/projects/${r.project_id}?tab=risks`} className="rounded-md px-1.5 py-0.5 text-[12px] text-ink-3 ring-1 ring-inset ring-line hover:text-ink">{r.project_code ?? r.project_name}</Link> : <span className="text-ink-4">—</span>}</td>}
+        {!hideProject && <td>{r.project_id ? <Link onClick={(e) => e.stopPropagation()} href={`/tasks/goals#project-${r.project_id}`} className="rounded-md px-1.5 py-0.5 text-[12px] text-ink-3 ring-1 ring-inset ring-line hover:text-ink">{r.project_code ?? r.project_name}</Link> : <span className="text-ink-4">—</span>}</td>}
         <td><span className="flex items-center gap-1.5 whitespace-nowrap"><Avatar name={r.owner_name} color={r.owner_color} size={20} /><span className="text-ink-2">{r.owner_name ?? "—"}</span></span></td>
         <td className="text-center tabular text-ink-2">{r.probability}</td>
         <td className="text-center tabular text-ink-2">{r.impact}</td>

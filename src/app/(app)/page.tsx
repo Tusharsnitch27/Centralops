@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlarmClock, ArrowRight, ArrowUpRight, Boxes, CalendarClock, CheckCheck, Gavel, ListChecks, NotebookPen, Presentation, Rocket, Send, Video } from "lucide-react";
+import { AlarmClock, ArrowUpRight, Boxes, CalendarClock, CheckCheck, ListChecks, NotebookPen, Presentation, Video } from "lucide-react";
 import { Avatar, AvatarStack, Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { AttentionList } from "@/components/home/Attention";
 import { HeroSpend } from "@/components/home/HeroSpend";
@@ -9,10 +9,9 @@ import { TaskList } from "@/components/tasks/TaskRow";
 import { requireUser } from "@/server/auth";
 import { runSweeps } from "@/server/inbox/sweep";
 import { attention } from "@/server/home/attention";
-import { aopOutcome, dueToday, followupPreview, homeStats, todaySchedule } from "@/server/home/overview";
+import { aopOutcome, dueToday, homeStats, todaySchedule } from "@/server/home/overview";
 import { sopHeadline } from "@/server/sop/summary";
-import { q } from "@/server/db";
-import { fmtDate, fmtMonth, fmtTime, relDay, today } from "@/lib/dates";
+import { fmtDate, fmtMonth, fmtTime, today } from "@/lib/dates";
 import { inr, num, pct, plural } from "@/lib/format";
 import { MOM_STATUS, type Tone } from "@/lib/meta";
 import { cn } from "@/lib/cn";
@@ -27,12 +26,8 @@ function greeting() {
 export default async function CommandCentre() {
   const u = await requireUser();
   await runSweeps(u);
-  const [items, stats, schedule, due, aop, sop, follow, decisions, series] = await Promise.all([
-    attention(u), homeStats(u), todaySchedule(u), dueToday(u), aopOutcome(), sopHeadline(), followupPreview(u),
-    q<{ id: string; title: string; due_date: string | null; maker: string | null }>(
-      `select d.id, d.title, d.due_date, m.name as maker from decisions d left join users m on m.id = d.decision_maker_id
-       where d.status in ('pending','proposed') order by d.due_date nulls last limit 4`),
-    homeSeries(u),
+  const [items, stats, schedule, due, aop, sop, series] = await Promise.all([
+    attention(u), homeStats(u), todaySchedule(u), dueToday(u), aopOutcome(), sopHeadline(), homeSeries(u),
   ]);
   const sum = (xs: { value: number }[], n = 7) => xs.slice(-n).reduce((a, x) => a + x.value, 0);
   const now = Date.now();
@@ -55,35 +50,23 @@ export default async function CommandCentre() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         <StatCard label="Open tasks" value={stats.openTasks} href="/tasks" icon={<ListChecks size={15} />} bars={series.completed.map((d) => d.value)}
           badge={`${sum(series.completed)} done this week`} foot="Completed per day · 14 days" />
         <StatCard label="Overdue" value={stats.overdue} href="/tasks/all?view=overdue" icon={<AlarmClock size={15} />}
           badge={stats.overdue ? "Needs action" : "All clear"} badgeTone={stats.overdue ? "bad" : "accent"} foot={stats.overdue ? "Past due date" : "Nothing past due"} />
-        <StatCard label="To follow up" value={stats.followupsDue} href="/followups" icon={<Send size={15} />} bars={series.followups.map((d) => d.value)}
-          badge={stats.followupsDue ? `${sum(series.followups)} nudges sent` : undefined} badgeTone="warn" foot="Delegated, no update in 5d+" />
         <StatCard label="MoMs pending" value={stats.momPending} href="/meetings" icon={<NotebookPen size={15} />}
           badge={stats.momPending ? "Awaiting" : "Up to date"} badgeTone={stats.momPending ? "warn" : "accent"} foot="Ended meetings without minutes" />
         <StatCard label="Meetings today" value={stats.meetingsToday} href="/meetings" icon={<Presentation size={15} />} bars={series.meetings.map((d) => d.value)}
           foot="Meetings per day · 14 days" />
       </div>
 
-      {!u.onboarded_at && (
-        <Link href="/welcome" className="card group flex items-center gap-3 px-4 py-3 transition-colors hover:border-line-strong">
-          <span className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-ink-3 sm:flex"><Rocket size={15} /></span>
-          <div className="flex-1">
-            <div className="text-[13px] font-semibold">Capture everything you’re working on</div>
-            <div className="text-[12.5px] text-ink-3">Dump your open actions, recurring meetings and the people you’re waiting on — Central Ops structures it and tracks from today.</div>
-          </div>
-          <span className="flex items-center gap-1 text-[13px] font-medium text-ink">Start <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" /></span>
-        </Link>
-      )}
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0 space-y-5">
           {/* Attention */}
           <Card className="overflow-hidden">
-            <CardHeader title="Needs your attention" subtitle="Ranked across tasks, follow-ups, meetings, decisions, AOP and S&OP" />
+            <CardHeader title="Needs your attention" subtitle="Ranked across tasks, goals, meetings, AOP and S&OP" />
             {items.length ? <AttentionList items={items} /> : <EmptyState compact icon={<CheckCheck size={18} />} title="All clear" body="No exceptions across your programs. New ones will surface here automatically." />}
           </Card>
 
@@ -134,22 +117,6 @@ export default async function CommandCentre() {
               lastClosed={aop.lastClosed} labels={aop.labels} cost={cost} trend={aop.trend.map((t) => ({ period: t.period, plan: t.plan, actual: t.actual }))} />
           )}
 
-          <Card className="overflow-hidden">
-            <CardHeader title="Follow up today" subtitle="Delegated work with no recent update" action={<ButtonLink href="/followups" variant="ghost" size="xs">All <ArrowUpRight size={12} /></ButtonLink>} />
-            {follow.length ? (
-              <div className="divide-y divide-line/70">
-                {follow.map((t) => (
-                  <Link key={t.id} href={`/tasks/${t.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-subtle/60">
-                    <Avatar name={t.owner_name ?? t.owner_team_name} color={t.owner_color} size={24} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] text-ink">{t.title}</div>
-                      <div className="text-[11.5px] text-ink-3">{t.owner_name ?? t.owner_team_name ?? "Unassigned"} · no update in {t.days_since_update}d{t.due_date ? ` · due ${relDay(t.due_date).toLowerCase()}` : ""}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : <EmptyState compact title="No one to chase" body="Every delegated task has a recent update." />}
-          </Card>
 
           <Card className="overflow-hidden">
             <CardHeader title="S&OP" subtitle={`${sop.submitted} of ${sop.total} inputs in for ${fmtMonth(sop.nextPeriod)}`} icon={<Boxes size={15} />}
@@ -175,19 +142,6 @@ export default async function CommandCentre() {
             </div>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardHeader title="Decisions pending" icon={<Gavel size={15} />} action={<ButtonLink href="/decisions" variant="ghost" size="xs">Log <ArrowUpRight size={12} /></ButtonLink>} />
-            {decisions.length ? (
-              <div className="divide-y divide-line/70">
-                {decisions.map((d) => (
-                  <Link key={d.id} href={`/decisions?focus=${d.id}`} className="block px-4 py-2.5 hover:bg-subtle/60">
-                    <div className="text-[13px]">{d.title}</div>
-                    <div className="text-[11.5px] text-ink-3">{d.maker ?? "—"}{d.due_date ? ` · by ${fmtDate(d.due_date)}` : ""}</div>
-                  </Link>
-                ))}
-              </div>
-            ) : <EmptyState compact title="No decisions pending" />}
-          </Card>
         </div>
       </div>
     </div>

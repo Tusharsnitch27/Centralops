@@ -5,7 +5,7 @@ import { Button } from "@/components/ui";
 import { saveTemplate } from "@/server/settings/actions";
 import { Section, useAction } from "./bits";
 
-type Kind = "mom" | "project_update" | "weekly_report";
+type Kind = "mom" | "weekly_report";
 
 export function TemplatesForm({ templates, defaults, meta, canEdit }: { templates: Record<Kind, string>; defaults: Record<Kind, string>; meta: Record<Kind, { label: string; hint: string }>; canEdit: boolean }) {
   return (

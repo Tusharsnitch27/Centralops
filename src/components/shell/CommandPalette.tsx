@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as Icons from "lucide-react";
 import { NAV } from "@/lib/nav";
-import { openQuickAdd, type QuickKind } from "./QuickAdd";
 
 export const openPalette = () => window.dispatchEvent(new Event("co:palette"));
 
@@ -14,11 +13,11 @@ const TYPE_ICON: Record<string, keyof typeof Icons> = {
 };
 const TYPE_LABEL: Record<string, string> = { task: "Tasks", project: "Projects", program: "Programs", meeting: "Meetings", decision: "Decisions", risk: "Risks", aop_item: "AOP lines", person: "People" };
 
-const CREATE: { kind: QuickKind; label: string; icon: keyof typeof Icons }[] = [
-  { kind: "task", label: "Add task", icon: "CirclePlus" },
-  { kind: "meeting", label: "Add meeting", icon: "CalendarPlus" },
-  { kind: "decision", label: "Log decision", icon: "Gavel" },
-  { kind: "followup", label: "Add follow-up", icon: "Send" },
+// creating is task-first: the capture box on My tasks has Task / Goal / Project
+const CREATE: { href: string; label: string; icon: keyof typeof Icons }[] = [
+  { href: "/tasks#capture", label: "Add task", icon: "CirclePlus" },
+  { href: "/tasks?create=goal#capture", label: "Add goal", icon: "Target" },
+  { href: "/tasks?create=project#capture", label: "Add project", icon: "FolderKanban" },
 ];
 
 export function CommandPalette() {
@@ -34,7 +33,7 @@ export function CommandPalette() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setOpen((o) => !o); }
       const tag = (e.target as HTMLElement)?.tagName;
       const typing = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
-      if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key === "c") { e.preventDefault(); openQuickAdd("task"); }
+      if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key === "c") { e.preventDefault(); router.push("/tasks#capture"); }
       if (!typing && e.key === "/") { e.preventDefault(); setOpen(true); }
     };
     window.addEventListener("co:palette", onOpen);
@@ -85,7 +84,7 @@ export function CommandPalette() {
           ))}
           <Command.Group heading="Create">
             {CREATE.map((c) => (
-              <Item key={c.kind} value={c.label} onSelect={() => { setOpen(false); openQuickAdd(c.kind, query.trim().length >= 2 ? query : undefined); }} icon={Ico(c.icon)}>{c.label}</Item>
+              <Item key={c.href} value={c.label} onSelect={() => go(c.href)} icon={Ico(c.icon)}>{c.label}</Item>
             ))}
           </Command.Group>
           <Command.Group heading="Go to">
@@ -95,7 +94,7 @@ export function CommandPalette() {
           </Command.Group>
         </Command.List>
         <div className="flex items-center gap-3 border-t border-line bg-subtle/50 px-4 py-2 text-[11.5px] text-ink-4">
-          <span>↑↓ navigate</span><span>↵ open</span><span>esc close</span><span className="ml-auto">C — new task anywhere</span>
+          <span>↑↓ navigate</span><span>↵ open</span><span>esc close</span><span className="ml-auto">C — new task</span>
         </div>
       </Command>
     </div>

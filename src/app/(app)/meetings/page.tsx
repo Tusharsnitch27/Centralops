@@ -48,7 +48,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Pro
     <div>
       <PageHeader eyebrow="Work" title="Meetings" subtitle={subtitle}
         actions={<>
-          <ButtonLink href="/calendar" variant="ghost" size="sm"><CalendarClock size={14} />Week view</ButtonLink>
+          
           <NewMeetingButton options={options} me={u.id} joinedAt={u.joined_at} />
         </>} />
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">

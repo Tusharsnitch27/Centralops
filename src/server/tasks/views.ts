@@ -160,7 +160,7 @@ export async function taskViewCounts(u: Pick<User, "id" | "role">): Promise<View
        count(*) filter (where ${scope} and ${open} and t.due_date < $2::date and ${stale})::int as "staleOverdue",
        count(*) filter (where ${delegated} and t.status = 'not_started' and t.acknowledged_at is null and t.created_at < now() - interval '2 days')::int as unacknowledged
      from tasks t`,
-    [u.id, td, weekEnd(td), addDays(td, -DONE_WINDOW_DAYS), ids ?? []],
+    [u.id, td, weekEnd(td), addDays(td, -DONE_WINDOW_DAYS), ...(ids ? [ids] : [])], // $5 only when the scope is limited
   );
   return r as unknown as ViewCounts;
 }
@@ -173,7 +173,7 @@ export function taskInsights(c: ViewCounts): TaskInsight[] {
   const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
   if (c.overdue) out.push({ key: "overdue", tone: "red", text: `${n(c.overdue, "task is", "tasks are")} past due${c.staleOverdue ? ` — ${c.staleOverdue} with no update in ${STALE_DAYS}+ days` : ""}`, cta: "Review", href: "/tasks/all?view=overdue" });
   if (c.blocked) out.push({ key: "blocked", tone: "red", text: `${n(c.blocked, "task is blocked and needs", "tasks are blocked and need")} a decision to move`, cta: "Unblock", href: "/tasks/all?view=all&status=blocked" });
-  if (c.noupdate) out.push({ key: "noupdate", tone: "amber", text: `${n(c.noupdate, "delegated task has", "delegated tasks have")} not received an update in the last ${STALE_DAYS} days`, cta: "Follow up", href: "/followups" });
+  if (c.noupdate) out.push({ key: "noupdate", tone: "amber", text: `${n(c.noupdate, "delegated task has", "delegated tasks have")} not received an update in the last ${STALE_DAYS} days`, cta: "Follow up", href: "/tasks/all?view=delegated" });
   if (c.unacknowledged) out.push({ key: "unack", tone: "amber", text: `${n(c.unacknowledged, "assignment hasn't", "assignments haven't")} been acknowledged after 2 days`, cta: "Review", href: "/tasks/all?view=delegated&status=not_started" });
   if (c.today) out.push({ key: "today", tone: "info", text: `${n(c.today, "task is", "tasks are")} due today`, cta: "Open", href: "/tasks/all?view=today" });
   return out.slice(0, 4);

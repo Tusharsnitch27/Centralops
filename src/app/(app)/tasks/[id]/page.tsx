@@ -54,7 +54,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         <nav className="flex items-center gap-1.5 text-[12.5px] text-ink-3">
           <Link href="/tasks" className="hover:text-ink">Tasks</Link>
           <ChevronRight size={13} className="text-ink-4" />
-          {t.project_id && <><Link href={`/projects/${t.project_id}`} className="max-w-[220px] truncate hover:text-ink">{t.project_name}</Link><ChevronRight size={13} className="text-ink-4" /></>}
+          {t.project_id && <><Link href={`/tasks/goals#project-${t.project_id}`} className="max-w-[220px] truncate hover:text-ink">{t.project_name}</Link><ChevronRight size={13} className="text-ink-4" /></>}
           <span className="font-mono text-[12px] text-ink-2">CO-{t.number}</span>
         </nav>
         <div className="flex items-center gap-2">

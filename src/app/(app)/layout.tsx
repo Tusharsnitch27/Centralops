@@ -3,7 +3,6 @@ import { navCounts } from "@/server/shell/counts";
 import { Topbar } from "@/components/shell/Topbar";
 import { BottomNav, NavRail } from "@/components/shell/NavRail";
 import { CommandPalette } from "@/components/shell/CommandPalette";
-import { QuickAdd } from "@/components/shell/QuickAdd";
 import { Toaster } from "@/components/ui/client";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +21,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <BottomNav counts={counts} />
       <CommandPalette />
-      <QuickAdd />
     </Toaster>
   );
 }

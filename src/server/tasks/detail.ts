@@ -150,8 +150,8 @@ export async function taskDependencies(id: string): Promise<{ blockedBy: TaskLis
 }
 
 const HREF: Record<string, (id: string) => string> = {
-  task: (id) => `/tasks/${id}`, project: (id) => `/projects/${id}`, program: (id) => `/programs/${id}`, meeting: (id) => `/meetings/${id}`,
-  decision: (id) => `/decisions/${id}`, risk: (id) => `/risks/${id}`, aop_item: () => `/aop`, sop_stream: () => `/sop`,
+  task: (id) => `/tasks/${id}`, project: (id) => `/tasks/goals#project-${id}`, program: () => `/tasks/goals`, meeting: (id) => `/meetings/${id}`,
+  decision: () => `/meetings`, risk: (id) => `/risks/${id}`, aop_item: () => `/aop`, sop_stream: () => `/sop`,
 };
 const TITLE_SQL: Record<string, string> = {
   task: `select id, title from tasks where id = any($1::uuid[])`,

@@ -52,7 +52,7 @@ export async function morningBrief(userId: string): Promise<MorningBrief> {
     const late = m.overdue_days > 0;
     push(late ? 85 + Math.min(m.overdue_days, 10) : 60 + Math.min(m.slip_days, 10),
       `${short(m)} — ${m.title} ${late ? `overdue by ${plural(m.overdue_days, "day")}` : `slipped ${plural(m.slip_days, "day")}`}`,
-      `${m.owner_name ? `Owner ${m.owner_name} · ` : ""}${m.project_name}`, `/projects/${m.project_id}`);
+      `${m.owner_name ? `Owner ${m.owner_name} · ` : ""}${m.project_name}`, `/tasks/goals#project-${m.project_id}`);
   }
   const byStream = new Map<string, typeof sopLate[number]>();
   for (const l of sopLate) if (!byStream.has(l.stream_id)) byStream.set(l.stream_id, l);
@@ -73,7 +73,7 @@ export async function morningBrief(userId: string): Promise<MorningBrief> {
       overdue.length === 1 ? `/tasks/${top.id}` : "/exceptions#overdue");
   }
   for (const d of decisions.filter((d) => d.due_date && d.due_date <= addDays(t, 3)).slice(0, 2))
-    push(d.days_overdue > 0 ? 76 : 66, `Decision due: ${d.title}`, d.days_overdue > 0 ? `${plural(d.days_overdue, "day")} past due` : `Due ${d.due_date === t ? "today" : d.due_date}`, `/decisions`);
+    push(d.days_overdue > 0 ? 76 : 66, `Decision due: ${d.title}`, d.days_overdue > 0 ? `${plural(d.days_overdue, "day")} past due` : `Due ${d.due_date === t ? "today" : d.due_date}`, "/meetings");
   if (stale.length >= 2) push(58 + Math.min(stale.length, 10), `${plural(stale.length, "delegated task")} without an update`, "Request updates before the reviews", "/exceptions#stale");
   for (const r of risks.slice(0, 1)) push(62, `Critical risk: ${r.title}`, `Score ${r.score}${r.owner_name ? ` · ${r.owner_name}` : ""}`, `/risks`);
   const prep = meetings.find((m) => m.prep_notes || m.agenda);

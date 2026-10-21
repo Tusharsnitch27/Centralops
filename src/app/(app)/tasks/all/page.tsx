@@ -41,7 +41,7 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
         subtitle={attention
           ? <><span className="font-medium text-ink">{plural(attention, "task needs", "tasks need")} attention</span> · {counts.all} open in your scope</>
           : <>Nothing needs attention · {counts.all} open in your scope</>}
-        actions={<><ButtonLink href="/followups" variant="secondary"><MessageCircleQuestion size={14} /> Follow-ups</ButtonLink><NewTaskButton /></>}
+        actions={<NewTaskButton />}
       />
 
       <InsightStrip insights={insights} />
@@ -140,7 +140,7 @@ function ViewEmpty({ view, filtered }: { view: TaskViewKey; filtered: boolean })
     delegated: { title: "Nothing delegated yet", body: "Tasks you assign to people or teams show up here with their last update.", cta: <NewTaskButton label="Assign a task" /> },
     waiting: { title: "You're not waiting on anyone", body: "Set a task to Waiting and pick who you're waiting on to track it here." },
     overdue: { title: "Nothing overdue", body: "Every open task in your scope is within its due date." },
-    today: { title: "Nothing due today", body: "Use the time to unblock something or chase a stale update.", cta: <ButtonLink href="/followups" size="sm">Open follow-ups</ButtonLink> },
+    today: { title: "Nothing due today", body: "Use the time to unblock something or chase a stale update.", cta: <ButtonLink href="/tasks/all?view=delegated" size="sm">Delegated tasks</ButtonLink> },
     week: { title: "Nothing else due this week", body: "Look ahead at what's coming next week.", cta: <ButtonLink href="/tasks/all?view=all&group=due" size="sm">See all by due date</ButtonLink> },
     noupdate: { title: "Every delegated task has a fresh update", body: `Nobody has gone ${STALE_DAYS}+ days without updating work you assigned.` },
     done: { title: "Nothing completed recently", body: "Completed tasks from the last two weeks appear here." },
