@@ -30,7 +30,7 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
   await requireUser();
   const per = await resolvePeriod(await searchParams);
   if (!per.sel) return <EmptyState title="No S&OP data yet" />;
-  const [b, fwd] = await Promise.all([leaderBrief(per.sel.months, per.label), forwardLook(3)]);
+  const [b, fwd] = await Promise.all([leaderBrief(per.sel.months, per.label), forwardLook(2)]);
   const { d, outward, inward } = b;
   const outDaily = b.daily.views.filter((v) => v.flow === "Outwards").reduce((a, v) => ({ off: a.off + v.total.up + v.total.down, n: a.n + v.total.judged }), { off: 0, n: 0 });
   const wh = (w: "South" | "North") => d.wh[w].filter((p) => p.util != null && per.sel.months.includes(p.period)).at(-1) ?? d.wh[w].filter((p) => p.util != null).at(-1);
@@ -83,12 +83,35 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
                 <tr key={r.key}><td className="font-medium">{r.label}<span className="ml-1.5 text-[11px] text-ink-4">{r.dir === "in" ? "in" : "out"}</span></td>
                   {r.values.map((v, i) => <td key={i} className={cn("text-right tabular", v == null && "text-ink-4")}>{v == null ? "no projection" : L(v)}</td>)}</tr>
               ))}
-              <tr className="bg-subtle/50 font-semibold"><td>Stock if projections hold</td><td className="text-right text-[11.5px] font-normal text-ink-4">{fwd.from ? `from ${MON(fwd.from)} close` : ""}</td>
-                {fwd.roll.map((r) => <td key={r.period} className={cn("text-right tabular", (r.util ?? 0) >= 1 ? "text-bad" : (r.util ?? 0) >= 0.9 ? "text-warn" : "")}>{r.stock == null ? "—" : <>{L(r.stock)} · {pc(r.util)}{!r.complete && <span className="text-[10.5px] font-normal text-ink-4"> *</span>}</>}</td>)}</tr>
             </tbody>
           </table>
-          <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Projections from the stream inputs (owners update monthly). Stock = latest close + projected inward − projected outward, against total capacity (28L). * some flows have no projection yet for that month.</p>
+          <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Projections from the stream inputs (owners update them monthly).</p>
         </div>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="label-caps mb-2 px-1">Inventory outlook · if projections hold</h2>
+        <div className="grid gap-3 xl:grid-cols-2">
+          {fwd.outlook.map((o) => (
+            <div key={o.wh} className="card overflow-x-auto">
+              <div className="flex items-baseline justify-between border-b border-line px-4 py-2.5"><span className="text-[13.5px] font-semibold">{o.wh} WH</span><span className="text-[11.5px] text-ink-4">capacity {L(o.capacity)}</span></div>
+              <table className="table-base min-w-[520px]">
+                <thead><tr><th></th>{o.rows.map((r) => <th key={r.period} className="text-right">{MON(r.period)}{r.partial ? ` · ${fwd.through + 1}–end` : ""}</th>)}</tr></thead>
+                <tbody>
+                  <tr><td className="text-ink-3">Opening</td>{o.rows.map((r) => <td key={r.period} className="text-right tabular">{L(r.opening)}</td>)}</tr>
+                  <tr><td className="text-ink-3">+ Inward &amp; returns</td>{o.rows.map((r) => <td key={r.period} className="text-right tabular text-ok">{L(r.inward)}</td>)}</tr>
+                  <tr><td className="text-ink-3">− All outward</td>{o.rows.map((r) => <td key={r.period} className="text-right tabular text-bad">{L(r.outward)}</td>)}</tr>
+                  <tr className="bg-subtle/50 font-semibold"><td>Closing (est.)</td>{o.rows.map((r) => <td key={r.period} className="text-right tabular">{L(r.closing)}{r.missing.length > 0 && <span className="text-[10.5px] font-normal text-warn"> *</span>}</td>)}</tr>
+                  <tr><td className="font-semibold">Utilisation</td>{o.rows.map((r) => <td key={r.period} className={cn("text-right font-semibold tabular", r.missingOut ? "text-ink-4" : (r.util ?? 0) >= 1 ? "text-bad" : (r.util ?? 0) >= 0.9 ? "text-warn" : "text-ok")}>{r.missingOut ? <span className="text-[11px] font-normal">needs projections</span> : pc(r.util)}</td>)}</tr>
+                </tbody>
+              </table>
+              {o.rows.some((r) => r.missing.length) && (
+                <p className="border-t border-line px-4 py-2 text-[11.5px] text-warn">* Not projected yet: {[...new Set(o.rows.flatMap((r) => r.missing))].map((m) => `${m} (${o.rows.filter((r) => r.missing.includes(m)).map((r) => MON(r.period).split(" ")[0]).join(", ")})`).join(" · ")}. Missing outward makes closing stock look higher than it will be.</p>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 px-1 text-[11.5px] text-ink-4">Starts from {fwd.startSource}. This month counts only the days still to come (day {fwd.through + 1} onward); later months roll forward. Flows without a South/North split use their latest planned split. Pre-pack stock is held separately and isn’t included.</p>
       </section>
     </div>
   );

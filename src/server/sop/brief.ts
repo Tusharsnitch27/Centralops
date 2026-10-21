@@ -43,7 +43,7 @@ export async function leaderBrief(months: string[], label: string) {
   for (const v of daily.views) {
     const accRow = d.overall.find((r) => r.key === v.key);
     swing(v.title, v.total, accRow?.acc ?? null, "/sop/monthly#daily");
-    const rv = d.views.find((x) => x.def.key === v.key);
+    const rv = d.views.find((x) => x.def.key === (v.key.startsWith("b2c") ? "b2c" : v.key));
     for (const row of v.rows.slice(0, 2)) {
       const r = rv?.rows.find((x) => x.label === row.label);
       swing(`${v.title} · ${row.label}`, row.series, r && r.tp > 0 ? Math.max(0, 1 - Math.abs(r.ta - r.tp) / r.tp) : null, "/sop/monthly#daily");
@@ -74,33 +74,79 @@ export async function leaderBrief(months: string[], label: string) {
   return { d, daily, problems, headline, outward, inward };
 }
 
-/** Next months: projections by flow from the stream inputs, and where warehouse stock heads if they hold. */
+/**
+ * Forward look. Projections by flow (stream inputs), and an inventory outlook per warehouse:
+ * current month = latest actual stock + projected inward/returns for the days still to come − every outward flow for those days;
+ * later months roll forward. Flows without a South/North split use that flow's latest planned split.
+ */
 export async function forwardLook(n = 3) {
   const cur = `${today().slice(0, 7)}-01`;
   const months = Array.from({ length: n + 1 }, (_, i) => addMonths(cur, i));
-  const rows = await q<{ period: string; stream: string; metric: string | null; line: string; projection: number }>(
-    `select v.period::text as period, s.name as stream, l.metric, l.name as line, sum(coalesce(v.revised_projection, v.projection))::float8 as projection
-     from sop_values v join sop_lines l on l.id = v.line_id join sop_streams s on s.id = l.stream_id
-     where v.period = any($1::date[]) group by 1, 2, 3, 4`, [months]);
-  const sum = (p: string, f: (r: (typeof rows)[number]) => boolean) => rows.filter((r) => r.period === p && f(r)).reduce((a, r) => a + (r.projection || 0), 0) || null;
-  const FLOWS: { key: string; label: string; dir: "out" | "in"; pick: (r: (typeof rows)[number]) => boolean }[] = [
-    { key: "b2c", label: "B2C outward (items)", dir: "out", pick: (r) => (r.stream === "B2C-SF" || r.stream === "B2C-MP") && r.metric === "items" },
-    { key: "b2b_mp", label: "B2B · Marketplace", dir: "out", pick: (r) => r.stream === "B2B-MP" },
-    { key: "retail", label: "B2B · Retail stores", dir: "out", pick: (r) => r.stream === "Retail-Forward" && r.metric !== "nso" },
-    { key: "liquidation", label: "Liquidation", dir: "out", pick: (r) => r.stream === "Liquidation" },
-    { key: "inward", label: "Category inward", dir: "in", pick: (r) => r.stream === "Inbound-Category Wise" },
-    { key: "returns", label: "B2C returns", dir: "in", pick: (r) => (r.stream === "B2C-SF" || r.stream === "B2C-MP") && r.metric === "returns" },
+  const daysIn = (p: string) => new Date(Date.UTC(Number(p.slice(0, 4)), Number(p.slice(5, 7)), 0)).getUTCDate();
+  const [vals, retailPlan, reviewSplit, retSplit, invDaily, invMonth, period] = await Promise.all([
+    q<{ period: string; stream: string; metric: string | null; dimension: string; projection: number }>(
+      `select v.period::text as period, s.name as stream, l.metric, v.dimension, sum(coalesce(v.revised_projection, v.projection))::float8 as projection
+       from sop_values v join sop_lines l on l.id = v.line_id join sop_streams s on s.id = l.stream_id where v.period = any($1::date[]) group by 1, 2, 3, 4`, [months]),
+    q<{ day: string; south: number; north: number }>(`select day::text as day, south::float8 as south, north::float8 as north from sop_plan_daily where view_key = 'retail_fwd' and day >= $1`, [cur]),
+    q<{ view_key: string; shopify: boolean; sp: number; np: number }>(
+      `select view_key, row_label ilike 'shopify%' as shopify, sum(coalesce(south_plan,0))::float8 as sp, sum(coalesce(north_plan,0))::float8 as np from sop_review_rows
+       where period = (select max(period) from sop_review_rows where view_key in ('b2c','b2b_mp') and south_plan is not null) and view_key in ('b2c','b2b_mp') group by 1, 2`),
+    q<{ south: number; north: number }>(`select sum(case when warehouse = 'South' then coalesce(b2c,0) end)::float8 as south, sum(case when warehouse = 'North' then coalesce(b2c,0) end)::float8 as north from sop_returns where period = (select max(period) from sop_returns)`),
+    q<{ day: string; region: string; units: number }>(`select day::text as day, region, sum(units)::float8 as units from sop_inventory_daily where day = (select max(day) from sop_inventory_daily) group by 1, 2`),
+    q<{ warehouse: "South" | "North"; inventory: number | null; capacity: number }>(`select warehouse, inventory::float8 as inventory, capacity::float8 as capacity from sop_wh_capacity where period = $1`, [cur]),
+    q<{ through_day: number }>(`select through_day from sop_review_periods where period = $1`, [cur]),
+  ]);
+  const through = invDaily.length ? Number(invDaily[0].day.slice(8, 10)) : period[0]?.through_day ?? new Date().getUTCDate();
+  const remain = (p: string) => (p === cur ? Math.max(0, daysIn(p) - through) / daysIn(p) : 1);
+  const share = (sp: number, np: number, dflt = 16 / 28) => (sp + np > 0 ? sp / (sp + np) : dflt);
+  const split = {
+    b2c_sf: share(...(((r) => [r?.sp ?? 0, r?.np ?? 0])(reviewSplit.find((r) => r.view_key === "b2c" && r.shopify)) as [number, number])),
+    b2c_mp: share(...(((r) => [r?.sp ?? 0, r?.np ?? 0])(reviewSplit.find((r) => r.view_key === "b2c" && !r.shopify)) as [number, number])),
+    b2b_mp: share(reviewSplit.filter((r) => r.view_key === "b2b_mp").reduce((a, r) => a + r.sp, 0), reviewSplit.filter((r) => r.view_key === "b2b_mp").reduce((a, r) => a + r.np, 0)),
+    returns: share(retSplit[0]?.south ?? 0, retSplit[0]?.north ?? 0),
+  };
+  const sum = (p: string, f: (r: (typeof vals)[number]) => boolean) => { const rs = vals.filter((r) => r.period === p && f(r)); return rs.length ? rs.reduce((a, r) => a + (r.projection || 0), 0) : null; };
+  const dimSum = (p: string, f: (r: (typeof vals)[number]) => boolean, wh: "South" | "North") => { const rs = vals.filter((r) => r.period === p && f(r) && r.dimension === wh); return rs.length ? rs.reduce((a, r) => a + (r.projection || 0), 0) : null; };
+  // each flow: month total + South/North for the days still to come
+  type Flow = { key: string; label: string; dir: "out" | "in"; month: (p: string) => { total: number | null; south: number | null; north: number | null } };
+  const bySplit = (total: number | null, sh: number, p: string) => (total == null ? { total: null, south: null, north: null } : { total, south: total * sh * remain(p), north: total * (1 - sh) * remain(p) });
+  // a flow projected for one warehouse only (e.g. liquidation from North) counts as 0 at the other
+  const byDims = (p: string, f: (r: (typeof vals)[number]) => boolean) => { const s_ = dimSum(p, f, "South"), n_ = dimSum(p, f, "North"); const t = s_ == null && n_ == null ? null : (s_ ?? 0) + (n_ ?? 0); return t == null ? { total: null, south: null, north: null } : { total: t, south: (s_ ?? 0) * remain(p), north: (n_ ?? 0) * remain(p) }; };
+  const FLOWS: Flow[] = [
+    { key: "b2c_sf", label: "B2C · Shopify", dir: "out", month: (p) => bySplit(sum(p, (r) => r.stream === "B2C-SF" && r.metric === "items"), split.b2c_sf, p) },
+    { key: "b2c_mp", label: "B2C · Marketplaces", dir: "out", month: (p) => bySplit(sum(p, (r) => r.stream === "B2C-MP" && r.metric === "items"), split.b2c_mp, p) },
+    { key: "b2b_mp", label: "B2B · Marketplace", dir: "out", month: (p) => bySplit(sum(p, (r) => r.stream === "B2B-MP"), split.b2b_mp, p) },
+    { key: "retail", label: "B2B · Retail stores", dir: "out", month: (p) => {
+      const ds = retailPlan.filter((d) => d.day.startsWith(p.slice(0, 7)));
+      if (!ds.length) return { total: null, south: null, north: null };
+      const left = ds.filter((d) => p !== cur || Number(d.day.slice(8, 10)) > through);
+      return { total: ds.reduce((a, d) => a + d.south + d.north, 0), south: left.reduce((a, d) => a + d.south, 0), north: left.reduce((a, d) => a + d.north, 0) };
+    } },
+    { key: "liquidation", label: "Liquidation", dir: "out", month: (p) => byDims(p, (r) => r.stream === "Liquidation") },
+    { key: "inward", label: "Category inward", dir: "in", month: (p) => byDims(p, (r) => r.stream === "Inbound-Category Wise") },
+    { key: "returns", label: "B2C returns", dir: "in", month: (p) => bySplit(sum(p, (r) => (r.stream === "B2C-SF" || r.stream === "B2C-MP") && r.metric === "returns"), split.returns, p) },
   ];
-  const table = FLOWS.map((f) => ({ ...f, values: months.map((p) => sum(p, f.pick)) }));
-  // stock roll-forward from the latest closing (both WHs), against total capacity
-  const last = await q<{ closing: number; capacity: number; period: string }>(`select sum(closing)::float8 as closing, sum(capacity)::float8 as capacity, max(period)::text as period from sop_inventory_flow where period = (select max(period) from sop_inventory_flow)`);
-  let stock = last[0]?.closing ?? null;
-  const cap = last[0]?.capacity ?? 2800000;
-  const roll = months.slice(1).map((p, i) => {
-    const inw = table.filter((t) => t.dir === "in").reduce((a, t) => a + (t.values[i + 1] ?? 0), 0);
-    const out = table.filter((t) => t.dir === "out").reduce((a, t) => a + (t.values[i + 1] ?? 0), 0);
-    if (stock != null) stock = stock + inw - out;
-    return { period: p, inward: inw, outward: out, stock, util: stock != null ? stock / cap : null, complete: table.every((t) => t.values[i + 1] != null) };
+  const table = FLOWS.map((f) => ({ key: f.key, label: f.label, dir: f.dir, values: months.map((p) => f.month(p).total) }));
+
+  // inventory outlook per warehouse
+  const start: Record<"South" | "North", number | null> = {
+    South: invDaily.find((r) => r.region === "south")?.units ?? invMonth.find((r) => r.warehouse === "South")?.inventory ?? null,
+    North: invDaily.find((r) => r.region === "north")?.units ?? invMonth.find((r) => r.warehouse === "North")?.inventory ?? null,
+  };
+  const cap = { South: invMonth.find((r) => r.warehouse === "South")?.capacity ?? 1600000, North: invMonth.find((r) => r.warehouse === "North")?.capacity ?? 1200000 };
+  const outlook = (["South", "North"] as const).map((wh) => {
+    let stock = start[wh];
+    const rows = months.map((p) => {
+      const parts = FLOWS.map((f) => ({ f, v: f.month(p)[wh === "South" ? "south" : "north"] }));
+      const inward = parts.filter((x) => x.f.dir === "in").reduce((a, x) => a + (x.v ?? 0), 0);
+      const outward = parts.filter((x) => x.f.dir === "out").reduce((a, x) => a + (x.v ?? 0), 0);
+      const missing = parts.filter((x) => x.v == null).map((x) => x.f.label);
+      const missingOut = parts.some((x) => x.v == null && x.f.dir === "out");
+      const opening = stock;
+      if (stock != null) stock = stock + inward - outward;
+      return { period: p, opening, inward, outward, closing: stock, util: stock != null ? stock / cap[wh] : null, missing, missingOut, partial: p === cur };
+    });
+    return { wh, capacity: cap[wh], rows };
   });
-  return { months, table, roll, from: last[0]?.period ?? null };
+  return { months, table, outlook, through, cur, startSource: invDaily.length ? `stock on ${invDaily[0].day} (Snowflake)` : `${new Date(`${cur}T00:00:00Z`).toLocaleString("en-IN", { month: "short", timeZone: "UTC" })} inventory from the workbook, taken as of day ${through}` };
 }

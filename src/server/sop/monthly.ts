@@ -64,8 +64,8 @@ export async function monthlyReview(input: string | string[], label?: string) {
   }).filter((v) => v.rows.length > 1);
   const [meta, trendRows, flowRows, returns] = await Promise.all([
     q<{ through_day: number }>(`select through_day from sop_review_periods where period = $1`, [period]),
-    q<{ view_key: string; period: string; sp: number; sa: number; np: number; na: number }>(
-      `select view_key, period::text as period, coalesce(south_plan,0) as sp, coalesce(south_actual,0) as sa, coalesce(north_plan,0) as np, coalesce(north_actual,0) as na
+    q<{ view_key: string; row_label: string; period: string; sp: number; sa: number; np: number; na: number }>(
+      `select view_key, row_label, period::text as period, coalesce(south_plan,0) as sp, coalesce(south_actual,0) as sa, coalesce(north_plan,0) as np, coalesce(north_actual,0) as na
        from sop_review_rows where period in (select period from sop_review_rows where view_key <> 'liquidation')`),
     q<FlowRow>(`select period::text as period, warehouse, capacity, coalesce(opening,0) as opening, coalesce(inward_category,0) as inward_category, coalesce(inward_returns,0) as inward_returns, coalesce(outward,0) as outward, coalesce(closing,0) as closing from sop_inventory_flow order by period, warehouse desc`),
     q<ReturnsRow>(`select period::text as period, warehouse, b2c, b2b, fwd_b2c, fwd_retail from sop_returns order by period, warehouse desc`),

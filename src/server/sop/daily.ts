@@ -10,8 +10,10 @@ export interface DayPoint { day: string; plan: number; actual: number; dev: numb
 export interface DaySeries { days: DayPoint[]; judged: number; up: number; down: number; ok: number; unplanned: number; basis: Basis; worstUp: DayPoint | null; worstDown: DayPoint | null }
 export interface DailyView { key: string; title: string; flow: "Outwards" | "Inwards"; total: DaySeries; rows: { label: string; series: DaySeries }[] }
 
-const VIEWS: { key: string; title: string; flow: "Outwards" | "Inwards"; weekly: boolean; byLabel: boolean }[] = [
-  { key: "b2c", title: "B2C outward", flow: "Outwards", weekly: false, byLabel: true },
+const shopify = (l: string) => /^shopify/i.test(l);
+const VIEWS: { key: string; src?: string; match?: (label: string) => boolean; title: string; flow: "Outwards" | "Inwards"; weekly: boolean; byLabel: boolean }[] = [
+  { key: "b2c_sf", src: "b2c", match: shopify, title: "B2C · Shopify", flow: "Outwards", weekly: false, byLabel: true },
+  { key: "b2c_mp", src: "b2c", match: (l) => !shopify(l), title: "B2C · Marketplaces", flow: "Outwards", weekly: false, byLabel: true },
   { key: "b2b_mp", title: "B2B · Marketplace", flow: "Outwards", weekly: false, byLabel: true },
   { key: "retail_fwd", title: "B2B · Retail stores", flow: "Outwards", weekly: true, byLabel: false },
   { key: "category_inward", title: "Category inward", flow: "Inwards", weekly: true, byLabel: false },
@@ -53,7 +55,7 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
   for (const f of facts) {
     const m = viewOf(f.feed, f.label, f.day, knownB2B);
     if (!m || f.region === "other") continue;
-    const label = VIEWS.find((v) => v.key === m.view)?.byLabel ? m.label : "";
+    const label = VIEWS.find((v) => (v.src ?? v.key) === m.view)?.byLabel ? m.label : "";
     act.set(`${m.view}|${label}|${f.day}`, (act.get(`${m.view}|${label}|${f.day}`) ?? 0) + Number(f.units));
     const p = `${f.day.slice(0, 7)}-01`;
     if (!lastFact.get(p) || f.day > lastFact.get(p)!) lastFact.set(p, f.day);
@@ -66,11 +68,13 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
 
   // only judge views that actually have day-level actuals in these months
   const viewsWithFacts = new Set([...act.keys()].map((k) => k.split("|")[0]));
+  // a B2C half only counts when it has its own facts (Shopify vs marketplaces)
   const out: DailyView[] = [];
   for (const v of VIEWS) {
-    if (!viewsWithFacts.has(v.key)) continue;
-    const labels = v.byLabel ? [...new Set(review.filter((r) => r.view_key === v.key).map((r) => r.row_label)
-      .concat([...act.keys()].filter((k) => k.startsWith(`${v.key}|`)).map((k) => k.split("|")[1])))].sort() : [""];
+    const src = v.src ?? v.key;
+    if (!viewsWithFacts.has(src)) continue;
+    const labels = v.byLabel ? [...new Set(review.filter((r) => r.view_key === src).map((r) => r.row_label)
+      .concat([...act.keys()].filter((k) => k.startsWith(`${src}|`)).map((k) => k.split("|")[1])))].filter((l) => !v.match || v.match(l)).sort() : [""];
     const rows: { label: string; series: DaySeries }[] = [];
     let basis: Basis = "monthly";
     const totals = new Map<string, DayPoint>();
@@ -79,17 +83,17 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
       for (const p of months) {
         const n = through[p];
         if (!n) continue;
-        const monthPlan = (lbl: string) => review.filter((r) => r.view_key === v.key && r.period === p && (v.byLabel ? r.row_label === lbl : true)).reduce((a, r) => a + r.sp + r.np, 0);
-        const weekPlan = (wk: string) => { const r = review.find((x) => x.view_key === v.key && x.period === p && x.row_label === wk); return r ? r.sp + r.np : null; };
+        const monthPlan = (lbl: string) => review.filter((r) => r.view_key === src && r.period === p && (v.byLabel ? r.row_label === lbl : true)).reduce((a, r) => a + r.sp + r.np, 0);
+        const weekPlan = (wk: string) => { const r = review.find((x) => x.view_key === src && x.period === p && x.row_label === wk); return r ? r.sp + r.np : null; };
         const wkDays = (wk: string) => Array.from({ length: daysIn(p) }, (_, i) => `${p.slice(0, 8)}${String(i + 1).padStart(2, "0")}`).filter((d) => weekOfMonth(d) === wk).length;
-        const useDaily = hasDaily(v.key, p);
+        const useDaily = hasDaily(src, p);
         basis = useDaily ? "daily" : v.weekly ? "weekly" : "monthly";
         for (const d of dayList(p, n)) {
           let plan: number;
-          if (useDaily) plan = dailyPlan.get(`${v.key}|${v.byLabel ? label : ""}|${d}`) ?? 0;
+          if (useDaily) plan = dailyPlan.get(`${src}|${v.byLabel ? label : ""}|${d}`) ?? 0;
           else if (v.weekly) { const wk = weekOfMonth(d); const w = weekPlan(wk); plan = w != null ? w / Math.max(1, wkDays(wk)) : 0; }
           else plan = monthPlan(label) / daysIn(p);
-          const actual = act.get(`${v.key}|${label}|${d}`) ?? 0;
+          const actual = act.get(`${src}|${label}|${d}`) ?? 0;
           pts.push({ day: d, plan, actual, dev: plan > 0 ? (actual - plan) / plan : null });
           const t = totals.get(d) ?? { day: d, plan: 0, actual: 0, dev: null };
           t.plan += plan; t.actual += actual; totals.set(d, t);

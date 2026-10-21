@@ -142,12 +142,18 @@ export function whInsights(s: ReturnType<typeof whSeries>): Insight[] {
 
 /* ---------- month-on-month ---------- */
 /** Total utilisation (actual ÷ plan) per view per month. */
-export function trendTable(rows: { view_key: string; period: string; sp: number; sa: number; np: number; na: number }[]) {
+export const isShopify = (label: string) => /^shopify/i.test(label);
+/** Rows of the month-on-month table: every view, with B2C split into Shopify and the marketplaces. */
+type TrendRow = { key: string; title: string; view: string; match?: (label: string) => boolean };
+const TREND_ROWS: TrendRow[] = VIEWS.flatMap((v): TrendRow[] => v.key === "b2c"
+  ? [{ key: "b2c_sf", title: "B2C · Shopify", view: "b2c", match: isShopify }, { key: "b2c_mp", title: "B2C · Marketplaces", view: "b2c", match: (l: string) => !isShopify(l) }]
+  : [{ key: v.key, title: v.title, view: v.key }]);
+export function trendTable(rows: { view_key: string; row_label: string; period: string; sp: number; sa: number; np: number; na: number }[]) {
   const periods = [...new Set(rows.map((r) => r.period))].sort();
-  return VIEWS.map((v) => ({
-    def: v,
+  return TREND_ROWS.map((v) => ({
+    def: { key: v.key, title: v.title },
     cells: periods.map((p) => {
-      const rs = rows.filter((r) => r.view_key === v.key && r.period === p);
+      const rs = rows.filter((r) => r.view_key === v.view && r.period === p && (!v.match || v.match(r.row_label)));
       if (!rs.length) return null;
       const plan = rs.reduce((a, r) => a + r.sp + r.np, 0), actual = rs.reduce((a, r) => a + r.sa + r.na, 0);
       return { period: p, plan, actual, util: plan > 0 ? actual / plan : null };
@@ -216,10 +222,11 @@ export function returnsInsights(rows: ReturnsRow[]): Insight[] {
 /** Forecast accuracy: 1 − |actual − plan| ÷ plan (0 when off by 100%+); null without a plan. */
 export const accuracy = (plan: number, actual: number) => (plan > 0 ? Math.max(0, 1 - Math.abs(actual - plan) / plan) : null);
 export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null }
-const OVERALL: { key: ViewKey; label: string; flow: "Inwards" | "Outwards" }[] = [
+const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp"; label: string; flow: "Inwards" | "Outwards" }[] = [
   { key: "category_inward", label: "Category inward", flow: "Inwards" },
   { key: "prepack", label: "Pre-pack", flow: "Inwards" },
-  { key: "b2c", label: "B2C (Shopify + marketplaces)", flow: "Outwards" },
+  { key: "b2c_sf", label: "B2C · Shopify", flow: "Outwards" },
+  { key: "b2c_mp", label: "B2C · Marketplaces", flow: "Outwards" },
   { key: "b2b_mp", label: "B2B · Marketplace", flow: "Outwards" },
   { key: "retail_fwd", label: "B2B · Retail stores", flow: "Outwards" },
   { key: "liquidation", label: "Liquidation", flow: "Outwards" },
@@ -234,7 +241,10 @@ export function overallTable(views: { def: ViewDef; rows: Row[] }[]): OverallRow
   for (const flow of ["Inwards", "Outwards"] as const) {
     const part: OverallRow[] = [];
     for (const o of OVERALL.filter((x) => x.flow === flow)) {
-      const t = views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
+      // B2C splits into Shopify and the marketplaces
+      const t = o.key === "b2c_sf" || o.key === "b2c_mp"
+        ? (views.find((v) => v.def.key === "b2c")?.rows ?? []).filter((r) => !r.kind && (o.key === "b2c_sf") === isShopify(r.label)).reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na, tp: a.tp + r.tp, ta: a.ta + r.ta }), { sp: 0, sa: 0, np: 0, na: 0, tp: 0, ta: 0 })
+        : views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
       if (t && (t.tp > 0 || t.ta > 0)) part.push(mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }));
     }
     if (!part.length) continue;
