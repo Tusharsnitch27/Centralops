@@ -100,8 +100,10 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
 }
 
 /** Sheet-style warehouse table: capacity, inventory and utilisation by month for South, North and Total. */
-function WhTable({ wh }: { wh: Data["wh"] }) {
+function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) {
   const blocks: [string, WhPoint[], string][] = [["South (BLR)", wh.South, "#e8f0fe"], ["North (GGN)", wh.North, "#fdf2e3"], ["Total", wh.Total, "#e7f7ed"]];
+  const pp = (name: string, m: string) => { const k = name.startsWith("South") ? "South" : name.startsWith("North") ? "North" : null; const v = prepack[m]; if (!v) return null; return k ? v[k] : (v.South ?? 0) + (v.North ?? 0); };
+  const hasPP = Object.keys(prepack).length > 0;
   return (
     <div className="card overflow-x-auto">
       <table className="w-full min-w-[900px] border-collapse text-[13px]">
@@ -115,7 +117,7 @@ function WhTable({ wh }: { wh: Data["wh"] }) {
           {blocks.map(([name, pts, bg]) => (
             <Fragment key={name}>
               <tr className="border-t border-line">
-                <td rowSpan={3} className="px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
+                <td rowSpan={hasPP ? 4 : 3} className="px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
                 <td className="whitespace-nowrap px-4 py-2 text-ink-3">Capacity (lakh units)</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right tabular">{(p.capacity / 100000).toFixed(2)}</td>)}
               </tr>
@@ -131,6 +133,12 @@ function WhTable({ wh }: { wh: Data["wh"] }) {
                   </td>
                 ))}
               </tr>
+              {hasPP && (
+                <tr className="border-t border-line/60">
+                  <td className="whitespace-nowrap px-4 py-2 text-ink-3">Pre-pack stock (separate area, units)</td>
+                  {pts.map((p) => { const v = pp(name, p.period); return <td key={p.period} className="px-4 py-2 text-right tabular text-ink-3">{v != null ? (v / 100000).toFixed(2) : "—"}</td>; })}
+                </tr>
+              )}
             </Fragment>
           ))}
         </tbody>
@@ -179,7 +187,7 @@ export function MonthlyReviewView({ d }: { d: Data }) {
               <WhTile name="Total" pts={d.wh.Total} tone="var(--color-ink)" />
             </div>
             {d.whInsights.length > 0 && <InsightCards items={d.whInsights} />}
-            <WhTable wh={d.wh} />
+            <WhTable wh={d.wh} prepack={d.prepack} />
           </div>
         </Collapsible>
         <Collapsible id="sop:flow" icon={<ArrowDownToLine size={15} />} title="Inventory flow" sub="Opening → inward (category + returns) → outward → closing, by warehouse"

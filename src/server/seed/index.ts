@@ -6,7 +6,7 @@ import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
-import { seedSopHistory } from "./sopHistory";
+import { seedSopHistory, seedSopPlanDaily } from "./sopHistory";
 import { seedWeekly } from "./weekly";
 import { seedLibrary } from "./library";
 import { seedOrgChart } from "./orgChart";
@@ -96,6 +96,12 @@ export async function bootstrap(rawQ: RunQ) {
     await seedSopHistory(rawQ);
     await setSetting("seed.sop_history", "v1");
     console.log("[seed] S&OP Apr–Oct history, inventory flow, returns, outbound capacity, call-outs loaded");
+  }
+
+  if ((await setting("seed.sop_plan_daily")) !== "v1") {
+    await seedSopPlanDaily(rawQ);
+    await setSetting("seed.sop_plan_daily", "v1");
+    console.log("[seed] S&OP daily plans (B2C, retail) loaded");
   }
 
   if ((await setting("seed.weekly")) !== "v1") {

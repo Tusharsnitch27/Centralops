@@ -42,9 +42,11 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const [rowsRaw, caps] = await Promise.all([
     q<{ period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null }>(
       `select period::text as period, view_key, row_label, row_group, sort, south_plan, south_actual, north_plan, north_actual from sop_review_rows where period = any($1::date[]) order by period, view_key, sort, row_label`, [months]),
-    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null }>(`select period::text as period, warehouse, capacity, inventory from sop_wh_capacity order by period`),
+    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; prepack_units: number | null }>(`select period::text as period, warehouse, capacity, inventory, prepack_units from sop_wh_capacity order by period`),
   ]);
   const wh = whSeries(caps as WhCap[]);
+  const prepack: Record<string, { South?: number; North?: number }> = {};
+  for (const c of caps) if (c.prepack_units != null) (prepack[c.period] ??= {})[c.warehouse] = Number(c.prepack_units);
   const at = (w: "South" | "North") => wh[w].find((p) => p.period === period && p.util != null) ?? latestUtil(wh[w]);
   const ctx = { South: at("South"), North: at("North") };
   const views = VIEWS.map((v) => {
@@ -73,7 +75,7 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const days = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0)).getUTCDate();
   const through = meta[0]?.through_day ?? days;
   return {
-    period, months, label: label ?? MON(period), multi, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
+    period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
     trend: trendTable(trendRows), flow, flowNow, flowInsights: flowInsights(flowNow.length ? flowNow : flow.filter((f) => f.period === flow.at(-1)?.period)),
     returns, returnsInsights: returnsInsights(returns),
   };

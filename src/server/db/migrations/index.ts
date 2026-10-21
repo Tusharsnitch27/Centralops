@@ -18,6 +18,8 @@ import { sql as sop40 } from "./040_sop";
 import { sql as sopReview } from "./041_sop_review";
 import { sql as sopHistory } from "./042_sop_history";
 import { sql as sopSync } from "./043_sop_sync";
+import { sql as sopDaily } from "./044_sop_daily";
+import { sql as sopPlanDaily } from "./045_sop_plan_daily";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -37,4 +39,6 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 41, name: "sop_review", sql: sopReview },
   { version: 42, name: "sop_history", sql: sopHistory },
   { version: 43, name: "sop_sync", sql: sopSync },
+  { version: 44, name: "sop_daily", sql: sopDaily },
+  { version: 45, name: "sop_plan_daily", sql: sopPlanDaily },
 ];

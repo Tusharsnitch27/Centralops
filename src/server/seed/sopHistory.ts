@@ -2,6 +2,7 @@ import "server-only";
 import type { RunQ } from "../db";
 import data from "../../db/seed/sop-history-fy27.json";
 import plan from "../../db/seed/sop-fy27.json";
+import planDaily from "../../db/seed/sop-plan-daily-fy27.json";
 
 /** Apr–Oct 2026 plan vs actual, inventory flow, returns, outbound capacity and meeting call-outs
  *  from "(Plan vs Actual) S&OP_FY'26-27.xlsx". Idempotent upserts. */
@@ -60,4 +61,16 @@ export async function seedSopHistory(S: RunQ) {
   if (!(await S(`select 1 from sop_callouts limit 1`)).length)
     for (const [i, c] of data.callouts.entries())
       await S(`insert into sop_callouts (meeting_date, title, poc, remarks, sort) values ($1,$2,$3,$4,$5)`, [c.date, c.task, c.poc, c.remarks, i]);
+}
+
+/** Day-level plans from the projection workbook (B2C per channel × WH, retail per WH). */
+export async function seedSopPlanDaily(S: RunQ) {
+  const rows = planDaily.rows as [string, string, string, number, number][];
+  for (let i = 0; i < rows.length; i += 500) {
+    const c = rows.slice(i, i + 500);
+    await S(`insert into sop_plan_daily (day, view_key, row_label, south, north, source)
+             select d::date, v, l, s, n, 'workbook' from unnest($1::text[], $2::text[], $3::text[], $4::numeric[], $5::numeric[]) as t(v, d, l, s, n)
+             on conflict (day, view_key, row_label) do update set south = excluded.south, north = excluded.north`,
+      [c.map((r) => r[0]), c.map((r) => r[1]), c.map((r) => r[2]), c.map((r) => r[3]), c.map((r) => r[4])]);
+  }
 }

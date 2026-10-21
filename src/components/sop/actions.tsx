@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { BellRing, Check, ClipboardCopy, MessageSquarePlus, MoreHorizontal, Plus, Send } from "lucide-react";
@@ -22,18 +23,36 @@ export function useSopAction() {
   return { pending, run };
 }
 
+const MAIN = [
+  { key: "summary", href: "/sop", label: "Summary" },
+  { key: "monthly", href: "/sop/monthly", label: "Monthly review" },
+  { key: "cost", href: "/sop/cost", label: "Processing cost" },
+  { key: "productivity", href: "/sop/productivity", label: "Productivity" },
+];
+const MORE = [
+  { key: "inputs", href: "/sop/inputs", label: "Inputs" }, { key: "projections", href: "/sop/projections", label: "Projections" },
+  { key: "streams", href: "/sop/streams", label: "Streams" }, { key: "capacity", href: "/sop/capacity", label: "Capacity planning" },
+  { key: "review", href: "/sop/review", label: "Review meeting" }, { key: "data", href: "/sop/data", label: "Data sources" },
+];
+
+/** Leadership tabs first; the working pages (inputs, projections, capacity, meeting, data) sit in a quieter row. */
 export function SopNav({ counts }: { counts?: { inputs?: number; capacity?: number } }) {
   const path = usePathname();
-  const active = path === "/sop" ? "overview" : path.split("/")[2] ?? "overview";
+  const seg = path.split("/")[2] ?? "summary";
+  const active = seg === "" ? "summary" : seg;
+  const count = (k: string) => (k === "inputs" ? counts?.inputs : k === "capacity" ? counts?.capacity : undefined);
   return (
-    <Tabs className="mb-6" active={active} items={[
-      { key: "overview", href: "/sop", label: "Monthly review" },
-      { key: "streams", href: "/sop/streams", label: "Streams" },
-      { key: "inputs", href: "/sop/inputs", label: "Inputs", count: counts?.inputs },
-      { key: "projections", href: "/sop/projections", label: "Projections" },
-      { key: "capacity", href: "/sop/capacity", label: "Capacity", count: counts?.capacity },
-      { key: "review", href: "/sop/review", label: "Review" },
-    ]} />
+    <div className="mb-6 space-y-2">
+      <Tabs active={active} items={MAIN} />
+      <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-1 text-[12px]">
+        <span className="mr-1 font-semibold uppercase tracking-[0.08em] text-ink-4 text-[10.5px]">Inputs &amp; data</span>
+        {MORE.map((m) => (
+          <Link key={m.key} href={m.href} className={`rounded-md px-2 py-0.5 ${active === m.key ? "bg-ink text-white" : "text-ink-3 hover:bg-subtle hover:text-ink"}`}>
+            {m.label}{count(m.key) ? <span className="ml-1 rounded bg-accent-soft px-1 text-[10.5px] font-semibold text-accent-ink">{count(m.key)}</span> : null}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
