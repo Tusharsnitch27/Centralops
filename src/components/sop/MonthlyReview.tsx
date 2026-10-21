@@ -3,7 +3,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Lightbulb, Warehouse } from "lucide-r
 import { cn } from "@/lib/cn";
 import { Collapsible, ExpandAll } from "@/components/ui/Collapsible";
 import type { MonthlyReview as Data } from "@/server/sop/monthly";
-import { returnRate, type FlowCalc, type Insight, type ReturnsRow, type Row, type Seg, type WhPoint } from "./reviewMath";
+import { returnRate, type OverallRow, type FlowCalc, type Insight, type ReturnsRow, type Row, type Seg, type WhPoint } from "./reviewMath";
 
 const fmt = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
 const lakh = (v: number) => `${(v / 100000).toFixed(2)}L`;
@@ -155,11 +155,13 @@ export function MonthlyReviewView({ d }: { d: Data }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end -mt-2"><ExpandAll ids={ids} /></div>
+      <OverallAccuracy rows={d.overall} label={d.multi ? d.label : `${mon(d.period)}${d.mtd ? ` · 1–${d.through}` : ""}`} />
+
       <section className="space-y-2">
         <h2 className="label-caps px-1">Overview</h2>
         <Collapsible id="sop:trend" title="Month on month" sub="Actual ÷ plan for every view, Apr → now"
           summary={<span className="text-ink-3">{d.trend[0]?.periods.length ?? 0} months</span>}>
-          <TrendTable trend={d.trend} current={d.period} mtdLabel={d.mtd ? `1–${d.through}` : null} />
+          <TrendTable trend={d.trend} current={d.months} mtdLabel={d.mtd ? `1–${d.through}` : null} />
         </Collapsible>
       </section>
 
@@ -205,7 +207,7 @@ export function MonthlyReviewView({ d }: { d: Data }) {
           {d.views.filter((v) => v.def.flow === f.key).map((v) => {
             const t = v.rows.find((r) => r.kind === "total")!;
             return (
-              <Collapsible key={v.def.key} id={`sop:${v.def.key}`} title={v.def.title} sub={`${v.def.sub} · 1–${days} ${mon(d.period)}`}
+              <Collapsible key={v.def.key} id={`sop:${v.def.key}`} title={v.def.title} sub={d.multi ? `${v.def.sub.replace(/ by week$/, "")} · ${d.label}` : `${v.def.sub} · 1–${days} ${mon(d.period)}`}
                 summary={<>
                   <span className="hidden text-ink-3 sm:inline">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
                   <span className="hidden text-ink-3 sm:inline">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
@@ -238,17 +240,18 @@ export function MonthlyReviewView({ d }: { d: Data }) {
 
 const monL = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { month: "short", timeZone: "UTC" });
 
-function TrendTable({ trend, current, mtdLabel }: { trend: { def: { key: string; title: string }; periods: string[]; cells: ({ period: string; plan: number; actual: number; util: number | null } | null)[] }[]; current: string; mtdLabel: string | null }) {
+function TrendTable({ trend, current, mtdLabel }: { trend: { def: { key: string; title: string }; periods: string[]; cells: ({ period: string; plan: number; actual: number; util: number | null } | null)[] }[]; current: string[]; mtdLabel: string | null }) {
+  const last = current.at(-1);
   const periods = trend[0]?.periods ?? [];
   return (
     <div className="overflow-x-auto">
       <table className="table-base min-w-[640px]">
-        <thead><tr><th>View</th>{periods.map((p) => <th key={p} className={cn("text-right", p === current && "!text-ink")}>{monL(p)}{p === current && mtdLabel ? ` · ${mtdLabel}` : ""}</th>)}</tr></thead>
+        <thead><tr><th>View</th>{periods.map((p) => <th key={p} className={cn("text-right", current.includes(p) && "!text-ink")}>{monL(p)}{p === last && mtdLabel ? ` · ${mtdLabel}` : ""}</th>)}</tr></thead>
         <tbody>{trend.map((r) => (
           <tr key={r.def.key}>
             <td className="font-medium">{r.def.title}</td>
             {r.cells.map((c, i) => (
-              <td key={i} className={cn("text-right", periods[i] === current && "bg-subtle/60")} title={c ? `Plan ${fmt(c.plan)} · Actual ${fmt(c.actual)}` : undefined}>
+              <td key={i} className={cn("text-right", current.includes(periods[i]) && "bg-subtle/60")} title={c ? `Plan ${fmt(c.plan)} · Actual ${fmt(c.actual)}` : undefined}>
                 {c ? <UtilChip u={c.util} plan={c.plan} actual={c.actual} /> : <span className="text-ink-4">—</span>}
               </td>
             ))}
@@ -307,5 +310,56 @@ function ReturnsTable({ rows }: { rows: ReturnsRow[] }) {
       </table>
       <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Rate = returns ÷ forward volume of the same month (B2C forward; retail forward for store returns). Months without a forward split show volumes only.</p>
     </div>
+  );
+}
+
+/** Overall plan vs actual by flow: plan, actual, deviation and forecast accuracy (Total / South / North). */
+function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string }) {
+  if (!rows.length) return null;
+  const accCell = (a: number | null, strong?: boolean) => {
+    if (a == null) return <span className="text-ink-4">—</span>;
+    const tone = a >= 0.9 ? "bg-ok" : a >= 0.75 ? "bg-warn" : "bg-bad";
+    return (
+      <span className="flex items-center justify-end gap-2">
+        {strong && <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-muted sm:block"><span className={cn("block h-full rounded-full", tone)} style={{ width: `${Math.round(a * 100)}%` }} /></span>}
+        <span className={cn("tabular", strong ? "font-semibold" : "", a >= 0.9 ? "text-ok" : a >= 0.75 ? "text-warn" : "text-bad")}>{pc(a)}</span>
+      </span>
+    );
+  };
+  const groups = ["Inwards", "Outwards"] as const;
+  return (
+    <section className="space-y-2">
+      <h2 className="label-caps px-1">Overall accuracy · {label}</h2>
+      <div className="card overflow-x-auto">
+        <table className="table-base min-w-[860px]">
+          <thead><tr>
+            <th>Flow</th><th className="text-right">Plan</th><th className="text-right">Actual</th><th className="text-right">Deviation</th><th className="text-right">Deviation %</th>
+            <th className="text-right">Accuracy</th><th className="text-right">South acc.</th><th className="text-right">North acc.</th>
+          </tr></thead>
+          {groups.map((g) => {
+            const rs = rows.filter((r) => r.flow === g);
+            if (!rs.length) return null;
+            return (
+              <tbody key={g}>
+                <tr><td colSpan={8} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">{g}</td></tr>
+                {rs.map((r) => (
+                  <tr key={r.key} className={cn(r.kind === "subtotal" && "bg-subtle/40 font-semibold")}>
+                    <td className={cn(r.kind ? "font-semibold" : "pl-5")}>{r.label}</td>
+                    <td className="text-right tabular">{fmt(r.tp)}</td>
+                    <td className="text-right tabular">{fmt(r.ta)}</td>
+                    <td className={cn("text-right tabular", r.dev < 0 ? "text-bad" : r.dev > 0 ? "text-warn" : "text-ink-3")}>{r.dev > 0 ? "+" : r.dev < 0 ? "−" : ""}{fmt(Math.abs(r.dev))}</td>
+                    <td className={cn("text-right tabular", r.devPct == null ? "text-ink-4" : Math.abs(r.devPct) >= 0.25 ? "text-bad" : Math.abs(r.devPct) >= 0.1 ? "text-warn" : "text-ok")}>{r.devPct == null ? "—" : `${r.devPct > 0 ? "+" : ""}${Math.round(r.devPct * 100)}%`}</td>
+                    <td className="text-right">{accCell(r.acc, true)}</td>
+                    <td className="text-right">{accCell(r.sAcc)}</td>
+                    <td className="text-right">{accCell(r.nAcc)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            );
+          })}
+        </table>
+        <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Accuracy = 1 − |actual − plan| ÷ plan. Deviation + means more than planned, − means less. Detailed views follow below.</p>
+      </div>
+    </section>
   );
 }

@@ -145,3 +145,28 @@ html[data-theme="mono"]   { --color-accent: #1c1c1c; --color-accent-2: #6b6b6b; 
   .card { box-shadow: none !important; }
   .break-inside-avoid-page { break-inside: avoid-page; }
 }
+
+/* ---------- Org chart (top-down tree with connectors) ---------- */
+@layer components {
+  .org-tree, .org-tree ul { display: flex; justify-content: center; margin: 0; padding: 0; }
+  .org-tree ul { position: relative; padding-top: 22px; }
+  .org-tree li { position: relative; list-style: none; display: flex; flex-direction: column; align-items: center; padding: 22px 8px 0; }
+  .org-tree > li { padding-top: 0; }
+  /* horizontal rail + drop to each child */
+  .org-tree li::before, .org-tree li::after { content: ""; position: absolute; top: 0; right: 50%; width: 50%; height: 22px; border-top: 1.5px solid var(--color-line-strong); }
+  .org-tree li::after { right: auto; left: 50%; border-left: 1.5px solid var(--color-line-strong); }
+  .org-tree li:only-child::before, .org-tree li:only-child::after { display: none; }
+  .org-tree li:only-child { padding-top: 22px; }
+  .org-tree li:only-child::after { display: block; border-top: 0; width: 0; left: 50%; }
+  .org-tree li:first-child::before, .org-tree li:last-child::after { border: 0 none; }
+  .org-tree li:last-child::before { border-right: 1.5px solid var(--color-line-strong); border-top-right-radius: 8px; }
+  .org-tree li:first-child::after { border-top-left-radius: 8px; }
+  .org-tree > li::before, .org-tree > li::after { display: none; }
+  /* stem down from a parent to its children */
+  .org-tree ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 1.5px solid var(--color-line-strong); }
+  /* reports without reports of their own: a compact column */
+  .org-stack { position: relative; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; padding-left: 14px; }
+  .org-stack::before { content: ""; position: absolute; left: 4px; top: -10px; bottom: 14px; border-left: 1.5px solid var(--color-line-strong); }
+  .org-stack > * { position: relative; }
+  .org-stack > *::before { content: ""; position: absolute; left: -10px; top: 50%; width: 10px; border-top: 1.5px solid var(--color-line-strong); }
+}

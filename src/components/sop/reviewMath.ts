@@ -211,3 +211,36 @@ export function returnsInsights(rows: ReturnsRow[]): Insight[] {
   }
   return out.sort((a, b) => b.score - a.score).slice(0, 3);
 }
+
+/* ---------- overall accuracy ---------- */
+/** Forecast accuracy: 1 − |actual − plan| ÷ plan (0 when off by 100%+); null without a plan. */
+export const accuracy = (plan: number, actual: number) => (plan > 0 ? Math.max(0, 1 - Math.abs(actual - plan) / plan) : null);
+export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null }
+const OVERALL: { key: ViewKey; label: string; flow: "Inwards" | "Outwards" }[] = [
+  { key: "category_inward", label: "Category inward", flow: "Inwards" },
+  { key: "prepack", label: "Pre-pack", flow: "Inwards" },
+  { key: "b2c", label: "B2C (Shopify + marketplaces)", flow: "Outwards" },
+  { key: "b2b_mp", label: "B2B · Marketplace", flow: "Outwards" },
+  { key: "retail_fwd", label: "B2B · Retail stores", flow: "Outwards" },
+  { key: "liquidation", label: "Liquidation", flow: "Outwards" },
+];
+const mk = (key: string, label: string, flow: OverallRow["flow"], s: { sp: number; sa: number; np: number; na: number }, kind?: OverallRow["kind"]): OverallRow => {
+  const tp = s.sp + s.np, ta = s.sa + s.na;
+  return { key, label, flow, kind, ...s, tp, ta, dev: ta - tp, devPct: tp > 0 ? (ta - tp) / tp : null, acc: accuracy(tp, ta), sAcc: accuracy(s.sp, s.sa), nAcc: accuracy(s.np, s.na) };
+};
+/** One row per flow (inwards / outwards by channel) from each view's total, plus subtotals. */
+export function overallTable(views: { def: ViewDef; rows: Row[] }[]): OverallRow[] {
+  const out: OverallRow[] = [];
+  for (const flow of ["Inwards", "Outwards"] as const) {
+    const part: OverallRow[] = [];
+    for (const o of OVERALL.filter((x) => x.flow === flow)) {
+      const t = views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
+      if (t && (t.tp > 0 || t.ta > 0)) part.push(mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }));
+    }
+    if (!part.length) continue;
+    out.push(...part);
+    const sum = part.reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na }), { sp: 0, sa: 0, np: 0, na: 0 });
+    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal"));
+  }
+  return out;
+}
