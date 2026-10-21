@@ -5,6 +5,7 @@ import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
+import { seedSopHistory } from "./sopHistory";
 import { seedWeekly } from "./weekly";
 import { seedLibrary } from "./library";
 
@@ -36,7 +37,21 @@ export async function bootstrap(rawQ: RunQ) {
     );
     console.log(`[seed] admin account ${email} created`);
   }
-  const admin = (await rawQ<{ id: string }>(`select id from users where role = 'admin' order by created_at limit 1`))[0]!.id;
+  // the ADMIN_EMAIL account must always be able to sign in (Long Tail's bootstrap rule): create it if another admin
+  // exists under a different email, and set the password when it has none — or on demand with ADMIN_RESET_PASSWORD=true
+  const pw = process.env.ADMIN_PASSWORD;
+  const mine = await rawQ<{ id: string; password_hash: string | null }>(`select id, password_hash from users where lower(email) = $1`, [email]);
+  if (!mine.length && pw) {
+    await rawQ(
+      `insert into users (username, email, name, title, role, password_hash, joined_at) values ($1,$2,$3,'Program Manager · Central Ops','admin',$4,current_date)
+       on conflict (username) do update set email = excluded.email, role = 'admin', password_hash = excluded.password_hash, active = true`,
+      [username, email, process.env.ADMIN_NAME || "Tushar", await hashPassword(pw)]);
+    console.log(`[seed] admin account ${email} created`);
+  } else if (mine.length && pw && (!mine[0].password_hash || process.env.ADMIN_RESET_PASSWORD === "true")) {
+    await rawQ(`update users set password_hash = $2, role = 'admin', active = true, failed_logins = 0, locked_until = null where id = $1`, [mine[0].id, await hashPassword(pw)]);
+    console.log(`[seed] admin password for ${email} set from ADMIN_PASSWORD`);
+  }
+  const admin = (await rawQ<{ id: string }>(`select id from users where role = 'admin' order by (lower(email) = $1) desc, created_at limit 1`, [email]))[0]!.id;
 
   if (!(await setting("seed.reference"))) {
     await rawQ("begin");
@@ -62,6 +77,12 @@ export async function bootstrap(rawQ: RunQ) {
     await seedSopReview(rawQ);
     await setSetting("seed.sop_review", "v1");
     console.log("[seed] S&OP monthly review (Sep 2026) loaded");
+  }
+
+  if ((await setting("seed.sop_history")) !== "v1") {
+    await seedSopHistory(rawQ);
+    await setSetting("seed.sop_history", "v1");
+    console.log("[seed] S&OP Apr–Oct history, inventory flow, returns, outbound capacity, call-outs loaded");
   }
 
   if ((await setting("seed.weekly")) !== "v1") {

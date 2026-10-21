@@ -8,15 +8,25 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Sign in" };
 
 const ERRORS: Record<string, string> = {
-  invalid: "That email and password don't match.",
-  locked: "Too many attempts. Try again in a few minutes.",
+  invalid: "Incorrect email or password.",
+  missing: "Enter your email and password.",
+  locked: "Too many attempts from this network. Try again in 15 minutes.",
+  denied: "Your account has been deactivated. Ask a Central Ops admin.",
+  no_password: "Your account has no password yet. Ask a Central Ops admin to set one.",
   session: "Your session ended — please sign in again.",
+  config: "Sign-in isn’t set up on this server (NEXTAUTH_SECRET or DATABASE_URL missing). Tell the admin.",
+  db: "Can’t reach the database right now. Try again in a minute; if it keeps failing, tell the admin.",
+  server: "Something went wrong signing you in. Try again; if it keeps failing, tell the admin.",
 };
+const left = (n: number) => `${n} attempt${n === 1 ? "" : "s"} left.`;
 
-export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; left?: string; m?: string; u?: string; signedout?: string }> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
-  if (await getUser()) redirect(next);
+  if (!sp.signedout && (await getUser().catch(() => null))) redirect(next);
+  const err = sp.error === "account_locked" ? `Account locked after 5 wrong passwords. Try again in ${Number(sp.m) || 15} minute${Number(sp.m) === 1 ? "" : "s"}, or ask an admin to reset it.`
+    : sp.error === "invalid" && Number(sp.left) > 0 ? `Incorrect email or password. ${left(Number(sp.left))}`
+    : sp.error ? ERRORS[sp.error] ?? "Sign-in failed." : null;
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_minmax(440px,0.9fr)]">
@@ -51,7 +61,8 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           <h2 className="text-[22px] font-semibold tracking-[-0.02em]">Sign in</h2>
           <p className="mt-1 text-[13px] text-ink-3">Use your Snitch work email.</p>
 
-          {sp.error && <div className="mt-5 rounded-lg border border-bad/20 bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-medium text-bad">{ERRORS[sp.error] ?? "Sign-in failed."}</div>}
+          {err && <div role="alert" className="mt-5 rounded-lg border border-bad/20 bg-bad-soft px-3.5 py-2.5 text-[12.5px] font-medium text-bad">{err}</div>}
+          {sp.signedout && !err && <div className="mt-5 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-[12.5px] text-ink-3">You’ve been signed out.</div>}
 
           <form action="/api/auth/login" method="post" className="mt-6 space-y-4">
             <input type="hidden" name="next" value={next} />
@@ -59,21 +70,21 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
               <span className="label">Email</span>
               <span className="relative block">
                 <Mail size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                <input name="username" type="text" inputMode="email" autoComplete="email" autoCapitalize="none" required autoFocus placeholder="name@snitch.com" className="field h-11 pl-9" />
+                <input name="username" type="text" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required autoFocus={!sp.u} defaultValue={sp.u ?? ""} placeholder="name@snitch.com" className="field h-11 pl-9" />
               </span>
             </label>
             <label className="block">
               <span className="label">Password</span>
               <span className="relative block">
                 <Lock size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-                <input name="password" type="password" autoComplete="current-password" required placeholder="••••••••" className="field h-11 pl-9" />
+                <input name="password" type="password" autoComplete="current-password" required autoFocus={!!sp.u} placeholder="••••••••" className="field h-11 pl-9" />
               </span>
             </label>
             <button className="group flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink text-[13.5px] font-medium text-white transition-colors hover:bg-ink-2">
               Sign in <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
             </button>
           </form>
-          <p className="mt-6 text-[12px] text-ink-4">No access yet? Ask your Central Ops admin to add you.</p>
+          <p className="mt-6 text-[12px] text-ink-4">Accounts are created by an admin. Forgot your password? Ask an admin to reset it.</p>
         </div>
       </section>
     </div>

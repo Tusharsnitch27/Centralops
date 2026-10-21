@@ -1,11 +1,12 @@
 // S&OP monthly review: view definitions, utilisation maths and top-3 insights (pure; server + client).
 
-export type ViewKey = "b2c" | "b2b_mp" | "retail_fwd" | "category_inward" | "prepack" | "category_view";
+export type ViewKey = "b2c" | "b2b_mp" | "retail_fwd" | "liquidation" | "category_inward" | "prepack" | "category_view";
 export interface ViewDef { key: ViewKey; title: string; sub: string; flow: "outbound" | "inbound"; rowLabel: string; weekly?: boolean; subtotalGroup?: string }
 export const VIEWS: ViewDef[] = [
   { key: "b2c", title: "B2C channels", sub: "Item-level orders by channel", flow: "outbound", rowLabel: "Channel", subtotalGroup: "Marketplace" },
   { key: "b2b_mp", title: "B2B-MP channels", sub: "B2B marketplace dispatch by channel", flow: "outbound", rowLabel: "Channel" },
   { key: "retail_fwd", title: "Retail forward", sub: "Store dispatch (NSO + replenishment) by week", flow: "outbound", rowLabel: "Week", weekly: true },
+  { key: "liquidation", title: "Liquidation", sub: "Aging / liquidation dispatch plan vs actual by week", flow: "outbound", rowLabel: "Week", weekly: true },
   { key: "category_inward", title: "Category inward", sub: "Inward plan vs received by week", flow: "inbound", rowLabel: "Week", weekly: true },
   { key: "prepack", title: "Pre-pack", sub: "Pre-pack plan vs actual by week", flow: "inbound", rowLabel: "Week", weekly: true },
   { key: "category_view", title: "Category-wise inward", sub: "Inward by category", flow: "inbound", rowLabel: "Category" },
@@ -137,4 +138,76 @@ export function whInsights(s: ReturnType<typeof whSeries>): Insight[] {
       impact: [`Headroom `, { b: `${k(head)} units` }, (cur.util ?? 0) >= 0.9 ? ` — little room for OND peak inward; prioritise liquidation / North allocation.` : ` before hitting capacity.`] });
   }
   return out;
+}
+
+/* ---------- month-on-month ---------- */
+/** Total utilisation (actual ÷ plan) per view per month. */
+export function trendTable(rows: { view_key: string; period: string; sp: number; sa: number; np: number; na: number }[]) {
+  const periods = [...new Set(rows.map((r) => r.period))].sort();
+  return VIEWS.map((v) => ({
+    def: v,
+    cells: periods.map((p) => {
+      const rs = rows.filter((r) => r.view_key === v.key && r.period === p);
+      if (!rs.length) return null;
+      const plan = rs.reduce((a, r) => a + r.sp + r.np, 0), actual = rs.reduce((a, r) => a + r.sa + r.na, 0);
+      return { period: p, plan, actual, util: plan > 0 ? actual / plan : null };
+    }),
+  })).filter((r) => r.cells.some(Boolean)).map((r) => ({ ...r, periods }));
+}
+
+/* ---------- inventory flow (opening → closing) ---------- */
+export interface FlowRow { period: string; warehouse: "South" | "North"; capacity: number; opening: number; inward_category: number; inward_returns: number; outward: number; closing: number }
+export interface FlowCalc extends FlowRow { inward: number; utilOpen: number; utilClose: number; build: number; buildPct: number | null; inOut: number | null }
+export function flowCalc(r: FlowRow): FlowCalc {
+  const inward = (r.inward_category ?? 0) + (r.inward_returns ?? 0);
+  return { ...r, inward, utilOpen: r.capacity ? r.opening / r.capacity : 0, utilClose: r.capacity ? r.closing / r.capacity : 0,
+    build: r.closing - r.opening, buildPct: r.opening ? (r.closing - r.opening) / r.opening : null, inOut: r.outward ? inward / r.outward : null };
+}
+export function flowInsights(rows: FlowCalc[]): Insight[] {
+  const out: Insight[] = [];
+  for (const r of rows) {
+    const mon = new Date(`${r.period}T00:00:00Z`).toLocaleString("en-IN", { month: "short", timeZone: "UTC" });
+    if (r.utilClose >= 1) out.push({ key: `${r.warehouse}:over`, tone: "bad", score: 10 + r.utilClose,
+      title: [`${r.warehouse} WH closes ${mon} at `, { b: pc(r.utilClose), tone: "bad" }, ` of capacity (`, { b: `${k(r.closing - r.capacity)} over`, tone: "bad" }, `)`],
+      impact: [`Inward `, { b: k(r.inward) }, ` vs outward `, { b: k(r.outward) }, ` — hold or re-route inward, push liquidation and outbound before the next inward wave.`] });
+    else if (r.utilClose >= 0.9) out.push({ key: `${r.warehouse}:tight`, tone: "warn", score: 5 + r.utilClose,
+      title: [`${r.warehouse} WH closes ${mon} at `, { b: pc(r.utilClose), tone: "warn" }],
+      impact: [`Headroom `, { b: `${k(r.capacity - r.closing)} units` }, ` — plan the next month’s inward against it.`] });
+    if (r.inOut != null && r.inOut >= 1.3 && r.build > 0) out.push({ key: `${r.warehouse}:build`, tone: r.inOut >= 1.6 ? "bad" : "warn", score: 3 + r.inOut,
+      title: [`${r.warehouse}: inward is `, { b: `${r.inOut.toFixed(2)}×`, tone: "warn" }, ` outward — inventory up `, { b: sgn(r.build) }, r.buildPct != null ? ` (${pc(r.buildPct)})` : ""],
+      impact: [`Returns are `, { b: k(r.inward_returns) }, ` of the inward. Outbound throughput is the lever — check pick/pack capacity and channel dispatch.`] });
+  }
+  const seen = new Set<string>();
+  return out.sort((a, b) => b.score - a.score).filter((i) => { const w = i.key.split(":")[0]; const key = `${w}:${i.key.endsWith("build") ? "b" : "u"}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 3);
+}
+
+/* ---------- returns ---------- */
+export interface ReturnsRow { period: string; warehouse: "South" | "North"; b2c: number | null; b2b: number | null; fwd_b2c: number | null; fwd_retail: number | null }
+export const returnRate = (ret: number | null, fwd: number | null) => (ret != null && fwd ? ret / fwd : null);
+export function returnsInsights(rows: ReturnsRow[]): Insight[] {
+  const months = [...new Set(rows.map((r) => r.period))].sort();
+  const withFwd = months.filter((p) => rows.some((r) => r.period === p && r.fwd_b2c));
+  const out: Insight[] = [];
+  const last = withFwd.at(-1), prev = withFwd.at(-2);
+  for (const w of ["South", "North"] as const) {
+    const cur = rows.find((r) => r.period === last && r.warehouse === w), before = rows.find((r) => r.period === prev && r.warehouse === w);
+    if (!cur) continue;
+    const rr = returnRate(cur.b2c, cur.fwd_b2c), pr = before ? returnRate(before.b2c, before.fwd_b2c) : null;
+    const br = returnRate(cur.b2b, cur.fwd_retail);
+    const mon = new Date(`${cur.period}T00:00:00Z`).toLocaleString("en-IN", { month: "short", timeZone: "UTC" });
+    if (rr != null) out.push({ key: `${w}:b2c`, tone: rr >= 0.4 ? "bad" : rr >= 0.3 ? "warn" : "info", score: rr * 10,
+      title: [`${w} B2C returns `, { b: pc(rr), tone: rr >= 0.35 ? "bad" : "warn" }, ` of forward in ${mon}`, ...(pr != null ? [` (`, { b: `${((rr - pr) * 100).toFixed(1)} pts`, tone: rr > pr ? "bad" as const : "good" as const }, ` MoM)`] : [])],
+      impact: [{ b: k(cur.b2c ?? 0) }, ` units came back into ${w} — they need QC and re-inward capacity, and add to utilisation.`] });
+    if (br != null && br >= 0.15) out.push({ key: `${w}:b2b`, tone: br >= 0.3 ? "warn" : "info", score: br * 6,
+      title: [`${w} store returns `, { b: pc(br), tone: "warn" }, ` of retail forward in ${mon}`],
+      impact: [{ b: k(cur.b2b ?? 0) }, ` units back from stores — review the replenishment rulebook for over-allocation.`] });
+  }
+  // latest month without forward split: volume trend
+  const latest = months.at(-1);
+  if (latest && latest !== last) {
+    const tot = rows.filter((r) => r.period === latest).reduce((a, r) => a + (r.b2c ?? 0) + (r.b2b ?? 0), 0);
+    const mon = new Date(`${latest}T00:00:00Z`).toLocaleString("en-IN", { month: "short", timeZone: "UTC" });
+    out.push({ key: "latest", tone: "info", score: 1, title: [{ b: k(tot) }, ` units returned in ${mon} (both WHs)`], impact: [`Forward split not in yet — return rate will show once forward volumes are added.`] });
+  }
+  return out.sort((a, b) => b.score - a.score).slice(0, 3);
 }

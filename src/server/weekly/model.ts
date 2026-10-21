@@ -64,13 +64,13 @@ export async function listReports() {
 
 export async function loadReport(weekOf: string, u: Pick<User, "id" | "role">): Promise<ReportView | null> {
   const report = await one<WeeklyReport>(
-    `select r.id, r.week_of, r.title, r.status, r.exec_summary, r.exec_engine, r.pm_notes, r.approved_at, a.name as approved_by_name, r.sent_at, r.sent_to
+    `select r.id, r.week_of, r.title, r.status, r.exec_summary, r.exec_engine, r.pm_notes, r.approved_at::text as approved_at, a.name as approved_by_name, r.sent_at::text as sent_at, r.sent_to
      from weekly_reports r left join users a on a.id = r.approved_by where r.week_of = $1`, [weekOf]);
   if (!report) return null;
   const [sections, entries, images, prev] = await Promise.all([
     listSections(false),
     q<Omit<WeeklyEntry, "images">>(
-      `select e.id, e.section_id, e.status, e.metrics, e.metrics_note, e.updates, e.ahead, e.blockers, e.tables, e.pm_comment, e.updated_at, e.submitted_at, su.name as submitted_by_name
+      `select e.id, e.section_id, e.status, e.metrics, e.metrics_note, e.updates, e.ahead, e.blockers, e.tables, e.pm_comment, e.updated_at::text as updated_at, e.submitted_at::text as submitted_at, su.name as submitted_by_name
        from weekly_entries e left join users su on su.id = e.submitted_by where e.report_id = $1`, [report.id]),
     q<WeeklyImage & { entry_id: string }>(
       `select i.id, i.entry_id, i.caption, i.mime from weekly_images i join weekly_entries e on e.id = i.entry_id where e.report_id = $1 order by i.sort, i.created_at`, [report.id]),
