@@ -4,6 +4,8 @@ import { aiConfigured, aiStructured } from "../ai/provider";
 import { listPeople } from "../core/people";
 import { listTasks, type TaskListItem } from "./queries";
 import { parseQuick } from "@/lib/quickParse";
+import { findPoc } from "@/lib/pocFind";
+import { extractLinks } from "@/lib/links";
 import { addDays, diffDays, fmtDate, today } from "@/lib/dates";
 import type { DraftInput, FocusBrief, FocusItem, Priority, TaskDraft } from "@/lib/taskDraft";
 
@@ -44,9 +46,6 @@ function verbify(t: string) {
   if (!m) return t;
   return `${NOUN_VERB[m[2].toLowerCase()]} ${m[1] ? `${m[1].toLowerCase()} ` : ""}${m[3]}`;
 }
-// "with Rahul from Delhivery" → POC "Rahul (Delhivery)"; "ask Priya" → "Priya"
-const POC_RE = /\b(?:with|ask|via|from|poc:?|owner:?|assign(?:ed)? to)\s+([A-Z][\w&.]*(?:\s+[A-Z][\w&.]*)?)(?:\s+(?:from|at|of)\s+([A-Z][\w&.]*(?:\s+[A-Z][\w&.]*)?))?/;
-
 /** Split one line into a short title and the detail clauses hanging off it. */
 function splitClauses(text: string): { title: string; details: string[] } {
   const details: string[] = [];
@@ -60,40 +59,56 @@ function splitClauses(text: string): { title: string; details: string[] } {
   return { title: t.replace(/\s+/g, " ").trim(), details: details.map((d) => d.replace(/\s+/g, " ").trim()).filter((d) => d.length > 2) };
 }
 
+/** Rule-based "done when" / "first step" from the task's leading verb. */
+function suggest(title: string, poc: string) {
+  const m = /^(\S+)\s+(.*)$/.exec(title);
+  const verb = (m?.[1] ?? "").toLowerCase(), obj = m?.[2] ?? title;
+  const w = poc ? ` with ${poc.split(" (")[0]}` : "";
+  if (/^(share|send|submit|present|circulate|publish)$/.test(verb)) return { outcome: `${cap(obj)} ${verb === "submit" ? "submitted" : "shared"} and acknowledged`, nextStep: `Prepare the first draft of ${obj}` };
+  if (/^(finalise|finalize|close|negotiate|sign|renew|approve)$/.test(verb)) return { outcome: `${cap(obj)} agreed and signed off${w}`, nextStep: `List the open points on ${obj}${w}` };
+  if (/^(add|launch|set|create|build|implement|deploy|onboard|roll)$/.test(verb)) return { outcome: `${cap(obj)} live and verified`, nextStep: `Collect everything needed for ${obj}` };
+  if (/^(review|audit|analyse|analyze|check|reconcile|track)$/.test(verb)) return { outcome: `${cap(obj)} reviewed, gaps and actions noted`, nextStep: `Pull the latest data for ${obj}` };
+  if (/^(fix|resolve|clear|reduce|improve)$/.test(verb)) return { outcome: `${cap(obj)} resolved, with the number before vs after`, nextStep: `Find the root cause of ${obj}` };
+  if (/^(plan|prepare|draft|design|define)$/.test(verb)) return { outcome: `${cap(obj)} ready for review`, nextStep: `Outline ${obj}` };
+  if (/^(follow|chase|discuss|align|sync|call|meet)$/.test(verb)) return { outcome: `Clear answer${w} on ${obj.replace(/^(up|with)\s+/i, "")}`, nextStep: `Message${w || " the owner"} to set a time` };
+  return { outcome: "", nextStep: "" };
+}
+
 /** Turn free text into a refined draft. Claude when configured, rules otherwise. `cur` = a re-sharpen pass over the user's edits. */
 export async function draftTask(raw: string, cur?: DraftInput): Promise<TaskDraft> {
   const t = today();
-  const source = cur ? [cur.title || raw, cur.details].filter(Boolean).join("\n") : raw.trim();
+  const people = await listPeople();
+  const { text: noUrl, links } = extractLinks(raw);
+  const allLinks = [...(cur?.links ?? []), ...links.filter((l) => !cur?.links?.some((c) => c.url === l.url))];
+  const source = cur ? [cur.title || noUrl, cur.details].filter(Boolean).join("\n") : noUrl;
   const p = parseQuick(source.split("\n")[0], t);
-  // POC: @name, "with X", "ask X", "X to …" — anyone, in the directory or not
-  const m = POC_RE.exec(raw) ?? /^([A-Z][a-z]+)\s+(?:to|will)\s/.exec(raw);
-  const found = m ? (m[2] ? `${m[1]} (${m[2]})` : m[1]) : "";
-  let pocName = cur?.pocName?.trim() || p.owner || found;
+  const hit = findPoc(noUrl, people);
+  let pocName = cur?.pocName?.trim() || hit?.name || "";
   const dueFixed = cur?.dueDate ?? null;
 
-  const people = aiConfigured() ? await listPeople() : [];
   const ai = aiConfigured() ? await aiStructured({
     system: COACH,
     prompt: `Today is ${t} (${fmtDate(t, { dow: true })}).\nPeople in the team: ${people.map((x) => `${x.name}${x.title ? ` (${x.title})` : ""}`).join("; ")}\n\n${cur
-      ? `The user's draft so far — sharpen it, keep everything they added:\nOriginally typed: ${raw}\nTitle: ${cur.title ?? ""}\nDetails: ${cur.details || "(none)"}\nPOC: ${cur.pocName || "(none)"}\nDue: ${cur.dueDate ?? "(none)"}`
-      : `Task as typed:\n${raw}`}`,
+      ? `The user's draft so far — sharpen it, keep everything they added:\nOriginally typed: ${noUrl}\nTitle: ${cur.title ?? ""}\nDetails: ${cur.details || "(none)"}\nPOC: ${cur.pocName || "(none)"}\nDue: ${cur.dueDate ?? "(none)"}`
+      : `Task as typed:\n${noUrl}`}${pocName ? `\n(POC detected: ${pocName})` : ""}`,
     tool: { name: "refine_task", description: "Return the refined task." },
     schema: DraftOut,
   }) : null;
 
   if (ai) {
-    pocName = cur?.pocName?.trim() || ai.poc_name || pocName;
+    pocName = cur?.pocName?.trim() || pocName || ai.poc_name || "";
     const person = await directoryPoc(pocName);
     const due = dueFixed ?? (ai.due_date && ai.due_date >= t ? ai.due_date : p.due ?? null);
     return {
-      raw, title: ai.title || p.title, details: ai.details.trim(), outcome: ai.outcome, nextStep: ai.next_step, dueDate: due, startDate: null, dueLabel: due ? fmtDate(due, { dow: true }) : null,
-      pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority: ai.priority, questions: ai.questions, tips: ai.tips, engine: "claude",
+      raw, title: ai.title || p.title, details: ai.details.trim(), outcome: ai.outcome, nextStep: ai.next_step, dueDate: due, startDate: cur?.startDate ?? null, dueLabel: due ? fmtDate(due, { dow: true }) : null,
+      pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority: ai.priority, questions: ai.questions, tips: ai.tips, links: allLinks, engine: "claude",
     };
   }
 
   // rules: strip the POC phrase and filler, split clauses into details, turn "X addition of Y" into "Add X Y"
-  const noPoc = p.title.replace(new RegExp(`\\s+${POC_RE.source.slice(2)}`), "").replace(FILLER, "");
-  const sp = splitClauses(noPoc);
+  let base = p.title;
+  if (hit?.phrase) base = base.replace(new RegExp(`\\s*${hit.phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i"), " ").replace(/\s+/g, " ").trim();
+  const sp = splitClauses(base.replace(FILLER, ""));
   const extra = cur ? (cur.details ?? "").split("\n").map((x) => x.replace(/^[-•]\s*/, "").trim()).filter(Boolean) : [];
   const details = [...new Set([...sp.details, ...extra])];
   const title = cap(verbify(sp.title));
@@ -109,9 +124,10 @@ export async function draftTask(raw: string, cur?: DraftInput): Promise<TaskDraf
   if (/\b(catalog|listing|sku|launch|live)\b/i.test(raw)) tips.push("Confirm images, pricing and inventory are ready before it goes live — those usually hold up catalog changes.");
   if (/\b(vendor|contract|rate|negotiat|po\b|invoice)/i.test(raw)) tips.push("Note the current rate or baseline so the saving or change can be measured.");
   if (days != null && days <= 2) tips.push("This is due very soon — block time on your calendar for it today.");
+  const sg = suggest(title, person?.name ?? pocName);
   return {
-    raw, title, details: details.map((x) => `- ${cap(x)}`).join("\n"), outcome: "", nextStep: "", dueDate: due, startDate: null, dueLabel: due ? fmtDate(due, { dow: true }) : null,
-    pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority, questions: questions.slice(0, 3), tips: tips.slice(0, 2), engine: "rules",
+    raw, title, details: details.map((x) => `- ${cap(x)}`).join("\n"), outcome: sg.outcome, nextStep: sg.nextStep, dueDate: due, startDate: cur?.startDate ?? null, dueLabel: due ? fmtDate(due, { dow: true }) : null,
+    pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority, questions: questions.slice(0, 3), tips: tips.slice(0, 2), links: allLinks, engine: "rules",
   };
 }
 

@@ -1,13 +1,16 @@
 "use client";
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CornerDownLeft, Lightbulb, Sparkles, X } from "lucide-react";
+import { ArrowRight, CalendarDays, CornerDownLeft, Flag, Lightbulb, Link2, Plus, Sparkles, User, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/client";
 import { refineTask, saveCapturedTask } from "@/server/tasks/capture-actions";
 import { fmtDate, today } from "@/lib/dates";
 import { cn } from "@/lib/cn";
 import type { Priority, TaskDraft } from "@/lib/taskDraft";
+import { parseQuick } from "@/lib/quickParse";
+import { findPoc } from "@/lib/pocFind";
+import { extractLinks, linkLabel } from "@/lib/links";
 
 interface PersonOpt { id: string; name: string; title: string | null }
 
@@ -20,6 +23,13 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
   const toast = useToast();
   const router = useRouter();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // live auto-detect while typing (instant, in the browser)
+  const live = useMemo(() => {
+    if (text.trim().length < 6) return null;
+    const { text: noUrl, links } = extractLinks(text);
+    const p = parseQuick(noUrl);
+    return { due: p.due ?? null, poc: findPoc(noUrl, people), links, priority: p.priority ?? (/\b(urgent|asap|critical)\b/i.test(text) ? "urgent" : null) };
+  }, [text, people]);
 
   const refine = () => {
     if (!text.trim() || thinking) return;
@@ -30,17 +40,17 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
   };
   const set = <K extends keyof TaskDraft>(k: K, v: TaskDraft[K]) => setD((x) => (x ? { ...x, [k]: v } : x));
   const sharpen = () => d && startThink(async () => {
-    const r = await refineTask(d.raw, { raw: d.raw, title: d.title, details: d.details, pocName: d.pocName, dueDate: d.dueDate });
+    const r = await refineTask(d.raw, { raw: d.raw, title: d.title, details: d.details, pocName: d.pocName, dueDate: d.dueDate, startDate: d.startDate, links: d.links });
     if (!r.ok || !r.data) { if (!r.ok) toast(r.error, "error"); return; }
     const n = r.data;
     // keep what the user set explicitly; take the sharper wording and suggestions
-    setD((x) => x && { ...n, pocName: x.pocName, dueDate: x.dueDate, startDate: x.startDate, dueLabel: x.dueLabel, outcome: n.outcome || x.outcome, nextStep: n.nextStep || x.nextStep });
+    setD((x) => x && { ...n, pocName: x.pocName, dueDate: x.dueDate, startDate: x.startDate, dueLabel: x.dueLabel, links: x.links, outcome: n.outcome || x.outcome, nextStep: n.nextStep || x.nextStep });
   });
   const reset = () => { setD(null); setText(""); setTimeout(() => inputRef.current?.focus(), 0); };
   const save = (skip: boolean) => d && startSave(async () => {
     const r = await saveCapturedTask(skip
-      ? { title: d.title, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, engine: d.engine }
-      : { title: d.title, details: d.details, outcome: d.outcome, nextStep: d.nextStep, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, engine: d.engine });
+      ? { title: d.title, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, links: d.links, engine: d.engine }
+      : { title: d.title, details: d.details, outcome: d.outcome, nextStep: d.nextStep, dueDate: d.dueDate, startDate: d.startDate, pocName: d.pocName, priority: d.priority, links: d.links, engine: d.engine });
     if (!r.ok) { toast(r.error, "error"); return; }
     toast(skip ? "Task added" : "Task added with details", "success");
     reset();
@@ -63,6 +73,16 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
         )}
         {d && <button onClick={reset} title="Discard" className="rounded-md p-1.5 text-ink-4 hover:bg-subtle hover:text-ink"><X size={15} /></button>}
       </div>
+      {!d && live && (live.due || live.poc || live.links.length || live.priority) && (
+        <div className="-mt-1 flex flex-wrap items-center gap-1.5 px-3 pb-3 text-[11.5px] md:px-4">
+          <span className="flex items-center gap-1 text-ink-4"><Sparkles size={11} />Auto-filling</span>
+          {live.due && <span className="flex items-center gap-1 rounded-md bg-subtle px-1.5 py-0.5 text-ink-2"><CalendarDays size={11} />{fmtDate(live.due, { dow: true })}</span>}
+          {live.poc && <span className="flex items-center gap-1 rounded-md bg-subtle px-1.5 py-0.5 text-ink-2"><User size={11} />{live.poc.name}{!live.poc.personId && <span className="text-ink-4">· outside team</span>}</span>}
+          {live.priority && <span className="flex items-center gap-1 rounded-md bg-subtle px-1.5 py-0.5 text-ink-2"><Flag size={11} />{live.priority}</span>}
+          {live.links.length > 0 && <span className="flex items-center gap-1 rounded-md bg-subtle px-1.5 py-0.5 text-ink-2"><Link2 size={11} />{live.links.length} link{live.links.length > 1 ? "s" : ""}</span>}
+          {!live.due && <span className="text-ink-4">· add a date (e.g. “by Friday”) — it’s required</span>}
+        </div>
+      )}
 
       {/* 2 · make it precise (all optional) */}
       {d && (
@@ -120,13 +140,31 @@ export function TaskCapture({ people, meId }: { people: PersonOpt[]; meId: strin
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="label">Done when</span>
+              <span className="label">Done when {d.outcome && <AutoTag ai={d.engine === "claude"} />}</span>
               <input className="field" value={d.outcome} onChange={(e) => set("outcome", e.target.value)} placeholder="What does finished look like?" />
             </label>
             <label className="block">
-              <span className="label">First step</span>
+              <span className="label">First step {d.nextStep && <AutoTag ai={d.engine === "claude"} />}</span>
               <input className="field" value={d.nextStep} onChange={(e) => set("nextStep", e.target.value)} placeholder="The very next action" />
             </label>
+          </div>
+
+          <div>
+            <div className="mb-1 flex items-center justify-between"><span className="label mb-0">Links</span>
+              <button type="button" onClick={() => set("links", [...d.links, { url: "", label: "" }])} className="flex items-center gap-1 text-[12px] text-ink-3 hover:text-ink"><Plus size={12} />Add link</button>
+            </div>
+            {d.links.length ? (
+              <div className="space-y-1.5">
+                {d.links.map((l, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_150px_28px] gap-1.5">
+                    <input className="field h-8 py-1 text-[12.5px]" placeholder="https://…" value={l.url}
+                      onChange={(e) => set("links", d.links.map((x, j) => (j === i ? { url: e.target.value, label: x.label && x.label !== linkLabel(x.url) ? x.label : linkLabel(e.target.value) } : x)))} />
+                    <input className="field h-8 py-1 text-[12.5px]" placeholder="Label" value={l.label} onChange={(e) => set("links", d.links.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+                    <button type="button" onClick={() => set("links", d.links.filter((_, j) => j !== i))} className="flex items-center justify-center rounded-md text-ink-4 hover:bg-subtle hover:text-bad" aria-label="Remove link"><X size={13} /></button>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-[12px] text-ink-4">Sheets, docs, dashboards — paste URLs in the task text or add them here.</p>}
           </div>
 
           {d.tips.length > 0 && (
@@ -154,3 +192,5 @@ function pocHint(name: string, people: PersonOpt[], meId: string) {
   if (hit) return hit.id === meId ? "You" : `${hit.name} — in the directory, they’ll own it`;
   return "Not in the directory — you own it, noted as POC";
 }
+
+const AutoTag = ({ ai }: { ai: boolean }) => <span className="ml-1 rounded bg-accent-soft px-1 py-px text-[10px] font-medium text-accent-ink">{ai ? "AI" : "auto"}</span>;

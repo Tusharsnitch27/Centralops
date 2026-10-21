@@ -3,6 +3,7 @@ import { tx, type Tx } from "../db";
 import { logActivity, link } from "../core/activity";
 import { notify, resolveInbox } from "../core/notify";
 import { today } from "@/lib/dates";
+import { cleanLinks, type TaskLink } from "@/lib/links";
 import { TASK_STATUS, type Priority, type TaskStatus, type Health } from "@/lib/meta";
 
 /**
@@ -29,6 +30,7 @@ export interface NewTask {
   source?: "manual" | "meeting" | "aop" | "sop" | "project" | "ai" | "followup" | "integration" | "onboarding";
   nextStep?: string | null;
   pocName?: string | null;
+  links?: TaskLink[];
   tags?: string[];
   dependsOn?: string[];
 }
@@ -57,6 +59,7 @@ export async function createTask(actorId: string | null, t: NewTask, opts: { all
     );
     const id = row!.id;
     if (t.pocName?.trim()) await x.q(`update tasks set poc_name = $2 where id = $1`, [id, t.pocName.trim()]);
+    if (t.links?.length) await x.q(`update tasks set links = $2 where id = $1`, [id, JSON.stringify(cleanLinks(t.links))]);
     // program follows project when not given
     if (!t.programId && t.projectId) await x.q(`update tasks set program_id = (select program_id from projects where id = $2) where id = $1`, [id, t.projectId]);
     await x.q(`insert into task_history (task_id, actor_id, event, to_value, note) values ($1,$2,'created',$3,$4)`, [id, actorId, t.source ?? "manual", t.meetingId ? "From meeting" : null]);
@@ -87,6 +90,7 @@ export interface TaskPatch {
   ownerTeamId?: string | null;
   dueDate?: string | null;
   startDate?: string | null;
+  links?: TaskLink[];
   projectId?: string | null;
   blocker?: string | null;
   nextStep?: string | null;
@@ -120,6 +124,7 @@ export async function updateTask(actorId: string, id: string, p: TaskPatch) {
     if (p.title !== undefined && p.title.trim() && p.title !== cur.title) { set("title", p.title.trim()); await hist("updated", cur.title, p.title, "Title"); }
     if (p.description !== undefined) set("description", p.description);
     if (p.nextStep !== undefined) set("next_step", p.nextStep);
+    if (p.links !== undefined) set("links", JSON.stringify(cleanLinks(p.links)));
     if (p.waitingOnId !== undefined) set("waiting_on_id", p.waitingOnId);
     if (p.projectId !== undefined && p.projectId !== cur.project_id) {
       set("project_id", p.projectId);

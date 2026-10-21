@@ -31,6 +31,7 @@ export interface TaskListItem {
   blocker: string | null;
   next_step: string | null;
   poc_name: string | null;
+  links: { url: string; label: string }[];
   last_update_at: string | null;
   last_update_note: string | null;
   created_at: string;
@@ -104,7 +105,7 @@ export async function listTasks(f: TaskFilter = {}): Promise<TaskListItem[]> {
             t.owner_id, ou.name as owner_name, ou.avatar_color as owner_color, t.owner_team_id, tm.name as owner_team_name,
             t.requester_id, ru.name as requester_name, t.waiting_on_id, wu.name as waiting_on_name,
             t.project_id, pr.name as project_name, pr.code as project_code, t.meeting_id, m.title as meeting_title,
-            t.source, t.blocker, t.next_step, t.poc_name, t.last_update_at, t.last_update_note, t.created_at, t.completed_at,
+            t.source, t.blocker, t.next_step, t.poc_name, t.links, t.last_update_at, t.last_update_note, t.created_at, t.completed_at,
             extract(day from now() - coalesce(t.last_update_at, t.created_at))::int as days_since_update,
             (select count(*)::int from followups f where f.entity_type = 'task' and f.entity_id = t.id and f.status = 'open') as open_followups,
             coalesce((select array_agg(g.tag order by g.tag) from task_tags g where g.task_id = t.id), '{}') as tags

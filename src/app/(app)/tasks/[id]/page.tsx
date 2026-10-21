@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TaskLinks } from "@/components/tasks/TaskLinks";
 import { notFound } from "next/navigation";
 import { AlertOctagon, ArrowUpRight, BellRing, CalendarClock, ChevronRight, CornerDownRight, Hourglass, MessageCircleQuestion, Route } from "lucide-react";
 import { Avatar, Badge, HealthBadge, PriorityIcon, StatusBadge } from "@/components/ui";
@@ -149,6 +150,9 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
 
         {/* properties sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <SideCard title="Links">
+            <TaskLinks id={t.id} links={t.links ?? []} readOnly={readOnly} />
+          </SideCard>
           <SideCard title="Properties">
             <TaskProperties readOnly={readOnly}
               t={{ id: t.id, status: t.status, health: t.health, priority: t.priority, owner_id: t.owner_id, owner_team_id: t.owner_team_id, requester_id: t.requester_id,

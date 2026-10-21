@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Inbox } from "lucide-react";
+import { ArrowRight, ExternalLink, Inbox } from "lucide-react";
 import { Avatar, EmptyState, PageHeader, PriorityIcon } from "@/components/ui";
 import { TaskCapture } from "@/components/tasks/TaskCapture";
 import { FocusPanel } from "@/components/tasks/FocusPanel";
@@ -96,6 +96,16 @@ function Row({ x, me }: { x: TaskListItem; me: string }) {
           </span>
         )}
       </Link>
+      {x.links.length > 0 && (
+        <span className="hidden max-w-[260px] shrink-0 flex-wrap justify-end gap-1 pt-0.5 sm:flex">
+          {x.links.slice(0, 3).map((l, i) => (
+            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" title={l.url} className="flex max-w-[120px] items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] text-info ring-1 ring-inset ring-line hover:bg-info-soft">
+              <ExternalLink size={10} className="shrink-0" /><span className="truncate">{l.label}</span>
+            </a>
+          ))}
+          {x.links.length > 3 && <span className="text-[11px] text-ink-4">+{x.links.length - 3}</span>}
+        </span>
+      )}
       <span className={cn("shrink-0 pt-0.5 text-right text-[12px] tabular", late ? "font-medium text-bad" : x.due_date === t ? "font-medium text-warn" : "text-ink-3")} title={x.due_date ? fmtDate(x.due_date, { dow: true }) : undefined}>
         {x.due_date ? (late ? `${diffDays(t, x.due_date)}d late` : relDay(x.due_date)) : "—"}
       </span>

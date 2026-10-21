@@ -1,3 +1,5 @@
+import type { TaskLink } from "./links";
+
 // Shared shape of a captured task while it's being refined (server ↔ client).
 export type Priority = "urgent" | "high" | "medium" | "low";
 export interface TaskDraft {
@@ -14,9 +16,10 @@ export interface TaskDraft {
   priority: Priority;
   questions: string[];      // what would make it precise
   tips: string[];           // ways to make it more impactful
+  links: TaskLink[];
   engine: "claude" | "rules";
 }
 export interface FocusItem { taskId: string; title: string; why: string; action: string; tone: "red" | "amber" | "info" }
 export interface FocusBrief { headline: string; items: FocusItem[]; hygiene: string[]; engine: "claude" | "rules" }
 /** What the user has so far, sent back for another sharpening pass. */
-export interface DraftInput { raw: string; title?: string; details?: string; pocName?: string; dueDate?: string | null }
+export interface DraftInput { raw: string; title?: string; details?: string; pocName?: string; dueDate?: string | null; startDate?: string | null; links?: TaskLink[] }
