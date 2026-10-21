@@ -1,15 +1,16 @@
 import "server-only";
 import { z } from "zod";
 import { aiConfigured, aiStructured } from "../ai/provider";
-import { listPeople, matchPerson } from "../core/people";
+import { listPeople } from "../core/people";
 import { listTasks, type TaskListItem } from "./queries";
 import { parseQuick } from "@/lib/quickParse";
 import { addDays, diffDays, fmtDate, today } from "@/lib/dates";
-import type { FocusBrief, FocusItem, Priority, TaskDraft } from "@/lib/taskDraft";
+import type { DraftInput, FocusBrief, FocusItem, Priority, TaskDraft } from "@/lib/taskDraft";
 
 const COACH = `You are the task coach inside Central Ops, the program-management tool of the Central Operations team at Snitch (an Indian D2C fashion brand: warehouses, logistics, packaging, SaaS, catalog, S&OP, AOP budgets).
 The user is the team's Program Manager. They type tasks the way they think them. Your job is to make each task precise and impactful WITHOUT inventing facts:
-- title: a crisp action starting with a verb, keeping the user's meaning and nouns. No dates or names in the title.
+- title: a crisp action starting with a verb, keeping the user's meaning and nouns (max ~10 words). No dates or names in the title.
+- details: everything else the user wrote that matters — scope, specifics, quantities, context, conditions — as 1–4 short lines ("- " bullets). Move it out of the title instead of dropping it. Never invent facts; empty string if there is nothing beyond the title.
 - outcome: one line "done" definition — observable, measurable where possible (e.g. "All 12 perfume SKUs live on site + app with freebie tag").
 - next_step: the very first concrete step the user can take today.
 - questions: up to 3 short questions about details that are genuinely missing and would change how the work gets done (scope, which SKUs/channel/vendor, approval needed). Never ask about due date or POC if already given.
@@ -19,10 +20,11 @@ Resolve relative dates against today. Due dates are never in the past.`;
 
 const DraftOut = z.object({
   title: z.string(),
+  details: z.string(),
   outcome: z.string(),
   next_step: z.string(),
   due_date: z.string().nullable().describe("YYYY-MM-DD or null if not stated"),
-  poc_name: z.string().nullable().describe("person named as owner/POC in the text, else null"),
+  poc_name: z.string().nullable().describe("person or company named as POC in the text (keep as written), else null"),
   priority: z.enum(["urgent", "high", "medium", "low"]),
   questions: z.array(z.string()).max(3),
   tips: z.array(z.string()).max(2),
@@ -31,48 +33,85 @@ const DraftOut = z.object({
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const FILLER = /^(i\s+(need|have|want)\s+to|need\s+to|have\s+to|must|should|todo:?|task:?|pls|please)\s+/i;
 
-/** Turn one free-text line into a refined draft. Claude when configured, rules otherwise. */
-export async function draftTask(raw: string): Promise<TaskDraft> {
+// "Freebie addition of perfumes into catalog" → "Add freebie perfumes into catalog"
+const NOUN_VERB: Record<string, string> = {
+  addition: "Add", creation: "Create", update: "Update", review: "Review", setup: "Set up", "set-up": "Set up", removal: "Remove", launch: "Launch",
+  onboarding: "Onboard", closure: "Close", renewal: "Renew", finalisation: "Finalise", finalization: "Finalize", preparation: "Prepare", completion: "Complete",
+  implementation: "Implement", migration: "Migrate", negotiation: "Negotiate", approval: "Get approval for", submission: "Submit", reconciliation: "Reconcile", audit: "Audit",
+};
+function verbify(t: string) {
+  const m = /^(.*?)\s*\b(addition|creation|update|review|setup|set-up|removal|launch|onboarding|closure|renewal|finalisation|finalization|preparation|completion|implementation|migration|negotiation|approval|submission|reconciliation|audit) of (.+)$/i.exec(t);
+  if (!m) return t;
+  return `${NOUN_VERB[m[2].toLowerCase()]} ${m[1] ? `${m[1].toLowerCase()} ` : ""}${m[3]}`;
+}
+// "with Rahul from Delhivery" → POC "Rahul (Delhivery)"; "ask Priya" → "Priya"
+const POC_RE = /\b(?:with|ask|via|from|poc:?|owner:?|assign(?:ed)? to)\s+([A-Z][\w&.]*(?:\s+[A-Z][\w&.]*)?)(?:\s+(?:from|at|of)\s+([A-Z][\w&.]*(?:\s+[A-Z][\w&.]*)?))?/;
+
+/** Split one line into a short title and the detail clauses hanging off it. */
+function splitClauses(text: string): { title: string; details: string[] } {
+  const details: string[] = [];
+  let t = text.replace(/\(([^)]+)\)/g, (_, x: string) => { details.push(x.trim()); return " "; });
+  const parts = t.split(/\s+[—–-]\s+|:\s+|;\s*|\.\s+(?=[A-Z])/);
+  t = parts.shift() ?? t;
+  details.push(...parts);
+  // trailing qualifiers: "… for Diwali sale", "… so that …", "… including …"
+  const tail = /\s+(so that|so|because|including|incl\.?|to ensure|in order to|as per|for the|for)\s+(.{8,})$/i.exec(t);
+  if (tail && t.length - tail[0].length >= 12) { details.unshift(`${cap(tail[1])} ${tail[2]}`); t = t.slice(0, tail.index); }
+  return { title: t.replace(/\s+/g, " ").trim(), details: details.map((d) => d.replace(/\s+/g, " ").trim()).filter((d) => d.length > 2) };
+}
+
+/** Turn free text into a refined draft. Claude when configured, rules otherwise. `cur` = a re-sharpen pass over the user's edits. */
+export async function draftTask(raw: string, cur?: DraftInput): Promise<TaskDraft> {
   const t = today();
-  const p = parseQuick(raw.trim(), t);
-  // POC: @name, "with X", "ask X", "X to …"
-  const m = /\b(?:with|ask|via|poc:?|owner:?|assign(?:ed)? to)\s+([A-Z][a-z]+)/.exec(raw) ?? /^([A-Z][a-z]+)\s+(?:to|will)\s/.exec(raw);
-  let ownerName = p.owner ?? m?.[1] ?? null;
-  const base = cap(p.title.replace(FILLER, "").replace(/\s+(?:with|ask|via)\s+[A-Z][a-z]+\b/, "").trim());
+  const source = cur ? [cur.title || raw, cur.details].filter(Boolean).join("\n") : raw.trim();
+  const p = parseQuick(source.split("\n")[0], t);
+  // POC: @name, "with X", "ask X", "X to …" — anyone, in the directory or not
+  const m = POC_RE.exec(raw) ?? /^([A-Z][a-z]+)\s+(?:to|will)\s/.exec(raw);
+  const found = m ? (m[2] ? `${m[1]} (${m[2]})` : m[1]) : "";
+  let pocName = cur?.pocName?.trim() || p.owner || found;
+  const dueFixed = cur?.dueDate ?? null;
 
   const people = aiConfigured() ? await listPeople() : [];
   const ai = aiConfigured() ? await aiStructured({
     system: COACH,
-    prompt: `Today is ${t} (${fmtDate(t, { dow: true })}).\nPeople in the team: ${people.map((x) => `${x.name}${x.title ? ` (${x.title})` : ""}`).join("; ")}\n\nTask as typed:\n${raw}`,
+    prompt: `Today is ${t} (${fmtDate(t, { dow: true })}).\nPeople in the team: ${people.map((x) => `${x.name}${x.title ? ` (${x.title})` : ""}`).join("; ")}\n\n${cur
+      ? `The user's draft so far — sharpen it, keep everything they added:\nOriginally typed: ${raw}\nTitle: ${cur.title ?? ""}\nDetails: ${cur.details || "(none)"}\nPOC: ${cur.pocName || "(none)"}\nDue: ${cur.dueDate ?? "(none)"}`
+      : `Task as typed:\n${raw}`}`,
     tool: { name: "refine_task", description: "Return the refined task." },
     schema: DraftOut,
   }) : null;
 
   if (ai) {
-    ownerName = ai.poc_name ?? ownerName;
-    const person = await matchPerson(ownerName);
-    const due = ai.due_date && ai.due_date >= t ? ai.due_date : p.due ?? null;
+    pocName = cur?.pocName?.trim() || ai.poc_name || pocName;
+    const person = await directoryPoc(pocName);
+    const due = dueFixed ?? (ai.due_date && ai.due_date >= t ? ai.due_date : p.due ?? null);
     return {
-      raw, title: ai.title || base, details: "", outcome: ai.outcome, nextStep: ai.next_step, dueDate: due, dueLabel: due ? fmtDate(due, { dow: true }) : null,
-      ownerId: person?.id ?? null, ownerName: person?.name ?? ownerName, priority: ai.priority, questions: ai.questions, tips: ai.tips, engine: "claude",
+      raw, title: ai.title || p.title, details: ai.details.trim(), outcome: ai.outcome, nextStep: ai.next_step, dueDate: due, dueLabel: due ? fmtDate(due, { dow: true }) : null,
+      pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority: ai.priority, questions: ai.questions, tips: ai.tips, engine: "claude",
     };
   }
 
-  const person = await matchPerson(ownerName);
-  const due = p.due ?? null;
+  // rules: strip the POC phrase and filler, split clauses into details, turn "X addition of Y" into "Add X Y"
+  const noPoc = p.title.replace(new RegExp(`\\s+${POC_RE.source.slice(2)}`), "").replace(FILLER, "");
+  const sp = splitClauses(noPoc);
+  const extra = cur ? (cur.details ?? "").split("\n").map((x) => x.replace(/^[-•]\s*/, "").trim()).filter(Boolean) : [];
+  const details = [...new Set([...sp.details, ...extra])];
+  const title = cap(verbify(sp.title));
+  const person = await directoryPoc(pocName);
+  const due = dueFixed ?? p.due ?? null;
   const days = due ? diffDays(due, t) : null;
   const priority: Priority = p.priority ?? (/\b(urgent|asap|critical|today)\b/i.test(raw) ? "urgent" : days != null && days <= 2 ? "high" : "medium");
   const questions: string[] = [];
-  questions.push("What exactly is in scope — which items, SKUs, channel or vendor?");
+  if (!details.length) questions.push("What exactly is in scope — which items, SKUs, channel or vendor?");
   if (!due) questions.push("When does this need to be done?");
-  if (!person) questions.push("Who is the point of contact you depend on?");
+  if (!pocName) questions.push("Who is the point of contact?");
   const tips: string[] = [];
   if (/\b(catalog|listing|sku|launch|live)\b/i.test(raw)) tips.push("Confirm images, pricing and inventory are ready before it goes live — those usually hold up catalog changes.");
   if (/\b(vendor|contract|rate|negotiat|po\b|invoice)/i.test(raw)) tips.push("Note the current rate or baseline so the saving or change can be measured.");
   if (days != null && days <= 2) tips.push("This is due very soon — block time on your calendar for it today.");
   return {
-    raw, title: base, details: "", outcome: "", nextStep: "", dueDate: due, dueLabel: due ? fmtDate(due, { dow: true }) : null,
-    ownerId: person?.id ?? null, ownerName: person?.name ?? ownerName, priority, questions: questions.slice(0, 3), tips: tips.slice(0, 2), engine: "rules",
+    raw, title, details: details.map((x) => `- ${cap(x)}`).join("\n"), outcome: "", nextStep: "", dueDate: due, dueLabel: due ? fmtDate(due, { dow: true }) : null,
+    pocName: person?.name ?? pocName, ownerId: person?.id ?? null, priority, questions: questions.slice(0, 3), tips: tips.slice(0, 2), engine: "rules",
   };
 }
 
@@ -132,4 +171,16 @@ export async function aiFocus(tasks: TaskListItem[], userId: string): Promise<Fo
   const byNo = new Map(tasks.map((x) => [x.number, x]));
   const items = ai.focus.flatMap((f) => { const x = byNo.get(f.number); return x ? [{ taskId: x.id, title: x.title, why: f.why, action: f.action, tone: f.tone }] : []; });
   return { headline: ai.headline, items, hygiene: ai.hygiene, engine: "claude" };
+}
+
+/** A POC counts as a directory user only on a clear match: full name, or a first name only one person has. */
+export async function directoryPoc(name?: string) {
+  const n = name?.trim().toLowerCase();
+  if (!n) return null;
+  const people = await listPeople();
+  const exact = people.find((p) => p.name.toLowerCase() === n || p.email?.toLowerCase() === n);
+  if (exact) return exact;
+  if (/\s/.test(n)) return null;
+  const firsts = people.filter((p) => p.name.toLowerCase().split(/\s+/)[0] === n);
+  return firsts.length === 1 ? firsts[0] : null;
 }

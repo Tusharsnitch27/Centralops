@@ -2,26 +2,29 @@
 import { revalidatePath } from "next/cache";
 import { requireUser, canEdit } from "../auth";
 import { createTask } from "./core";
-import { aiFocus, draftTask, myPending } from "./coach";
+import { aiFocus, directoryPoc, draftTask, myPending } from "./coach";
 import { fail, ok, type ActionResult } from "../core/result";
 import { aiConfigured } from "../ai/provider";
-import type { FocusBrief, Priority, TaskDraft } from "@/lib/taskDraft";
+import type { DraftInput, FocusBrief, Priority, TaskDraft } from "@/lib/taskDraft";
 
-export async function refineTask(raw: string): Promise<ActionResult<TaskDraft>> {
+export async function refineTask(raw: string, cur?: DraftInput): Promise<ActionResult<TaskDraft>> {
   try {
     await requireUser();
     if (!raw.trim()) throw new Error("Write the task first");
-    return ok(await draftTask(raw));
+    return ok(await draftTask(raw, cur));
   } catch (e) { return fail(e); }
 }
 
-export async function saveCapturedTask(d: { title: string; details?: string; outcome?: string; nextStep?: string; dueDate?: string | null; ownerId?: string | null; priority?: Priority; engine?: "claude" | "rules" }): Promise<ActionResult<{ id: string }>> {
+export async function saveCapturedTask(d: { title: string; details?: string; outcome?: string; nextStep?: string; dueDate?: string | null; pocName?: string; priority?: Priority; engine?: "claude" | "rules" }): Promise<ActionResult<{ id: string }>> {
   try {
     const u = await requireUser();
     if (!canEdit(u)) throw new Error("Read-only access");
     const description = [d.details?.trim(), d.outcome?.trim() ? `Done when: ${d.outcome.trim()}` : ""].filter(Boolean).join("\n\n") || null;
+    // POC in the directory → they own it; anyone else → I own it and they're recorded as the POC
+    const poc = await directoryPoc(d.pocName);
     const row = await createTask(u.id, {
-      title: d.title, description, nextStep: d.nextStep?.trim() || null, dueDate: d.dueDate || null, ownerId: d.ownerId || u.id, requesterId: u.id,
+      title: d.title, description, nextStep: d.nextStep?.trim() || null, dueDate: d.dueDate || null, ownerId: poc?.id ?? u.id, requesterId: u.id,
+      pocName: poc ? null : d.pocName?.trim() || null,
       priority: d.priority ?? "medium", source: d.engine === "claude" ? "ai" : "manual",
     });
     revalidatePath("/", "layout");
@@ -36,3 +39,4 @@ export async function planMyDay(): Promise<ActionResult<FocusBrief>> {
     return ok(await aiFocus(await myPending(u.id), u.id));
   } catch (e) { return fail(e); }
 }
+

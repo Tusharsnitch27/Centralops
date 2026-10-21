@@ -161,6 +161,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                 programs: programs.map((p) => ({ id: p.id, name: p.name, code: p.code })),
               }} />
             <div className="mt-2 space-y-1 border-t border-line px-2 pt-3 text-[12.5px]">
+              {t.poc_name && <Meta label="POC">{t.poc_name}</Meta>}
               <Meta label="Source">{TASK_SOURCE[t.source as keyof typeof TASK_SOURCE] ?? t.source}</Meta>
               {t.meeting_id && (
                 <Meta label="Meeting">

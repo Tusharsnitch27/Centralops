@@ -78,9 +78,10 @@ function Row({ x, me }: { x: TaskListItem; me: string }) {
           <PriorityIcon priority={x.priority} className="shrink-0" />
           <span className="truncate text-[13px] text-ink">{x.title}</span>
         </span>
-        {(x.next_step || other) && (
+        {(x.next_step || other || x.poc_name) && (
           <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] text-ink-4">
             {other && <span className="flex items-center gap-1"><Avatar name={x.owner_name ?? x.owner_team_name} color={x.owner_color} size={14} />{x.owner_name ?? x.owner_team_name ?? "Unassigned"}</span>}
+            {x.poc_name && <span>POC: {x.poc_name}</span>}
             {x.next_step && <span className="truncate">Next: {x.next_step}</span>}
           </span>
         )}

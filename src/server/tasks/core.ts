@@ -28,6 +28,7 @@ export interface NewTask {
   waitingOnId?: string | null;
   source?: "manual" | "meeting" | "aop" | "sop" | "project" | "ai" | "followup" | "integration" | "onboarding";
   nextStep?: string | null;
+  pocName?: string | null;
   tags?: string[];
   dependsOn?: string[];
 }
@@ -55,6 +56,7 @@ export async function createTask(actorId: string | null, t: NewTask, opts: { all
       ],
     );
     const id = row!.id;
+    if (t.pocName?.trim()) await x.q(`update tasks set poc_name = $2 where id = $1`, [id, t.pocName.trim()]);
     // program follows project when not given
     if (!t.programId && t.projectId) await x.q(`update tasks set program_id = (select program_id from projects where id = $2) where id = $1`, [id, t.projectId]);
     await x.q(`insert into task_history (task_id, actor_id, event, to_value, note) values ($1,$2,'created',$3,$4)`, [id, actorId, t.source ?? "manual", t.meetingId ? "From meeting" : null]);
