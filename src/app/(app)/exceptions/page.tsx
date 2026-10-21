@@ -53,7 +53,7 @@ export default async function ExceptionsPage() {
       more: Math.max(0, stale.length - 6), cta: <RequestUpdatesButton taskIds={stale.map((t) => t.id)} /> },
     { id: "blocked", title: "Blocked tasks", icon: <AlertOctagon size={15} />, tone: "red", count: blocked.length, unit: "task",
       rows: blocked.slice(0, 6).map((t) => ({ key: t.id, primary: t.title, secondary: `${t.owner_name ?? t.owner_team_name ?? "—"}${t.blocker ? ` · ${t.blocker}` : ""}`, right: t.due_date ? relDay(t.due_date) : undefined, href: `/tasks/${t.id}` })),
-      cta: <ButtonLink href="/tasks?status=blocked" size="xs" variant="primary">Unblock</ButtonLink> },
+      cta: <ButtonLink href="/tasks/all?status=blocked" size="xs" variant="primary">Unblock</ButtonLink> },
     { id: "milestones", title: "Slipped or overdue milestones", icon: <Milestone size={15} />, tone: "red", count: slips.length, unit: "milestone",
       rows: slips.slice(0, 6).map((m) => ({ key: m.id, primary: `${m.project_code ?? m.project_name} · ${m.title}`, secondary: `${m.owner_name ?? "—"} · baseline ${fmtDate(m.baseline_date)} → ${fmtDate(m.due_date)}`,
         right: m.overdue_days > 0 ? <span className="font-medium text-bad">{m.overdue_days}d overdue</span> : <span className="text-warn">+{m.slip_days}d slip</span>, href: `/projects/${m.project_id}` })),

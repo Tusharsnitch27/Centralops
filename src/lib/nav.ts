@@ -19,6 +19,6 @@ export const NAV: NavGroup[] = [
 
 /** Sub-sections rendered as tabs at the top of a work area. */
 export const SECTION_TABS: Record<string, { href: string; label: string }[]> = {
-  tasks: [{ href: "/tasks", label: "Tasks" }, { href: "/followups", label: "Follow-ups" }],
+  tasks: [{ href: "/tasks", label: "My list" }, { href: "/tasks/all", label: "All views" }, { href: "/followups", label: "Follow-ups" }],
   meetings: [{ href: "/meetings", label: "Meetings" }, { href: "/decisions", label: "Decisions" }],
 };

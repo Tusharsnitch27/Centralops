@@ -68,10 +68,10 @@ export async function attention(u: User): Promise<AttentionItem[]> {
   if (mine && mine.overdue > 0)
     push({ key: "overdue", area: "tasks", severity: mine.overdue >= 5 ? "critical" : "high", weight: 50 + mine.overdue,
       title: `${plural(mine.overdue, "task")} overdue`, detail: mine.oldest ? `Oldest was due ${fmtDate(mine.oldest)} (${diffDays(t, mine.oldest)} days ago).` : undefined,
-      cta: { label: "Review", href: "/tasks?view=overdue" } });
+      cta: { label: "Review", href: "/tasks/all?view=overdue" } });
   if (critToday.length)
     push({ key: "crit-today", area: "tasks", severity: "high", weight: 45, title: `${plural(critToday.length, "critical action")} due today`,
-      detail: critToday.slice(0, 2).map((x) => x.title).join(" · "), cta: { label: "Open", href: critToday.length === 1 ? `/tasks/${critToday[0].id}` : "/tasks?view=today" } });
+      detail: critToday.slice(0, 2).map((x) => x.title).join(" · "), cta: { label: "Open", href: critToday.length === 1 ? `/tasks/${critToday[0].id}` : "/tasks/all?view=today" } });
   if (delegated.length) {
     const worst = delegated[0];
     push({ key: "stale", area: "followups", severity: delegated.length >= 5 ? "high" : "medium", weight: 40 + delegated.length,
@@ -80,7 +80,7 @@ export async function attention(u: User): Promise<AttentionItem[]> {
       cta: { label: "Follow up", href: "/followups" } });
   }
   if (mine && mine.blocked > 0)
-    push({ key: "blocked", area: "tasks", severity: "medium", weight: 30, title: `${plural(mine.blocked, "of your tasks is", "of your tasks are")} blocked`, cta: { label: "Unblock", href: "/tasks?status=blocked" } });
+    push({ key: "blocked", area: "tasks", severity: "medium", weight: 30, title: `${plural(mine.blocked, "of your tasks is", "of your tasks are")} blocked`, cta: { label: "Unblock", href: "/tasks/all?status=blocked" } });
 
   // ---- meetings
   for (const m of moms.filter((x) => x.mom_status === "submitted").slice(0, 2))

@@ -21,7 +21,14 @@ export function parseQuick(input: string, ref = today()): Parsed {
   const refDow = new Date(`${ref}T00:00:00Z`).getUTCDay();
   s = s.replace(/\s(?:by |due |on )?(today|tod|tomorrow|tmrw|tmr)\b/i, (_, w: string) => (w.toLowerCase().startsWith("tod") ? setDue(ref, "Today") : setDue(addDays(ref, 1), "Tomorrow")));
   s = s.replace(/\s(?:by |due |on )?in (\d{1,3}) (day|days|week|weeks)\b/i, (_, n: string, u: string) => setDue(addDays(ref, Number(n) * (u.startsWith("week") ? 7 : 1)), `In ${n} ${u}`));
-  s = s.replace(/\s(?:by |due )?(next week|eow|end of week)\b/i, (_, w: string) =>
+  const monthEnd = (iso: string) => { const d = new Date(`${iso.slice(0, 7)}-01T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + 1, 0); return d.toISOString().slice(0, 10); };
+  s = s.replace(/\s(?:by |before |due )?(?:the )?(end of (?:this |the )?month|eom|this month|month[- ]end)\b/i, () => setDue(monthEnd(ref), "End of month"));
+  s = s.replace(/\s(?:by |before |due )?(?:the )?(end of next month|next month)\b/i, (_, w: string) => {
+    const next = monthEnd(addDays(monthEnd(ref), 1));
+    return w.toLowerCase().startsWith("end") ? setDue(next, "End of next month") : setDue(addDays(monthEnd(ref), 1), "Next month");
+  });
+  s = s.replace(/\s(?:by |before |due )?(?:the )?(end of next week)\b/i, () => setDue(addDays(ref, ((5 - refDow + 7) % 7) + 7), "Next Friday"));
+  s = s.replace(/\s(?:by |before |due )?(?:the )?(next week|eow|end of (?:this |the )?week|this week|week[- ]end)\b/i, (_, w: string) =>
     w.toLowerCase() === "next week" ? setDue(addDays(ref, ((8 - refDow) % 7) || 7), "Next Monday") : setDue(addDays(ref, (5 - refDow + 7) % 7), "Friday"));
   s = s.replace(/\s(?:by |due |on )?(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b/i, (m, d: string) => {
     const idx = DOW.indexOf(d.toLowerCase().slice(0, 3));
@@ -36,6 +43,6 @@ export function parseQuick(input: string, ref = today()): Parsed {
       if (iso < ref) { y += 1; iso = `${y}-${String(mon + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`; }
       return setDue(iso, `${day} ${MONTHS[mon][0].toUpperCase()}${MONTHS[mon].slice(1)}`);
     });
-  out.title = s.replace(/\s+/g, " ").trim();
+  out.title = s.replace(/\s+/g, " ").replace(/\s+(by|before|due|on)\s*$/i, "").replace(/[\s.,;:]+$/, "").trim();
   return out;
 }

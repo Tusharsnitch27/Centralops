@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, Lightbulb, Warehouse } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Collapsible, ExpandAll } from "@/components/ui/Collapsible";
 import type { MonthlyReview as Data } from "@/server/sop/monthly";
 import type { Insight, Row, Seg, WhPoint } from "./reviewMath";
 
@@ -139,49 +140,65 @@ function WhTable({ wh }: { wh: Data["wh"] }) {
 }
 
 export function MonthlyReviewView({ d }: { d: Data }) {
-  const flows: { key: "outbound" | "inbound"; title: string; icon: React.ReactNode }[] = [
-    { key: "outbound", title: "Outbound — channels & stores", icon: <ArrowUpFromLine size={16} /> },
-    { key: "inbound", title: "Inbound — inward, pre-pack & categories", icon: <ArrowDownToLine size={16} /> },
+  const flows: { key: "outbound" | "inbound"; title: string }[] = [
+    { key: "outbound", title: "Outbound — channels & stores" },
+    { key: "inbound", title: "Inbound — inward, pre-pack & categories" },
   ];
+  const days = new Date(Date.UTC(Number(d.period.slice(0, 4)), Number(d.period.slice(5, 7)), 0)).getUTCDate();
+  const ids = ["sop:wh", ...d.views.map((v) => `sop:${v.def.key}`)];
+  const flagged = (items: Insight[]) => items.filter((i) => i.tone === "bad" || i.tone === "warn").length;
+  const Flags = ({ items }: { items: Insight[] }) => {
+    const n = flagged(items);
+    return n ? <span className="rounded-md bg-warn-soft px-1.5 py-0.5 text-[11px] font-semibold text-warn">{n} to watch</span> : <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[11px] font-semibold text-accent-ink">On plan</span>;
+  };
+  const whTotal = d.wh.Total.findLast((p) => p.util != null);
   return (
-    <div className="space-y-8">
-      <section>
-        <div className="mb-3 flex items-center gap-2"><span className="flex items-center justify-center text-ink-4"><Warehouse size={16} /></span><h2 className="text-[17px] font-semibold tracking-[-0.02em]">Warehouse utilisation</h2></div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          <WhTile name="South (BLR)" pts={d.wh.South} tone="#2563eb" />
-          <WhTile name="North (GGN)" pts={d.wh.North} tone="#ea580c" />
-          <WhTile name="Total" pts={d.wh.Total} tone="var(--color-ink)" />
-        </div>
-        {d.whInsights.length > 0 && <div className="mt-4"><InsightCards items={d.whInsights} /></div>}
-        <div className="mt-4"><WhTable wh={d.wh} /></div>
+    <div className="space-y-6">
+      <div className="flex justify-end -mt-2"><ExpandAll ids={ids} /></div>
+      <section className="space-y-2">
+        <h2 className="label-caps px-1">Capacity</h2>
+        <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · capacity vs inventory by month"
+          summary={<>
+            {whTotal && <span className="flex items-center gap-1.5 text-ink-3">Total <span className="font-semibold text-ink tabular">{pc(whTotal.util)}</span><span className="text-ink-4">· {mon(whTotal.period)}</span></span>}
+            <Flags items={d.whInsights} />
+          </>}>
+          <div className="space-y-4 p-4 md:p-5">
+            <div className="grid gap-3 lg:grid-cols-3">
+              <WhTile name="South (BLR)" pts={d.wh.South} tone="#2563eb" />
+              <WhTile name="North (GGN)" pts={d.wh.North} tone="#ea580c" />
+              <WhTile name="Total" pts={d.wh.Total} tone="var(--color-ink)" />
+            </div>
+            {d.whInsights.length > 0 && <InsightCards items={d.whInsights} />}
+            <WhTable wh={d.wh} />
+          </div>
+        </Collapsible>
       </section>
 
       {flows.map((f) => (
-        <section key={f.key} className="space-y-5">
-          <div className="flex items-center gap-2"><span className="flex items-center justify-center text-ink-4">{f.icon}</span><h2 className="text-[17px] font-semibold tracking-[-0.02em]">{f.title}</h2></div>
+        <section key={f.key} className="space-y-2">
+          <h2 className="label-caps flex items-center gap-1.5 px-1">{f.key === "outbound" ? <ArrowUpFromLine size={12} /> : <ArrowDownToLine size={12} />}{f.title}</h2>
           {d.views.filter((v) => v.def.flow === f.key).map((v) => {
             const t = v.rows.find((r) => r.kind === "total")!;
             return (
-              <div key={v.def.key} className="card overflow-hidden">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-5 py-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[15px] font-semibold tracking-[-0.02em]">{v.def.title}</div>
-                    <div className="text-[12.5px] font-medium text-ink-3">{v.def.sub} · 1–{new Date(Date.UTC(Number(d.period.slice(0, 4)), Number(d.period.slice(5, 7)), 0)).getUTCDate()} {mon(d.period)}</div>
-                  </div>
-                  <div className="flex items-center gap-4 text-[12.5px]">
-                    <span className="text-ink-3">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
-                    <span className="text-ink-3">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
-                    <span className="flex items-center gap-1.5 text-ink-3">Total <UtilChip u={t.tu} plan={t.tp} actual={t.ta} /></span>
-                    <span className="flex items-center gap-1.5 text-ink-3">South <UtilChip u={t.su} plan={t.sp} actual={t.sa} /></span>
-                    <span className="flex items-center gap-1.5 text-ink-3">North <UtilChip u={t.nu} plan={t.np} actual={t.na} /></span>
-                  </div>
+              <Collapsible key={v.def.key} id={`sop:${v.def.key}`} title={v.def.title} sub={`${v.def.sub} · 1–${days} ${mon(d.period)}`}
+                summary={<>
+                  <span className="hidden text-ink-3 sm:inline">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
+                  <span className="hidden text-ink-3 sm:inline">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
+                  <UtilChip u={t.tu} plan={t.tp} actual={t.ta} />
+                  <Flags items={v.insights} />
+                </>}>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-4 py-2.5 text-[12px] md:px-5">
+                  <span className="text-ink-3">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
+                  <span className="text-ink-3">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
+                  <span className="flex items-center gap-1.5 text-ink-3">South <UtilChip u={t.su} plan={t.sp} actual={t.sa} /></span>
+                  <span className="flex items-center gap-1.5 text-ink-3">North <UtilChip u={t.nu} plan={t.np} actual={t.na} /></span>
                 </div>
-                <div className="border-b border-line bg-subtle/30 px-5 py-4">
-                  <div className="mb-2.5 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-4"><Lightbulb size={13} className="text-accent" /> Top insights</div>
+                <div className="border-b border-line bg-subtle/30 px-4 py-4 md:px-5">
+                  <div className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4"><Lightbulb size={12} /> Top insights</div>
                   <InsightCards items={v.insights} />
                 </div>
                 <ViewTable rows={v.rows} label={v.def.rowLabel} />
-              </div>
+              </Collapsible>
             );
           })}
         </section>

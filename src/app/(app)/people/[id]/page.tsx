@@ -55,7 +55,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
         <div className="min-w-0 space-y-5">
           <Card id="tasks" className="overflow-hidden">
             <CardHeader icon={<CircleCheck size={15} />} title="Open tasks" subtitle={tasks.length ? `${plural(tasks.length, "task")}${p.overdue ? ` · ${p.overdue} overdue` : ""}` : undefined}
-              action={tasks.length ? <ButtonLink href={`/tasks?owner=${p.id}`} size="xs" variant="ghost">Open in Tasks</ButtonLink> : null} />
+              action={tasks.length ? <ButtonLink href={`/tasks/all?owner=${p.id}`} size="xs" variant="ghost">Open in Tasks</ButtonLink> : null} />
             <TaskList tasks={tasks} showOwner={false} empty={<EmptyState compact icon={<CircleCheck size={18} />} title="Nothing open" body={`${p.name.split(" ")[0]} has no open tasks.`} />} />
           </Card>
 

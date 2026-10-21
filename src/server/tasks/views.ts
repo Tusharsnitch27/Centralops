@@ -87,7 +87,7 @@ export function taskQuery(p: Partial<TaskParams>, overrides: Partial<TaskParams>
   if (m.search) s.set("search", m.search);
   if (m.group && m.group !== "none") s.set("group", m.group);
   const qs = s.toString();
-  return qs ? `/tasks?${qs}` : "/tasks";
+  return qs ? `/tasks/all?${qs}` : "/tasks/all";
 }
 
 export const weekEnd = (d = today()) => addDays(weekStart(d), 6);
@@ -167,11 +167,11 @@ export interface TaskInsight { key: string; tone: "red" | "amber" | "info"; text
 export function taskInsights(c: ViewCounts): TaskInsight[] {
   const out: TaskInsight[] = [];
   const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
-  if (c.overdue) out.push({ key: "overdue", tone: "red", text: `${n(c.overdue, "task is", "tasks are")} past due${c.staleOverdue ? ` — ${c.staleOverdue} with no update in ${STALE_DAYS}+ days` : ""}`, cta: "Review", href: "/tasks?view=overdue" });
-  if (c.blocked) out.push({ key: "blocked", tone: "red", text: `${n(c.blocked, "task is blocked and needs", "tasks are blocked and need")} a decision to move`, cta: "Unblock", href: "/tasks?view=all&status=blocked" });
+  if (c.overdue) out.push({ key: "overdue", tone: "red", text: `${n(c.overdue, "task is", "tasks are")} past due${c.staleOverdue ? ` — ${c.staleOverdue} with no update in ${STALE_DAYS}+ days` : ""}`, cta: "Review", href: "/tasks/all?view=overdue" });
+  if (c.blocked) out.push({ key: "blocked", tone: "red", text: `${n(c.blocked, "task is blocked and needs", "tasks are blocked and need")} a decision to move`, cta: "Unblock", href: "/tasks/all?view=all&status=blocked" });
   if (c.noupdate) out.push({ key: "noupdate", tone: "amber", text: `${n(c.noupdate, "delegated task has", "delegated tasks have")} not received an update in the last ${STALE_DAYS} days`, cta: "Follow up", href: "/followups" });
-  if (c.unacknowledged) out.push({ key: "unack", tone: "amber", text: `${n(c.unacknowledged, "assignment hasn't", "assignments haven't")} been acknowledged after 2 days`, cta: "Review", href: "/tasks?view=delegated&status=not_started" });
-  if (c.today) out.push({ key: "today", tone: "info", text: `${n(c.today, "task is", "tasks are")} due today`, cta: "Open", href: "/tasks?view=today" });
+  if (c.unacknowledged) out.push({ key: "unack", tone: "amber", text: `${n(c.unacknowledged, "assignment hasn't", "assignments haven't")} been acknowledged after 2 days`, cta: "Review", href: "/tasks/all?view=delegated&status=not_started" });
+  if (c.today) out.push({ key: "today", tone: "info", text: `${n(c.today, "task is", "tasks are")} due today`, cta: "Open", href: "/tasks/all?view=today" });
   return out.slice(0, 4);
 }
 

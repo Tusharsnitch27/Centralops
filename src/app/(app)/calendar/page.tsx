@@ -106,7 +106,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                         <span className="truncate">{t.title}</span>
                       </Link>
                     ))}
-                    {ts.length > 3 && <Link href={`/tasks?due=${d}`} className="block px-1.5 text-[11px] text-ink-3 hover:text-ink">+{ts.length - 3} more{late ? ` · ${late} late` : ""}</Link>}
+                    {ts.length > 3 && <Link href={`/tasks/all?due=${d}`} className="block px-1.5 text-[11px] text-ink-3 hover:text-ink">+{ts.length - 3} more{late ? ` · ${late} late` : ""}</Link>}
                   </div>
                 </div>
               );

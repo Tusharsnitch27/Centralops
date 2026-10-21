@@ -225,7 +225,7 @@ export function TagEditor({ id, tags, suggestions, readOnly }: { id: string; tag
     <div className={cn("flex flex-wrap items-center gap-1.5", pending && "opacity-70")}>
       {tags.map((tag) => (
         <span key={tag} className="group/tag inline-flex h-6 items-center gap-1 rounded-md bg-subtle pl-2 pr-1 text-[12px] text-ink-2 ring-1 ring-inset ring-line">
-          <Link href={`/tasks?view=all&tag=${encodeURIComponent(tag)}`} className="hover:text-ink">#{tag}</Link>
+          <Link href={`/tasks/all?view=all&tag=${encodeURIComponent(tag)}`} className="hover:text-ink">#{tag}</Link>
           {!readOnly && <button type="button" onClick={() => run(() => removeTaskTag(id, tag))} className="rounded p-0.5 text-ink-4 opacity-0 hover:text-ink group-hover/tag:opacity-100" aria-label={`Remove ${tag}`}><X size={10} /></button>}
         </span>
       ))}

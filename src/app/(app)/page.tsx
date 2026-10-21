@@ -58,7 +58,7 @@ export default async function CommandCentre() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <StatCard label="Open tasks" value={stats.openTasks} href="/tasks" icon={<ListChecks size={15} />} bars={series.completed.map((d) => d.value)}
           badge={`${sum(series.completed)} done this week`} foot="Completed per day · 14 days" />
-        <StatCard label="Overdue" value={stats.overdue} href="/tasks?view=overdue" icon={<AlarmClock size={15} />}
+        <StatCard label="Overdue" value={stats.overdue} href="/tasks/all?view=overdue" icon={<AlarmClock size={15} />}
           badge={stats.overdue ? "Needs action" : "All clear"} badgeTone={stats.overdue ? "bad" : "accent"} foot={stats.overdue ? "Past due date" : "Nothing past due"} />
         <StatCard label="To follow up" value={stats.followupsDue} href="/followups" icon={<Send size={15} />} bars={series.followups.map((d) => d.value)}
           badge={stats.followupsDue ? `${sum(series.followups)} nudges sent` : undefined} badgeTone="warn" foot="Delegated, no update in 5d+" />
