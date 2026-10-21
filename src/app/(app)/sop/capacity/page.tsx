@@ -10,6 +10,11 @@ import { currentPeriod } from "@/server/sop/model";
 import { addMonths, fmtMonth, today } from "@/lib/dates";
 import { num, plural } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { Collapsible } from "@/components/ui/Collapsible";
+import { OutboundCapacity } from "@/components/sop/OutboundCapacity";
+import { FacilityEngine } from "@/components/sop/FacilityEngine";
+import { engineScenario, listObCapacity } from "@/server/sop/capacityTools";
+import { canManage } from "@/server/auth";
 
 export const metadata = { title: "S&OP capacity" };
 
@@ -26,6 +31,7 @@ export default async function SopCapacity({ searchParams }: { searchParams: Prom
   const [rows, outlookRows, breaches, rules, people, ownerId] = await Promise.all([
     getCapacity(month, month), getCapacity(cur, addMonths(cur, 2)), getCapacityBreaches(month, month), getRules(), listPeople(), getCapacityOwnerId(),
   ]);
+  const [obRows, engine] = await Promise.all([listObCapacity(), engineScenario()]);
   const peopleOpts = people.map((p) => ({ id: p.id, name: p.name, hint: p.team_name }));
 
   // departments: this month's, else carry the list from the nearest month so the grid is ready to fill
@@ -121,6 +127,15 @@ export default async function SopCapacity({ searchParams }: { searchParams: Prom
           </table>
         </div>
       </Card>
+      <section className="space-y-2 pt-2">
+        <h2 className="label-caps px-1">Planning tools</h2>
+        <Collapsible id="sop:ob-capacity" title="Outbound capacity · day level" sub="Marketplace + Retail outbound needed vs capacity planned, per warehouse — red days are short">
+          <OutboundCapacity rows={obRows} canEdit={canEdit(u)} />
+        </Collapsible>
+        <Collapsible id="sop:facility-engine" title="Facility capacity engine" sub="Inward · outward · stickering days per facility, the bottleneck, and extra sticker capacity needed">
+          <FacilityEngine initial={engine.input} savedAt={engine.savedAt} canSave={canManage(u)} />
+        </Collapsible>
+      </section>
     </div>
   );
 }

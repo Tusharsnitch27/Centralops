@@ -3,7 +3,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Lightbulb, Warehouse } from "lucide-r
 import { cn } from "@/lib/cn";
 import { Collapsible, ExpandAll } from "@/components/ui/Collapsible";
 import type { MonthlyReview as Data } from "@/server/sop/monthly";
-import type { Insight, Row, Seg, WhPoint } from "./reviewMath";
+import { returnRate, type FlowCalc, type Insight, type ReturnsRow, type Row, type Seg, type WhPoint } from "./reviewMath";
 
 const fmt = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
 const lakh = (v: number) => `${(v / 100000).toFixed(2)}L`;
@@ -144,8 +144,8 @@ export function MonthlyReviewView({ d }: { d: Data }) {
     { key: "outbound", title: "Outbound — channels & stores" },
     { key: "inbound", title: "Inbound — inward, pre-pack & categories" },
   ];
-  const days = new Date(Date.UTC(Number(d.period.slice(0, 4)), Number(d.period.slice(5, 7)), 0)).getUTCDate();
-  const ids = ["sop:wh", ...d.views.map((v) => `sop:${v.def.key}`)];
+  const days = d.through;
+  const ids = ["sop:trend", "sop:wh", "sop:flow", "sop:returns", ...d.views.map((v) => `sop:${v.def.key}`)];
   const flagged = (items: Insight[]) => items.filter((i) => i.tone === "bad" || i.tone === "warn").length;
   const Flags = ({ items }: { items: Insight[] }) => {
     const n = flagged(items);
@@ -155,6 +155,14 @@ export function MonthlyReviewView({ d }: { d: Data }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end -mt-2"><ExpandAll ids={ids} /></div>
+      <section className="space-y-2">
+        <h2 className="label-caps px-1">Overview</h2>
+        <Collapsible id="sop:trend" title="Month on month" sub="Actual ÷ plan for every view, Apr → now"
+          summary={<span className="text-ink-3">{d.trend[0]?.periods.length ?? 0} months</span>}>
+          <TrendTable trend={d.trend} current={d.period} mtdLabel={d.mtd ? `1–${d.through}` : null} />
+        </Collapsible>
+      </section>
+
       <section className="space-y-2">
         <h2 className="label-caps px-1">Capacity</h2>
         <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · capacity vs inventory by month"
@@ -170,6 +178,23 @@ export function MonthlyReviewView({ d }: { d: Data }) {
             </div>
             {d.whInsights.length > 0 && <InsightCards items={d.whInsights} />}
             <WhTable wh={d.wh} />
+          </div>
+        </Collapsible>
+        <Collapsible id="sop:flow" icon={<ArrowDownToLine size={15} />} title="Inventory flow" sub="Opening → inward (category + returns) → outward → closing, by warehouse"
+          summary={<>
+            {d.flowNow.map((f) => <span key={f.warehouse} className="text-ink-3">{f.warehouse} close <b className={cn("font-semibold tabular", f.utilClose >= 1 ? "text-bad" : f.utilClose >= 0.9 ? "text-warn" : "text-ink")}>{pc(f.utilClose)}</b></span>)}
+            <Flags items={d.flowInsights} />
+          </>}>
+          <div className="space-y-4 p-4 md:p-5">
+            {d.flowInsights.length > 0 && <InsightCards items={d.flowInsights} />}
+            <FlowTable rows={d.flow} current={d.period} />
+          </div>
+        </Collapsible>
+        <Collapsible id="sop:returns" title="Returns" sub="Units returned into each warehouse, and as a share of forward volume"
+          summary={<Flags items={d.returnsInsights.filter((i) => i.tone !== "info")} />}>
+          <div className="space-y-4 p-4 md:p-5">
+            {d.returnsInsights.length > 0 && <InsightCards items={d.returnsInsights} />}
+            <ReturnsTable rows={d.returns} />
           </div>
         </Collapsible>
       </section>
@@ -207,6 +232,80 @@ export function MonthlyReviewView({ d }: { d: Data }) {
         <span className="font-semibold text-ink-2">Utilisation key:</span>
         <UtilChip u={0.95} plan={1} actual={1} /> within ±10% <UtilChip u={0.78} plan={1} actual={1} /> 70–90% <UtilChip u={0.5} plan={1} actual={1} /> below 70% <UtilChip u={1.2} plan={1} actual={1} /> 115–140% <UtilChip u={1.5} plan={1} actual={1} /> 140%+ · Totals are calculated from the South + North figures.
       </div>
+    </div>
+  );
+}
+
+const monL = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { month: "short", timeZone: "UTC" });
+
+function TrendTable({ trend, current, mtdLabel }: { trend: { def: { key: string; title: string }; periods: string[]; cells: ({ period: string; plan: number; actual: number; util: number | null } | null)[] }[]; current: string; mtdLabel: string | null }) {
+  const periods = trend[0]?.periods ?? [];
+  return (
+    <div className="overflow-x-auto">
+      <table className="table-base min-w-[640px]">
+        <thead><tr><th>View</th>{periods.map((p) => <th key={p} className={cn("text-right", p === current && "!text-ink")}>{monL(p)}{p === current && mtdLabel ? ` · ${mtdLabel}` : ""}</th>)}</tr></thead>
+        <tbody>{trend.map((r) => (
+          <tr key={r.def.key}>
+            <td className="font-medium">{r.def.title}</td>
+            {r.cells.map((c, i) => (
+              <td key={i} className={cn("text-right", periods[i] === current && "bg-subtle/60")} title={c ? `Plan ${fmt(c.plan)} · Actual ${fmt(c.actual)}` : undefined}>
+                {c ? <UtilChip u={c.util} plan={c.plan} actual={c.actual} /> : <span className="text-ink-4">—</span>}
+              </td>
+            ))}
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+function FlowTable({ rows, current }: { rows: FlowCalc[]; current: string }) {
+  const periods = [...new Set(rows.map((r) => r.period))].sort().reverse();
+  const cell = (v: number) => <td className="text-right tabular">{lakh(v)}</td>;
+  return (
+    <div className="card overflow-x-auto">
+      <table className="table-base min-w-[900px]">
+        <thead><tr><th>Month</th><th>WH</th><th className="text-right">Capacity</th><th className="text-right">Opening</th><th className="text-right">Util (open)</th><th className="text-right">Inward · category</th><th className="text-right">Inward · returns</th><th className="text-right">Outward</th><th className="text-right">Closing</th><th className="text-right">Util (close)</th><th className="text-right">Change</th></tr></thead>
+        <tbody>{periods.flatMap((p) => rows.filter((r) => r.period === p).map((r, i) => (
+          <tr key={`${p}${r.warehouse}`} className={cn(p === current && "bg-subtle/50")}>
+            <td className="font-medium">{i === 0 ? monL(p) : ""}</td>
+            <td>{r.warehouse}</td>
+            {cell(r.capacity)}{cell(r.opening)}
+            <td className="text-right tabular text-ink-3">{pc(r.utilOpen)}</td>
+            {cell(r.inward_category)}{cell(r.inward_returns)}{cell(r.outward)}{cell(r.closing)}
+            <td className={cn("text-right font-semibold tabular", r.utilClose >= 1 ? "text-bad" : r.utilClose >= 0.9 ? "text-warn" : "text-ink")}>{pc(r.utilClose)}</td>
+            <td className={cn("text-right tabular", r.build > 0 ? "text-warn" : "text-ok")}>{r.build >= 0 ? "+" : "−"}{lakh(Math.abs(r.build))}</td>
+          </tr>
+        )))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+function ReturnsTable({ rows }: { rows: ReturnsRow[] }) {
+  const periods = [...new Set(rows.map((r) => r.period))].sort().reverse();
+  const at = (p: string, w: "South" | "North") => rows.find((r) => r.period === p && r.warehouse === w);
+  const rate = (v: number | null) => <span className={cn("tabular", v == null ? "text-ink-4" : v >= 0.35 ? "font-semibold text-bad" : v >= 0.25 ? "text-warn" : "text-ink-2")}>{pc(v)}</span>;
+  return (
+    <div className="card overflow-x-auto">
+      <table className="table-base min-w-[820px]">
+        <thead>
+          <tr><th rowSpan={2}>Month</th><th colSpan={4} className="text-center">South</th><th colSpan={4} className="text-center">North</th></tr>
+          <tr>{["South", "North"].flatMap((w) => [<th key={`${w}1`} className="text-right">B2C</th>, <th key={`${w}2`} className="text-right">B2C rate</th>, <th key={`${w}3`} className="text-right">Store / B2B</th>, <th key={`${w}4`} className="text-right">Store rate</th>])}</tr>
+        </thead>
+        <tbody>{periods.map((p) => (
+          <tr key={p}>
+            <td className="font-medium">{monL(p)}</td>
+            {(["South", "North"] as const).flatMap((w) => { const r = at(p, w); return [
+              <td key={`${w}a`} className="text-right tabular">{r?.b2c != null ? lakh(r.b2c) : "—"}</td>,
+              <td key={`${w}b`} className="text-right">{rate(returnRate(r?.b2c ?? null, r?.fwd_b2c ?? null))}</td>,
+              <td key={`${w}c`} className="text-right tabular">{r?.b2b != null ? lakh(r.b2b) : "—"}</td>,
+              <td key={`${w}d`} className="text-right">{rate(returnRate(r?.b2b ?? null, r?.fwd_retail ?? null))}</td>,
+            ]; })}
+          </tr>
+        ))}</tbody>
+      </table>
+      <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Rate = returns ÷ forward volume of the same month (B2C forward; retail forward for store returns). Months without a forward split show volumes only.</p>
     </div>
   );
 }

@@ -11,6 +11,10 @@ import { WH_LABEL } from "@/server/sop/queries";
 import { dateOf, fmtDate, fmtMonth, fmtTime } from "@/lib/dates";
 import { num, pct } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { Callouts } from "@/components/sop/Callouts";
+import { listCallouts } from "@/server/sop/capacityTools";
+import { listPeople } from "@/server/core/people";
+import { canEdit, requireUser } from "@/server/auth";
 
 export const metadata = { title: "S&OP review pre-read" };
 
@@ -27,7 +31,7 @@ function Section({ n, title, aside, children }: { n: number; title: string; asid
 }
 
 export default async function SopReview() {
-  const b = await buildReviewBrief();
+  const [b, callouts, people, u] = await Promise.all([buildReviewBrief(), listCallouts(), listPeople(), requireUser()]);
   const m = b.meeting;
   const openPrev = b.prevTasks.filter((t) => t.status !== "completed" && t.status !== "cancelled");
   const closedPrev = b.prevTasks.filter((t) => t.status === "completed" || t.status === "cancelled");
@@ -42,6 +46,10 @@ export default async function SopReview() {
           <CopyTextButton text={b.text} />
         </div>
       </div>
+      <Card className="mb-5 overflow-hidden">
+        <div className="border-b border-line px-5 py-3"><h2 className="text-[14px] font-semibold">Review call-outs</h2><p className="text-[12px] text-ink-3">Raised in the S&amp;OP review — who owns each, and the task tracking it</p></div>
+        <Callouts items={callouts} people={people.map((p) => ({ id: p.id, name: p.name }))} canEdit={canEdit(u)} />
+      </Card>
       <Card className="overflow-hidden">
         <header className="border-b border-line bg-subtle/40 px-8 py-6">
           <div className="eyebrow mb-1.5">Pre-read</div>
