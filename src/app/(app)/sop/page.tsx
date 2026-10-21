@@ -3,6 +3,8 @@ import { EmptyState } from "@/components/ui";
 import { MonthlyReviewView } from "@/components/sop/MonthlyReview";
 import { monthlyReview, partialPeriods, periodOptions, reviewPeriods, type Grain } from "@/server/sop/monthly";
 import { requireUser } from "@/server/auth";
+import { lastRuns } from "@/server/sop/sync";
+import { ago } from "@/lib/dates";
 
 export const metadata = { title: "S&OP · Monthly review" };
 
@@ -11,7 +13,9 @@ const GRAINS: { key: Grain; label: string }[] = [{ key: "month", label: "Month" 
 export default async function SopMonthlyReview({ searchParams }: { searchParams: Promise<{ grain?: string; p?: string; period?: string }> }) {
   const sp = await searchParams;
   await requireUser();
-  const [months, partial] = await Promise.all([reviewPeriods(), partialPeriods()]);
+  const [months, partial, runs] = await Promise.all([reviewPeriods(), partialPeriods(), lastRuns()]);
+  const okRuns = runs.filter((r) => r.status === "ok");
+  const lastOk = okRuns.map((r) => r.finished_at ?? r.started_at).sort().at(-1);
   if (!months.length) return <EmptyState title="No monthly review data yet" body="Plan vs actual by channel, week and category will appear here." />;
   const grain: Grain = sp.grain === "quarter" || sp.grain === "year" ? sp.grain : "month";
   const options = periodOptions(months, grain);
@@ -36,7 +40,7 @@ export default async function SopMonthlyReview({ searchParams }: { searchParams:
         </div>
       </div>
       <p className="mb-6 text-[12.5px] font-medium text-ink-3">
-        {sel.months.length > 1 ? `${sel.months.length} months added up` : "Plan vs actual by warehouse"}{mtd.length && sel.months.length > 1 ? ` · includes ${mtd.join(", ")} (month to date)` : ""} · from the S&OP Plan vs Actual workbook (Snowflake feed later)
+        {sel.months.length > 1 ? `${sel.months.length} months added up` : "Plan vs actual by warehouse"}{mtd.length && sel.months.length > 1 ? ` · includes ${mtd.join(", ")} (month to date)` : ""} · {lastOk ? <>actuals from Snowflake, refreshed {ago(lastOk)}{runs.some((r) => r.status === "failed") ? " (some feeds failed — see Settings › Integrations)" : ""}</> : "actuals from the S&OP workbook until the Snowflake feed is connected"}
       </p>
       <MonthlyReviewView d={d} />
     </div>

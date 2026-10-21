@@ -33,3 +33,30 @@ if (enabled && process.env.DATABASE_URL && !g.__reminderTimer) {
   console.log(`[reminders] scheduler on — daily at ${process.env.REMINDER_TIME ?? "10:00"} IST`);
 }
 export {};
+
+// Daily Snowflake → S&OP actuals refresh at SOP_SYNC_TIME IST (default 07:00). Same on/off switch as the reminders.
+const gs = globalThis as unknown as { __sopSyncTimer?: ReturnType<typeof setInterval> };
+if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
+  const [sh, sm] = (process.env.SOP_SYNC_TIME ?? "07:00").split(":").map(Number);
+  const syncTick = async () => {
+    try {
+      const now = new Date();
+      const ist = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false }).format(now).split(":").map(Number);
+      if (ist[0] * 60 + ist[1] < sh * 60 + sm) return;
+      const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
+      const { one, q } = await import("./server/db");
+      if ((await one<{ value: string }>(`select value from app_settings where key = 'sop.sync_day'`))?.value === day) return;
+      await q(`insert into app_settings (key, value) values ('sop.sync_day', to_jsonb($1::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`, [day]);
+      const { sfConfigured } = await import("./server/snowflake");
+      if (!sfConfigured()) return;
+      const { runSync } = await import("./server/sop/sync");
+      const r = await runSync(undefined, "schedule");
+      console.log(`[sop-sync] ${day}: ${r.map((x) => `${x.feed} ${x.status}`).join(", ")}`);
+    } catch (e) {
+      console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
+    }
+  };
+  gs.__sopSyncTimer = setInterval(syncTick, 10 * 60_000);
+  setTimeout(syncTick, 60_000);
+  console.log(`[sop-sync] daily Snowflake refresh at ${process.env.SOP_SYNC_TIME ?? "07:00"} IST`);
+}

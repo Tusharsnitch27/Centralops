@@ -8,6 +8,8 @@ import { cn } from "@/lib/cn";
 import { ago, fmtDate } from "@/lib/dates";
 import { describeRule, type DeadlineConfig, type DeadlineRule, type Measure } from "@/server/aop/deadlines";
 import { saveEmailConfig } from "@/server/weekly/actions";
+import { refreshFromSnowflake } from "@/server/sop/syncActions";
+import type { FeedKey } from "@/server/sop/sync";
 import { generateWebhookSecret, runRemindersNow, saveDeadlines, saveMyWhatsApp, saveWhatsAppConfig, sendTestWhatsApp } from "@/server/integrations/waActions";
 import type { IntegrationsData } from "@/server/integrations/queries";
 import type { WaProvider } from "@/server/integrations/whatsapp";
@@ -114,6 +116,7 @@ export function IntegrationsAdmin({ d }: { d: IntegrationsData }) {
       </Section>
 
       {/* ---------- Deadlines & cadence ---------- */}
+      <SnowflakeCard d={d} />
       <EmailCard d={d} />
       {d.cycle && <DeadlinesCard cycleId={d.cycle.id} cycleName={d.cycle.name} initial={d.cycle.deadlines} functions={d.cycle.functions} />}
 
@@ -274,6 +277,54 @@ function EmailCard({ d }: { d: IntegrationsData }) {
         <pre className="mt-2 overflow-x-auto rounded-md bg-surface p-2 text-[11.5px]">{sample}</pre>
         <p className="mt-2 text-ink-3">No n8n yet? Use <b>Copy for email</b> on the document and paste into Gmail, then <b>Mark as sent</b>.</p>
       </details>
+    </Section>
+  );
+}
+
+function SnowflakeCard({ d }: { d: IntegrationsData }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [, start] = useTransition();
+  const sf = d.snowflake;
+  const refresh = (feed?: FeedKey) => { setBusy(feed ?? "all"); start(async () => {
+    const r = await refreshFromSnowflake(feed);
+    setBusy(null);
+    if (!r.ok) toast(r.error, "error"); else { toast(r.message ?? "Refreshed", "success"); router.refresh(); }
+  }); };
+  const env = sf.env;
+  const missing = [!env.account && "SNOWFLAKE_ACCOUNT", !env.username && "SNOWFLAKE_USERNAME", !env.auth && "SNOWFLAKE_PAT", !env.warehouse && "SNOWFLAKE_WAREHOUSE", !env.role && "SNOWFLAKE_ROLE"].filter(Boolean) as string[];
+  return (
+    <Section icon={<Workflow size={17} />} title="Snowflake · S&OP actuals" sub={`Refreshed daily at ${sf.syncTime} IST — every month from ${sf.from} is re-read; plans are never touched`}
+      right={<div className="flex items-center gap-2">{sf.configured ? <Badge tone="green" dot>Connected</Badge> : <Badge tone="amber" dot>Not set up</Badge>}
+        <Button size="sm" variant="primary" disabled={!sf.configured || !!busy} onClick={() => refresh()}><Play size={13} />{busy === "all" ? "Refreshing…" : "Refresh all now"}</Button></div>}>
+      <div className="mb-4 grid gap-x-6 gap-y-1 text-[12.5px] sm:grid-cols-2">
+        {([["Account", env.account], ["User", env.username], ["Auth", env.auth], ["Role", env.role], ["Warehouse", env.warehouse], ["Database", env.database]] as const).map(([k, v]) => (
+          <div key={k} className="flex gap-2"><span className="w-24 text-ink-4">{k}</span><span className={v ? "text-ink" : "text-warn"}>{v ?? "not set"}</span></div>
+        ))}
+      </div>
+      {missing.length > 0 && <p className="mb-4 rounded-lg bg-warn-soft px-3 py-2 text-[12.5px] text-warn">Add in Coolify → Environment Variables, then restart: <b className="font-semibold">{missing.join(", ")}</b>. Use a Snowflake user and PAT made for Central Ops (separate from Long Tail).</p>}
+      <div className="card overflow-x-auto">
+        <table className="table-base min-w-[760px]">
+          <thead><tr><th>Feed</th><th>Fills</th><th>Last run</th><th className="text-right">Rows</th><th className="w-24" /></tr></thead>
+          <tbody>{sf.feeds.map((f) => (
+            <tr key={f.key} className="align-top">
+              <td className="!py-2.5">
+                <div className="font-medium">{f.title}</div>
+                <details className="mt-1"><summary className="cursor-pointer text-[11.5px] text-ink-4 hover:text-ink">Query</summary><pre className="mt-1 max-w-[460px] overflow-x-auto rounded-md bg-subtle p-2 text-[11px] leading-snug">{f.sql}</pre></details>
+              </td>
+              <td className="!py-2.5 text-[12px] text-ink-3">{f.fills}</td>
+              <td className="!py-2.5 text-[12px]">
+                {f.last ? <><Badge tone={f.last.status === "ok" ? "green" : f.last.status === "failed" ? "red" : "info"} dot>{f.last.status}</Badge> <span className="text-ink-4">{ago(f.last.started_at)} · {f.last.trigger}</span>
+                  {f.last.message && <div className={cn("mt-1 max-w-[280px] text-[11.5px]", f.last.status === "failed" ? "text-bad" : "text-ink-4")}>{f.last.message}</div>}</> : <span className="text-ink-4">Never</span>}
+              </td>
+              <td className="!py-2.5 text-right text-[12px] tabular text-ink-3">{f.last?.rows_read != null ? `${f.last.rows_read} → ${f.last.rows_written}` : "—"}</td>
+              <td className="!py-2.5 text-right"><Button size="xs" disabled={!sf.configured || !!busy} onClick={() => refresh(f.key as FeedKey)}>{busy === f.key ? "…" : "Refresh"}</Button></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-[11.5px] text-ink-4">Also callable by an external scheduler: <code>GET /api/cron/sop-sync</code> with <code>Authorization: Bearer CRON_SECRET</code>.</p>
     </Section>
   );
 }
