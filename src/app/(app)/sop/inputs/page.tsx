@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { BookOpen, ChevronDown } from "lucide-react";
+import { BookOpen, ChevronDown , Lock } from "lucide-react";
 import { Avatar, Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 import { SubChip } from "@/components/sop/bits";
 import { RemindAllButton, RemindButton, SubmissionMenu } from "@/components/sop/actions";
 import { ValuesForm } from "@/components/sop/ProjectionForm";
-import { requireUser, canManage } from "@/server/auth";
-import { getGuidelines, getSubmissionGrid, inputPeriods } from "@/server/sop/queries";
+import { canOverview, requireUser, canManage } from "@/server/auth";
+import { getGuidelines, getSubmissionGrid, inputPeriods, projectionLock } from "@/server/sop/queries";
 import { getStreamMonthForm } from "@/server/sop/form";
 import { currentPeriod, dueLabel, isOpenSub, SUB_META } from "@/server/sop/model";
 import { addMonths, ago, fmtDate, fmtMonth, today } from "@/lib/dates";
@@ -20,6 +20,12 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
   const periods = inputPeriods(4, td);
   const next = addMonths(cur, 1);
   const [grid, guidelines] = await Promise.all([getSubmissionGrid(periods), getGuidelines()]);
+  // without the full overview a person sees only the streams they own
+  if (!canOverview(u)) {
+    grid.streams = grid.streams.filter((s) => s.poc_id === u.id);
+    const own = new Set(grid.streams.map((s) => s.id));
+    grid.cells = grid.cells.filter((c) => own.has(c.stream_id));
+  }
   const cell = (sid: string, p: string) => grid.cells.find((c) => c.stream_id === sid && c.period === p)!;
 
   const nextCells = grid.cells.filter((c) => c.period === next && c.state !== "na");
@@ -35,6 +41,8 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
   const formPeriod = sp.period && formPeriods.includes(sp.period) ? sp.period : next;
   const form = defStream ? await getStreamMonthForm(defStream, formPeriod) : null;
   const canSubmit = !!defStream && (canManage(u) || defStream.poc_id === u.id);
+  const lock = defStream ? await projectionLock(defStream.id, formPeriod) : { locked: false, at: null, since: "" };
+  const lockedForMe = lock.locked && u.role !== "admin";
   const formCell = defStream ? grid.cells.find((c) => c.stream_id === defStream.id && c.period === formPeriod) : null;
 
   return (
@@ -124,11 +132,16 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
             </label>
             <button className="h-9 rounded-lg border border-line-strong bg-surface px-3 text-[13px] hover:bg-subtle">Open</button>
           </form>
+          {lock.locked && (
+            <div className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] ${lockedForMe ? "bg-warn-soft text-warn" : "bg-info-soft text-info"}`}>
+              <Lock size={13} />{lockedForMe ? <>Locked — submitted {lock.since}. Projections lock 24 hours after submission; only an admin can change them.</> : <>Locked for the owner (submitted {lock.since}). As an admin you can still change it.</>}
+            </div>
+          )}
           {defStream && form ? (
             form.lines.length ? (
               <ValuesForm key={`${defStream.id}:${formPeriod}`} mode="projection" streamId={defStream.id} period={formPeriod} periodLabel={fmtMonth(formPeriod)}
                 lines={form.lines} labels={form.labels} dims={form.dims} cells={form.cells} prev={form.prev} started={formPeriod <= cur}
-                disabled={!canSubmit} disabledReason={canSubmit ? undefined : `Only ${defStream.poc_name ?? "the POC"} or a PM can submit`} />
+                disabled={!canSubmit || lockedForMe} disabledReason={lockedForMe ? `Locked — submitted ${lock.since}. Projections lock 24 hours after submission; ask an admin to change them.` : canSubmit ? undefined : `Only ${defStream.poc_name ?? "the POC"} or a PM can submit`} />
             ) : <EmptyState compact title="No lines configured" body="Add lines for this stream in Projections → Data source." />
           ) : <EmptyState compact title="No streams" />}
         </div>

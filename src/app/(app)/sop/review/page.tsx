@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
@@ -31,7 +32,7 @@ function Section({ n, title, aside, children }: { n: number; title: string; asid
 }
 
 export default async function SopReview() {
-  const [b, callouts, people, u] = await Promise.all([buildReviewBrief(), listCallouts(), listPeople(), requireUser()]);
+  const [b, callouts, people, u] = await Promise.all([buildReviewBrief(), listCallouts(), listPeople(), requireSopOverview()]);
   const m = b.meeting;
   const openPrev = b.prevTasks.filter((t) => t.status !== "completed" && t.status !== "cancelled");
   const closedPrev = b.prevTasks.filter((t) => t.status === "completed" || t.status === "cancelled");

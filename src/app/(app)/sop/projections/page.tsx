@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import Link from "next/link";
 import { Avatar, Badge, Card, CardHeader, EmptyState, Stat } from "@/components/ui";
 import { AccuracyText, DemoBadge, SourceBadge, Variance } from "@/components/sop/bits";
@@ -21,7 +22,7 @@ const KIND_LABEL: Record<string, string> = { commentary: "Commentary", variance_
 
 export default async function SopProjections({ searchParams }: { searchParams: Promise<{ stream?: string; month?: string; metric?: string }> }) {
   const sp = await searchParams;
-  const u = await requireUser();
+  const u = await requireSopOverview();
   const td = today();
   const cur = currentPeriod(td);
   const fyStart = Number(cur.slice(5, 7)) >= 4 ? `${cur.slice(0, 4)}-04-01` : `${Number(cur.slice(0, 4)) - 1}-04-01`;

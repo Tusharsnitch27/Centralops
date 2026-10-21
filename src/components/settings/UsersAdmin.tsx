@@ -183,12 +183,12 @@ function CreateUserModal({ onClose, teams, roles, today }: { onClose: () => void
 }
 
 function EditUserModal({ user, onClose, teams, roles }: { user: AdminUser; onClose: () => void; teams: { value: string; label: string }[]; roles: typeof ROLE_OPTIONS }) {
-  const [f, setF] = useState({ name: user.name, email: user.email ?? "", role: user.role, teamId: user.team_id, title: user.title ?? "", joinedAt: user.joined_at, active: user.active, phone: user.phone ?? "", whatsappOptIn: user.whatsapp_opt_in });
+  const [f, setF] = useState({ name: user.name, email: user.email ?? "", role: user.role, teamId: user.team_id, title: user.title ?? "", joinedAt: user.joined_at, active: user.active, phone: user.phone ?? "", whatsappOptIn: user.whatsapp_opt_in, fullOverview: user.full_overview });
   const [password, setPassword] = useState(user.has_password ? "" : tempPassword());
   const { pending, run } = useAction();
   const needsInvite = !user.email || !user.has_password;
   const submit = () => run(async () => {
-    const r = await updateUserAccess(user.id, { name: f.name, email: f.email || null, role: f.role, teamId: f.teamId, title: f.title, joinedAt: f.joinedAt, active: f.active, phone: f.phone || null, whatsappOptIn: f.whatsappOptIn });
+    const r = await updateUserAccess(user.id, { name: f.name, email: f.email || null, role: f.role, teamId: f.teamId, title: f.title, joinedAt: f.joinedAt, active: f.active, phone: f.phone || null, whatsappOptIn: f.whatsappOptIn, fullOverview: f.fullOverview });
     if (r.ok && needsInvite && f.email && password) return resetUserPassword(user.id, password);
     return r;
   }, { onOk: onClose, success: "Saved" });
@@ -214,6 +214,7 @@ function EditUserModal({ user, onClose, teams, roles }: { user: AdminUser; onClo
         <Field label="Joining date"><input type="date" className="field" value={f.joinedAt} onChange={(e) => setF({ ...f, joinedAt: e.target.value })} /></Field>
         <Field label="WhatsApp number" hint="For deadline reminders. 10-digit Indian mobile is fine."><input className="field" inputMode="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="98765 43210" /></Field>
         <label className="flex items-center gap-2.5 self-end pb-2 text-[13px] text-ink-2"><Toggle checked={f.whatsappOptIn} onChange={(v) => setF({ ...f, whatsappOptIn: v })} label="WhatsApp reminders" />Send WhatsApp reminders</label>
+        <label className="flex items-center gap-2.5 self-end pb-2 text-[13px] text-ink-2" title="Sees the whole S&OP program and every Weekly-update section. Without it: only their own inputs, sections and tasks."><Toggle checked={f.fullOverview || f.role === "admin"} onChange={(v) => setF({ ...f, fullOverview: v })} label="Full overview" />Full overview (S&amp;OP, Weekly updates)</label>
         <label className="flex items-center gap-2.5 text-[13px] text-ink-2 sm:col-span-2"><Toggle checked={f.active} onChange={(v) => setF({ ...f, active: v })} label="Active" />Active — can sign in and be assigned work</label>
       </div>
     </Modal>

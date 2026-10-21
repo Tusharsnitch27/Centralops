@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import { EmptyState } from "@/components/ui";
 import { Collapsible } from "@/components/ui/Collapsible";
 import { PeriodPicker } from "@/components/sop/PeriodPicker";
@@ -15,7 +16,7 @@ const rs = (v: number | null | undefined) => (v == null ? "—" : `₹${v.toFixe
 const MON = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { month: "short", year: "2-digit", timeZone: "UTC" });
 
 export default async function ProcessingCost({ searchParams }: { searchParams: Promise<{ grain?: string; p?: string }> }) {
-  const u = await requireUser();
+  const u = await requireSopOverview();
   const per = await resolvePeriod(await searchParams);
   if (!per.sel) return <EmptyState title="No data yet" />;
   const [c, allMonths] = await Promise.all([processingCost(per.sel.months), reviewPeriods()]);

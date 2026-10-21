@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import { EmptyState } from "@/components/ui";
 import { MonthlyReviewView } from "@/components/sop/MonthlyReview";
 import { PeriodPicker } from "@/components/sop/PeriodPicker";
@@ -13,7 +14,7 @@ import { ago } from "@/lib/dates";
 export const metadata = { title: "S&OP · Monthly review" };
 
 export default async function SopMonthlyReview({ searchParams }: { searchParams: Promise<{ grain?: string; p?: string; period?: string }> }) {
-  await requireUser();
+  await requireSopOverview();
   const per = await resolvePeriod(await searchParams);
   if (!per.sel) return <EmptyState title="No monthly review data yet" body="Plan vs actual by channel, week and category will appear here." />;
   const [d, daily, runs] = await Promise.all([monthlyReview(per.sel.months, per.label), dailyDeviation(per.sel.months), lastRuns()]);

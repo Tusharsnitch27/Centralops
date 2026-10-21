@@ -8,7 +8,7 @@ import { RemindButton } from "@/components/weekly/WeeklyActions";
 import { WeeklyTabs } from "@/components/weekly/WeeklyTabs";
 import { Suspense } from "react";
 import { STATUS_LABEL, STATUS_TONE } from "@/components/weekly/meta";
-import { canManage, requireUser } from "@/server/auth";
+import { canManage, canOverview, requireUser } from "@/server/auth";
 import { currentWeekOf, ensureReport, listReports, loadReport, type ReportView } from "@/server/weekly/model";
 import { fmtDate } from "@/lib/dates";
 import { cn } from "@/lib/cn";
@@ -35,13 +35,16 @@ export default async function WeeklyPage({ searchParams }: { searchParams: Promi
   if (weekOf >= cur) await ensureReport(weekOf);
   const [v, reports] = await Promise.all([loadReport(weekOf, u), listReports()]);
   const manage = canManage(u);
+  const overview = canOverview(u);
+  // without the full overview people see only the sections they own
+  if (v && !overview) { v.rows = v.rows.filter((r) => r.section.owner_ids.includes(u.id)); const c = (s: string) => v.rows.filter((r) => r.entry.status === s).length; v.counts = { total: v.rows.length, submitted: c("submitted"), draft: c("draft"), pending: c("pending") }; }
   if (!v) return <><PageHeader title="Weekly updates" /><EmptyState title="No update for that week" action={<ButtonLink href="/weekly">Go to this week</ButtonLink>} /></>;
 
   const { report, counts } = v;
   const sent = report.status === "sent";
   const dl = countdown(v.deadline);
   const groups = [...new Set(v.rows.map((r) => r.section.group_name))];
-  const mine = v.rows.filter((r) => r.mine && !manage);
+  const mine = v.rows.filter((r) => r.mine && !manage && overview);
   const notDone = v.rows.filter((r) => r.entry.status !== "submitted");
   const weeks = [...new Set([cur, ...reports.map((r) => r.week_of)])].sort().reverse().slice(0, 8);
   const pct = (n: number) => `${(n / Math.max(1, counts.total)) * 100}%`;
@@ -50,9 +53,9 @@ export default async function WeeklyPage({ searchParams }: { searchParams: Promi
     <div>
       <PageHeader title="Weekly updates"
         subtitle="Every Monday by 12 PM · compiled and sent to leadership"
-        actions={<ButtonLink href={`/weekly/document?week=${weekOf}`} variant="primary"><FileText size={14} />{manage ? "Compile & review" : "View document"}</ButtonLink>} />
+        actions={overview ? <ButtonLink href={`/weekly/document?week=${weekOf}`} variant="primary"><FileText size={14} />{manage ? "Compile & review" : "View document"}</ButtonLink> : undefined} />
 
-      <Suspense><WeeklyTabs /></Suspense>
+      {overview && <Suspense><WeeklyTabs /></Suspense>}
       <div className="seg mb-4">
         <span className="seg-label">Week of</span>
         {weeks.map((w) => <Link key={w} href={`/weekly?week=${w}`} data-on={w === weekOf} className="seg-item">{fmtDate(w)}{w === cur ? " · next" : ""}</Link>)}

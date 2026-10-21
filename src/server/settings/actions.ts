@@ -81,7 +81,7 @@ export async function createUser(input: UserInput): Promise<ActionResult<{ id: s
   } catch (e) { return fail(e); }
 }
 
-export async function updateUserAccess(id: string, input: { name?: string; email?: string | null; role?: string; teamId?: string | null; title?: string; active?: boolean; joinedAt?: string; phone?: string | null; whatsappOptIn?: boolean }): Promise<ActionResult> {
+export async function updateUserAccess(id: string, input: { name?: string; email?: string | null; role?: string; teamId?: string | null; title?: string; active?: boolean; joinedAt?: string; phone?: string | null; whatsappOptIn?: boolean; fullOverview?: boolean }): Promise<ActionResult> {
   try {
     const me = await requireManager();
     if (!UUID.test(id)) throw new Error("Unknown user");
@@ -111,6 +111,7 @@ export async function updateUserAccess(id: string, input: { name?: string; email
       set("phone", p);
     }
     if (input.whatsappOptIn !== undefined) set("whatsapp_opt_in", !!input.whatsappOptIn);
+    if (input.fullOverview !== undefined) set("full_overview", !!input.fullOverview);
     if (!sets.length) return ok();
     vals.push(id);
     await tx(async (x) => {

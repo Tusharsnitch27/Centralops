@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card, CardHeader, EmptyState } from "@/components/ui";
@@ -22,7 +23,7 @@ const WHS = ["South", "North"] as const;
 
 export default async function SopCapacity({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const sp = await searchParams;
-  const u = await requireUser();
+  const u = await requireSopOverview();
   const cur = currentPeriod(today());
   const outlook = [cur, addMonths(cur, 1), addMonths(cur, 2)];
   const stored = await getCapacityPeriods();
@@ -31,7 +32,9 @@ export default async function SopCapacity({ searchParams }: { searchParams: Prom
   const [rows, outlookRows, breaches, rules, people, ownerId] = await Promise.all([
     getCapacity(month, month), getCapacity(cur, addMonths(cur, 2)), getCapacityBreaches(month, month), getRules(), listPeople(), getCapacityOwnerId(),
   ]);
-  const [obRows, engine] = await Promise.all([listObCapacity(), engineScenario()]);
+  const [obRows, engine, allCap] = await Promise.all([listObCapacity(), engineScenario(), getCapacity(months[0], months.at(-1)!)]);
+  const momDepts = sortDepts(allCap.map((r) => r.department));
+  const momMonths = [...new Set(allCap.map((r) => String(r.period).slice(0, 10)))].sort();
   const peopleOpts = people.map((p) => ({ id: p.id, name: p.name, hint: p.team_name }));
 
   // departments: this month's, else carry the list from the nearest month so the grid is ready to fill
@@ -127,6 +130,26 @@ export default async function SopCapacity({ searchParams }: { searchParams: Prom
           </table>
         </div>
       </Card>
+      <section className="space-y-2 pt-2">
+        <h2 className="label-caps px-1">Month on month · available − required (per day)</h2>
+        <div className="card overflow-x-auto">
+          <table className="table-base min-w-[720px]">
+            <thead><tr><th>Department</th><th>WH</th>{momMonths.map((m) => <th key={m} className="text-right">{fmtMonth(m)}</th>)}</tr></thead>
+            <tbody>{momDepts.flatMap((dep) => WHS.map((wh, i) => (
+              <tr key={dep + wh}>
+                <td className="font-medium">{i === 0 ? dep : ""}</td><td className="text-ink-3">{wh}</td>
+                {momMonths.map((m) => { const r = allCap.find((x) => x.department === dep && x.warehouse === wh && String(x.period).slice(0, 10) === m); const gap = r && r.required != null && r.available != null ? Number(r.available) - Number(r.required) : null; return (
+                  <td key={m} className={cn("text-right tabular", gap == null ? "text-ink-4" : gap < 0 ? "bg-bad-soft font-semibold text-bad" : gap === 0 ? "text-ink-3" : "text-ok")} title={r ? `required ${num(Number(r.required ?? 0))} · available ${num(Number(r.available ?? 0))}` : undefined}>
+                    {gap == null ? "—" : `${gap > 0 ? "+" : gap < 0 ? "−" : ""}${num(Math.abs(gap))}`}
+                  </td>
+                ); })}
+              </tr>
+            )))}</tbody>
+          </table>
+          <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Red = short of capacity that month. Hover for required vs available.</p>
+        </div>
+      </section>
+
       <section className="space-y-2 pt-2">
         <h2 className="label-caps px-1">Planning tools</h2>
         <Collapsible id="sop:ob-capacity" title="Outbound capacity · day level" sub="Marketplace + Retail outbound needed vs capacity planned, per warehouse — red days are short">

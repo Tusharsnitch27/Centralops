@@ -8,6 +8,7 @@ import { fail, ok, type ActionResult } from "../core/result";
 import { createTask } from "../tasks/core";
 import { fmtDate, fmtMonth, today } from "@/lib/dates";
 import { currentPeriod, dueDateFor, isOpenSub, subState, type ActualSource, type Stream } from "./model";
+import { projectionLock } from "./queries";
 
 const refresh = () => revalidatePath("/sop", "layout");
 const isPeriod = (p: string) => /^\d{4}-\d{2}-01$/.test(p);
@@ -86,6 +87,9 @@ export async function submitProjections(input: { streamId: string; period: strin
     const s = await loadStream(input.streamId);
     if (!canSubmitFor(u, s)) throw new Error(`Only ${s.poc_name ?? "the POC"} or a PM can submit ${s.name} projections`);
     if (!isPeriod(input.period)) throw new Error("Choose a month");
+    // projections lock 24 h after they were first submitted; only an admin can change them after that
+    const lock = await projectionLock(s.id, input.period);
+    if (lock.locked && u.role !== "admin") throw new Error(`${s.name} · ${fmtMonth(input.period)} projections were submitted ${lock.since} and are locked. Ask an admin to change them.`);
     const started = input.period <= currentPeriod();
     const lineIds = new Set((await q<{ id: string }>(`select id from sop_lines where stream_id = $1`, [s.id])).map((r) => r.id));
     let changed = 0, revised = 0;
@@ -118,6 +122,7 @@ export async function submitProjections(input: { streamId: string; period: strin
         `insert into sop_submissions (stream_id, period, status, due_date, submitted_at, submitted_by, note) values ($1,$2,'submitted',$3,now(),$4,$5)
          on conflict (stream_id, period) do update set status = 'submitted', submitted_at = now(), submitted_by = excluded.submitted_by, note = coalesce(excluded.note, sop_submissions.note)`,
         [s.id, input.period, dueDateFor(input.period, s.due_day), u.id, input.note?.trim() || null]);
+      await x.q(`update sop_submissions set first_submitted_at = coalesce(first_submitted_at, now()) where stream_id = $1 and period = $2`, [s.id, input.period]);
       await x.q(`update followups set status = 'responded', responded_at = now(), response = $2 where entity_type = 'sop_stream' and entity_id = $1 and status = 'open'`,
         [s.id, `Submitted ${fmtMonth(input.period)} projections`]);
       await resolveInbox(`sop:${s.id}:${input.period}`, undefined, x);

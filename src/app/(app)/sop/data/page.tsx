@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import { Badge } from "@/components/ui";
 import { Collapsible } from "@/components/ui/Collapsible";
 import { requireUser } from "@/server/auth";
@@ -12,7 +13,7 @@ const MON = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { 
 
 /** What each S&OP number comes from, with which conditions — plus reconciliation and open questions. */
 export default async function DataSources() {
-  await requireUser();
+  await requireSopOverview();
   const [runs, schema, recon, plans] = await Promise.all([
     lastRuns(), schemaInfo(),
     q<{ view_key: string; period: string; wb: number; sf: number }>(

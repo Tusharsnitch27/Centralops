@@ -4,7 +4,8 @@ import { Badge, EmptyState, PageHeader } from "@/components/ui";
 import { Collapsible } from "@/components/ui/Collapsible";
 import { RichText } from "@/components/weekly/EntryBody";
 import { WeeklyTabs } from "@/components/weekly/WeeklyTabs";
-import { requireUser } from "@/server/auth";
+import { canOverview, requireUser } from "@/server/auth";
+import { redirect } from "next/navigation";
 import { q } from "@/server/db";
 import { currentWeekOf, ensureReport, loadReport } from "@/server/weekly/model";
 import { fmtDate } from "@/lib/dates";
@@ -19,6 +20,7 @@ const ENTRY = { pending: { label: "Pending", tone: "red" as const }, draft: { la
 /** Last week's highlights next to what each section committed for this week. */
 export default async function Glance({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const u = await requireUser();
+  if (!canOverview(u)) redirect("/weekly");
   const sp = await searchParams;
   const cur = currentWeekOf();
   const weekOf = sp.week && /^\d{4}-\d{2}-\d{2}$/.test(sp.week) ? sp.week : cur;

@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/ui";
@@ -27,7 +28,7 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: 
 const accTone = (a: number | null | undefined) => (a == null ? undefined : a >= 0.9 ? "ok" : a >= 0.75 ? "warn" : "bad");
 
 export default async function SopSummary({ searchParams }: { searchParams: Promise<{ grain?: string; p?: string }> }) {
-  await requireUser();
+  await requireSopOverview();
   const per = await resolvePeriod(await searchParams);
   if (!per.sel) return <EmptyState title="No S&OP data yet" />;
   const [b, fwd] = await Promise.all([leaderBrief(per.sel.months, per.label), forwardLook(2)]);
@@ -61,13 +62,22 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
       </section>
 
       <section className="mb-6">
-        <h2 className="label-caps mb-2 px-1">Month on month · actual vs plan</h2>
+        <h2 className="label-caps mb-2 px-1">Month on month · actual vs plan, and capacity</h2>
         <div className="card overflow-x-auto">
           <table className="table-base min-w-[640px]">
             <thead><tr><th>Flow</th>{d.trend[0]?.periods.map((p) => <th key={p} className={cn("text-right", per.sel.months.includes(p) && "!text-ink")}>{MON(p)}</th>)}</tr></thead>
             <tbody>{d.trend.map((r) => (
               <tr key={r.def.key}><td className="font-medium">{r.def.title}</td>
                 {r.cells.map((c, i) => <td key={i} className={cn("text-right", per.sel.months.includes(r.periods[i]) && "bg-subtle/60")} title={c ? `Plan ${L(c.plan)} · Actual ${L(c.actual)}` : undefined}>{c ? <UtilChip u={c.util} plan={c.plan} actual={c.actual} /> : <span className="text-ink-4">—</span>}</td>)}</tr>
+            ))}
+            <tr><td colSpan={(d.trend[0]?.periods.length ?? 0) + 1} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">Capacity · warehouse utilisation (stock ÷ capacity, pre-packs apart)</td></tr>
+            {(["South", "North", "Total"] as const).map((w) => (
+              <tr key={w}><td className="font-medium">{w === "Total" ? "Total (28L)" : `${w} WH`}</td>
+                {(d.trend[0]?.periods ?? []).map((p) => { const pt = d.wh[w].find((x) => x.period === p); const u = pt?.util ?? null; return (
+                  <td key={p} className={cn("text-right", per.sel.months.includes(p) && "bg-subtle/60")} title={pt?.inventory != null ? `${L(pt.inventory)} of ${L(pt.capacity)}` : undefined}>
+                    {u == null ? <span className="text-ink-4">—</span> : <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-semibold tabular", u >= 0.95 ? "bg-bad-soft text-bad" : u >= 0.85 ? "bg-warn-soft text-warn" : "bg-accent-soft text-accent-ink")}>{pc(u)}</span>}
+                  </td>
+                ); })}</tr>
             ))}</tbody>
           </table>
         </div>

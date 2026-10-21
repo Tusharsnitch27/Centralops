@@ -273,3 +273,12 @@ export async function getCapacityOwnerId() {
 export async function getCapacityPeriods() {
   return (await q<{ period: string }>(`select distinct period from sop_capacity order by period`)).map((r) => r.period);
 }
+
+export const LOCK_HOURS = 24;
+/** Projections lock 24 h after the stream first submitted them for that month. */
+export async function projectionLock(streamId: string, period: string): Promise<{ locked: boolean; at: string | null; since: string }> {
+  const r = await q<{ at: string | null; locked: boolean }>(
+    `select first_submitted_at::text as at, coalesce(first_submitted_at < now() - make_interval(hours => $3), false) as locked from sop_submissions where stream_id = $1 and period = $2`, [streamId, period, LOCK_HOURS]);
+  const at = r[0]?.at ?? null;
+  return { locked: !!r[0]?.locked, at, since: at ? `on ${new Date(at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}` : "" };
+}

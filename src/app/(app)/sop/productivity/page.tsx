@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import { EmptyState } from "@/components/ui";
 import { PeriodPicker } from "@/components/sop/PeriodPicker";
 import { requireUser } from "@/server/auth";
@@ -13,7 +14,7 @@ const pc = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(
 
 /** Throughput vs facility capacity now; units per man-day by function once the attendance feed is connected. */
 export default async function Productivity({ searchParams }: { searchParams: Promise<{ grain?: string; p?: string }> }) {
-  await requireUser();
+  await requireSopOverview();
   const per = await resolvePeriod(await searchParams);
   if (!per.sel) return <EmptyState title="No data yet" />;
   const [flow, periods, engine] = await Promise.all([

@@ -4,7 +4,8 @@ import { Badge, EmptyState } from "@/components/ui";
 import { EntryBody, RichText } from "@/components/weekly/EntryBody";
 import { DocToolbar, ExecSummaryEditor, SectionFeedback } from "@/components/weekly/DocumentControls";
 import { STATUS_LABEL, STATUS_TONE } from "@/components/weekly/meta";
-import { canManage, requireUser } from "@/server/auth";
+import { canManage, canOverview, requireUser } from "@/server/auth";
+import { redirect } from "next/navigation";
 import { currentWeekOf, ensureReport, loadReport } from "@/server/weekly/model";
 import { emailConfig } from "@/server/weekly/delivery";
 
@@ -12,6 +13,7 @@ export const metadata = { title: "Weekly update · Document" };
 
 export default async function WeeklyDocument({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const u = await requireUser();
+  if (!canOverview(u)) redirect("/weekly");
   const sp = await searchParams;
   const cur = currentWeekOf();
   const weekOf = sp.week && /^\d{4}-\d{2}-\d{2}$/.test(sp.week) ? sp.week : cur;

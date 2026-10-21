@@ -26,24 +26,26 @@ export function useSopAction() {
 const MAIN = [
   { key: "summary", href: "/sop", label: "Summary" },
   { key: "monthly", href: "/sop/monthly", label: "Monthly review" },
+  { key: "inputs", href: "/sop/inputs", label: "Inputs" },
   { key: "cost", href: "/sop/cost", label: "Processing cost" },
   { key: "productivity", href: "/sop/productivity", label: "Productivity" },
 ];
 const MORE = [
-  { key: "inputs", href: "/sop/inputs", label: "Inputs" }, { key: "projections", href: "/sop/projections", label: "Projections" },
+  { key: "projections", href: "/sop/projections", label: "Projections" },
   { key: "streams", href: "/sop/streams", label: "Streams" }, { key: "capacity", href: "/sop/capacity", label: "Capacity planning" },
   { key: "review", href: "/sop/review", label: "Review meeting" }, { key: "data", href: "/sop/data", label: "Data sources" },
 ];
 
 /** Leadership tabs first; the working pages (inputs, projections, capacity, meeting, data) sit in a quieter row. */
-export function SopNav({ counts }: { counts?: { inputs?: number; capacity?: number } }) {
+export function SopNav({ counts, overview = true }: { counts?: { inputs?: number; capacity?: number }; overview?: boolean }) {
   const path = usePathname();
+  if (!overview) return <div className="mb-6"><Tabs active="inputs" items={[{ key: "inputs", href: "/sop/inputs", label: "My inputs", count: counts?.inputs }]} /></div>;
   const seg = path.split("/")[2] ?? "summary";
   const active = seg === "" ? "summary" : seg;
   const count = (k: string) => (k === "inputs" ? counts?.inputs : k === "capacity" ? counts?.capacity : undefined);
   return (
     <div className="mb-6 space-y-2">
-      <Tabs active={active} items={MAIN} />
+      <Tabs active={active} items={MAIN.map((m) => (m.key === "inputs" ? { ...m, count: counts?.inputs } : m))} />
       <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-1 text-[12px]">
         <span className="mr-1 font-semibold uppercase tracking-[0.08em] text-ink-4 text-[10.5px]">Inputs &amp; data</span>
         {MORE.map((m) => (

@@ -3,12 +3,12 @@ import { one, q } from "../db";
 
 export interface AdminUser {
   id: string; name: string; email: string | null; username: string | null; role: string; title: string | null; team_id: string | null; team_name: string | null;
-  joined_at: string; active: boolean; has_password: boolean; last_seen_at: string | null; avatar_color: string | null; employee_no: string | null; department: string | null; phone: string | null; whatsapp_opt_in: boolean;
+  joined_at: string; active: boolean; has_password: boolean; last_seen_at: string | null; avatar_color: string | null; employee_no: string | null; department: string | null; phone: string | null; whatsapp_opt_in: boolean; full_overview: boolean;
 }
 export async function listUsersAdmin() {
   return q<AdminUser>(
     `select u.id, u.name, u.email, u.username, u.role, u.title, u.team_id, t.name as team_name, u.joined_at, u.active,
-            (u.password_hash is not null) as has_password, u.last_seen_at, u.avatar_color, u.employee_no, u.department, u.phone, u.whatsapp_opt_in
+            (u.password_hash is not null) as has_password, u.last_seen_at, u.avatar_color, u.employee_no, u.department, u.phone, u.whatsapp_opt_in, u.full_overview
      from users u left join teams t on t.id = u.team_id order by u.active desc, u.name`);
 }
 

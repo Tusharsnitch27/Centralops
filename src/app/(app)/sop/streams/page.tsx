@@ -1,3 +1,4 @@
+import { requireSopOverview } from "@/server/sop/access";
 import Link from "next/link";
 import { ArrowRight, CalendarClock, ClipboardList, Gauge, Warehouse } from "lucide-react";
 import { Avatar, AvatarStack, Badge, ButtonLink, Card, CardHeader, EmptyState, SectionTitle } from "@/components/ui";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/cn";
 export const metadata = { title: "S&OP" };
 
 export default async function SopOverview() {
+  await requireSopOverview();
   const [o, people] = await Promise.all([getOverview(), listPeople()]);
   const peopleOpts = people.map((p) => ({ id: p.id, name: p.name, hint: p.team_name }));
   const streamById = new Map(o.cards.map((c) => [c.stream.id, c.stream]));

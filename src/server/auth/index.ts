@@ -17,9 +17,10 @@ export interface User {
   avatar_color: string | null;
   joined_at: string;
   onboarded_at: string | null;
+  full_overview: boolean;
 }
 
-const COLS = "id, name, email, username, role, title, team_id, avatar_color, joined_at, onboarded_at";
+const COLS = "id, name, email, username, role, title, team_id, avatar_color, joined_at, onboarded_at, full_overview";
 
 /** Current signed-in user (null when signed out or deactivated). Cached per request. */
 export const getUser = cache(async (): Promise<User | null> => {
@@ -48,5 +49,7 @@ export async function requireRole(...roles: Role[]): Promise<User> {
 
 /** Program-management capabilities (create/assign/distribute). */
 export const canManage = (u: Pick<User, "role">) => u.role === "admin" || u.role === "pm";
+/** Sees the whole S&OP program and every Weekly-update section (admins + people given "Full overview"). Others see only their own part. */
+export const canOverview = (u: Pick<User, "role"> & { full_overview?: boolean }) => u.role === "admin" || !!u.full_overview;
 /** Can edit anything they own; viewers/leadership are read-only. */
 export const canEdit = (u: Pick<User, "role">) => u.role !== "viewer" && u.role !== "leadership";

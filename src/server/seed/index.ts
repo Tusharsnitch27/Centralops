@@ -92,6 +92,12 @@ export async function bootstrap(rawQ: RunQ) {
     console.log("[seed] org chart + roles set (Mahadevan/Tushar admin, Pradhyum PM)");
   }
 
+  if ((await setting("seed.overview")) !== "v1") {
+    await rawQ(`update users set full_overview = true where name in ('Mahadevan Pillai','Tushar Gupta','Pradhyum Shivhare','Malhar Murhekar')`);
+    await setSetting("seed.overview", "v1");
+    console.log("[seed] full overview: Mahadevan, Tushar, Pradhyum, Malhar");
+  }
+
   if ((await setting("seed.sop_history")) !== "v1") {
     await seedSopHistory(rawQ);
     await setSetting("seed.sop_history", "v1");

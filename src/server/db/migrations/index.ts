@@ -6,6 +6,7 @@ import { sql as plans } from "./002_plans";
 import { sql as directory } from "./003_directory";
 import { sql as loginLock } from "./004_login_lock";
 import { sql as orgGoals } from "./005_org_goals";
+import { sql as fullOverview } from "./006_full_overview";
 import { sql as taskPoc } from "./010_task_poc";
 import { sql as weekly } from "./012_weekly";
 import { sql as taskLinks } from "./013_task_links";
@@ -20,6 +21,7 @@ import { sql as sopHistory } from "./042_sop_history";
 import { sql as sopSync } from "./043_sop_sync";
 import { sql as sopDaily } from "./044_sop_daily";
 import { sql as sopPlanDaily } from "./045_sop_plan_daily";
+import { sql as sopLock } from "./046_sop_lock";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -27,6 +29,7 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 3, name: "directory", sql: directory },
   { version: 4, name: "login_lock", sql: loginLock },
   { version: 5, name: "org_goals", sql: orgGoals },
+  { version: 6, name: "full_overview", sql: fullOverview },
   { version: 10, name: "task_poc", sql: taskPoc },
   { version: 12, name: "weekly", sql: weekly },
   { version: 13, name: "task_links", sql: taskLinks },
@@ -41,4 +44,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 43, name: "sop_sync", sql: sopSync },
   { version: 44, name: "sop_daily", sql: sopDaily },
   { version: 45, name: "sop_plan_daily", sql: sopPlanDaily },
+  { version: 46, name: "sop_lock", sql: sopLock },
 ];
