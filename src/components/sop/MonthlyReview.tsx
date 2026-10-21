@@ -1,8 +1,10 @@
 import { Fragment } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, Lightbulb, Warehouse } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Warehouse } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Collapsible, ExpandAll } from "@/components/ui/Collapsible";
 import type { MonthlyReview as Data } from "@/server/sop/monthly";
+import type { DailyView } from "@/server/sop/daily";
+import { FunctionTile } from "./FunctionTile";
 import { returnRate, type OverallRow, type FlowCalc, type Insight, type ReturnsRow, type Row, type Seg, type WhPoint } from "./reviewMath";
 
 const fmt = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
@@ -147,7 +149,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
   );
 }
 
-export function MonthlyReviewView({ d }: { d: Data }) {
+export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyView[] }) {
   const flows: { key: "outbound" | "inbound"; title: string }[] = [
     { key: "outbound", title: "Outbound — channels & stores" },
     { key: "inbound", title: "Inbound — inward, pre-pack & categories" },
@@ -228,11 +230,11 @@ export function MonthlyReviewView({ d }: { d: Data }) {
                   <span className="flex items-center gap-1.5 text-ink-3">South <UtilChip u={t.su} plan={t.sp} actual={t.sa} /></span>
                   <span className="flex items-center gap-1.5 text-ink-3">North <UtilChip u={t.nu} plan={t.np} actual={t.na} /></span>
                 </div>
-                <div className="border-b border-line bg-subtle/30 px-4 py-4 md:px-5">
-                  <div className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4"><Lightbulb size={12} /> Top insights</div>
-                  <InsightCards items={v.insights} />
+                {/* table on the left, the function's own insight tile on the right (stacks on smaller screens) */}
+                <div className="grid gap-4 p-3 md:p-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="min-w-0 overflow-hidden rounded-xl border border-line"><ViewTable rows={v.rows} label={v.def.rowLabel} /></div>
+                  <FunctionTile viewKey={v.def.key} total={t} rows={v.rows} insights={v.insights} daily={daily} notes={d.notes} owners={d.owners} />
                 </div>
-                <ViewTable rows={v.rows} label={v.def.rowLabel} />
               </Collapsible>
             );
           })}

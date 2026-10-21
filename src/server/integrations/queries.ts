@@ -25,7 +25,7 @@ export async function integrationsData(userId: string) {
     wa: { provider: cfg.provider, configured: cfg.configured, webhookUrl: cfg.webhookUrl, hasSecret: !!cfg.secret, template: cfg.template, lang: cfg.lang, phoneNumberId: cfg.phoneNumberId, hasMetaToken: !!cfg.metaToken },
     myPhone: me?.phone ?? null,
     snowflake: { configured: sfConfigured(), env: sfEnv(), syncTime: process.env.SOP_SYNC_TIME ?? "07:00", from: process.env.SOP_SYNC_FROM ?? "2026-04-01",
-      feeds: [...Object.entries(FEEDS).map(([key, f]) => ({ key, title: f.title, fills: f.fills.join(" · "), sql: f.sql({ slaSku: null }), last: runs.find((r) => r.feed === key) ?? null })),
+      feeds: [...Object.entries(FEEDS).map(([key, f]) => ({ key, title: f.title, fills: f.fills.join(" · "), sql: f.sql({ slaSku: null, putDate: "‹putaway updated column›" }), last: runs.find((r) => r.feed === key) ?? null })),
         { key: "inventory", title: INVENTORY_FEED.title, fills: INVENTORY_FEED.fills.join(" · "), sql: "DESCRIBE + daily stock query — columns detected at run time (see S&OP › Data sources)", last: runs.find((r) => r.feed === "inventory") ?? null }] },
     email: { webhookUrl: mail.webhookUrl, hasSecret: !!mail.secret, recipients: mail.recipients, cc: mail.cc },
     log, lastRun: lastRun?.value ?? null, phones: phones!,

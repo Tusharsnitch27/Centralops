@@ -22,7 +22,7 @@ export default async function DataSources() {
     q<{ view_key: string; months: string }>(`select view_key, string_agg(distinct to_char(day, 'Mon'), ', ') as months from sop_plan_daily group by 1`),
   ]);
   const run = (k: string) => runs.find((r) => r.feed === k);
-  const feeds = [...Object.entries(FEEDS).map(([key, f]) => ({ key, ...f, sqlText: f.sql({ slaSku: schema.sla?.picked.sku ?? null }) })),
+  const feeds = [...Object.entries(FEEDS).map(([key, f]) => ({ key, ...f, sqlText: f.sql({ slaSku: schema.sla?.picked.sku ?? null, putDate: schema.putaway?.picked.date ?? "‹putaway updated column›" }) })),
     { key: "inventory", ...INVENTORY_FEED, source: process.env.SNOWFLAKE_INVENTORY_TABLE ?? "snitch_db.maplemonk.snitch_final_inventory_wh2", sqlText: "DESCRIBE TABLE → detect date / warehouse / SKU / quantity columns → daily SUM by warehouse, pre-packs split out" }];
   const slaSku = schema.sla?.picked.sku;
   const inv = schema.inventory?.picked;
@@ -31,7 +31,7 @@ export default async function DataSources() {
     { q: inv ? `Inventory columns detected: date = ${inv.date}, warehouse = ${inv.warehouse}, SKU = ${inv.sku}, quantity = ${inv.quantity}. Is that quantity on-hand (incl. blocked / QC) or sellable only?` : "Inventory table: which columns are the snapshot date, warehouse, SKU and quantity — and is quantity on-hand or sellable only? (detected on the first refresh)", status: inv ? "auto" : "open" },
     { q: "Category inward includes pre-pack putaway (expanded to units) — and Pre-pack is also shown on its own. Should Category inward exclude PP SKUs so ‘Total inwards’ doesn’t count them twice?", status: "open" },
     { q: "Capacity: South is 16L for SAPL-WH1 + WH2 combined. What is each warehouse’s own capacity, and what is the capacity of the separate pre-pack area?", status: "open" },
-    { q: "Timestamps: are packed_time and putaway_completed_date in IST? (decides which day an order near midnight counts in)", status: "open" },
+    { q: "Timestamps: are packed_time and the putaway updated time in IST? (decides which day an order near midnight counts in)", status: "open" },
     { q: "Category-wise inward has no is_trading filter (Category inward does), so their totals can differ. Keep as is?", status: "open" },
     { q: "Returns: North = Warehouse Name containing NORTH, everything else counts as South (including any non-SAPL warehouse). Limit to the three SAPL warehouses?", status: "open" },
     { q: "B2B-MP has a planned row “Amazon Cocoblu”. With AMAZON/COCOBLU treated as B2C, should that B2B plan move to B2C or stay as a B2B channel?", status: "open" },

@@ -69,14 +69,15 @@ const outwardSql = (marketplace: string, where: string, sku: string | null) => `
 SELECT day, label, region, COUNT(*) AS qty, SUM(mult) AS units, COUNT(DISTINCT order_name) AS orders
 FROM x GROUP BY 1, 2, 3`;
 
-const putawaySql = (labelSql: string, where: string) => `SELECT TO_VARCHAR(putaway_completed_date::date, 'YYYY-MM-DD') AS day,
+// putaway is dated by the putaway-updated column (found with DESCRIBE), never the completed / created date
+const putawaySql = (D: string, labelSql: string, where: string) => `SELECT TO_VARCHAR(${D}::date, 'YYYY-MM-DD') AS day,
   ${labelSql} AS label,
   ${PUT_REGION} AS region,
   SUM(putaway_completed_quantity) AS qty,
   SUM(putaway_completed_quantity * ${mult(PUT_SKU)}) AS units
 FROM ${PUT_TABLE}
 WHERE ${where}
-  AND putaway_completed_date >= '${FROM()}'
+  AND ${D} >= '${FROM()}'
 GROUP BY 1, 2, 3`;
 
 const CATEGORY_BUCKET = `CASE TRIM(LOWER(category))
@@ -90,7 +91,7 @@ const CATEGORY_BUCKET = `CASE TRIM(LOWER(category))
 
 export interface FeedDef {
   title: string; source: string; grain: string; conditions: string[]; transforms: string[]; fills: string[];
-  sql: (ctx: { slaSku: string | null }) => string;
+  sql: (ctx: { slaSku: string | null; putDate: string }) => string;
 }
 export const FEEDS: Record<string, FeedDef> = {
   b2c: {
@@ -117,35 +118,35 @@ export const FEEDS: Record<string, FeedDef> = {
   },
   category_inward: {
     title: "Category inward (new inward putaway)", source: PUT_TABLE, grain: "day × region",
-    conditions: ["putaway_type = PUTAWAY_GRN_ITEM", "final_type = New Inward", "Warehouse Name in SAPL-WH1/WH2/NORTH-TAURU", "category ≠ NON- TRADING, is_trading = TRUE", "day = putaway_completed_date"],
+    conditions: ["putaway_type = PUTAWAY_GRN_ITEM", "final_type = New Inward", "Warehouse Name in SAPL-WH1/WH2/NORTH-TAURU", "category ≠ NON- TRADING, is_trading = TRUE", "day = putaway updated date (column detected — see below)"],
     transforms: ["units = putaway_completed_quantity × pre-pack size (PP4-… = 4)", "weeks as above"],
     fills: ["Monthly review › Category inward (weekly)", "Inventory flow inward (category)"],
-    sql: () => putawaySql(`''`, `putaway_type = 'PUTAWAY_GRN_ITEM' AND final_type IN ('New Inward') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND category NOT IN ('NON- TRADING') AND is_trading = TRUE`),
+    sql: ({ putDate }) => putawaySql(putDate, `''`, `putaway_type = 'PUTAWAY_GRN_ITEM' AND final_type IN ('New Inward') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND category NOT IN ('NON- TRADING') AND is_trading = TRUE`),
   },
   prepack: {
     title: "Pre-pack inward (kits)", source: PUT_TABLE, grain: "day × region",
     conditions: ["as Category inward, plus Item Type skuCode LIKE 'PP%'"],
     transforms: ["packs = putaway_completed_quantity; units = packs × pre-pack size", "weeks as above"],
     fills: ["Monthly review › Pre-pack (weekly, units)"],
-    sql: () => putawaySql(`''`, `putaway_type = 'PUTAWAY_GRN_ITEM' AND final_type IN ('New Inward') AND ${PUT_SKU} LIKE 'PP%' AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND category NOT IN ('NON- TRADING') AND is_trading = TRUE`),
+    sql: ({ putDate }) => putawaySql(putDate, `''`, `putaway_type = 'PUTAWAY_GRN_ITEM' AND final_type IN ('New Inward') AND ${PUT_SKU} LIKE 'PP%' AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND category NOT IN ('NON- TRADING') AND is_trading = TRUE`),
   },
   category_view: {
     title: "Category-wise inward", source: PUT_TABLE, grain: "day × category × region",
     conditions: ["putaway_type = PUTAWAY_GRN_ITEM, final_type = New Inward", "Warehouse Name in SAPL-WH1/WH2/NORTH-TAURU", "categories Hoodies, Carry Bag, Non- Trading dropped (as in your query; no is_trading filter)"],
     transforms: ["your category buckets (trouser → Trousers, joggers / trackpants → Joggers & Trackpants, belts → Accessories …)", "units = quantity × pre-pack size"],
     fills: ["Monthly review › Category-wise inward"],
-    sql: () => `SELECT * FROM (${putawaySql(CATEGORY_BUCKET, `putaway_type = 'PUTAWAY_GRN_ITEM' AND final_type IN ('New Inward') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')`)}) WHERE label NOT IN ('Hoodies','Carry Bag','Non- Trading')`,
+    sql: ({ putDate }) => `SELECT * FROM (${putawaySql(putDate, CATEGORY_BUCKET, `putaway_type = 'PUTAWAY_GRN_ITEM' AND final_type IN ('New Inward') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')`)}) WHERE label NOT IN ('Hoodies','Carry Bag','Non- Trading')`,
   },
   returns: {
     title: "Returns (putaway)", source: PUT_TABLE, grain: "day × final_type × region",
-    conditions: ["final_type LIKE '%Return%'", "is_trading = TRUE, category_group NOT LIKE '%NON%'", "region: Warehouse Name containing NORTH → North, else South"],
+    conditions: ["final_type LIKE '%Return%'", "is_trading = TRUE, category_group NOT LIKE '%NON%'", "region: Warehouse Name containing NORTH → North, else South", "day = putaway updated date"],
     transforms: ["final_type containing B2B / Store / Retail / SOR → B2B returns, the rest → B2C", "units = quantity × pre-pack size"],
     fills: ["Monthly review › Returns (+ return rate vs B2C and retail forward)", "Inventory flow inward (returns)"],
-    sql: () => `SELECT TO_VARCHAR(putaway_completed_date::date, 'YYYY-MM-DD') AS day, final_type AS label,
+    sql: ({ putDate }) => `SELECT TO_VARCHAR(${putDate}::date, 'YYYY-MM-DD') AS day, final_type AS label,
   CASE WHEN "Warehouse Name" LIKE '%NORTH%' THEN 'north' ELSE 'south' END AS region,
   SUM(putaway_completed_quantity) AS qty, SUM(putaway_completed_quantity * ${mult(PUT_SKU)}) AS units
 FROM ${PUT_TABLE}
-WHERE final_type LIKE '%Return%' AND is_trading = TRUE AND category_group NOT LIKE '%NON%' AND putaway_completed_date >= '${FROM()}'
+WHERE final_type LIKE '%Return%' AND is_trading = TRUE AND category_group NOT LIKE '%NON%' AND ${putDate} >= '${FROM()}'
 GROUP BY 1, 2, 3`,
   },
 };
@@ -184,6 +185,15 @@ async function saveDaily(feed: string, rows: DailyRow[]) {
       [feed, c.map((x) => x.day), c.map((x) => x.label), c.map((x) => x.region), c.map((x) => x.qty), c.map((x) => x.units), c.map((x) => x.orders)]);
   }
   return v.length;
+}
+
+/** The putaway table's "putaway updated" timestamp — every putaway feed is dated by it. */
+async function putawayDateColumn(): Promise<string> {
+  const cols = await describe(PUT_TABLE);
+  const d = pick(cols, ["PUTAWAY_UPDATED", "PUTAWAY_UPDATED_AT", "PUTAWAY_UPDATED_DATE", "PUTAWAY_UPDATED_TIME", "PUTAWAY_UPDATED_ON", "Putaway Updated", "Putaway Updated At", "Putaway Updated Date"], /putaway.?updat/i);
+  await saveSchema("putaway", { table: PUT_TABLE, columns: cols.map((c) => c.name), picked: { date: d }, checkedAt: new Date().toISOString() });
+  if (!d) throw new Error(`No "putaway updated" column found in ${PUT_TABLE}. Columns: ${cols.map((c) => c.name).join(", ")}`);
+  return quote(d);
 }
 
 async function slaSkuColumn(): Promise<string | null> {
@@ -388,6 +398,7 @@ export async function rebuild() {
 export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | "schedule" | "cron" = "manual", actorId: string | null = null) {
   const out: { feed: FeedKey; status: "ok" | "failed"; read?: number; written?: number; error?: string }[] = [];
   let slaSku: string | null | undefined;
+  let putDate: string | undefined;
   for (const feed of feeds) {
     const [run] = await q<{ id: string }>(`insert into sop_sync_runs (feed, trigger, from_date, actor_id) values ($1,$2,$3,$4) returning id`, [feed, trigger, FROM(), actorId]);
     try {
@@ -396,10 +407,12 @@ export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | 
       if (feed === "inventory") ({ read, written, note } = await pullInventory());
       else {
         if (["b2c", "b2b_mp", "retail"].includes(feed) && slaSku === undefined) slaSku = await slaSkuColumn().catch(() => null);
-        const rows = await sfQuery<DailyRow>(FEEDS[feed].sql({ slaSku: slaSku ?? null }));
+        if (["category_inward", "prepack", "category_view", "returns"].includes(feed) && putDate === undefined) putDate = await putawayDateColumn();
+        const rows = await sfQuery<DailyRow>(FEEDS[feed].sql({ slaSku: slaSku ?? null, putDate: putDate ?? "" }));
         read = rows.length;
         written = await saveDaily(feed, rows);
         if (feed === "returns") note = `Return types: ${[...new Set(rows.map((x) => `${x.label} → ${isB2BReturn(x.label ?? "") ? "B2B" : "B2C"}`))].join("; ")}`;
+        if (putDate && ["category_inward", "prepack", "category_view"].includes(feed)) note = `dated by ${putDate}`;
         if (["b2c", "b2b_mp", "retail"].includes(feed)) note = slaSku ? `pre-packs expanded via ${slaSku}` : "no SKU column found in the dispatch table — pre-packs counted as 1 unit";
       }
       await q(`update sop_sync_runs set status = 'ok', rows_read = $2, rows_written = $3, message = $4, finished_at = now() where id = $1`, [run.id, read, written, note?.slice(0, 1000) ?? null]);

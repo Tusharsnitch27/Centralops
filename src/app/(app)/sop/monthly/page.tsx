@@ -26,7 +26,7 @@ export default async function SopMonthlyReview({ searchParams }: { searchParams:
       <p className="-mt-2 mb-5 px-1 text-[12px] text-ink-4">
         {per.sel.months.length > 1 ? `${per.sel.months.length} months added up · ` : ""}{lastOk ? `Actuals from Snowflake, refreshed ${ago(lastOk)}` : "Actuals from the S&OP workbook until the Snowflake feed is connected"}
       </p>
-      <MonthlyReviewView d={d} />
+      <MonthlyReviewView d={d} daily={daily.views} />
       <section id="daily" className="mt-6 scroll-mt-20 space-y-2">
         <h2 className="label-caps px-1">Day by day · plan vs actual</h2>
         {!daily.hasActuals

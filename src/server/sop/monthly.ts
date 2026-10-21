@@ -53,7 +53,8 @@ export async function monthlyReview(input: string | string[], label?: string) {
     // across several months: channel/category views add up by row; week views become one row per month
     const acc = new Map<string, RawRow>();
     for (const r of rowsRaw.filter((x) => x.view_key === v.key)) {
-      const label = multi && v.weekly ? MON(r.period) : r.row_label;
+      // Amazon and Cocoblu are one B2C channel
+      const label = multi && v.weekly ? MON(r.period) : v.key === "b2c" && /^cocoblu$/i.test(r.row_label) ? "Amazon" : r.row_label;
       const cur = acc.get(label) ?? { label, group: r.row_group, sp: 0, sa: 0, np: 0, na: 0 };
       cur.sp += r.south_plan ?? 0; cur.sa += r.south_actual ?? 0; cur.np += r.north_plan ?? 0; cur.na += r.north_actual ?? 0;
       acc.set(label, cur);
@@ -62,13 +63,18 @@ export async function monthlyReview(input: string | string[], label?: string) {
     const def = multi && v.weekly ? { ...v, rowLabel: "Month", weekly: false } : v;
     return { def, rows: tableRows(def, raw), insights: viewInsights(def, raw, ctx) };
   }).filter((v) => v.rows.length > 1);
-  const [meta, trendRows, flowRows, returns] = await Promise.all([
+  const [meta, trendRows, flowRows, returns, notes, owners] = await Promise.all([
     q<{ through_day: number }>(`select through_day from sop_review_periods where period = $1`, [period]),
     q<{ view_key: string; row_label: string; period: string; sp: number; sa: number; np: number; na: number }>(
       `select view_key, row_label, period::text as period, coalesce(south_plan,0) as sp, coalesce(south_actual,0) as sa, coalesce(north_plan,0) as np, coalesce(north_actual,0) as na
        from sop_review_rows where period in (select period from sop_review_rows where view_key <> 'liquidation')`),
     q<FlowRow>(`select period::text as period, warehouse, capacity, coalesce(opening,0) as opening, coalesce(inward_category,0) as inward_category, coalesce(inward_returns,0) as inward_returns, coalesce(outward,0) as outward, coalesce(closing,0) as closing from sop_inventory_flow order by period, warehouse desc`),
     q<ReturnsRow>(`select period::text as period, warehouse, b2c, b2b, fwd_b2c, fwd_retail from sop_returns order by period, warehouse desc`),
+    // owners' remarks on these months (commentary with projections, variance reasons, corrective actions)
+    q<{ code: string; kind: string; body: string; author: string | null; at: string }>(
+      `select s.code, n.kind, n.body, u.name as author, n.created_at::text as at from sop_notes n join sop_streams s on s.id = n.stream_id
+       left join users u on u.id = n.author_id where n.period = any($1::date[]) order by n.created_at desc`, [months]),
+    q<{ code: string; poc: string | null }>(`select s.code, coalesce(u.name, s.poc_label) as poc from sop_streams s left join users u on u.id = s.poc_id where s.active`),
   ]);
   const flow = flowRows.map(flowCalc);
   const flowNow = flow.filter((f) => f.period === period);
@@ -77,7 +83,7 @@ export async function monthlyReview(input: string | string[], label?: string) {
   return {
     period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
     trend: trendTable(trendRows), flow, flowNow, flowInsights: flowInsights(flowNow.length ? flowNow : flow.filter((f) => f.period === flow.at(-1)?.period)),
-    returns, returnsInsights: returnsInsights(returns),
+    returns, returnsInsights: returnsInsights(returns), notes, owners: Object.fromEntries(owners.map((o) => [o.code, o.poc])) as Record<string, string | null>,
   };
 }
 export type MonthlyReview = Awaited<ReturnType<typeof monthlyReview>>;

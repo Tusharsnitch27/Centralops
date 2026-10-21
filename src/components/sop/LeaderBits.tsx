@@ -39,12 +39,12 @@ const cell = (dev: number | null, plan: number, actual: number) => {
 };
 const fmt = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
 
-function Strip({ s }: { s: DaySeries }) {
+export function Strip({ s, small }: { s: DaySeries; small?: boolean }) {
   return (
-    <div className="flex gap-[2px]">
+    <div className={cn("flex gap-[2px]", small && "flex-wrap")}>
       {s.days.map((d) => (
         <span key={d.day} title={`${d.day.slice(8)}: plan ${fmt(d.plan)}, actual ${fmt(d.actual)}${d.dev != null ? ` (${d.dev > 0 ? "+" : ""}${Math.round(d.dev * 100)}%)` : d.actual > 0 ? " — no plan" : ""}`}
-          className={cn("h-5 w-[14px] shrink-0 rounded-[3px]", cell(d.dev, d.plan, d.actual))} />
+          className={cn("shrink-0 rounded-[3px]", small ? "h-3.5 w-[9px]" : "h-5 w-[14px]", cell(d.dev, d.plan, d.actual))} />
       ))}
     </div>
   );

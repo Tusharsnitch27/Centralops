@@ -26,6 +26,7 @@ export function useSopAction() {
 const MAIN = [
   { key: "summary", href: "/sop", label: "Summary" },
   { key: "monthly", href: "/sop/monthly", label: "Monthly review" },
+  { key: "detailed", href: "/sop/detailed", label: "Detailed" },
   { key: "inputs", href: "/sop/inputs", label: "Inputs" },
   { key: "cost", href: "/sop/cost", label: "Processing cost" },
   { key: "productivity", href: "/sop/productivity", label: "Productivity" },
