@@ -15,6 +15,9 @@ const ERRORS: Record<string, string> = {
   no_password: "Your account has no password yet. Ask a Central Ops admin to set one.",
   session: "Your session ended — please sign in again.",
   config: "Sign-in isn’t set up on this server (NEXTAUTH_SECRET or DATABASE_URL missing). Tell the admin.",
+  config_secret: "Server setting missing: NEXTAUTH_SECRET isn’t available while the app runs. In Coolify add it under Environment Variables (not as build-only), save, then Restart.",
+  config_secret_short: "Server setting too short: NEXTAUTH_SECRET must be at least 32 characters. Fix it in Coolify → Environment Variables, then Restart.",
+  config_db: "Server setting missing: DATABASE_URL isn’t available while the app runs. Paste the Postgres internal URL in Coolify → Environment Variables, then Restart.",
   db: "Can’t reach the database right now. Try again in a minute; if it keeps failing, tell the admin.",
   server: "Something went wrong signing you in. Try again; if it keeps failing, tell the admin.",
 };

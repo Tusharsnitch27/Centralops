@@ -26,9 +26,10 @@ export async function POST(req: Request) {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "local";
 
     if (!username || !password) return back("missing");
-    const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "";
-    if (secret.length < 32) { console.error("[auth] NEXTAUTH_SECRET missing or shorter than 32 characters"); return back("config"); }
-    if (!dbConfigured()) { console.error("[auth] DATABASE_URL is not set"); return back("config"); }
+    const secret = (process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "").trim();
+    if (!secret) { console.error("[auth] NEXTAUTH_SECRET is not set at runtime"); return back("config_secret"); }
+    if (secret.length < 32) { console.error(`[auth] NEXTAUTH_SECRET is only ${secret.length} characters (needs 32+)`); return back("config_secret_short"); }
+    if (!dbConfigured()) { console.error("[auth] DATABASE_URL is not set at runtime"); return back("config_db"); }
     if (recent(`ip:${ip}`).length >= MAX_FAILS * 3) return back("locked");
 
     const u = await one<{ id: string; name: string; password_hash: string | null; active: boolean; mins: number | null }>(
