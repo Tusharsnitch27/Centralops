@@ -9,7 +9,7 @@ import { createTask } from "../tasks/core";
 import { inr } from "@/lib/format";
 import { today } from "@/lib/dates";
 import { cycleMonths, LABEL_PRESETS, monLabel, type Labels, type Measure } from "./calc";
-import { allItemsOf, canEditField, loadModel, sectionOwner, type Model } from "./model";
+import { allItemsOf, canEditField, grantedItem, loadModel, sectionOwner, type Model } from "./model";
 import { dueFor, type InputKind } from "./inputs";
 
 const done = () => revalidatePath("/aop", "layout");
@@ -178,7 +178,9 @@ export async function submitInputs(i: { cycleId: string; period: string; kind: I
     const u = await requireUser();
     const m = await loadModel(i.cycleId);
     if (!m) throw new Error("Cycle not found");
-    if (!canManage(u) && i.ownerId !== u.id) throw new Error("You can only submit your own inputs");
+    // someone else's inputs only for PMs, or for lines your Settings › Permissions grant covers
+    if (!canManage(u) && i.ownerId !== u.id && !i.lines.every((l) => { const it = m.itemById.get(l.itemId); return it && grantedItem(m, u.id, it); }))
+      throw new Error("You can only submit your own inputs");
     let changed = 0;
     const touched = new Set<string>();
     await tx(async (x) => {

@@ -28,14 +28,12 @@ export async function listPermissions() {
 
 export interface EntityOption { value: string; label: string; hint?: string }
 export async function permissionEntities(): Promise<Record<string, EntityOption[]>> {
-  const [programs, projects, sections, streams] = await Promise.all([
-    q<EntityOption>(`select id as value, name as label, code as hint from programs where status <> 'cancelled' order by name`),
-    q<EntityOption>(`select id as value, name as label, code as hint from projects where status not in ('cancelled') order by name`),
+  const [sections, streams] = await Promise.all([
     q<EntityOption>(`select s.id as value, s.name as label, c.name as hint from aop_sections s join aop_cycles c on c.id = s.cycle_id where s.parent_id is null order by c.fy_start desc, s.sort`),
     q<EntityOption>(`select id as value, name as label, area as hint from sop_streams where active order by sort`),
   ]);
   const clean = (r: EntityOption[]) => r.map((o) => ({ value: o.value, label: o.label, ...(o.hint ? { hint: o.hint } : {}) }));
-  return { program: clean(programs), project: clean(projects), aop_section: clean(sections), sop_stream: clean(streams) };
+  return { aop_section: clean(sections), sop_stream: clean(streams) };
 }
 
 export interface TeamAdmin { id: string; name: string; function: string | null; color: string | null; lead_id: string | null; member_ids: string[] }

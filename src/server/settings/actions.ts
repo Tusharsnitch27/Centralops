@@ -143,7 +143,7 @@ export async function resetUserPassword(id: string, password: string): Promise<A
 }
 
 /* ---------------- permissions ---------------- */
-const ENTITY_TYPES = ["program", "project", "aop_section", "sop_stream"];
+const ENTITY_TYPES = ["aop_section", "sop_stream"]; // enforced in AOP inputs and S&OP projections (server/auth/grants)
 export async function addPermission(input: { subject: "user" | "team"; subjectId: string; entityType: string; entityId: string | null; level: string }): Promise<ActionResult> {
   try {
     const me = await requireManager();

@@ -50,6 +50,8 @@ export interface Model {
   cycle: Cycle; months: string[]; currentMonth: string; lastClosed: string | null; closed: string[]; remaining: string[];
   threshold: number; direction: Direction; functions: SectionNode[]; sectionById: Map<string, SectionNode>; items: ItemRow[];
   itemById: Map<string, ItemRow>; totals: Metrics; monthly: Record<string, Vals>;
+  /** Settings › Permissions grants on AOP functions: user → section (null = all) at edit / manage */
+  grants: { user_id: string; section_id: string | null }[];
 }
 
 const parseLabels = (l: unknown): Labels => ({ ...DEFAULT_LABELS, ...((l as Partial<Labels>) ?? {}) });
@@ -214,7 +216,11 @@ export const loadModel = cache(async (cycleId: string): Promise<Model | null> =>
   }
   const dirCount = itemRows.reduce((a, i) => a + (i.direction === "lower_better" ? 1 : -1), 0);
   const direction: Direction = itemRows.length ? (dirCount >= 0 ? "lower_better" : "higher_better") : cycle.kind === "revenue" ? "higher_better" : "lower_better";
-  return { cycle, months, currentMonth, lastClosed, closed, remaining, threshold, direction, functions, sectionById, items: itemRows, itemById: new Map(itemRows.map((i) => [i.id, i])), totals, monthly };
+  const grants = await q<{ user_id: string; section_id: string | null }>(
+    `select coalesce(p.user_id, tm.user_id) as user_id, p.entity_id as section_id from permissions p
+     left join team_members tm on tm.team_id = p.team_id
+     where p.entity_type = 'aop_section' and p.level in ('edit','manage') and coalesce(p.user_id, tm.user_id) is not null`);
+  return { cycle, months, currentMonth, lastClosed, closed, remaining, threshold, direction, functions, sectionById, items: itemRows, itemById: new Map(itemRows.map((i) => [i.id, i])), totals, monthly, grants };
 });
 
 /* ---------- permissions ---------- */
@@ -230,16 +236,20 @@ export function ownsItem(m: Model, userId: string, item: ItemRow) {
   if (item.owner_id === userId || item.contributors.includes(userId)) return true;
   return sectionChain(m, item.section_id).some((s) => s.owner_id === userId || s.contributors.some((c) => c.id === userId));
 }
+/** An edit grant on this item's function (or a parent, or all functions) from Settings › Permissions. */
+export function grantedItem(m: Model, userId: string, item: ItemRow) {
+  const chain = sectionChain(m, item.section_id);
+  return m.grants.some((g) => g.user_id === userId && (g.section_id == null || chain.some((s) => s.id === g.section_id)));
+}
 /** Items a user may edit forecast/actual/commentary on. Managers: all. */
 export function editableItemIds(m: Model, u: Pick<User, "id" | "role">): Set<string> {
   if (canManage(u)) return new Set(m.items.map((i) => i.id));
-  if (!canEdit(u)) return new Set();
-  return new Set(m.items.filter((i) => ownsItem(m, u.id, i)).map((i) => i.id));
+  return new Set(m.items.filter((i) => (canEdit(u) && ownsItem(m, u.id, i)) || grantedItem(m, u.id, i)).map((i) => i.id));
 }
 export function canEditField(m: Model, u: Pick<User, "id" | "role">, item: ItemRow, field: "plan" | "forecast" | "actual" | "comment") {
   if (canManage(u)) return true;
-  if (!canEdit(u) || field === "plan") return false;
-  return ownsItem(m, u.id, item);
+  if (field === "plan") return false;
+  return (canEdit(u) && ownsItem(m, u.id, item)) || grantedItem(m, u.id, item);
 }
 
 /** Owner of a function for input collection: section owner, else first contributor. */

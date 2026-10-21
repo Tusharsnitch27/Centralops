@@ -1,4 +1,5 @@
 "use server";
+import { granted, grantsFor } from "../auth/grants";
 import { applyInputsToPlan } from "./inputPlan";
 import { revalidatePath } from "next/cache";
 import { one, q, tx } from "../db";
@@ -20,7 +21,8 @@ async function loadStream(id: string) {
   if (!s) throw new Error("Stream not found");
   return s;
 }
-const canSubmitFor = (u: User, s: Stream) => canManage(u) || s.poc_id === u.id;
+/** PMs, the stream's POC, or an edit grant on the stream (Settings › Permissions). */
+const canSubmitFor = async (u: User, s: Stream) => canManage(u) || s.poc_id === u.id || granted(await grantsFor(u.id, "sop_stream"), [s.id]);
 
 /* ---------------- reminders ---------------- */
 
@@ -86,7 +88,7 @@ export async function submitProjections(input: { streamId: string; period: strin
   try {
     const u = await requireUser();
     const s = await loadStream(input.streamId);
-    if (!canSubmitFor(u, s)) throw new Error(`Only ${s.poc_name ?? "the POC"} or a PM can submit ${s.name} projections`);
+    if (!(await canSubmitFor(u, s))) throw new Error(`Only ${s.poc_name ?? "the POC"} or a PM can submit ${s.name} projections`);
     if (!isPeriod(input.period)) throw new Error("Choose a month");
     // projections lock 24 h after they were first submitted; only an admin can change them after that
     const lock = await projectionLock(s.id, input.period);

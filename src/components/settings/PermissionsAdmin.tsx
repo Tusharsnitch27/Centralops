@@ -9,14 +9,12 @@ import type { PermissionRow } from "@/server/settings/queries";
 import { useAction } from "./bits";
 
 const TYPES = [
-  { value: "program", label: "Program" },
-  { value: "project", label: "Project" },
   { value: "aop_section", label: "AOP function" },
   { value: "sop_stream", label: "S&OP stream" },
 ];
 const LEVELS = [
-  { value: "view", label: "View", hint: "Read only" },
-  { value: "edit", label: "Edit", hint: "Update values, tasks & status" },
+  { value: "view", label: "View", hint: "See the S&OP stream in Inputs" },
+  { value: "edit", label: "Edit", hint: "Enter AOP inputs / S&OP projections" },
   { value: "manage", label: "Manage", hint: "Edit + assign, approve, configure" },
 ];
 const LEVEL_TONE = { view: "muted", edit: "info", manage: "violet" } as const;
@@ -24,7 +22,7 @@ const LEVEL_TONE = { view: "muted", edit: "info", manage: "violet" } as const;
 export function PermissionsAdmin({ rows, people, teams, entities }: { rows: PermissionRow[]; people: Option[]; teams: Option[]; entities: Record<string, Option[]> }) {
   const [subject, setSubject] = useState<"user" | "team">("user");
   const [subjectId, setSubjectId] = useState<string | null>(null);
-  const [entityType, setEntityType] = useState("project");
+  const [entityType, setEntityType] = useState("aop_section");
   const [entityId, setEntityId] = useState<string | null>(null);
   const [level, setLevel] = useState("edit");
   const { pending, run } = useAction();
@@ -48,17 +46,17 @@ export function PermissionsAdmin({ rows, people, teams, entities }: { rows: Perm
             </div>
           </Field>
           <Field label={subject === "user" ? "Person" : "Team"}><Combobox options={subject === "user" ? people : teams} value={subjectId} onChange={setSubjectId} placeholder={subject === "user" ? "Choose a person" : "Choose a team"} /></Field>
-          <Field label="On"><Combobox options={TYPES} value={entityType} allowClear={false} onChange={(v) => { setEntityType(v ?? "project"); setEntityId(null); }} /></Field>
+          <Field label="On"><Combobox options={TYPES} value={entityType} allowClear={false} onChange={(v) => { setEntityType(v ?? "aop_section"); setEntityId(null); }} /></Field>
           <Field label="Which"><Combobox options={entityOptions} value={entityId ?? "*"} allowClear={false} onChange={(v) => setEntityId(v === "*" ? null : v)} /></Field>
           <Field label="Level"><Combobox options={LEVELS} value={level} allowClear={false} onChange={(v) => setLevel(v ?? "view")} /></Field>
           <Button variant="primary" size="md" disabled={!subjectId || pending}
             onClick={() => run(() => addPermission({ subject, subjectId: subjectId!, entityType, entityId, level }), { onOk: () => setSubjectId(null) })}>Grant</Button>
         </div>
-        <p className="mt-3 text-[12px] text-ink-3">Roles set the baseline (admins & PMs manage everything; leadership and viewers read). Grants here add object-level access on top — e.g. let Iqbal edit the Logistics AOP function, or the Retail team view the RFID project.</p>
+        <p className="mt-3 text-[12px] text-ink-3">Roles set the baseline (admins & PMs manage everything; leadership and viewers read). Grants here add object-level access on top — e.g. let Iqbal enter inputs for the Logistics AOP function, or the Retail team enter the Retail-Forward S&OP projections.</p>
       </div>
 
       {rows.length === 0 ? (
-        <div className="card"><EmptyState icon={<ShieldCheck size={18} />} title="No object-level grants yet" body="Everyone works from their role. Grant access above when someone needs to edit a specific program, project, AOP function or S&OP stream." /></div>
+        <div className="card"><EmptyState icon={<ShieldCheck size={18} />} title="No object-level grants yet" body="Owners and POCs already edit their own AOP functions and S&OP streams. Grant access here when someone else needs to enter inputs for a specific AOP function or S&OP stream (or all of them)." /></div>
       ) : (
         TYPES.filter((t) => grouped.has(t.value)).map((t) => (
           <div key={t.value} className="card overflow-hidden">

@@ -5,6 +5,7 @@ import { SubChip } from "@/components/sop/bits";
 import { RemindAllButton, RemindButton, SubmissionMenu } from "@/components/sop/actions";
 import { ValuesForm } from "@/components/sop/ProjectionForm";
 import { canOverview, requireUser, canManage } from "@/server/auth";
+import { granted, grantsFor } from "@/server/auth/grants";
 import { getGuidelines, getSubmissionGrid, inputPeriods, projectionLock } from "@/server/sop/queries";
 import { getStreamMonthForm } from "@/server/sop/form";
 import { currentPeriod, dueLabel, isOpenSub, SUB_META } from "@/server/sop/model";
@@ -20,9 +21,10 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
   const periods = inputPeriods(4, td);
   const next = addMonths(cur, 1);
   const [grid, guidelines] = await Promise.all([getSubmissionGrid(periods), getGuidelines()]);
-  // without the full overview a person sees only the streams they own
+  // without the full overview a person sees the streams they own or were granted (Settings › Permissions)
+  const grants = await grantsFor(u.id, "sop_stream");
   if (!canOverview(u)) {
-    grid.streams = grid.streams.filter((s) => s.poc_id === u.id);
+    grid.streams = grid.streams.filter((s) => s.poc_id === u.id || granted(grants, [s.id], "view"));
     const own = new Set(grid.streams.map((s) => s.id));
     grid.cells = grid.cells.filter((c) => own.has(c.stream_id));
   }
@@ -34,13 +36,13 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
   const late = grid.cells.filter((c) => c.state === "late");
 
   // ---- submit form selection: explicit, else my first open stream, else first stream
-  const mine = grid.streams.filter((s) => s.poc_id === u.id);
+  const mine = grid.streams.filter((s) => s.poc_id === u.id || granted(grants, [s.id]));
   const defStream = sp.stream ? grid.streams.find((s) => s.id === sp.stream || s.code === sp.stream)
     : (mine.find((s) => isOpenSub(cell(s.id, next).state)) ?? mine[0] ?? grid.streams.find((s) => isOpenSub(cell(s.id, next).state)) ?? grid.streams[0]);
   const formPeriods = [addMonths(cur, -1), ...periods];
   const formPeriod = sp.period && formPeriods.includes(sp.period) ? sp.period : next;
   const form = defStream ? await getStreamMonthForm(defStream, formPeriod) : null;
-  const canSubmit = !!defStream && (canManage(u) || defStream.poc_id === u.id);
+  const canSubmit = !!defStream && (canManage(u) || defStream.poc_id === u.id || granted(grants, [defStream.id]));
   const lock = defStream ? await projectionLock(defStream.id, formPeriod) : { locked: false, at: null, since: "" };
   const lockedForMe = lock.locked && u.role !== "admin";
   const formCell = defStream ? grid.cells.find((c) => c.stream_id === defStream.id && c.period === formPeriod) : null;
