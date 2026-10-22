@@ -190,7 +190,8 @@ async function saveDaily(feed: string, rows: DailyRow[]) {
 /** The putaway table's "putaway updated" timestamp — every putaway feed is dated by it. */
 async function putawayDateColumn(): Promise<string> {
   const cols = await describe(PUT_TABLE);
-  const d = pick(cols, ["PUTAWAY_UPDATED", "PUTAWAY_UPDATED_AT", "PUTAWAY_UPDATED_DATE", "PUTAWAY_UPDATED_TIME", "PUTAWAY_UPDATED_ON", "Putaway Updated", "Putaway Updated At", "Putaway Updated Date"], /putaway.?updat/i);
+  const d = pick(cols, ["PUTAWAY_UPDATED", "PUTAWAY_UPDATED_AT", "PUTAWAY_UPDATED_DATE", "PUTAWAY_UPDATED_TIME", "PUTAWAY_UPDATED_ON", "Putaway Updated", "Putaway Updated At", "Putaway Updated Date"], /putaway.?updat/i)
+    ?? pick(cols, ["UPDATED", "UPDATED_AT", "Updated", "Updated At", "UPDATED_DATE"], /^updated/i);
   await saveSchema("putaway", { table: PUT_TABLE, columns: cols.map((c) => c.name), picked: { date: d }, checkedAt: new Date().toISOString() });
   if (!d) throw new Error(`No "putaway updated" column found in ${PUT_TABLE}. Columns: ${cols.map((c) => c.name).join(", ")}`);
   return quote(d);
@@ -206,23 +207,32 @@ async function slaSkuColumn(): Promise<string | null> {
 async function pullInventory(): Promise<{ read: number; written: number; note: string }> {
   const t = INV_TABLE();
   const cols = await describe(t);
-  const date = pick(cols, ["DATE", "INVENTORY_DATE", "SNAPSHOT_DATE", "AS_ON_DATE", "AS_OF_DATE", "REPORT_DATE", "INV_DATE", "STOCK_DATE", "CREATED_DATE"], /date|_dt$|day/i, /date|time/i);
+  // exact names first, whatever their type — Airbyte-loaded tables often keep numbers and dates as text (converted below)
+  const date = pick(cols, ["DATE", "INVENTORY_DATE", "SNAPSHOT_DATE", "AS_ON_DATE", "AS_OF_DATE", "REPORT_DATE", "INV_DATE", "STOCK_DATE", "CREATED_DATE"]) ?? pick(cols, [], /date|_dt$|day/i, /date|time/i);
   const wh = pick(cols, ["WAREHOUSE_NAME", "Warehouse Name", "FACILITY", "FACILITY_NAME", "WAREHOUSE", "FACILITY_CODE", "WAREHOUSE_CODE"], /ware|facil/i);
   const sku = pick(cols, ["SKU", "SKU_CODE", "SKUCODE", "Item Type skuCode", "ITEM_SKU_CODE", "ITEM_SKU"], /sku/i);
-  const qty = pick(cols, ["INVENTORY", "TOTAL_INVENTORY", "QUANTITY", "QTY", "INVENTORY_QTY", "TOTAL_QTY", "ON_HAND", "AVAILABLE_INVENTORY", "GOOD_INVENTORY"], /inv|qty|quant|stock/i, /number|int|float|decimal|numeric/i);
+  const qty = pick(cols, ["INVENTORY", "TOTAL_INVENTORY", "QUANTITY", "QTY", "INVENTORY_QTY", "TOTAL_QTY", "ON_HAND", "AVAILABLE_INVENTORY", "GOOD_INVENTORY"]) ?? pick(cols, [], /^(inv|qty|quant)/i, /number|int|float|decimal|numeric/i);
   await saveSchema("inventory", { table: t, columns: cols.map((c) => c.name), picked: { date, warehouse: wh, sku, quantity: qty }, checkedAt: new Date().toISOString() });
   const missing = Object.entries({ date, warehouse: wh, sku, quantity: qty }).filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) throw new Error(`Couldn't identify the ${missing.join(", ")} column in ${t}. Columns: ${cols.map((c) => c.name).join(", ")}`);
-  const [D, W, S, Q] = [quote(date!), quote(wh!), quote(sku!), quote(qty!)];
+  // text-safe: '2026-10-21', '2026-10-21 10:00:00' and real DATE/TIMESTAMP all become a date; '1,234' / '12.0' / numbers become numbers
+  const D = `TRY_TO_DATE(LEFT(TO_VARCHAR(${quote(date!)}), 10))`;
+  const [W, S] = [`TRIM(${quote(wh!)})`, quote(sku!)];
+  const Q = `COALESCE(TRY_TO_NUMBER(REPLACE(TO_VARCHAR(${quote(qty!)}), ',', ''), 38, 4), 0)`;
   const from = new Date(new Date(`${FROM()}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10); // + the day before, for April's opening
   const rows = await sfQuery<{ day: string; warehouse: string; units: number; prepack_packs: number; prepack_units: number }>(
-    `SELECT TO_VARCHAR(${D}::date, 'YYYY-MM-DD') AS day, ${W} AS warehouse,
+    `SELECT TO_VARCHAR(${D}, 'YYYY-MM-DD') AS day, UPPER(${W}) AS warehouse,
        SUM(CASE WHEN ${S} LIKE 'PP%' THEN 0 ELSE ${Q} END) AS units,
        SUM(CASE WHEN ${S} LIKE 'PP%' THEN ${Q} ELSE 0 END) AS prepack_packs,
        SUM(CASE WHEN ${S} LIKE 'PP%' THEN ${Q} * ${mult(S)} ELSE 0 END) AS prepack_units
      FROM ${t}
-     WHERE ${W} IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND ${D}::date >= '${from}'
+     WHERE UPPER(${W}) IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND ${D} >= '${from}'
      GROUP BY 1, 2`);
+  if (!rows.length) {
+    // nothing matched: say which warehouse names and dates the table actually has
+    const seen = await sfQuery<{ w: string; n: number; latest: string }>(`SELECT ${W} AS w, COUNT(*) AS n, TO_VARCHAR(MAX(${D})) AS latest FROM ${t} GROUP BY 1 ORDER BY 2 DESC LIMIT 15`);
+    throw new Error(`No rows for SAPL-WH1 / SAPL-WH2 / SAPL-NORTH-TAURU from ${from}. ${wh} values in the table: ${seen.map((x) => `${x.w} (${x.n}, latest ${x.latest})`).join("; ") || "none"}`);
+  }
   await q(`delete from sop_inventory_daily where day >= $1`, [from]);
   for (const r of rows) {
     const region = /NORTH/i.test(r.warehouse) ? "north" : "south";
