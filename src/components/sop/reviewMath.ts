@@ -14,7 +14,8 @@ export const VIEWS: ViewDef[] = [
 
 export interface RawRow { label: string; group: string | null; sp: number; sa: number; np: number; na: number }
 export interface Row extends RawRow { tp: number; ta: number; tu: number | null; su: number | null; nu: number | null; gap: number; kind?: "subtotal" | "total" }
-export interface WhCap { period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null }
+/** inventory = total space used; good / bad / other split it (other = blocked + putaway pending + putback pending). */
+export interface WhCap { period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good?: number | null; bad?: number | null; other?: number | null }
 
 const u = (a: number, p: number) => (p > 0 ? a / p : null);
 export function enrich(r: RawRow, kind?: Row["kind"]): Row {
@@ -39,12 +40,19 @@ export function tableRows(v: ViewDef, raw: RawRow[]): Row[] {
 }
 
 /* ---------- warehouse utilisation ---------- */
-export interface WhPoint { period: string; capacity: number; inventory: number | null; util: number | null }
+export interface WhPoint { period: string; capacity: number; inventory: number | null; util: number | null; good: number | null; bad: number | null; other: number | null }
 export function whSeries(caps: WhCap[]) {
   const months = [...new Set(caps.map((c) => c.period))].sort();
-  const pick = (wh: "South" | "North") => months.map((p) => { const c = caps.find((x) => x.period === p && x.warehouse === wh); return { period: p, capacity: c?.capacity ?? 0, inventory: c?.inventory ?? null, util: c?.inventory != null && c.capacity ? c.inventory / c.capacity : null }; });
+  const n = (v: number | null | undefined) => (v == null ? null : Number(v));
+  const pick = (wh: "South" | "North"): WhPoint[] => months.map((p) => {
+    const c = caps.find((x) => x.period === p && x.warehouse === wh);
+    const inv = n(c?.inventory);
+    return { period: p, capacity: Number(c?.capacity ?? 0), inventory: inv, util: inv != null && c?.capacity ? inv / Number(c.capacity) : null, good: n(c?.good), bad: n(c?.bad), other: n(c?.other) };
+  });
   const S = pick("South"), N = pick("North");
-  const T = months.map((p, i) => { const inv = S[i].inventory != null || N[i].inventory != null ? (S[i].inventory ?? 0) + (N[i].inventory ?? 0) : null; const cap = S[i].capacity + N[i].capacity; return { period: p, capacity: cap, inventory: inv, util: inv != null && cap ? inv / cap : null }; });
+  const add = (a: number | null, b: number | null) => (a == null && b == null ? null : (a ?? 0) + (b ?? 0));
+  const T: WhPoint[] = months.map((p, i) => { const inv = add(S[i].inventory, N[i].inventory); const cap = S[i].capacity + N[i].capacity;
+    return { period: p, capacity: cap, inventory: inv, util: inv != null && cap ? inv / cap : null, good: add(S[i].good, N[i].good), bad: add(S[i].bad, N[i].bad), other: add(S[i].other, N[i].other) }; });
   return { months, South: S, North: N, Total: T };
 }
 /** Latest month with inventory for a WH. */
@@ -140,6 +148,20 @@ export function whInsights(s: ReturnType<typeof whSeries>): Insight[] {
     out.push({ key: w, tone: (cur.util ?? 0) >= 0.9 ? "bad" : (cur.util ?? 0) >= 0.8 ? "warn" : "good", score: cur.util ?? 0,
       title: [`${w} WH at `, { b: pc(cur.util), tone: (cur.util ?? 0) >= 0.9 ? "bad" : "warn" }, ` in ${mon}`, ...(prev ? [` (`, { b: `${(((cur.util ?? 0) - (prev.util ?? 0)) * 100).toFixed(1)} pts`, tone: (cur.util ?? 0) < (prev.util ?? 0) ? "good" as const : "bad" as const }, ` vs last month)`] : [])],
       impact: [`Headroom `, { b: `${k(head)} units` }, (cur.util ?? 0) >= 0.9 ? ` — little room for OND peak inward; prioritise liquidation / North allocation.` : ` before hitting capacity.`] });
+    // space that isn't sellable: bad stock and stock stuck in blocked / putaway / putback
+    const used = cur.inventory ?? 0;
+    if (used > 0 && cur.bad != null && cur.bad / used >= 0.02) {
+      const sh = cur.bad / used, pb = prev?.bad != null && prev.inventory ? prev.bad / prev.inventory : null;
+      out.push({ key: `${w}:bad`, tone: sh >= 0.05 ? "bad" : "warn", score: sh * 4,
+        title: [`${w}: `, { b: `${k(cur.bad)} bad units`, tone: "bad" }, ` take `, { b: pc(sh) }, ` of used space`, ...(pb != null ? [` (${sh >= pb ? "up" : "down"} from ${pc(pb)})`] : [])],
+        impact: [`Liquidate / RTV the bad stock to free `, { b: pc(cur.bad / (cur.capacity || 1)) }, ` of ${w} capacity.`] });
+    }
+    if (used > 0 && cur.other != null && cur.other / used >= 0.03) {
+      const sh = cur.other / used;
+      out.push({ key: `${w}:other`, tone: sh >= 0.08 ? "bad" : "warn", score: sh * 3,
+        title: [`${w}: `, { b: `${k(cur.other)} units`, tone: "warn" }, ` blocked or waiting for putaway / putback (`, { b: pc(sh) }, ` of used space)`],
+        impact: [`Clear the putaway / putback backlog and unblock stock — it fills space without being sellable.`] });
+    }
   }
   return out;
 }

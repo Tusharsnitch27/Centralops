@@ -83,9 +83,20 @@ function ViewTable({ rows, label }: { rows: Row[]; label: string }) {
   );
 }
 
+// space used, split: sellable · bad · other (blocked + putaway pending + putback pending)
+const SEG = [
+  { k: "good" as const, label: "Good", cls: "bg-ink/80" },
+  { k: "bad" as const, label: "Bad", cls: "bg-bad" },
+  { k: "other" as const, label: "Blocked / putaway / putback", cls: "bg-warn" },
+];
 function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: string }) {
   const cur = [...pts].reverse().find((p) => p.util != null);
+  const prev = cur ? [...pts].reverse().find((p) => p.util != null && p.period < cur.period) : undefined;
   const u = cur?.util ?? 0;
+  const cap = cur?.capacity || 1;
+  const split = cur && cur.good != null;
+  const free = cur ? Math.max(0, cur.capacity - (cur.inventory ?? 0)) : 0;
+  const notSellable = cur && cur.inventory ? ((cur.bad ?? 0) + (cur.other ?? 0)) / cur.inventory : null;
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
@@ -94,18 +105,35 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
       </div>
       <div className="mt-3 flex items-end gap-2">
         <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] tabular">{pc(cur?.util ?? null)}</span>
-        <span className="mb-1 text-[12.5px] font-medium text-ink-3">utilised · {cur ? mon(cur.period) : ""}</span>
+        <span className="mb-1 text-[12.5px] font-medium text-ink-3">used · {cur ? mon(cur.period) : ""}</span>
+        {prev?.util != null && cur?.util != null && <span className={cn("mb-1 ml-auto text-[12px] font-semibold tabular", cur.util > prev.util ? "text-bad" : "text-ok")}>{cur.util > prev.util ? "▲" : "▼"} {Math.abs((cur.util - prev.util) * 100).toFixed(1)} pts</span>}
       </div>
-      <div className="mt-1 text-[12.5px] text-ink-3"><b className="font-semibold text-ink">{cur?.inventory != null ? lakh(cur.inventory) : "—"}</b> on hand of <b className="font-semibold text-ink">{cur ? lakh(cur.capacity) : "—"}</b> capacity</div>
+      {/* capacity bar: good | bad | other | free */}
+      <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-muted">
+        {split ? SEG.map((sg) => <span key={sg.k} className={sg.cls} style={{ width: `${((cur![sg.k] ?? 0) / cap) * 100}%` }} title={`${sg.label}: ${lakh(cur![sg.k] ?? 0)}`} />)
+          : <span className="bg-ink/80" style={{ width: `${Math.min(1, u) * 100}%` }} />}
+      </div>
+      {split ? (
+        <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
+          {SEG.map((sg) => (
+            <span key={sg.k} className="flex items-center gap-1.5 text-ink-3"><span className={cn("size-2 rounded-sm", sg.cls)} />{sg.label}<b className="ml-auto font-semibold tabular text-ink">{lakh(cur![sg.k] ?? 0)}</b></span>
+          ))}
+          <span className="flex items-center gap-1.5 text-ink-3"><span className="size-2 rounded-sm bg-muted ring-1 ring-inset ring-line" />Free<b className="ml-auto font-semibold tabular text-ink">{lakh(free)}</b></span>
+        </div>
+      ) : <div className="mt-2 text-[12.5px] text-ink-3"><b className="font-semibold text-ink">{cur?.inventory != null ? lakh(cur.inventory) : "—"}</b> used of <b className="font-semibold text-ink">{cur ? lakh(cur.capacity) : "—"}</b> capacity</div>}
+      {notSellable != null && notSellable > 0 && (
+        <div className={cn("mt-2.5 rounded-lg px-2.5 py-1.5 text-[12px]", notSellable >= 0.08 ? "bg-bad-soft text-bad" : "bg-subtle text-ink-2")}>
+          <b className="font-semibold">{pc(notSellable)}</b> of used space isn’t sellable (bad + blocked / pending)
+        </div>
+      )}
     </div>
   );
 }
-
-/** Sheet-style warehouse table: capacity, inventory and utilisation by month for South, North and Total. */
 function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) {
   const blocks: [string, WhPoint[], string][] = [["South (BLR)", wh.South, "#e8f0fe"], ["North (GGN)", wh.North, "#fdf2e3"], ["Total", wh.Total, "#e7f7ed"]];
   const pp = (name: string, m: string) => { const k = name.startsWith("South") ? "South" : name.startsWith("North") ? "North" : null; const v = prepack[m]; if (!v) return null; return k ? v[k] : (v.South ?? 0) + (v.North ?? 0); };
   const hasPP = Object.keys(prepack).length > 0;
+  const hasSplit = wh.Total.some((p) => p.good != null);
   return (
     <div className="card overflow-x-auto">
       <table className="w-full min-w-[900px] border-collapse text-[13px]">
@@ -119,12 +147,18 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
           {blocks.map(([name, pts, bg]) => (
             <Fragment key={name}>
               <tr className="border-t border-line">
-                <td rowSpan={hasPP ? 4 : 3} className="px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
+                <td rowSpan={(hasPP ? 4 : 3) + (hasSplit ? 3 : 0)} className="px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
                 <td className="whitespace-nowrap px-4 py-2 text-ink-3">Capacity (lakh units)</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right tabular">{(p.capacity / 100000).toFixed(2)}</td>)}
               </tr>
+              {hasSplit && ([["good", "Good stock"], ["bad", "Bad inventory"], ["other", "Blocked + putaway / putback pending"]] as const).map(([k, label]) => (
+                <tr key={k} className="border-t border-line/60">
+                  <td className={cn("whitespace-nowrap px-4 py-2", k === "bad" ? "text-bad" : k === "other" ? "text-warn" : "text-ink-3")}>{label}</td>
+                  {pts.map((p) => <td key={p.period} className={cn("px-4 py-2 text-right tabular", k === "good" ? "text-ink-2" : k === "bad" ? "text-bad" : "text-warn")}>{p[k] != null ? (p[k]! / 100000).toFixed(2) : <span className="text-ink-4">—</span>}</td>)}
+                </tr>
+              ))}
               <tr className="border-t border-line/60">
-                <td className="whitespace-nowrap px-4 py-2 text-ink-3">Inventory (lakh units)</td>
+                <td className="whitespace-nowrap px-4 py-2 text-ink-3">{hasSplit ? "Space used (lakh units)" : "Inventory (lakh units)"}</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right font-semibold tabular">{p.inventory != null ? (p.inventory / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
               </tr>
               <tr className="border-t border-line/60 bg-subtle/50">
@@ -177,7 +211,7 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
 
       <section className="space-y-2">
         <h2 className="label-caps px-1">Capacity</h2>
-        <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · capacity vs inventory by month"
+        <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · space used = good + bad + blocked / putaway / putback, vs capacity, by month"
           summary={<>
             {whTotal && <span className="flex items-center gap-1.5 text-ink-3">Total <span className="font-semibold text-ink tabular">{pc(whTotal.util)}</span><span className="text-ink-4">· {mon(whTotal.period)}</span></span>}
             <Flags items={d.whInsights} />
@@ -221,8 +255,7 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
                 summary={<>
                   <span className="hidden text-ink-3 sm:inline">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
                   <span className="hidden text-ink-3 sm:inline">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
-                  <UtilChip u={t.tu} plan={t.tp} actual={t.ta} />
-                  <Flags items={v.insights} />
+                  {t.ta === 0 && t.tp > 0 ? <span className="text-[12px] text-ink-4">awaiting actuals</span> : <><UtilChip u={t.tu} plan={t.tp} actual={t.ta} /><Flags items={v.insights} /></>}
                 </>}>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-4 py-2.5 text-[12px] md:px-5">
                   <span className="text-ink-3">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
@@ -356,12 +389,17 @@ function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string })
                   <tr key={r.key} className={cn(r.kind === "subtotal" && "bg-subtle/40 font-semibold")}>
                     <td className={cn(r.kind ? "font-semibold" : "pl-5")}>{r.label}</td>
                     <td className="text-right tabular">{fmt(r.tp)}</td>
+                    {r.ta === 0 && r.tp > 0 ? (
+                      // actuals come only from Snowflake: no feed yet is not a −100% miss
+                      <td colSpan={6} className="text-right text-[12px] text-ink-4">Awaiting Snowflake actuals{r.key === "liquidation" ? " (no liquidation query yet)" : ""}</td>
+                    ) : (<>
                     <td className="text-right tabular">{fmt(r.ta)}</td>
                     <td className={cn("text-right tabular", r.dev < 0 ? "text-bad" : r.dev > 0 ? "text-warn" : "text-ink-3")}>{r.dev > 0 ? "+" : r.dev < 0 ? "−" : ""}{fmt(Math.abs(r.dev))}</td>
                     <td className={cn("text-right tabular", r.devPct == null ? "text-ink-4" : Math.abs(r.devPct) > 0.2 ? "font-semibold text-bad" : "text-ink-2")}>{r.devPct == null ? "—" : `${r.devPct > 0 ? "+" : ""}${Math.round(r.devPct * 100)}%`}</td>
                     <td className="text-right">{accCell(r.acc, true)}</td>
                     <td className="text-right">{accCell(r.sAcc)}</td>
                     <td className="text-right">{accCell(r.nAcc)}</td>
+                    </>)}
                   </tr>
                 ))}
               </tbody>

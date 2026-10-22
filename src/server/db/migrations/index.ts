@@ -27,6 +27,7 @@ import { sql as sopActualsSf } from "./048_sop_actuals_snowflake";
 import { sql as permScope } from "./061_permissions_scope";
 import { sql as meetingBrief } from "./062_meeting_ai_brief";
 import { sql as taskPrograms } from "./063_task_programs";
+import { sql as invSplit } from "./064_inventory_split";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -55,4 +56,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 61, name: "permissions_scope", sql: permScope },
   { version: 62, name: "meeting_ai_brief", sql: meetingBrief },
   { version: 63, name: "task_programs", sql: taskPrograms },
+  { version: 64, name: "inventory_split", sql: invSplit },
 ];

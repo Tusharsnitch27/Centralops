@@ -42,7 +42,9 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const [rowsRaw, caps] = await Promise.all([
     q<{ period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null }>(
       `select period::text as period, view_key, row_label, row_group, sort, south_plan, south_actual, north_plan, north_actual from sop_review_rows where period = any($1::date[]) order by period, view_key, sort, row_label`, [months]),
-    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; prepack_units: number | null }>(`select period::text as period, warehouse, capacity, inventory, prepack_units from sop_wh_capacity order by period`),
+    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null }>(
+      `select period::text as period, warehouse, capacity::float8 as capacity, inventory::float8 as inventory, good_units::float8 as good, bad_units::float8 as bad, other_units::float8 as other, prepack_units::float8 as prepack_units
+       from sop_wh_capacity order by period`),
   ]);
   const wh = whSeries(caps as WhCap[]);
   const prepack: Record<string, { South?: number; North?: number }> = {};

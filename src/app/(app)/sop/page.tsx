@@ -53,7 +53,8 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
         <Kpi label="Outward days off plan (>20%, items)" value={outDaily.n ? `${outDaily.off} / ${outDaily.n}` : "—"} tone={outDaily.n ? (outDaily.off / outDaily.n >= 0.4 ? "bad" : outDaily.off / outDaily.n >= 0.2 ? "warn" : "ok") : undefined}
           sub={outDaily.n ? "flow-days across B2C, B2B-MP, Retail" : "needs daily actuals (Snowflake)"} />
         <Kpi label="Warehouse utilisation" value={`${pc(s?.util)} · ${pc(n?.util)}`} tone={(s?.util ?? 0) >= 0.95 || (n?.util ?? 0) >= 0.95 ? "bad" : (s?.util ?? 0) >= 0.85 || (n?.util ?? 0) >= 0.85 ? "warn" : "ok"}
-          sub={<>South · North{s ? ` · ${MON(s.period)}` : ""} · pre-packs held separately</>} />
+          sub={<>South · North{s ? ` · ${MON(s.period)}` : ""}{(() => { const used = (s?.inventory ?? 0) + (n?.inventory ?? 0); const ns = (s?.bad ?? 0) + (s?.other ?? 0) + (n?.bad ?? 0) + (n?.other ?? 0);
+            return used && ns ? <> · <span className={ns / used >= 0.08 ? "text-bad" : "text-warn"}>{pc(ns / used)} not sellable</span></> : " · pre-packs held separately"; })()}</>} />
       </div>
 
       <section className="mb-6">
@@ -70,7 +71,7 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
               <tr key={r.def.key}><td className="font-medium">{r.def.title}</td>
                 {r.cells.map((c, i) => <td key={i} className={cn("text-right", per.sel.months.includes(r.periods[i]) && "bg-subtle/60")} title={c ? `Plan ${L(c.plan)} · Actual ${L(c.actual)}` : undefined}>{c ? <UtilChip u={c.util} plan={c.plan} actual={c.actual} /> : <span className="text-ink-4">—</span>}</td>)}</tr>
             ))}
-            <tr><td colSpan={(d.trend[0]?.periods.length ?? 0) + 1} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">Capacity · warehouse utilisation (stock ÷ capacity, pre-packs apart)</td></tr>
+            <tr><td colSpan={(d.trend[0]?.periods.length ?? 0) + 1} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">Capacity · warehouse utilisation (good + bad + blocked / putaway / putback ÷ capacity, pre-packs apart)</td></tr>
             {(["South", "North", "Total"] as const).map((w) => (
               <tr key={w}><td className="font-medium">{w === "Total" ? "Total (28L)" : `${w} WH`}</td>
                 {(d.trend[0]?.periods ?? []).map((p) => { const pt = d.wh[w].find((x) => x.period === p); const u = pt?.util ?? null; return (

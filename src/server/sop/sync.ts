@@ -154,7 +154,9 @@ export type FeedKey = keyof typeof FEEDS | "inventory";
 export const INVENTORY_FEED = {
   title: "Warehouse inventory (daily)", grain: "day × warehouse",
   conditions: ["warehouses SAPL-WH1, SAPL-WH2 (South) and SAPL-NORTH-TAURU (North)", "columns detected automatically — see the detected columns below"],
-  transforms: ["SKU LIKE 'PP%' → pre-pack stock: packs and units (× pre-pack size), kept OUT of capacity", "everything else → units against capacity (South 16L = WH1 + WH2, North 12L)", "month inventory = last day available in the month"],
+  transforms: ["space used = good (INVENTORY) + bad (Bad Inventory) + other (Inventory Blocked + Putaway Pending + Putback Pending), each kept apart; Pending Inventory Assessment ignored",
+    "pre-pack: Item SkuCode starting PP (PP4 = 4 pieces), else Item Type Name (PP4… / 'pre pack' / '4 pcs') → pre-pack area, kept OUT of capacity",
+    "everything else → against capacity (South 16L = WH1 + WH2, North 12L)", "one snapshot per day; month = last day available in the month"],
   fills: ["Monthly review › Warehouse utilisation (+ pre-pack stock shown apart)", "Inventory flow opening / closing"],
 };
 export const ALL_FEEDS = [...Object.keys(FEEDS), "inventory"] as FeedKey[];
@@ -194,7 +196,8 @@ async function putawayDateColumn(): Promise<string> {
     ?? pick(cols, ["UPDATED", "UPDATED_AT", "Updated", "Updated At", "UPDATED_DATE"], /^updated/i);
   await saveSchema("putaway", { table: PUT_TABLE, columns: cols.map((c) => c.name), picked: { date: d }, checkedAt: new Date().toISOString() });
   if (!d) throw new Error(`No "putaway updated" column found in ${PUT_TABLE}. Columns: ${cols.map((c) => c.name).join(", ")}`);
-  return quote(d);
+  // putaway_updated may be a timestamp or text — the day is its first 10 characters either way
+  return `TRY_TO_DATE(LEFT(TO_VARCHAR(${quote(d)}), 10))`;
 }
 
 async function slaSkuColumn(): Promise<string | null> {
@@ -211,20 +214,36 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
   const date = pick(cols, ["DATE", "INVENTORY_DATE", "SNAPSHOT_DATE", "AS_ON_DATE", "AS_OF_DATE", "REPORT_DATE", "INV_DATE", "STOCK_DATE", "CREATED_DATE"]) ?? pick(cols, [], /date|_dt$|day/i, /date|time/i);
   const wh = pick(cols, ["WAREHOUSE_NAME", "Warehouse Name", "FACILITY", "FACILITY_NAME", "WAREHOUSE", "FACILITY_CODE", "WAREHOUSE_CODE"], /ware|facil/i);
   const sku = pick(cols, ["SKU", "SKU_CODE", "SKUCODE", "Item Type skuCode", "ITEM_SKU_CODE", "ITEM_SKU"], /sku/i);
+  const name = pick(cols, ["Item Type Name", "ITEM_TYPE_NAME", "ITEM_NAME", "PRODUCT_NAME", "NAME"], /item.*name|product.*name/i);
+  const bad = pick(cols, ["Bad Inventory", "BAD_INVENTORY"]);
+  const blocked = pick(cols, ["Inventory Blocked", "INVENTORY_BLOCKED", "BLOCKED_INVENTORY"]);
+  const putawayP = pick(cols, ["Putaway Pending", "PUTAWAY_PENDING"]);
+  const putbackP = pick(cols, ["Putback Pending", "PUTBACK_PENDING"]);
   const qty = pick(cols, ["INVENTORY", "TOTAL_INVENTORY", "QUANTITY", "QTY", "INVENTORY_QTY", "TOTAL_QTY", "ON_HAND", "AVAILABLE_INVENTORY", "GOOD_INVENTORY"]) ?? pick(cols, [], /^(inv|qty|quant)/i, /number|int|float|decimal|numeric/i);
-  await saveSchema("inventory", { table: t, columns: cols.map((c) => c.name), picked: { date, warehouse: wh, sku, quantity: qty }, checkedAt: new Date().toISOString() });
+  await saveSchema("inventory", { table: t, columns: cols.map((c) => c.name), picked: { date, warehouse: wh, sku, name, quantity: qty, bad, blocked, putaway_pending: putawayP, putback_pending: putbackP }, checkedAt: new Date().toISOString() });
   const missing = Object.entries({ date, warehouse: wh, sku, quantity: qty }).filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) throw new Error(`Couldn't identify the ${missing.join(", ")} column in ${t}. Columns: ${cols.map((c) => c.name).join(", ")}`);
   // text-safe: '2026-10-21', '2026-10-21 10:00:00' and real DATE/TIMESTAMP all become a date; '1,234' / '12.0' / numbers become numbers
   const D = `TRY_TO_DATE(LEFT(TO_VARCHAR(${quote(date!)}), 10))`;
   const [W, S] = [`TRIM(${quote(wh!)})`, quote(sku!)];
-  const Q = `COALESCE(TRY_TO_NUMBER(REPLACE(TO_VARCHAR(${quote(qty!)}), ',', ''), 38, 4), 0)`;
+  const num = (c: string | null) => (c ? `COALESCE(TRY_TO_NUMBER(REPLACE(TO_VARCHAR(${quote(c)}), ',', ''), 38, 4), 0)` : "0");
+  const Q = num(qty);                                                     // good, sellable stock
+  const BAD = num(bad);                                                   // bad inventory — its own line
+  const OTH = `(${num(blocked)} + ${num(putawayP)} + ${num(putbackP)})`;  // blocked + putaway pending + putback pending
+  // "Pending Inventory Assessment" is ignored on purpose (not physical space yet)
+  // pre-pack: from the SKU code (PP4-…); when the code doesn't say, from the item name (PP4… / "pre pack" / "4 pcs")
+  const N = name ? `COALESCE(${quote(name)}, '')` : "''";
+  const isPP = `(${S} ILIKE 'PP%' OR ${N} ILIKE 'PP%' OR ${N} ILIKE '%pre%pack%')`;
+  const ppMult = `COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR(${S}, '^PP([0-9]+)', 1, 1, 'ie', 1)), TRY_TO_NUMBER(REGEXP_SUBSTR(${N}, 'PP ?([0-9]+)', 1, 1, 'ie', 1)),
+    TRY_TO_NUMBER(REGEXP_SUBSTR(${N}, '([0-9]+) ?(pcs|pc|pieces|piece)', 1, 1, 'ie', 1)), 1)`;
   const from = new Date(new Date(`${FROM()}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10); // + the day before, for April's opening
-  const rows = await sfQuery<{ day: string; warehouse: string; units: number; prepack_packs: number; prepack_units: number }>(
+  const rows = await sfQuery<{ day: string; warehouse: string; good: number; bad: number; other: number; prepack_packs: number; prepack_units: number }>(
     `SELECT TO_VARCHAR(${D}, 'YYYY-MM-DD') AS day, UPPER(${W}) AS warehouse,
-       SUM(CASE WHEN ${S} LIKE 'PP%' THEN 0 ELSE ${Q} END) AS units,
-       SUM(CASE WHEN ${S} LIKE 'PP%' THEN ${Q} ELSE 0 END) AS prepack_packs,
-       SUM(CASE WHEN ${S} LIKE 'PP%' THEN ${Q} * ${mult(S)} ELSE 0 END) AS prepack_units
+       SUM(CASE WHEN ${isPP} THEN 0 ELSE ${Q} END) AS good,
+       SUM(CASE WHEN ${isPP} THEN 0 ELSE ${BAD} END) AS bad,
+       SUM(CASE WHEN ${isPP} THEN 0 ELSE ${OTH} END) AS other,
+       SUM(CASE WHEN ${isPP} THEN ${Q} + ${BAD} + ${OTH} ELSE 0 END) AS prepack_packs,
+       SUM(CASE WHEN ${isPP} THEN (${Q} + ${BAD} + ${OTH}) * ${ppMult} ELSE 0 END) AS prepack_units
      FROM ${t}
      WHERE UPPER(${W}) IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND ${D} >= '${from}'
      GROUP BY 1, 2`);
@@ -236,11 +255,13 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
   await q(`delete from sop_inventory_daily where day >= $1`, [from]);
   for (const r of rows) {
     const region = /NORTH/i.test(r.warehouse) ? "north" : "south";
-    await q(`insert into sop_inventory_daily (day, warehouse, region, units, prepack_packs, prepack_units) values ($1,$2,$3,$4,$5,$6)
-             on conflict (day, warehouse) do update set units = excluded.units, prepack_packs = excluded.prepack_packs, prepack_units = excluded.prepack_units`,
-      [r.day, r.warehouse, region, Number(r.units) || 0, Number(r.prepack_packs) || 0, Number(r.prepack_units) || 0]);
+    const [good, bad, other] = [Number(r.good) || 0, Number(r.bad) || 0, Number(r.other) || 0];
+    await q(`insert into sop_inventory_daily (day, warehouse, region, units, good_units, bad_units, other_units, prepack_packs, prepack_units) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+             on conflict (day, warehouse) do update set units = excluded.units, good_units = excluded.good_units, bad_units = excluded.bad_units, other_units = excluded.other_units,
+               prepack_packs = excluded.prepack_packs, prepack_units = excluded.prepack_units`,
+      [r.day, r.warehouse, region, good + bad + other, good, bad, other, Number(r.prepack_packs) || 0, Number(r.prepack_units) || 0]);
   }
-  return { read: rows.length, written: rows.length, note: `columns: date=${date}, warehouse=${wh}, sku=${sku}, qty=${qty}` };
+  return { read: rows.length, written: rows.length, note: `columns: date=${date}, warehouse=${wh}, sku=${sku}, name=${name ?? "—"}, good=${qty}, bad=${bad ?? "—"}, other=${[blocked, putawayP, putbackP].filter(Boolean).join(" + ") || "—"}` };
 }
 
 /* ------------------------------------------------------------------ */
@@ -355,10 +376,11 @@ export async function rebuild() {
     }
 
   // --- inventory: month = last day available; pre-packs apart
-  const inv = await q<{ day: string; region: string; units: number; prepack_units: number }>(
-    `select day::text as day, region, sum(units)::float8 as units, sum(prepack_units)::float8 as prepack_units from sop_inventory_daily group by day, region order by day`);
-  const invAt = new Map<string, { units: number; prepack: number }>(); // "day|region"
-  for (const x of inv) invAt.set(`${x.day}|${x.region}`, { units: Number(x.units), prepack: Number(x.prepack_units) });
+  const inv = await q<{ day: string; region: string; units: number; good: number; bad: number; other: number; prepack_units: number }>(
+    `select day::text as day, region, sum(units)::float8 as units, sum(good_units)::float8 as good, sum(bad_units)::float8 as bad, sum(other_units)::float8 as other,
+            sum(prepack_units)::float8 as prepack_units from sop_inventory_daily group by day, region order by day`);
+  const invAt = new Map<string, { units: number; good: number; bad: number; other: number; prepack: number }>(); // "day|region"
+  for (const x of inv) invAt.set(`${x.day}|${x.region}`, { units: Number(x.units), good: Number(x.good), bad: Number(x.bad), other: Number(x.other), prepack: Number(x.prepack_units) });
   const invDays = [...new Set(inv.map((x) => x.day))].sort();
   const lastInvIn = (p: string) => invDays.filter((d) => d.startsWith(p.slice(0, 7))).at(-1);
   const months = [...new Set(invDays.map((d) => month(d)))].filter((p) => p >= from);
@@ -367,9 +389,10 @@ export async function rebuild() {
     for (const [region, wh, cap] of [["south", "South", 1600000], ["north", "North", 1200000]] as const) {
       const at = invAt.get(`${d}|${region}`);
       if (!at) continue;
-      await q(`insert into sop_wh_capacity (period, warehouse, capacity, inventory, prepack_units, inventory_source) values ($1,$2,$3,$4,$5,'snowflake')
-               on conflict (period, warehouse) do update set inventory = excluded.inventory, prepack_units = excluded.prepack_units, inventory_source = 'snowflake'`,
-        [p, wh, cap, Math.round(at.units), Math.round(at.prepack)]);
+      await q(`insert into sop_wh_capacity (period, warehouse, capacity, inventory, good_units, bad_units, other_units, prepack_units, inventory_source) values ($1,$2,$3,$4,$5,$6,$7,$8,'snowflake')
+               on conflict (period, warehouse) do update set inventory = excluded.inventory, good_units = excluded.good_units, bad_units = excluded.bad_units,
+                 other_units = excluded.other_units, prepack_units = excluded.prepack_units, inventory_source = 'snowflake'`,
+        [p, wh, cap, Math.round(at.units), Math.round(at.good), Math.round(at.bad), Math.round(at.other), Math.round(at.prepack)]);
     }
   }
 
