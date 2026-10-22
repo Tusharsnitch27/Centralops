@@ -46,11 +46,16 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
       const { one, q } = await import("./server/db");
       if ((await one<{ value: string }>(`select value from app_settings where key = 'sop.sync_day'`))?.value === day) return;
-      await q(`insert into app_settings (key, value) values ('sop.sync_day', to_jsonb($1::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`, [day]);
       const { sfConfigured } = await import("./server/snowflake");
       if (!sfConfigured()) return;
+      // a failed day is retried hourly (e.g. after the warehouse is fixed) — the day only counts as done once every feed is ok
+      const last = await one<{ value: string }>(`select value from app_settings where key = 'sop.sync_attempt'`);
+      if (last?.value && Date.now() - Date.parse(last.value) < 55 * 60_000) return;
+      await q(`insert into app_settings (key, value) values ('sop.sync_attempt', to_jsonb($1::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`, [now.toISOString()]);
       const { runSync } = await import("./server/sop/sync");
       const r = await runSync(undefined, "schedule");
+      if (r.every((x) => x.status === "ok"))
+        await q(`insert into app_settings (key, value) values ('sop.sync_day', to_jsonb($1::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`, [day]);
       console.log(`[sop-sync] ${day}: ${r.map((x) => `${x.feed} ${x.status}`).join(", ")}`);
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);

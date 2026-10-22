@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { ago, fmtDate } from "@/lib/dates";
 import { describeRule, type DeadlineConfig, type DeadlineRule, type Measure } from "@/server/aop/deadlines";
 import { saveEmailConfig } from "@/server/weekly/actions";
-import { refreshFromSnowflake } from "@/server/sop/syncActions";
+import { chooseSnowflakeWarehouse, refreshFromSnowflake, testSnowflake } from "@/server/sop/syncActions";
 import type { FeedKey } from "@/server/sop/sync";
 import { generateWebhookSecret, runRemindersNow, saveDeadlines, saveMyWhatsApp, saveWhatsAppConfig, sendTestWhatsApp } from "@/server/integrations/waActions";
 import type { IntegrationsData } from "@/server/integrations/queries";
@@ -117,6 +117,10 @@ export function IntegrationsAdmin({ d }: { d: IntegrationsData }) {
 
       {/* ---------- Deadlines & cadence ---------- */}
       <SnowflakeCard d={d} />
+      <Section icon={<Download size={17} />} title="Data & backups" sub={d.persist.since ? `Database in use since ${fmtDate(d.persist.since.slice(0, 10))} · survived ${Math.max(0, (d.persist.boots ?? 1) - 1)} restarts / deploys · ${d.persist.users} users, ${d.persist.tasks} tasks` : "Everything entered in the app lives in the Postgres database"}
+        right={<a href="/api/admin/export" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-[12.5px] font-medium hover:bg-subtle"><Download size={13} />Download full backup</a>}>
+        <p className="text-[12.5px] text-ink-3">Users, access, org chart, tasks, goals, meetings, AOP / S&OP inputs and settings are stored in Postgres; deploys never re-seed or overwrite them. If the “in use since” date above ever changes after a deploy, the database was recreated — keep Coolify’s Postgres on a persistent volume with scheduled backups enabled.</p>
+      </Section>
       <EmailCard d={d} />
       {d.cycle && <DeadlinesCard cycleId={d.cycle.id} cycleName={d.cycle.name} initial={d.cycle.deadlines} functions={d.cycle.functions} />}
 
@@ -293,6 +297,17 @@ function SnowflakeCard({ d }: { d: IntegrationsData }) {
     if (!r.ok) toast(r.error, "error"); else { toast(r.message ?? "Refreshed", "success"); router.refresh(); }
   }); };
   const env = sf.env;
+  const [diag, setDiag] = useState<{ user: string; role: string; warehouse: string; database: string; warehouses: { name: string; state: string; size: string }[] } | null>(null);
+  const [diagErr, setDiagErr] = useState<string | null>(null);
+  const test = () => { setBusy("test"); start(async () => {
+    const r = await testSnowflake();
+    setBusy(null);
+    if (!r.ok) { setDiag(null); setDiagErr(r.error); } else { setDiagErr(null); setDiag(r.data!); }
+  }); };
+  const pick = (name: string) => start(async () => {
+    const r = await chooseSnowflakeWarehouse(name || null);
+    if (!r.ok) toast(r.error, "error"); else { toast(r.message ?? "Saved", "success"); router.refresh(); test(); }
+  });
   const missing = [!env.account && "SNOWFLAKE_ACCOUNT", !env.username && "SNOWFLAKE_USERNAME", !env.auth && "SNOWFLAKE_PAT", !env.warehouse && "SNOWFLAKE_WAREHOUSE", !env.role && "SNOWFLAKE_ROLE"].filter(Boolean) as string[];
   return (
     <Section icon={<Workflow size={17} />} title="Snowflake · S&OP actuals" sub={`Refreshed daily at ${sf.syncTime} IST — every month from ${sf.from} is re-read; plans are never touched`}
@@ -302,6 +317,28 @@ function SnowflakeCard({ d }: { d: IntegrationsData }) {
         {([["Account", env.account], ["User", env.username], ["Auth", env.auth], ["Role", env.role], ["Warehouse", env.warehouse], ["Database", env.database]] as const).map(([k, v]) => (
           <div key={k} className="flex gap-2"><span className="w-24 text-ink-4">{k}</span><span className={v ? "text-ink" : "text-warn"}>{v ?? "not set"}</span></div>
         ))}
+      </div>
+      <div className="mb-4 rounded-lg border border-line p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[12.5px] font-medium">Active warehouse</span>
+          <span className="rounded-md bg-subtle px-2 py-0.5 text-[12px] tabular">{diag?.warehouse ?? sf.chosenWarehouse ?? env.warehouse ?? "SNITCH_WH (fallback)"}</span>
+          {sf.chosenWarehouse && <span className="text-[11.5px] text-ink-4">picked here (overrides SNOWFLAKE_WAREHOUSE)</span>}
+          <Button size="sm" className="ml-auto" disabled={!sf.configured || !!busy} onClick={test}>{busy === "test" ? "Testing…" : "Test connection"}</Button>
+        </div>
+        {diag && (
+          <div className="mt-2.5 space-y-2 text-[12.5px]">
+            <div className="text-ok">Connected as <b>{diag.user}</b> · role <b>{diag.role}</b> · warehouse <b>{diag.warehouse}</b> · database <b>{diag.database || "—"}</b></div>
+            <label className="flex flex-wrap items-center gap-2"><span className="text-ink-3">Run refreshes on</span>
+              <select className="field h-8 w-auto py-0" value={sf.chosenWarehouse ?? ""} onChange={(e) => pick(e.target.value)}>
+                <option value="">{env.warehouse ? `${env.warehouse} (from Coolify)` : "Automatic"}</option>
+                {diag.warehouses.map((w) => <option key={w.name} value={w.name}>{w.name}{w.size ? ` · ${w.size}` : ""}{w.state ? ` · ${w.state.toLowerCase()}` : ""}</option>)}
+              </select>
+              <span className="text-[11.5px] text-ink-4">{diag.warehouses.length} warehouse{diag.warehouses.length === 1 ? "" : "s"} this role can use</span>
+            </label>
+          </div>
+        )}
+        {diagErr && <p className="mt-2 text-[12.5px] text-bad">{diagErr}</p>}
+        {!diag && !diagErr && <p className="mt-1.5 text-[11.5px] text-ink-4">If the configured warehouse can’t be used by the role, refreshes fall back to SNITCH_WH, then to any warehouse the role can use — same as Long Tail.</p>}
       </div>
       {missing.length > 0 && <p className="mb-4 rounded-lg bg-warn-soft px-3 py-2 text-[12.5px] text-warn">Add in Coolify → Environment Variables, then restart: <b className="font-semibold">{missing.join(", ")}</b>. Use a Snowflake user and PAT made for Central Ops (separate from Long Tail).</p>}
       <div className="card overflow-x-auto">

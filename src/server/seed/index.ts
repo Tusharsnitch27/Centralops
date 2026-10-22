@@ -27,6 +27,10 @@ export async function bootstrap(rawQ: RunQ) {
   const { setting, setSetting } = mk(rawQ);
   const email = (process.env.ADMIN_EMAIL ?? "admin@snitch.com").trim().toLowerCase();
   const username = (process.env.ADMIN_USERNAME ?? email.split("@")[0]).trim().toLowerCase();
+  // persistence check: the first boot is stamped once; every start bumps the counter — if a deploy ever resets the database,
+  // /api/health shows a new "since" date and boots back at 1
+  if (!(await setting("app.first_boot"))) await setSetting("app.first_boot", new Date().toISOString());
+  await rawQ(`insert into app_settings (key, value) values ('app.boots', '1'::jsonb) on conflict (key) do update set value = to_jsonb(coalesce((app_settings.value #>> '{}')::int, 0) + 1), updated_at = now()`);
   const existing = await rawQ<{ id: string }>(`select id from users where role = 'admin' limit 1`);
   if (!existing.length) {
     const pw = process.env.ADMIN_PASSWORD;
