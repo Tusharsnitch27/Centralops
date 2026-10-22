@@ -150,7 +150,7 @@ WHERE final_type LIKE '%Return%' AND is_trading = TRUE AND category_group NOT LI
 GROUP BY 1, 2, 3`,
   },
 };
-export type FeedKey = keyof typeof FEEDS | "inventory";
+export type FeedKey = keyof typeof FEEDS | "inventory" | "packaging";
 export const INVENTORY_FEED = {
   title: "Warehouse inventory (daily)", grain: "day × warehouse",
   conditions: ["warehouses SAPL-WH1, SAPL-WH2 (South) and SAPL-NORTH-TAURU (North)", "columns detected automatically — see the detected columns below"],
@@ -159,7 +159,13 @@ export const INVENTORY_FEED = {
     "everything else → against capacity (South 16L = WH1 + WH2, North 12L)", "one snapshot per day; month = last day available in the month"],
   fills: ["Monthly review › Warehouse utilisation (+ pre-pack stock shown apart)", "Inventory flow opening / closing"],
 };
-export const ALL_FEEDS = [...Object.keys(FEEDS), "inventory"] as FeedKey[];
+export const PACKAGING_FEED = {
+  title: "Packaging used (AOP)", grain: "day × package type × marketplace", source: "snitch_db.maplemonk.warehouse_sla_performance",
+  conditions: ["dispatched_timestamp is not null", "day = dispatch_date", "from Sep 2026 (earlier months come from the packaging workbook)"],
+  transforms: ["packages = COUNT(DISTINCT shippingpackagecode)", "× the package rate in force on that day (AOP › Packaging › Rates)", "marketplace → AOP line: Shopify / Marketplace / B2B MP / Store", "frozen at month end and written as the AOP actual"],
+  fills: ["AOP › Packaging (daily progress vs plan)", "AOP Packaging actuals at month end"],
+};
+export const ALL_FEEDS = [...Object.keys(FEEDS), "inventory", "packaging"] as FeedKey[];
 
 /* ------------------------------------------------------------------ */
 /* Pull: Snowflake → daily facts                                       */
@@ -438,6 +444,7 @@ export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | 
       if (!sfConfigured()) throw new Error("Snowflake isn't configured (SNOWFLAKE_ACCOUNT / SNOWFLAKE_USERNAME / SNOWFLAKE_PAT)");
       let read = 0, written = 0, note: string | null = null;
       if (feed === "inventory") ({ read, written, note } = await pullInventory());
+      else if (feed === "packaging") { const { pullPackaging } = await import("../packaging/engine"); ({ read, written, note } = await pullPackaging()); }
       else {
         if (["b2c", "b2b_mp", "retail"].includes(feed) && slaSku === undefined) slaSku = await slaSkuColumn().catch(() => null);
         if (["category_inward", "prepack", "category_view", "returns"].includes(feed) && putDate === undefined) putDate = await putawayDateColumn();

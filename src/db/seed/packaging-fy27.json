@@ -1,0 +1,5032 @@
+{
+"source": "pakcaging month on month.xlsx (Nov 2025 \u2013 Aug 2026)",
+"rows": [
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 88600.0,
+"rate": 2.5,
+"amount": 221500.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 29325.0,
+"rate": 5.0,
+"amount": 146625.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 20727.0,
+"rate": 3.3,
+"amount": 68399.1
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 20000.0,
+"rate": 1.5,
+"amount": 30000.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 19741.0,
+"rate": 3.5,
+"amount": 69093.5
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 16625.0,
+"rate": 1.25,
+"amount": 20781.25
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 8662.0,
+"rate": 15.0,
+"amount": 129930.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 6278.0,
+"rate": 15.0,
+"amount": 94170.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 5596.0,
+"rate": 9.0,
+"amount": 50364.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 4480.0,
+"rate": 7.0,
+"amount": 31360.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 4332.0,
+"rate": 3.9,
+"amount": 16894.8
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 3512.0,
+"rate": 10.0,
+"amount": 35120.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 2965.0,
+"rate": 10.0,
+"amount": 29650.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 2392.0,
+"rate": 7.0,
+"amount": 16744.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 1193.0,
+"rate": 15.0,
+"amount": 17895.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 1105.0,
+"rate": 15.0,
+"amount": 16575.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 967.0,
+"rate": 6.24,
+"amount": 6034.08
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 742.0,
+"rate": 9.0,
+"amount": 6678.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 463.0,
+"rate": 3.0,
+"amount": 1389.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 399.0,
+"rate": 15.0,
+"amount": 5985.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 286.0,
+"rate": 40.9,
+"amount": 11697.4
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 171.0,
+"rate": 40.9,
+"amount": 6993.9
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 101.0,
+"rate": 22.32,
+"amount": 2254.32
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 71.0,
+"rate": 22.32,
+"amount": 1584.72
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 57.0,
+"rate": 40.9,
+"amount": 2331.3
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 55.0,
+"rate": 17.7,
+"amount": 973.5
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 52.0,
+"rate": 17.7,
+"amount": 920.4
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SMALL BOX",
+"qty": 51.0,
+"rate": 17.7,
+"amount": 902.7
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 30.0,
+"rate": 22.32,
+"amount": 669.6
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 28.0,
+"rate": 17.7,
+"amount": 495.6
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 26.0,
+"rate": 15.0,
+"amount": 390.0
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 19.0,
+"rate": 40.9,
+"amount": 777.1
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 18.0,
+"rate": 17.7,
+"amount": 318.6
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SUIT BOX",
+"qty": 6.0,
+"rate": 40.9,
+"amount": 245.4
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SMALL BOX",
+"qty": 5.0,
+"rate": 17.7,
+"amount": 88.5
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 22.32,
+"amount": 66.96
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 22.32,
+"amount": 66.96
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 22.32,
+"amount": 44.64
+},
+{
+"period": "2025-12-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SUIT BOX",
+"qty": 2.0,
+"rate": 40.9,
+"amount": 81.8
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 74984.0,
+"rate": 15.0,
+"amount": 1124760.0
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 66257.0,
+"rate": 4.2,
+"amount": 278279.4
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 55945.0,
+"rate": 6.05,
+"amount": 338467.25
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 11958.0,
+"rate": 8.95,
+"amount": 107024.1
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 1598.0,
+"rate": 3.56,
+"amount": 5688.88
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 728.0,
+"rate": 22.32,
+"amount": 16248.96
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 230.0,
+"rate": 17.7,
+"amount": 4071.0
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 208.0,
+"rate": 40.9,
+"amount": 8507.2
+},
+{
+"period": "2025-12-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 186.0,
+"rate": 17.7,
+"amount": 3292.2
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "ZILO",
+"package_type": "DEFAULT",
+"qty": 2.0,
+"rate": 15.0,
+"amount": 30.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "SNITCH HQ",
+"package_type": "DEFAULT",
+"qty": 10.0,
+"rate": 15.0,
+"amount": 150.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "SLIKK",
+"package_type": "DEFAULT",
+"qty": 8.0,
+"rate": 15.0,
+"amount": 120.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 3162.0,
+"rate": 10.0,
+"amount": 31620.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 42.0,
+"rate": 40.9,
+"amount": 1717.8
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 2367.0,
+"rate": 9.0,
+"amount": 21303.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 4057.0,
+"rate": 7.0,
+"amount": 28399.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 60.0,
+"rate": 15.0,
+"amount": 900.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 22.32,
+"amount": 44.64
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 5554.0,
+"rate": 9.0,
+"amount": 49986.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 4.0,
+"rate": 17.7,
+"amount": 70.8
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 43.0,
+"rate": 15.0,
+"amount": 645.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 578.0,
+"rate": 10.0,
+"amount": 5780.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 3162.0,
+"rate": 7.0,
+"amount": 22134.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 22.32,
+"amount": 44.64
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "NOON",
+"package_type": "DEFAULT",
+"qty": 75.0,
+"rate": 15.0,
+"amount": 1125.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 99.0,
+"rate": 22.32,
+"amount": 2209.68
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 46886.0,
+"rate": 2.5,
+"amount": 117215.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 148.0,
+"rate": 40.9,
+"amount": 6053.2
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 13.0,
+"rate": 17.7,
+"amount": 230.1
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 290.0,
+"rate": 15.0,
+"amount": 4350.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 21232.0,
+"rate": 5.0,
+"amount": 106160.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "KNOT",
+"package_type": "DEFAULT",
+"qty": 2.0,
+"rate": 15.0,
+"amount": 30.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 37.0,
+"rate": 17.7,
+"amount": 654.9
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 22.32,
+"amount": 22.32
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 13003.0,
+"rate": 3.5,
+"amount": 45510.5
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 11443.0,
+"rate": 1.5,
+"amount": 17164.5
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 12.0,
+"rate": 40.9,
+"amount": 490.8
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 114.0,
+"rate": 15.0,
+"amount": 1710.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "CUSTOM",
+"package_type": "DEFAULT",
+"qty": 1.0,
+"rate": 15.0,
+"amount": 15.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "B2B CORPORATE CHANNEL",
+"package_type": "DEFAULT",
+"qty": 4.0,
+"rate": 15.0,
+"amount": 60.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 22.32,
+"amount": 66.96
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 3433.0,
+"rate": 3.9,
+"amount": 13388.7
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SUIT BOX",
+"qty": 2.0,
+"rate": 40.9,
+"amount": 81.8
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 1471.0,
+"rate": 3.0,
+"amount": 4413.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 788.0,
+"rate": 6.24,
+"amount": 4917.12
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 41.0,
+"rate": 15.0,
+"amount": 615.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SMALL BOX",
+"qty": 24.0,
+"rate": 17.7,
+"amount": 424.8
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 203.0,
+"rate": 40.9,
+"amount": 8302.7
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 24.0,
+"rate": 17.7,
+"amount": 424.8
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 13584.0,
+"rate": 3.3,
+"amount": 44827.2
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 63.0,
+"rate": 22.32,
+"amount": 1406.16
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 223.0,
+"rate": 15.0,
+"amount": 3345.0
+},
+{
+"period": "2026-02-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 4486.0,
+"rate": 1.25,
+"amount": 5607.5
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 2077.0,
+"rate": 17.7,
+"amount": 36762.9
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 56087.0,
+"rate": 6.05,
+"amount": 339326.35
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 2276.0,
+"rate": 22.32,
+"amount": 50800.32
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 34340.0,
+"rate": 15.0,
+"amount": 515100.0
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 2259.0,
+"rate": 3.56,
+"amount": 8042.04
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 10754.0,
+"rate": 8.95,
+"amount": 96248.3
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 38708.0,
+"rate": 4.2,
+"amount": 162573.6
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 290.0,
+"rate": 40.9,
+"amount": 11861.0
+},
+{
+"period": "2026-02-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 1764.0,
+"rate": 17.7,
+"amount": 31222.8
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 68706.0,
+"rate": 2.5,
+"amount": 171765.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 22881.0,
+"rate": 5.0,
+"amount": 114405.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 19877.0,
+"rate": 3.3,
+"amount": 65594.1
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 19009.0,
+"rate": 3.5,
+"amount": 66531.5
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 16105.0,
+"rate": 1.5,
+"amount": 24157.5
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 9073.0,
+"rate": 9.0,
+"amount": 81657.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 7381.0,
+"rate": 7.0,
+"amount": 51667.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 5359.0,
+"rate": 1.25,
+"amount": 6698.75
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 4227.0,
+"rate": 3.9,
+"amount": 16485.3
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 3548.0,
+"rate": 7.0,
+"amount": 24836.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 1959.0,
+"rate": 10.0,
+"amount": 19590.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 1789.0,
+"rate": 10.0,
+"amount": 17890.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 1389.0,
+"rate": 3.56,
+"amount": 4944.84
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 1028.0,
+"rate": 3.0,
+"amount": 3084.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 793.0,
+"rate": 6.24,
+"amount": 4948.32
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 319.0,
+"rate": 15.0,
+"amount": 4785.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 312.0,
+"rate": 15.0,
+"amount": 4680.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 213.0,
+"rate": 15.0,
+"amount": 3195.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 2039.0,
+"rate": 9.0,
+"amount": 18351.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 188.0,
+"rate": 40.9,
+"amount": 7689.2
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 171.0,
+"rate": 15.0,
+"amount": 2565.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 157.0,
+"rate": 40.9,
+"amount": 6421.3
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 97.0,
+"rate": 15.0,
+"amount": 1455.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 83.0,
+"rate": 22.32,
+"amount": 1852.56
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "DEFAULT",
+"qty": 75.0,
+"rate": 15.0,
+"amount": 1125.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "ZILO",
+"package_type": "DEFAULT",
+"qty": 60.0,
+"rate": 15.0,
+"amount": 900.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 54.0,
+"rate": 17.7,
+"amount": 955.8
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 52.0,
+"rate": 22.32,
+"amount": 1160.64
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 51.0,
+"rate": 17.7,
+"amount": 902.7
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NOON",
+"package_type": "DEFAULT",
+"qty": 46.0,
+"rate": 15.0,
+"amount": 690.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 42.0,
+"rate": 17.7,
+"amount": 743.4
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 40.0,
+"rate": 17.7,
+"amount": 708.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 31.0,
+"rate": 22.32,
+"amount": 691.92
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 27.0,
+"rate": 15.0,
+"amount": 405.0
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 26.0,
+"rate": 40.9,
+"amount": 1063.4
+},
+{
+"period": "2026-01-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 25.0,
+"rate": 40.9,
+"amount": 1022.5
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 12131.0,
+"rate": 8.95,
+"amount": 108572.45
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 55167.0,
+"rate": 6.05,
+"amount": 333760.35
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 40383.0,
+"rate": 4.2,
+"amount": 169608.6
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 33121.0,
+"rate": 15.0,
+"amount": 496815.0
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 2324.0,
+"rate": 22.32,
+"amount": 51871.68
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 2040.0,
+"rate": 17.7,
+"amount": 36108.0
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 1848.0,
+"rate": 17.7,
+"amount": 32709.6
+},
+{
+"period": "2026-01-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 192.0,
+"rate": 40.9,
+"amount": 7852.8
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "ZILO",
+"package_type": "DEFAULT",
+"qty": 15.0,
+"rate": 15.0,
+"amount": 225.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "SNITCH HQ",
+"package_type": "DEFAULT",
+"qty": 8.0,
+"rate": 15.0,
+"amount": 120.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "SLIKK",
+"package_type": "DEFAULT",
+"qty": 3.0,
+"rate": 15.0,
+"amount": 45.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SMALL BOX",
+"qty": 4.0,
+"rate": 17.7,
+"amount": 70.8
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 22.32,
+"amount": 66.96
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 2020.0,
+"rate": 9.0,
+"amount": 18180.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 11.0,
+"rate": 40.9,
+"amount": 449.9
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 85.0,
+"rate": 15.0,
+"amount": 1275.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 5981.0,
+"rate": 7.0,
+"amount": 41867.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 1973.0,
+"rate": 10.0,
+"amount": 19730.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SUIT BOX",
+"qty": 1.0,
+"rate": 40.9,
+"amount": 40.9
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 404.0,
+"rate": 10.0,
+"amount": 4040.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 2.0,
+"rate": 17.7,
+"amount": 35.4
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 5288.0,
+"rate": 7.0,
+"amount": 37016.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 41.0,
+"rate": 15.0,
+"amount": 615.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 3891.0,
+"rate": 9.0,
+"amount": 35019.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 4.0,
+"rate": 22.32,
+"amount": 89.28
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NOON",
+"package_type": "SMALL BOX",
+"qty": 3.0,
+"rate": 17.7,
+"amount": 53.1
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "NOON",
+"package_type": "DEFAULT",
+"qty": 46.0,
+"rate": 15.0,
+"amount": 690.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 22.0,
+"rate": 17.7,
+"amount": 389.4
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 81958.0,
+"rate": 2.5,
+"amount": 204895.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 368.0,
+"rate": 15.0,
+"amount": 5520.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 101.0,
+"rate": 40.9,
+"amount": 4130.9
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 32098.0,
+"rate": 5.0,
+"amount": 160490.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 174.0,
+"rate": 22.32,
+"amount": 3883.68
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "KNOT",
+"package_type": "DEFAULT",
+"qty": 3.0,
+"rate": 15.0,
+"amount": 45.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 15.0,
+"rate": 17.7,
+"amount": 265.5
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 28700.0,
+"rate": 1.5,
+"amount": 43050.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 23.0,
+"rate": 40.9,
+"amount": 940.7
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 19959.0,
+"rate": 3.5,
+"amount": 69856.5
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 102.0,
+"rate": 22.32,
+"amount": 2276.64
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 299.0,
+"rate": 15.0,
+"amount": 4485.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "CUSTOM",
+"package_type": "DEFAULT",
+"qty": 25.0,
+"rate": 15.0,
+"amount": 375.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "B2B CORPORATE CHANNEL",
+"package_type": "DEFAULT",
+"qty": 10.0,
+"rate": 15.0,
+"amount": 150.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "B2B CORPORATE CHANNEL",
+"package_type": "SUIT BOX",
+"qty": 1.0,
+"rate": 40.9,
+"amount": 40.9
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 436.0,
+"rate": 15.0,
+"amount": 6540.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 3557.0,
+"rate": 3.9,
+"amount": 13872.3
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 22.32,
+"amount": 66.96
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SUIT BOX",
+"qty": 6.0,
+"rate": 40.9,
+"amount": 245.4
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 812.0,
+"rate": 6.24,
+"amount": 5066.88
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 1752.0,
+"rate": 3.0,
+"amount": 5256.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 8.0,
+"rate": 17.7,
+"amount": 141.6
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 49.0,
+"rate": 40.9,
+"amount": 2004.1
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 14556.0,
+"rate": 1.25,
+"amount": 18195.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 18545.0,
+"rate": 3.3,
+"amount": 61198.5
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 254.0,
+"rate": 15.0,
+"amount": 3810.0
+},
+{
+"period": "2026-03-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 216.0,
+"rate": 22.32,
+"amount": 4821.12
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 23214.0,
+"rate": 8.95,
+"amount": 207765.3
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 299.0,
+"rate": 17.7,
+"amount": 5292.3
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 2836.0,
+"rate": 3.56,
+"amount": 10096.16
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 250.0,
+"rate": 40.9,
+"amount": 10225.0
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 39920.0,
+"rate": 15.0,
+"amount": 598800.0
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 60982.0,
+"rate": 6.05,
+"amount": 368941.1
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 52630.0,
+"rate": 4.2,
+"amount": 221046.0
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 5914.0,
+"rate": 22.32,
+"amount": 132000.48
+},
+{
+"period": "2026-03-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 56.0,
+"rate": 17.7,
+"amount": 991.2
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "FLIPKART_SOR",
+"package_type": "DEFAULT",
+"qty": 61.0,
+"rate": 15.0,
+"amount": 915.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "FLIPKART_SOR",
+"package_type": "MEDIUM BOX",
+"qty": 6.0,
+"rate": 25.0,
+"amount": 150.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "FLIPKART_SOR",
+"package_type": "PM2 AMAZON BAG",
+"qty": 24.0,
+"rate": 3.0,
+"amount": 72.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "INSTAMART",
+"package_type": "DEFAULT",
+"qty": 21.0,
+"rate": 15.0,
+"amount": 315.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "KNOT",
+"package_type": "DEFAULT",
+"qty": 4.0,
+"rate": 15.0,
+"amount": 60.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "KNOT",
+"package_type": "PM2 AMAZON BAG",
+"qty": 2.0,
+"rate": 3.0,
+"amount": 6.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "M-NOW",
+"package_type": "DEFAULT",
+"qty": 48.0,
+"rate": 15.0,
+"amount": 720.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "M-NOW",
+"package_type": "PM2 AMAZON BAG",
+"qty": 14.0,
+"rate": 3.0,
+"amount": 42.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "DEFAULT",
+"qty": 16.0,
+"rate": 15.0,
+"amount": 240.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 25.0,
+"amount": 25.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "PM2 AMAZON BAG",
+"qty": 3.0,
+"rate": 3.0,
+"amount": 9.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "NOON",
+"package_type": "DEFAULT",
+"qty": 51.0,
+"rate": 15.0,
+"amount": 765.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "NOON",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 25.0,
+"amount": 75.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "NOON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 8.0,
+"rate": 3.0,
+"amount": 24.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "NOON",
+"package_type": "SMALL BOX",
+"qty": 21.0,
+"rate": 17.7,
+"amount": 371.7
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "SLIKK",
+"package_type": "DEFAULT",
+"qty": 11.0,
+"rate": 15.0,
+"amount": 165.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "ZILO",
+"package_type": "DEFAULT",
+"qty": 12.0,
+"rate": 15.0,
+"amount": 180.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "ZILO",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 25.0,
+"amount": 25.0
+},
+{
+"period": "2026-05-01",
+"partner": "B2B MP",
+"marketplace": "ZILO",
+"package_type": "SMALL BOX",
+"qty": 3.0,
+"rate": 17.7,
+"amount": 53.1
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 23356.0,
+"rate": 3.3,
+"amount": 77074.8
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 199.0,
+"rate": 15.0,
+"amount": 2985.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 239.0,
+"rate": 25.0,
+"amount": 5975.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "PM2 AMAZON BAG",
+"qty": 27.0,
+"rate": 3.0,
+"amount": 81.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 20903.0,
+"rate": 1.25,
+"amount": 26128.75
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 10.0,
+"rate": 17.7,
+"amount": 177.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 39.0,
+"rate": 40.9,
+"amount": 1595.1
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 3012.0,
+"rate": 15.0,
+"amount": 45180.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 1232.0,
+"rate": 3.0,
+"amount": 3696.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 2762.0,
+"rate": 3.9,
+"amount": 10771.8
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 333.0,
+"rate": 6.24,
+"amount": 2077.92
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 16446.0,
+"rate": 3.5,
+"amount": 57561.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 4861.0,
+"rate": 15.0,
+"amount": 72915.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 271.0,
+"rate": 25.0,
+"amount": 6775.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "PM2 AMAZON BAG",
+"qty": 51.0,
+"rate": 3.0,
+"amount": 153.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "PM3 AMAZON BAG",
+"qty": 1.0,
+"rate": 3.9,
+"amount": 3.9
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "PM4 AMAZON BAG",
+"qty": 2.0,
+"rate": 6.24,
+"amount": 12.48
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 41.0,
+"rate": 17.7,
+"amount": 725.7
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 44012.0,
+"rate": 1.5,
+"amount": 66018.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 13.0,
+"rate": 40.9,
+"amount": 531.7
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 33371.0,
+"rate": 5.0,
+"amount": 166855.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 9969.0,
+"rate": 15.0,
+"amount": 149535.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 175.0,
+"rate": 25.0,
+"amount": 4375.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "PM2 AMAZON BAG",
+"qty": 387.0,
+"rate": 3.0,
+"amount": 1161.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "PM3 AMAZON BAG",
+"qty": 5.0,
+"rate": 3.9,
+"amount": 19.5
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "PM4 AMAZON BAG",
+"qty": 37.0,
+"rate": 6.24,
+"amount": 230.88
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 74161.0,
+"rate": 2.5,
+"amount": 185402.5
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 24.0,
+"rate": 17.7,
+"amount": 424.8
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 55.0,
+"rate": 40.9,
+"amount": 2249.5
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 85.0,
+"rate": 15.0,
+"amount": 1275.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 25.0,
+"amount": 50.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 4223.0,
+"rate": 7.0,
+"amount": 29561.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 3386.0,
+"rate": 9.0,
+"amount": 30474.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 257.0,
+"rate": 10.0,
+"amount": 2570.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "PM2 AMAZON BAG",
+"qty": 7.0,
+"rate": 3.0,
+"amount": 21.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "PM3 AMAZON BAG",
+"qty": 2.0,
+"rate": 3.9,
+"amount": 7.8
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "PM4 AMAZON BAG",
+"qty": 46.0,
+"rate": 6.24,
+"amount": 287.04
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 104.0,
+"rate": 15.0,
+"amount": 1560.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "MEDIUM BOX",
+"qty": 3.0,
+"rate": 25.0,
+"amount": 75.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 5103.0,
+"rate": 7.0,
+"amount": 35721.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 841.0,
+"rate": 9.0,
+"amount": 7569.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 2945.0,
+"rate": 10.0,
+"amount": 29450.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "PM2 AMAZON BAG",
+"qty": 59.0,
+"rate": 3.0,
+"amount": 177.0
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "PM4 AMAZON BAG",
+"qty": 4.0,
+"rate": 6.24,
+"amount": 24.96
+},
+{
+"period": "2026-05-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 14.0,
+"rate": 40.9,
+"amount": 572.6
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B LARGE BOX",
+"qty": 3.0,
+"rate": 100.0,
+"amount": 300.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B MEDIUM BOX",
+"qty": 1323.0,
+"rate": 80.0,
+"amount": 105840.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B SMALL BOX",
+"qty": 32.0,
+"rate": 70.0,
+"amount": 2240.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "DEFAULT",
+"qty": 255.0,
+"rate": 15.0,
+"amount": 3825.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "LARGE BOX B2B",
+"qty": 13.0,
+"rate": 100.0,
+"amount": 1300.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX",
+"qty": 6.0,
+"rate": 25.0,
+"amount": 150.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX B2B",
+"qty": 1267.0,
+"rate": 80.0,
+"amount": 101360.0
+},
+{
+"period": "2026-05-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "SMALL BOX B2B",
+"qty": 153.0,
+"rate": 70.0,
+"amount": 10710.0
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 38237.0,
+"rate": 15.0,
+"amount": 573555.0
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 42410.0,
+"rate": 6.05,
+"amount": 256580.5
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 3220.0,
+"rate": 25.0,
+"amount": 80500.0
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 80920.0,
+"rate": 4.2,
+"amount": 339864.0
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "PM2 AMAZON BAG",
+"qty": 156.0,
+"rate": 3.0,
+"amount": 468.0
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 67.0,
+"rate": 17.7,
+"amount": 1185.9
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 343.0,
+"rate": 3.56,
+"amount": 1221.08
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 524.0,
+"rate": 21.0,
+"amount": 11004.0
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 146.0,
+"rate": 40.9,
+"amount": 5971.4
+},
+{
+"period": "2026-05-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 11304.0,
+"rate": 8.95,
+"amount": 101170.8
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 7676.0,
+"rate": 3.3,
+"amount": 25330.8
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 376.0,
+"rate": 15.0,
+"amount": 5640.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 148.0,
+"rate": 22.32,
+"amount": 3303.36
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 10354.0,
+"rate": 1.25,
+"amount": 12942.5
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 16.0,
+"rate": 17.7,
+"amount": 283.2
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 246.0,
+"rate": 40.9,
+"amount": 10061.4
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 54.0,
+"rate": 15.0,
+"amount": 810.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "MEDIUM BOX",
+"qty": 0.0,
+"rate": 22.32,
+"amount": 0.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 231.0,
+"rate": 3.0,
+"amount": 693.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 3641.0,
+"rate": 3.9,
+"amount": 14199.9
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4",
+"qty": 0.0,
+"rate": 6.24,
+"amount": 0.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 858.0,
+"rate": 6.24,
+"amount": 5353.92
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SMALL BOX",
+"qty": 13.0,
+"rate": 17.7,
+"amount": 230.1
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SUIT BOX",
+"qty": 11.0,
+"rate": 40.9,
+"amount": 449.9
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 3624.0,
+"rate": 3.5,
+"amount": 12684.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 5005.0,
+"rate": 15.0,
+"amount": 75075.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 22.32,
+"amount": 22.32
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 8.0,
+"rate": 17.7,
+"amount": 141.6
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 8859.0,
+"rate": 1.5,
+"amount": 13288.5
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 5.0,
+"rate": 40.9,
+"amount": 204.5
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "TAG LOOPS",
+"qty": 90000.0,
+"rate": 1.0,
+"amount": 90000.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 16074.0,
+"rate": 5.0,
+"amount": 80370.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 12259.0,
+"rate": 15.0,
+"amount": 183885.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 69.0,
+"rate": 22.32,
+"amount": 1540.08
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 47984.0,
+"rate": 2.5,
+"amount": 119960.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 21.0,
+"rate": 17.7,
+"amount": 371.7
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 436.0,
+"rate": 40.9,
+"amount": 17832.4
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA",
+"package_type": "TAG LOOPS",
+"qty": 10000.0,
+"rate": 1.0,
+"amount": 10000.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 1534.0,
+"rate": 15.0,
+"amount": 23010.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 22.32,
+"amount": 22.32
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 314.0,
+"rate": 7.0,
+"amount": 2198.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 2396.0,
+"rate": 9.0,
+"amount": 21564.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 2048.0,
+"rate": 10.0,
+"amount": 20480.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SUIT BOX",
+"qty": 2.0,
+"rate": 40.9,
+"amount": 81.8
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 2447.0,
+"rate": 15.0,
+"amount": 36705.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "MEDIUM BOX",
+"qty": 0.0,
+"rate": 22.32,
+"amount": 0.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 563.0,
+"rate": 7.0,
+"amount": 3941.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 699.0,
+"rate": 9.0,
+"amount": 6291.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 4270.0,
+"rate": 10.0,
+"amount": 42700.0
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2025-11-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 25.0,
+"rate": 40.9,
+"amount": 1022.5
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 82370.0,
+"rate": 15.0,
+"amount": 1235550.0
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 75218.0,
+"rate": 6.05,
+"amount": 455068.9
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 3881.0,
+"rate": 22.32,
+"amount": 86623.92
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 79221.0,
+"rate": 4.2,
+"amount": 332728.2
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 1817.0,
+"rate": 17.7,
+"amount": 32160.9
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 5147.0,
+"rate": 3.56,
+"amount": 18323.32
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 1618.0,
+"rate": 17.7,
+"amount": 28638.6
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 419.0,
+"rate": 40.9,
+"amount": 17137.1
+},
+{
+"period": "2025-11-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 21839.0,
+"rate": 8.95,
+"amount": 195459.05
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 16341.0,
+"rate": 8.95,
+"amount": 146251.95
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 40786.0,
+"rate": 15.0,
+"amount": 611790.0
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 243.0,
+"rate": 21.0,
+"amount": 5103.0
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 123257.0,
+"rate": 4.2,
+"amount": 517679.4
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 13.0,
+"rate": 17.7,
+"amount": 230.1
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 4777.0,
+"rate": 25.0,
+"amount": 119425.0
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 43508.0,
+"rate": 6.05,
+"amount": 263223.4
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 1114.0,
+"rate": 3.56,
+"amount": 3965.84
+},
+{
+"period": "2026-06-01",
+"partner": "SHOPIFY",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 360.0,
+"rate": 40.9,
+"amount": 14724.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 1.0,
+"rate": 40.9,
+"amount": 40.9
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 2002.0,
+"rate": 10.0,
+"amount": 20020.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 296.0,
+"rate": 15.0,
+"amount": 4440.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA_FASHION",
+"package_type": "SMALL BOX",
+"qty": 2.0,
+"rate": 17.7,
+"amount": 35.4
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 5014.0,
+"rate": 7.0,
+"amount": 35098.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 494.0,
+"rate": 9.0,
+"amount": 4446.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 217.0,
+"rate": 15.0,
+"amount": 3255.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA.COM",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 1824.0,
+"rate": 9.0,
+"amount": 16416.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 47.0,
+"rate": 10.0,
+"amount": 470.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 3548.0,
+"rate": 7.0,
+"amount": 24836.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NOON",
+"package_type": "SMALL BOX",
+"qty": 23.0,
+"rate": 17.7,
+"amount": 407.1
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "NOON",
+"package_type": "DEFAULT",
+"qty": 48.0,
+"rate": 15.0,
+"amount": 720.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "DEFAULT",
+"qty": 1.0,
+"rate": 15.0,
+"amount": 15.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 51002.0,
+"rate": 2.5,
+"amount": 127505.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 56.0,
+"rate": 40.9,
+"amount": 2290.4
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 34948.0,
+"rate": 5.0,
+"amount": 174740.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 14.0,
+"rate": 17.7,
+"amount": 247.8
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 91.0,
+"rate": 25.0,
+"amount": 2275.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 366.0,
+"rate": 15.0,
+"amount": 5490.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "M-NOW",
+"package_type": "DEFAULT",
+"qty": 4.0,
+"rate": 15.0,
+"amount": 60.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART_SOR",
+"package_type": "DEFAULT",
+"qty": 18.0,
+"rate": 15.0,
+"amount": 270.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 4.0,
+"rate": 17.7,
+"amount": 70.8
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 513.0,
+"rate": 15.0,
+"amount": 7695.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 8.0,
+"rate": 40.9,
+"amount": 327.2
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 8549.0,
+"rate": 3.5,
+"amount": 29921.5
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 33254.0,
+"rate": 1.5,
+"amount": 49881.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 148.0,
+"rate": 25.0,
+"amount": 3700.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON",
+"qty": 955.0,
+"rate": 3.9,
+"amount": 3724.5
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON",
+"qty": 876.0,
+"rate": 6.24,
+"amount": 5466.24
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 2074.0,
+"rate": 3.9,
+"amount": 8088.6
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON",
+"qty": 362.0,
+"rate": 3.0,
+"amount": 1086.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 83.0,
+"rate": 15.0,
+"amount": 1245.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 435.0,
+"rate": 3.0,
+"amount": 1305.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 175.0,
+"rate": 6.24,
+"amount": 1092.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 16419.0,
+"rate": 1.25,
+"amount": 20523.75
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 17.0,
+"rate": 40.9,
+"amount": 695.3
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 8.0,
+"rate": 17.7,
+"amount": 141.6
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 12002.0,
+"rate": 3.3,
+"amount": 39606.6
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 218.0,
+"rate": 25.0,
+"amount": 5450.0
+},
+{
+"period": "2026-06-01",
+"partner": null,
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 151.0,
+"rate": 15.0,
+"amount": 2265.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX B2B",
+"qty": 1567.0,
+"rate": 80.0,
+"amount": 125360.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B LARGE BOX",
+"qty": 13.0,
+"rate": 100.0,
+"amount": 1300.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "SMALL BOX B2B",
+"qty": 84.0,
+"rate": 70.0,
+"amount": 5880.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX B2B",
+"qty": 29.0,
+"rate": 80.0,
+"amount": 2320.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX",
+"qty": 24.0,
+"rate": 25.0,
+"amount": 600.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "LARGE BOX B2B",
+"qty": 11.0,
+"rate": 100.0,
+"amount": 1100.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B MEDIUM BOX",
+"qty": 1501.0,
+"rate": 80.0,
+"amount": 120080.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "DEFAULT",
+"qty": 126.0,
+"rate": 15.0,
+"amount": 1890.0
+},
+{
+"period": "2026-06-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B SMALL BOX",
+"qty": 40.0,
+"rate": 70.0,
+"amount": 2800.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B SMALL BOX",
+"qty": 45.0,
+"rate": 70.0,
+"amount": 3150.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B LARGE BOX",
+"qty": 10.0,
+"rate": 100.0,
+"amount": 1000.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "B2B MEDIUM BOX",
+"qty": 1420.0,
+"rate": 80.0,
+"amount": 113600.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX",
+"qty": 8.0,
+"rate": 25.0,
+"amount": 200.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "OWN_STORE_B2B",
+"qty": 78.0,
+"rate": 0.0,
+"amount": 0.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "DEFAULT",
+"qty": 144.0,
+"rate": 15.0,
+"amount": 2160.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "LARGE BOX B2B",
+"qty": 1.0,
+"rate": 100.0,
+"amount": 100.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX B2B",
+"qty": 1768.0,
+"rate": 80.0,
+"amount": 141440.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "STORE",
+"package_type": "SMALL BOX B2B",
+"qty": 67.0,
+"rate": 70.0,
+"amount": 4690.0
+},
+{
+"period": "2026-07-01",
+"partner": "Retail",
+"marketplace": "SNITCH HQ",
+"package_type": "DEFAULT",
+"qty": 7.0,
+"rate": 15.0,
+"amount": 105.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "SLIKK",
+"package_type": "DEFAULT",
+"qty": 1.0,
+"rate": 15.0,
+"amount": 15.0
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 89.0,
+"rate": 17.7,
+"amount": 1575.3
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 5318.0,
+"rate": 25.0,
+"amount": 132950.0
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 354.0,
+"rate": 3.56,
+"amount": 1260.24
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 18018.0,
+"rate": 8.95,
+"amount": 161261.1
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 31051.0,
+"rate": 15.0,
+"amount": 465765.0
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 328.0,
+"rate": 40.9,
+"amount": 13415.2
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 206.0,
+"rate": 21.0,
+"amount": 4326.0
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM TROLLEY BOX",
+"qty": 5.0,
+"rate": 1.0,
+"amount": 5.0
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 85088.0,
+"rate": 6.05,
+"amount": 514782.4
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 242543.0,
+"rate": 4.2,
+"amount": 1018680.6
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE TROLLEY BOX",
+"qty": 35.0,
+"rate": 1.0,
+"amount": 35.0
+},
+{
+"period": "2026-07-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL TROLLEY BOX",
+"qty": 16.0,
+"rate": 1.0,
+"amount": 16.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 25.0,
+"amount": 25.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 1641.0,
+"rate": 10.0,
+"amount": 16410.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 521.0,
+"rate": 9.0,
+"amount": 4689.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 4.0,
+"rate": 40.9,
+"amount": 163.6
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 4512.0,
+"rate": 7.0,
+"amount": 31584.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 49.0,
+"rate": 15.0,
+"amount": 735.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 2471.0,
+"rate": 7.0,
+"amount": 17297.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 25.0,
+"amount": 25.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 81.0,
+"rate": 10.0,
+"amount": 810.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 36.0,
+"rate": 15.0,
+"amount": 540.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 1265.0,
+"rate": 9.0,
+"amount": 11385.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NOON",
+"package_type": "DEFAULT",
+"qty": 21.0,
+"rate": 15.0,
+"amount": 315.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "NOON",
+"package_type": "SMALL BOX",
+"qty": 8.0,
+"rate": 17.7,
+"amount": 141.6
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "DEFAULT",
+"qty": 3.0,
+"rate": 15.0,
+"amount": 45.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 40.0,
+"rate": 25.0,
+"amount": 1000.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 47.0,
+"rate": 40.9,
+"amount": 1922.3
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 36530.0,
+"rate": 2.5,
+"amount": 91325.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 343.0,
+"rate": 15.0,
+"amount": 5145.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 13.0,
+"rate": 17.7,
+"amount": 230.1
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 24144.0,
+"rate": 5.0,
+"amount": 120720.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "M-NOW",
+"package_type": "DEFAULT",
+"qty": 17.0,
+"rate": 15.0,
+"amount": 255.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "INSTAMART",
+"package_type": "DEFAULT",
+"qty": 45.0,
+"rate": 15.0,
+"amount": 675.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART_SOR",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 25.0,
+"amount": 50.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART_SOR",
+"package_type": "DEFAULT",
+"qty": 32.0,
+"rate": 15.0,
+"amount": 480.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 8.0,
+"rate": 17.7,
+"amount": 141.6
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 295.0,
+"rate": 15.0,
+"amount": 4425.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 47.0,
+"rate": 25.0,
+"amount": 1175.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 30227.0,
+"rate": 1.5,
+"amount": 45340.5
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 4.0,
+"rate": 40.9,
+"amount": 163.6
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 7221.0,
+"rate": 3.5,
+"amount": 25273.5
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "COCOBLUE_WH2",
+"qty": 1372.0,
+"rate": 5.0,
+"amount": 6860.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "COCOBLU_WH1",
+"qty": 924.0,
+"rate": 5.0,
+"amount": 4620.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "MEDIUM BOX",
+"qty": 4.0,
+"rate": 25.0,
+"amount": 100.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "SUIT BOX",
+"qty": 1.0,
+"rate": 40.9,
+"amount": 40.9
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "COCOBLU_NORTH",
+"qty": 1057.0,
+"rate": 5.0,
+"amount": 5285.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "DEFAULT",
+"qty": 54.0,
+"rate": 15.0,
+"amount": 810.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "B2B CORPORATE CHANNEL",
+"package_type": "DEFAULT",
+"qty": 6.0,
+"rate": 15.0,
+"amount": 90.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON BAG",
+"qty": 116.0,
+"rate": 6.24,
+"amount": 723.84
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON",
+"qty": 231.0,
+"rate": 3.9,
+"amount": 900.9
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM3 AMAZON BAG",
+"qty": 502.0,
+"rate": 3.9,
+"amount": 1957.8
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "DEFAULT",
+"qty": 3.0,
+"rate": 15.0,
+"amount": 45.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM4 AMAZON",
+"qty": 385.0,
+"rate": 6.24,
+"amount": 2402.4
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON BAG",
+"qty": 209.0,
+"rate": 3.0,
+"amount": 627.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AMAZON",
+"package_type": "PM2 AMAZON",
+"qty": 3.0,
+"rate": 3.0,
+"amount": 9.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 165.0,
+"rate": 25.0,
+"amount": 4125.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 140.0,
+"rate": 15.0,
+"amount": 2100.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 8.0,
+"rate": 40.9,
+"amount": 327.2
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 11004.0,
+"rate": 1.25,
+"amount": 13755.0
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 7067.0,
+"rate": 3.3,
+"amount": 23321.1
+},
+{
+"period": "2026-07-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 7.0,
+"rate": 17.7,
+"amount": 123.9
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX B2B",
+"qty": 1419.0,
+"rate": 80.0,
+"amount": 113520.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "B2B SMALL BOX",
+"qty": 75.0,
+"rate": 70.0,
+"amount": 5250.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "B2B LARGE BOX",
+"qty": 31.0,
+"rate": 100.0,
+"amount": 3100.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "LARGE BOX B2B",
+"qty": 6.0,
+"rate": 100.0,
+"amount": 600.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "OWN_STORE_B2B",
+"qty": 435.0,
+"rate": 0.0,
+"amount": 0.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "MEDIUM BOX",
+"qty": 50.0,
+"rate": 25.0,
+"amount": 1250.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "B2B MEDIUM BOX",
+"qty": 1444.0,
+"rate": 80.0,
+"amount": 115520.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "SMALL BOX B2B",
+"qty": 104.0,
+"rate": 70.0,
+"amount": 7280.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "STORE",
+"package_type": "DEFAULT",
+"qty": 536.0,
+"rate": 15.0,
+"amount": 8040.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "SNITCH HQ",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "SNITCH HQ",
+"package_type": "DEFAULT",
+"qty": 7.0,
+"rate": 15.0,
+"amount": 105.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "SNITCH HQ",
+"package_type": "MEDIUM BOX",
+"qty": 1.0,
+"rate": 25.0,
+"amount": 25.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "SLIKK",
+"package_type": "DEFAULT",
+"qty": 6.0,
+"rate": 15.0,
+"amount": 90.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM PAPERBAG",
+"qty": 86847.0,
+"rate": 4.2,
+"amount": 364757.4
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE PAPERBAG",
+"qty": 34472.0,
+"rate": 6.05,
+"amount": 208555.6
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM BOX",
+"qty": 1902.0,
+"rate": 25.0,
+"amount": 47550.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "5 KG BOX",
+"qty": 56.0,
+"rate": 30.0,
+"amount": 1680.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "DEFAULT",
+"qty": 21984.0,
+"rate": 15.0,
+"amount": 329760.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "XL PAPERBAG",
+"qty": 9658.0,
+"rate": 8.95,
+"amount": 86439.1
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL TROLLEY BOX",
+"qty": 104.0,
+"rate": 1.0,
+"amount": 104.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL BOX",
+"qty": 2.0,
+"rate": 17.7,
+"amount": 35.4
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "LARGE TROLLEY BOX",
+"qty": 698.0,
+"rate": 1.0,
+"amount": 698.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "MEDIUM TROLLEY BOX",
+"qty": 61.0,
+"rate": 1.0,
+"amount": 61.0
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SUIT BOX",
+"qty": 37.0,
+"rate": 40.9,
+"amount": 1513.3
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALL PAPERBAG",
+"qty": 243.0,
+"rate": 3.56,
+"amount": 865.08
+},
+{
+"period": "2026-08-01",
+"partner": "Shopify",
+"marketplace": "SHOPIFY",
+"package_type": "SMALLBOX",
+"qty": 253.0,
+"rate": 21.0,
+"amount": 5313.0
+},
+{
+"period": "2026-08-01",
+"partner": "STORE",
+"marketplace": "SAPL_WH_TRANSFERS",
+"package_type": "DEFAULT",
+"qty": 3.0,
+"rate": 15.0,
+"amount": 45.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF2",
+"qty": 997.0,
+"rate": 9.0,
+"amount": 8973.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SUIT BOX",
+"qty": 14.0,
+"rate": 40.9,
+"amount": 572.6
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "SMALL BOX",
+"qty": 1.0,
+"rate": 17.7,
+"amount": 17.7
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF3",
+"qty": 1121.0,
+"rate": 10.0,
+"amount": 11210.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "DEFAULT",
+"qty": 21.0,
+"rate": 15.0,
+"amount": 315.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA_FASHION",
+"package_type": "NF1",
+"qty": 5800.0,
+"rate": 7.0,
+"amount": 40600.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "SUIT BOX",
+"qty": 1.0,
+"rate": 40.9,
+"amount": 40.9
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "DEFAULT",
+"qty": 25.0,
+"rate": 15.0,
+"amount": 375.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC2",
+"qty": 1171.0,
+"rate": 9.0,
+"amount": 10539.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC3",
+"qty": 202.0,
+"rate": 10.0,
+"amount": 2020.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 25.0,
+"amount": 50.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "NYKAA.COM",
+"package_type": "NFC1",
+"qty": 3952.0,
+"rate": 7.0,
+"amount": 27664.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "M_NOW_WESTBENGAL",
+"package_type": "DEFAULT",
+"qty": 7.0,
+"rate": 15.0,
+"amount": 105.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "MEDIUM BOX",
+"qty": 79.0,
+"rate": 25.0,
+"amount": 1975.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "BIG BAG MYNTRA",
+"qty": 21171.0,
+"rate": 5.0,
+"amount": 105855.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BAG MYNTRA",
+"qty": 55082.0,
+"rate": 2.5,
+"amount": 137705.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SUIT BOX",
+"qty": 29.0,
+"rate": 40.9,
+"amount": 1186.1
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "DEFAULT",
+"qty": 187.0,
+"rate": 15.0,
+"amount": 2805.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "MYNTRA",
+"package_type": "SMALL BOX",
+"qty": 21.0,
+"rate": 17.7,
+"amount": 371.7
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "M-NOW",
+"package_type": "DEFAULT",
+"qty": 30.0,
+"rate": 15.0,
+"amount": 450.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "KNOT",
+"package_type": "DEFAULT",
+"qty": 4.0,
+"rate": 15.0,
+"amount": 60.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "KNOT",
+"package_type": "MEDIUM BOX",
+"qty": 2.0,
+"rate": 25.0,
+"amount": 50.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART_SOR",
+"package_type": "SMALL BOX",
+"qty": 2.0,
+"rate": 17.7,
+"amount": 35.4
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART_SOR",
+"package_type": "DEFAULT",
+"qty": 50.0,
+"rate": 15.0,
+"amount": 750.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART_SOR",
+"package_type": "MEDIUM BOX",
+"qty": 5.0,
+"rate": 25.0,
+"amount": 125.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "BIG PB FLIPKART",
+"qty": 11357.0,
+"rate": 3.5,
+"amount": 39749.5
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL PB FLIPKART",
+"qty": 33794.0,
+"rate": 1.5,
+"amount": 50691.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SMALL BOX",
+"qty": 19.0,
+"rate": 17.7,
+"amount": 336.3
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "SUIT BOX",
+"qty": 9.0,
+"rate": 40.9,
+"amount": 368.1
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "MEDIUM BOX",
+"qty": 54.0,
+"rate": 25.0,
+"amount": 1350.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "FLIPKART",
+"package_type": "DEFAULT",
+"qty": 146.0,
+"rate": 15.0,
+"amount": 2190.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "CUSTOM",
+"package_type": "DEFAULT",
+"qty": 8.0,
+"rate": 15.0,
+"amount": 120.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "COCOBLUE_WH2",
+"qty": 1652.0,
+"rate": 5.0,
+"amount": 8260.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "COCOBLU_WH1",
+"qty": 359.0,
+"rate": 5.0,
+"amount": 1795.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "COCOBLU_NORTH",
+"qty": 1701.0,
+"rate": 5.0,
+"amount": 8505.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "COCOBLU",
+"package_type": "DEFAULT",
+"qty": 10.0,
+"rate": 15.0,
+"amount": 150.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "B2B CORPORATE CHANNEL",
+"package_type": "DEFAULT",
+"qty": 2.0,
+"rate": 15.0,
+"amount": 30.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SUIT BOX",
+"qty": 40.0,
+"rate": 40.9,
+"amount": 1636.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "BIG BAG AJIO",
+"qty": 8287.0,
+"rate": 3.3,
+"amount": 27347.1
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "DEFAULT",
+"qty": 118.0,
+"rate": 15.0,
+"amount": 1770.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "MEDIUM BOX",
+"qty": 17.0,
+"rate": 25.0,
+"amount": 425.0
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BOX",
+"qty": 6.0,
+"rate": 17.7,
+"amount": 106.2
+},
+{
+"period": "2026-08-01",
+"partner": "Marketplace",
+"marketplace": "AJIO",
+"package_type": "SMALL BAG AJIO",
+"qty": 12509.0,
+"rate": 1.25,
+"amount": 15636.25
+}
+],
+"rates_from": "2026-09-01",
+"rates": [
+{
+"package_type": "MEDIUM BOX B2B",
+"rate": 80.0
+},
+{
+"package_type": "SMALL BOX B2B",
+"rate": 70.0
+},
+{
+"package_type": "LARGE BOX B2B",
+"rate": 100.0
+},
+{
+"package_type": "MEDIUM BOX",
+"rate": 25.0
+},
+{
+"package_type": "BIG BAG AJIO",
+"rate": 3.3
+},
+{
+"package_type": "DEFAULT",
+"rate": 15.0
+},
+{
+"package_type": "SMALL BAG AJIO",
+"rate": 1.25
+},
+{
+"package_type": "SMALL BOX",
+"rate": 17.7
+},
+{
+"package_type": "SUIT BOX",
+"rate": 40.9
+},
+{
+"package_type": "PM2 AMAZON BAG",
+"rate": 3.0
+},
+{
+"package_type": "PM3 AMAZON BAG",
+"rate": 3.9
+},
+{
+"package_type": "PM4",
+"rate": 6.24
+},
+{
+"package_type": "PM4 AMAZON BAG",
+"rate": 6.24
+},
+{
+"package_type": "BIG PB FLIPKART",
+"rate": 3.5
+},
+{
+"package_type": "SMALL PB FLIPKART",
+"rate": 1.5
+},
+{
+"package_type": "BIG BAG MYNTRA",
+"rate": 5.0
+},
+{
+"package_type": "SMALL BAG MYNTRA",
+"rate": 2.5
+},
+{
+"package_type": "NFC1",
+"rate": 7.0
+},
+{
+"package_type": "NFC2",
+"rate": 9.0
+},
+{
+"package_type": "NFC3",
+"rate": 10.0
+},
+{
+"package_type": "NF1",
+"rate": 7.0
+},
+{
+"package_type": "NF2",
+"rate": 9.0
+},
+{
+"package_type": "NF3",
+"rate": 10.0
+},
+{
+"package_type": "LARGE PAPERBAG",
+"rate": 6.05
+},
+{
+"package_type": "MEDIUM PAPERBAG",
+"rate": 4.2
+},
+{
+"package_type": "SMALL PAPERBAG",
+"rate": 3.56
+},
+{
+"package_type": "SMALLBOX",
+"rate": 21.0
+},
+{
+"package_type": "XL PAPERBAG",
+"rate": 8.95
+},
+{
+"package_type": "B2B LARGE BOX",
+"rate": 100.0
+},
+{
+"package_type": "B2B MEDIUM BOX",
+"rate": 80.0
+},
+{
+"package_type": "B2B SMALL BOX",
+"rate": 70.0
+},
+{
+"package_type": "PM2 AMAZON",
+"rate": 3.0
+},
+{
+"package_type": "PM3 AMAZON",
+"rate": 3.9
+},
+{
+"package_type": "PM4 AMAZON",
+"rate": 6.24
+},
+{
+"package_type": "LARGE TROLLEY BOX",
+"rate": 1.0
+},
+{
+"package_type": "SMALL TROLLEY BOX",
+"rate": 1.0
+},
+{
+"package_type": "MEDIUM TROLLEY BOX",
+"rate": 1.0
+},
+{
+"package_type": "5 KG BOX",
+"rate": 30.0
+},
+{
+"package_type": "COCOBLUE_WH2",
+"rate": 5.0
+},
+{
+"package_type": "COCOBLU_WH1",
+"rate": 5.0
+},
+{
+"package_type": "COCOBLU_NORTH",
+"rate": 5.0
+}
+]
+}

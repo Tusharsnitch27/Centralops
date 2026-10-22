@@ -9,6 +9,7 @@ import { seedSopReview } from "./sopReview";
 import { seedSopHistory, seedSopPlanDaily } from "./sopHistory";
 import { seedWeekly } from "./weekly";
 import { seedHandbook, seedLibrary } from "./library";
+import { seedPackaging } from "./packaging";
 import { seedOrgChart } from "./orgChart";
 
 const mk = (rawQ: RunQ) => ({
@@ -136,6 +137,11 @@ export async function bootstrap(rawQ: RunQ) {
     await seedLibrary(rawQ);
     await setSetting("seed.library", "v1");
     console.log("[seed] library sources loaded");
+  }
+  if ((await setting("seed.packaging")) !== "v1") {
+    await seedPackaging(rawQ);
+    await setSetting("seed.packaging", "v1");
+    console.log("[seed] packaging history Nov 2025 – Aug 2026 + rate list loaded");
   }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
