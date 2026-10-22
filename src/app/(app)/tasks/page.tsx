@@ -9,7 +9,7 @@ import { listTasks } from "@/server/tasks/queries";
 import { FocusPanel } from "@/components/tasks/FocusPanel";
 import { TaskCheck } from "@/components/tasks/TaskCheck";
 import { Collapsible } from "@/components/ui/Collapsible";
-import { requireUser } from "@/server/auth";
+import { canManage, requireUser } from "@/server/auth";
 import { listPeople } from "@/server/core/people";
 import { myPending, ruleFocus } from "@/server/tasks/coach";
 import { aiConfigured } from "@/server/ai/provider";
@@ -53,7 +53,7 @@ export default async function MyTasks({ searchParams }: { searchParams: Promise<
         subtitle={<>{tasks.length} active{scheduled.length ? ` · ${scheduled.length} scheduled` : ""}{overdue ? <> · <span className="font-medium text-bad">{overdue} overdue</span></> : null} · sorted by due date</>} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-5">
-          <CreateTabs meId={u.id} people={people.map((p) => ({ id: p.id, name: p.name, title: p.title }))} links={{ goals, projects }} />
+          <CreateTabs meId={u.id} people={people.map((p) => ({ id: p.id, name: p.name, title: p.title }))} links={{ goals, projects }} canProgram={canManage(u)} />
           {onMe.length > 0 && (
             <section>
               <h2 className="mb-1.5 flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-bad">Blocked on you<span className="font-medium text-ink-4">{onMe.length}</span></h2>

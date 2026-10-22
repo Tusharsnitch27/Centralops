@@ -1,5 +1,5 @@
 import "server-only";
-import { taskScope, visibleSql } from "../org/queries";
+import { reportsOf, taskScope, visibleSql } from "../org/queries";
 import { one, q } from "../db";
 import { canManage, type User } from "../auth";
 import { addDays, today, weekStart } from "@/lib/dates";
@@ -41,6 +41,7 @@ export const GROUP_BY: { key: GroupBy; label: string }[] = [
 /** URL params understood by /tasks (also what a saved view stores). */
 export interface TaskParams {
   view: TaskViewKey;
+  who?: "me" | "team";   // split: my own tasks vs. my team's (everyone reporting to me in the org chart)
   owner?: string;      // user id | "me" | "team:<id>"
   team?: string;
   project?: string;
@@ -63,6 +64,7 @@ export function parseTaskParams(sp: Record<string, string | string[] | undefined
   const status = list(str(sp.status), STATUSES);
   return {
     view: isViewKey(view) ? view : "mine",
+    who: str(sp.who) === "me" ? "me" : str(sp.who) === "team" ? "team" : undefined,
     owner: str(sp.owner),
     team: str(sp.team),
     project: str(sp.project),
@@ -79,6 +81,7 @@ export function taskQuery(p: Partial<TaskParams>, overrides: Partial<TaskParams>
   const m = { ...p, ...overrides };
   const s = new URLSearchParams();
   if (m.view && m.view !== "mine") s.set("view", m.view);
+  if (m.who) s.set("who", m.who);
   if (m.owner) s.set("owner", m.owner);
   if (m.team) s.set("team", m.team);
   if (m.project) s.set("project", m.project);
@@ -115,6 +118,12 @@ export async function listTasksForParams(p: TaskParams, u: Pick<User, "id" | "ro
   const f: TaskFilter = { ...viewFilter(p.view, u) };
   const ids = await taskScope(u);
   if (ids) f.visibleTo = { me: u.id, ids };
+  if (p.who === "me") f.peopleOf = [u.id];
+  else if (p.who === "team") {
+    const team = await reportsOf(u.id);
+    f.peopleOf = team.length ? team : ["00000000-0000-0000-0000-000000000000"];
+    if (f.ownerId === u.id) delete f.ownerId; // "My tasks" view + team split = my team's open tasks
+  }
   let ownerTeam: string | undefined;
   if (p.owner === "me") f.ownerId = u.id;
   else if (p.owner?.startsWith("team:")) ownerTeam = p.owner.slice(5);

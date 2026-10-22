@@ -48,6 +48,7 @@ export interface TaskFilter {
   delegatedBy?: string;          // requested by X but owned by someone else
   involving?: string;            // owner OR requester OR waiting-on OR co-assignee
   visibleTo?: { me: string; ids: string[] }; // org scope: only these people's tasks (+ ones I created/asked for)
+  peopleOf?: string[];           // owned by, or co-assigned to, one of these people (Me / My team split)
   waitingOnOthersFor?: string;   // waiting status / waiting_on someone else, for this user
   projectId?: string;
   programId?: string;
@@ -82,6 +83,7 @@ export async function listTasks(f: TaskFilter = {}): Promise<TaskListItem[]> {
     p.push(f.visibleTo.ids, f.visibleTo.me);
     where.push(visibleSql(`$${p.length - 1}`, `$${p.length}::uuid`));
   }
+  if (f.peopleOf) add(`(t.owner_id = any($?::uuid[]) or exists (select 1 from task_assignees ta where ta.task_id = t.id and ta.user_id = any($?::uuid[])))`, f.peopleOf);
   if (f.waitingOnOthersFor) add(`((t.owner_id = $? and (t.status = 'waiting' or t.waiting_on_id is not null)))`, f.waitingOnOthersFor);
   if (f.projectId) add(`t.project_id = $?`, f.projectId);
   if (f.programId) add(`t.program_id = $?`, f.programId);

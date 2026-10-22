@@ -27,7 +27,8 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
     taskViewCounts(u), listTasksForParams(params, u), listSavedViews(u.id), listPeople(), listTeams(), listProjectsLite(), listTags(),
   ]);
   const insights = taskInsights(counts);
-  const groups = groupTasks(tasks, params.group);
+  // My team: one block per person unless another grouping was picked
+  const groups = groupTasks(tasks, params.who === "team" && params.group === "none" ? "owner" : params.group);
   const attention = counts.overdue + counts.blocked + counts.noupdate;
   const currentHref = taskQuery(params);
   const filtered = !!(params.owner || params.team || params.project || params.priority || params.status || params.tag || params.search);
@@ -51,9 +52,18 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
           views={saved.map((v) => ({ id: v.id, name: v.name, builtin: v.builtin, href: taskQuery({ view: "mine", group: "none", ...v.filters } as TaskParams) }))} />
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="seg">
+          {([[undefined, "Everyone in my scope"], ["me", "Me"], ["team", "My team"]] as const).map(([k, label]) => (
+            <a key={label} href={taskQuery(params, { who: k })} data-on={params.who === k} className="seg-item">{label}</a>
+          ))}
+        </div>
+        {params.who === "team" && <span className="text-[12px] text-ink-4">Everyone reporting to you in the org chart, grouped by person</span>}
+      </div>
+
       <div className="-mx-4 overflow-x-auto px-4 scroll-thin md:mx-0 md:px-0">
         <Tabs className="min-w-max" active={params.view}
-          items={TASK_VIEWS.map((v) => ({ key: v.key, label: v.label, count: counts[v.key], href: taskQuery({ view: v.key, group: params.group }) }))} />
+          items={TASK_VIEWS.map((v) => ({ key: v.key, label: v.label, count: counts[v.key], href: taskQuery({ view: v.key, group: params.group, who: params.who }) }))} />
       </div>
 
       <div className="my-3">

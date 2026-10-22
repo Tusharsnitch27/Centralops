@@ -27,7 +27,7 @@ export interface NewTask {
   aopItemId?: string | null;
   parentId?: string | null;
   waitingOnId?: string | null;
-  source?: "manual" | "meeting" | "aop" | "sop" | "project" | "ai" | "followup" | "integration" | "onboarding";
+  source?: "manual" | "meeting" | "aop" | "sop" | "project" | "ai" | "followup" | "integration" | "onboarding" | "program";
   nextStep?: string | null;
   pocName?: string | null;
   links?: TaskLink[];
