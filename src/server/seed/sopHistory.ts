@@ -6,7 +6,7 @@ import planDaily from "../../db/seed/sop-plan-daily-fy27.json";
 import planDailyOrders from "../../db/seed/sop-plan-daily-orders-fy27.json";
 
 /** Apr–Oct 2026 plans, outbound capacity and meeting call-outs from "(Plan vs Actual) S&OP_FY'26-27.xlsx".
- *  Actuals come only from Snowflake: the workbook's actuals are kept in wb_* for reconciliation, never shown as actuals. */
+ *  Workbook actuals land in wb_*; months before the Sep 2026 cut-over show them as actuals (seedSopWorkbookActuals), later months use Snowflake. */
 export async function seedSopHistory(S: RunQ) {
   const up = (view: string, period: string, label: string, group: string | null, sort: number, sp: number | null, sa: number | null, np: number | null, na: number | null) =>
     S(`insert into sop_review_rows (view_key, period, row_label, row_group, sort, south_plan, wb_south_actual, north_plan, wb_north_actual)
@@ -48,4 +48,24 @@ export async function seedSopPlanDaily(S: RunQ, which: "items" | "orders" = "ite
              on conflict (day, view_key, row_label) do update set south = excluded.south, north = excluded.north`,
       [c.map((r) => r[0]), c.map((r) => r[1]), c.map((r) => r[2]), c.map((r) => r[3]), c.map((r) => r[4])]);
   }
+}
+
+/** Workbook actuals for the months before the Snowflake cut-over (Apr–Aug 2026): inventory flow, returns, review periods. */
+export async function seedSopWorkbookActuals(S: RunQ, cutover: string) {
+  for (const p of data.periods.filter((x) => x.period < cutover))
+    await S(`insert into sop_review_periods (period, through_day, label) values ($1,$2,$3) on conflict (period) do update set through_day = excluded.through_day`, [p.period, p.through, p.label ?? ""]);
+  for (const f of data.flow.filter((x) => x.period < cutover)) {
+    await S(`insert into sop_inventory_flow (period, warehouse, capacity, opening, inward_category, inward_returns, outward, closing, source) values ($1,$2,$3,$4,$5,$6,$7,$8,'workbook')
+             on conflict (period, warehouse) do update set capacity = excluded.capacity, opening = excluded.opening, inward_category = excluded.inward_category,
+               inward_returns = excluded.inward_returns, outward = excluded.outward, closing = excluded.closing, source = 'workbook'`,
+      [f.period, f.wh, f.capacity, f.opening, f.inward_category, f.inward_returns, f.outward, f.closing]);
+    // month-end stock = the workbook's closing inventory
+    await S(`insert into sop_wh_capacity (period, warehouse, capacity, inventory, inventory_source) values ($1,$2,$3,$4,'workbook')
+             on conflict (period, warehouse) do update set inventory = excluded.inventory, inventory_source = 'workbook'`, [f.period, f.wh, f.capacity, f.closing]);
+  }
+  for (const r of data.returns.filter((x) => x.period < cutover && x.period >= "2026-04-01"))
+    for (const [wh, b2c, b2b, fb, fr] of [["South", r.b2c_south, r.b2b_south, r.fwd_b2c_south, r.fwd_retail_south], ["North", r.b2c_north, r.b2b_north, r.fwd_b2c_north, r.fwd_retail_north]] as const)
+      await S(`insert into sop_returns (period, warehouse, b2c, b2b, fwd_b2c, fwd_retail, source) values ($1,$2,$3,$4,$5,$6,'workbook')
+               on conflict (period, warehouse) do update set b2c = excluded.b2c, b2b = excluded.b2b, fwd_b2c = excluded.fwd_b2c, fwd_retail = excluded.fwd_retail, source = 'workbook'`,
+        [r.period, wh, b2c, b2b, fb, fr]);
 }

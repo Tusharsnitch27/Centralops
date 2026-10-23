@@ -310,7 +310,7 @@ function SnowflakeCard({ d }: { d: IntegrationsData }) {
   });
   const missing = [!env.account && "SNOWFLAKE_ACCOUNT", !env.username && "SNOWFLAKE_USERNAME", !env.auth && "SNOWFLAKE_PAT", !env.warehouse && "SNOWFLAKE_WAREHOUSE", !env.role && "SNOWFLAKE_ROLE"].filter(Boolean) as string[];
   return (
-    <Section icon={<Workflow size={17} />} title="Snowflake · S&OP actuals" sub={`Refreshed daily at ${sf.syncTime} IST — every month from ${sf.from} is re-read; plans are never touched`}
+    <Section icon={<Workflow size={17} />} title="Snowflake · S&OP actuals" sub={`Refreshed daily at ${sf.syncTime} IST — open months from ${sf.from} are re-read; Apr–Aug 2026 are the workbook’s and every finished month is frozen; plans are never touched`}
       right={<div className="flex items-center gap-2">{sf.configured ? <Badge tone="green" dot>Connected</Badge> : <Badge tone="amber" dot>Not set up</Badge>}
         <Button size="sm" variant="primary" disabled={!sf.configured || !!busy} onClick={() => refresh()}><Play size={13} />{busy === "all" ? "Refreshing…" : "Refresh all now"}</Button></div>}>
       <div className="mb-4 grid gap-x-6 gap-y-1 text-[12.5px] sm:grid-cols-2">

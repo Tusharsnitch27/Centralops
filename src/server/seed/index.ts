@@ -138,6 +138,12 @@ export async function bootstrap(rawQ: RunQ) {
     await setSetting("seed.library", "v1");
     console.log("[seed] library sources loaded");
   }
+  if ((await setting("seed.sop_wb_actuals")) !== "v1") {
+    const { seedSopWorkbookActuals } = await import("./sopHistory");
+    await seedSopWorkbookActuals(rawQ, "2026-09-01");
+    await setSetting("seed.sop_wb_actuals", "v1");
+    console.log("[seed] S&OP Apr–Aug 2026 actuals restored from the Plan vs Actual workbook");
+  }
   if ((await setting("seed.packaging")) !== "v1") {
     await seedPackaging(rawQ);
     await setSetting("seed.packaging", "v1");

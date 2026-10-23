@@ -5,14 +5,35 @@ import { weekOfMonth } from "@/lib/sopWeeks";
 
 /**
  * Snowflake → S&OP, daily grain. Each feed pulls one row per day (× channel / category / region) from FY27 start
- * (SOP_SYNC_FROM) into sop_actuals_daily; rebuild() then derives every weekly / monthly / MTD number the review shows.
+ * (the first open month on or after Sep 2026 — earlier months are the workbook's, frozen) into sop_actuals_daily; rebuild() then derives every weekly / monthly / MTD number the review shows.
  * Plans are never touched. Queries are the S&OP team's (Oct 2026), only re-grained to days.
  *
  * Pre-packs: a SKU like "PP4-…" is one pack holding 4 pieces → units = quantity × 4 (packs and units are both kept).
  * Inventory: daily stock by warehouse from SNOWFLAKE_INVENTORY_TABLE; pre-pack stock is kept apart (separate area,
  * not part of WH capacity).
  */
-export const FROM = () => process.env.SOP_SYNC_FROM ?? "2026-04-01";
+/**
+ * Actuals: Apr–Aug 2026 come from the Plan vs Actual workbook (frozen); Snowflake from the cut-over (Sep 2026). Each finished month is
+ * frozen after a clean refresh, so pulls only ever re-read the open month(s): FROM() = first open month on or after the cut-over.
+ */
+export const SOP_CUTOVER = "2026-09-01";
+const gf = globalThis as unknown as { __sopFrom?: string };
+export const FROM = () => gf.__sopFrom ?? SOP_CUTOVER;
+const nextMonth = (p: string) => { const d = new Date(`${p}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0, 10); };
+export async function refreshFrom() {
+  const last = await one<{ p: string | null }>(`select max(period)::text as p from sop_month_status where status = 'closed'`);
+  const f = last?.p ? nextMonth(last.p) : SOP_CUTOVER;
+  gf.__sopFrom = f > SOP_CUTOVER ? f : SOP_CUTOVER;
+  return gf.__sopFrom;
+}
+/** Freeze every month that has ended (only after a refresh where every feed succeeded). */
+async function closeFinishedMonths() {
+  const cur = `${new Date().toISOString().slice(0, 7)}-01`;
+  const months = (await q<{ p: string }>(`select distinct date_trunc('month', day)::date::text as p from sop_actuals_daily where day >= $1 and day < $2 order by 1`, [FROM(), cur])).map((r) => r.p);
+  for (const p of months)
+    await q(`insert into sop_month_status (period, status, source, closed_at) values ($1,'closed','snowflake',now()) on conflict (period) do update set status = 'closed', closed_at = now()`, [p]);
+  return months;
+}
 const INV_TABLE = () => process.env.SNOWFLAKE_INVENTORY_TABLE ?? "snitch_db.maplemonk.snitch_final_inventory_wh2";
 const SLA_TABLE = "maplemonk.warehouse_sla_performance";
 const PUT_TABLE = "snitch_db.maplemonk.putaway_tracking";
@@ -438,6 +459,7 @@ export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | 
   const out: { feed: FeedKey; status: "ok" | "failed"; read?: number; written?: number; error?: string }[] = [];
   let slaSku: string | null | undefined;
   let putDate: string | undefined;
+  await refreshFrom();
   for (const feed of feeds) {
     const [run] = await q<{ id: string }>(`insert into sop_sync_runs (feed, trigger, from_date, actor_id) values ($1,$2,$3,$4) returning id`, [feed, trigger, FROM(), actorId]);
     try {
@@ -465,6 +487,12 @@ export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | 
     }
   }
   if (out.some((o) => o.status === "ok")) await rebuild().catch((e) => console.error("[sop-sync] rebuild failed", e));
+  // a full, clean refresh freezes the months that have ended; the next pull starts at the first open month
+  if (feeds.length === ALL_FEEDS.length && out.every((o) => o.status === "ok")) {
+    const closed = await closeFinishedMonths();
+    if (closed.length) console.log(`[sop-sync] closed ${closed.join(", ")}`);
+    await refreshFrom();
+  }
   return out;
 }
 

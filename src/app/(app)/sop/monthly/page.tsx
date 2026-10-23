@@ -24,7 +24,7 @@ export default async function SopMonthlyReview({ searchParams }: { searchParams:
     <div>
       <PeriodPicker base="/sop/monthly" grain={per.grain} options={per.options} selected={per.sel.key} partial={per.partial} />
       <p className="-mt-2 mb-5 px-1 text-[12px] text-ink-4">
-        {per.sel.months.length > 1 ? `${per.sel.months.length} months added up · ` : ""}{lastOk ? `Actuals from Snowflake, refreshed ${ago(lastOk)}` : "Actuals come only from Snowflake — none yet, run a refresh (Data sources)"}
+        {per.sel.months.length > 1 ? `${per.sel.months.length} months added up · ` : ""}{lastOk ? `Apr–Aug actuals from the workbook · Sep onwards from Snowflake, refreshed ${ago(lastOk)} · finished months frozen` : "Apr–Aug 2026 actuals from the Plan vs Actual workbook · Sep onwards from Snowflake once refreshed"}
       </p>
       <MonthlyReviewView d={d} daily={daily.views} />
       <section id="daily" className="mt-6 scroll-mt-20 space-y-2">

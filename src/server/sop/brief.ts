@@ -57,7 +57,7 @@ export async function leaderBrief(months: string[], label: string) {
     problems.push({ type: "Capacity", tone: f.utilClose >= 1 ? "bad" : "warn", score: f.utilClose * 40, title: `${f.warehouse} WH closes ${MON(f.period)} at ${pc(f.utilClose)} of capacity`, detail: `Inward ${k(f.inward)} vs outward ${k(f.outward)}. Pre-pack stock is held separately and not counted here.`, href: "/sop/monthly" });
   // data gaps
   const failed = runs.filter((r) => r.status === "failed");
-  if (!runs.length) problems.push({ type: "Data gap", tone: "info", score: 5, title: "No actuals yet", detail: "Actuals come only from the Snowflake pipelines — set the Snowflake keys (Settings › Integrations) and run a refresh.", href: "/sop/data" });
+  if (!runs.length) problems.push({ type: "Data gap", tone: "info", score: 5, title: "No actuals yet", detail: "Apr–Aug come from the workbook; Sep onwards needs the Snowflake refresh (Settings › Integrations).", href: "/sop/data" });
   else if (failed.length) problems.push({ type: "Data gap", tone: "warn", score: 18, title: `${failed.length} data feed${failed.length > 1 ? "s" : ""} failed on the last refresh`, detail: failed.map((f) => `${f.feed}: ${(f.message ?? "").slice(0, 80)}`).join(" · "), href: "/sop/data" });
   if (daily.hasActuals && daily.views.some((v) => v.total.basis === "monthly")) problems.push({ type: "Data gap", tone: "info", score: 4, title: "No day-level plan for some flows", detail: `${daily.views.filter((v) => v.total.basis !== "daily").map((v) => `${v.title} (${v.total.basis})`).join(", ")} — their daily plan is the ${"week/month"} spread evenly.`, href: "/sop/data" });
 

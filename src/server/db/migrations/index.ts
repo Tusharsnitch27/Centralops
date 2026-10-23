@@ -29,6 +29,7 @@ import { sql as meetingBrief } from "./062_meeting_ai_brief";
 import { sql as taskPrograms } from "./063_task_programs";
 import { sql as invSplit } from "./064_inventory_split";
 import { sql as packaging } from "./065_packaging";
+import { sql as sopMonthClose } from "./066_sop_month_close";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -59,4 +60,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 63, name: "task_programs", sql: taskPrograms },
   { version: 64, name: "inventory_split", sql: invSplit },
   { version: 65, name: "packaging", sql: packaging },
+  { version: 66, name: "sop_month_close", sql: sopMonthClose },
 ];
