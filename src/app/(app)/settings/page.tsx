@@ -70,7 +70,14 @@ async function renderTab(tab: string, userId: string, isAdmin: boolean, manager:
     case "integrations": {
       const { integrationsData } = await import("@/server/integrations/queries");
       const { IntegrationsAdmin } = await import("@/components/settings/IntegrationsAdmin");
-      return <IntegrationsAdmin d={await integrationsData(userId)} />;
+      const { CalendarMaster } = await import("@/components/settings/CalendarConnect");
+      const { calendarMaster } = await import("@/server/integrations/actions");
+      const { q } = await import("@/server/db");
+      const [d, master, people] = await Promise.all([integrationsData(userId), calendarMaster(),
+        q<{ id: string; name: string; color: string | null; email: string | null; status: string | null; last_sync_at: string | null }>(
+          `select u.id, u.name, u.avatar_color as color, i.account_email as email, i.status, i.last_sync_at::text from users u
+           left join integrations i on i.user_id = u.id and i.provider = 'google_calendar' where u.active order by u.name`)]);
+      return <div className="space-y-6"><CalendarMaster master={master} people={people} /><IntegrationsAdmin d={d} /></div>;
     }
     case "rules":
       return (
@@ -80,8 +87,9 @@ async function renderTab(tab: string, userId: string, isAdmin: boolean, manager:
         </div>
       );
     default: {
-      const profile = await getUserProfile(userId);
-      return profile ? <ProfileForm profile={profile} /> : null;
+      const [profile, { googleStatus }, { calendarMaster }, { MyCalendar }] = await Promise.all([getUserProfile(userId), import("@/server/integrations/registry"), import("@/server/integrations/actions"), import("@/components/settings/CalendarConnect")]);
+      const [g, master] = await Promise.all([googleStatus(userId), calendarMaster()]);
+      return profile ? <div className="space-y-6"><ProfileForm profile={profile} /><MyCalendar g={g} master={master} /></div> : null;
     }
   }
 }

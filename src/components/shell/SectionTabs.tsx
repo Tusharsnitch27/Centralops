@@ -5,11 +5,11 @@ import { SECTION_TABS } from "@/lib/nav";
 import { cn } from "@/lib/cn";
 
 /** Segmented switch between sibling sections (Tasks | Follow-ups, Meetings | Decisions). */
-export function SectionTabs({ section }: { section: keyof typeof SECTION_TABS }) {
+export function SectionTabs({ section, prefix }: { section: keyof typeof SECTION_TABS; prefix?: boolean }) {
   const path = usePathname();
   const tabs = SECTION_TABS[section];
   // only on section roots; detail pages (e.g. /tasks/[id]) keep their own header
-  const active = tabs?.find((t) => t.href === path)?.href;
+  const active = tabs?.find((t) => (prefix ? path === t.href || path.startsWith(`${t.href}/`) : t.href === path))?.href;
   if (!active) return null;
   return (
     <div className="mb-5 inline-flex rounded-lg border border-line bg-subtle/60 p-0.5">

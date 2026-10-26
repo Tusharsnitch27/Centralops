@@ -11,12 +11,12 @@ const refresh = () => { revalidatePath("/tasks", "layout"); revalidatePath("/tas
 async function editor() { const u = await requireUser(); if (!canEdit(u)) throw new Error("Read-only access"); return u; }
 const date = (d?: string | null) => { if (!d) return null; if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error("Invalid date"); if (d < today()) throw new Error("Dates can't be in the past"); return d; };
 
-export async function createGoal(i: { title: string; description?: string; ownerId?: string | null; targetDate?: string | null; projectIds?: string[] }): Promise<ActionResult<{ id: string }>> {
+export async function createGoal(i: { title: string; description?: string; ownerId?: string | null; targetDate?: string | null; projectIds?: string[]; overall?: boolean }): Promise<ActionResult<{ id: string }>> {
   try {
     const u = await editor();
     if (!i.title.trim()) throw new Error("Give the goal a title");
-    const [g] = await q<{ id: string }>(`insert into goals (title, description, owner_id, target_date, created_by) values ($1,$2,$3,$4,$5) returning id`,
-      [i.title.trim(), i.description?.trim() || null, i.ownerId || u.id, date(i.targetDate), u.id]);
+    const [g] = await q<{ id: string }>(`insert into goals (title, description, owner_id, target_date, created_by, scope) values ($1,$2,$3,$4,$5,$6) returning id`,
+      [i.title.trim(), i.description?.trim() || null, i.ownerId || u.id, date(i.targetDate), u.id, i.overall ? "overall" : "private"]);
     if (i.projectIds?.length) await q(`update projects set goal_id = $1 where id = any($2::uuid[])`, [g.id, i.projectIds]);
     await logActivity({ actorId: u.id, entityType: "project", entityId: null, action: "goal_created", summary: i.title.trim() });
     refresh();
@@ -36,13 +36,13 @@ export async function updateGoal(id: string, p: { status?: GoalStatus; title?: s
   } catch (e) { return fail(e); }
 }
 
-export async function createProject(i: { name: string; objective?: string; ownerId?: string | null; targetDate?: string | null; goalId?: string | null }): Promise<ActionResult<{ id: string }>> {
+export async function createProject(i: { name: string; objective?: string; ownerId?: string | null; targetDate?: string | null; goalId?: string | null; overall?: boolean }): Promise<ActionResult<{ id: string }>> {
   try {
     const u = await editor();
     if (!i.name.trim()) throw new Error("Give the project a name");
     const [p] = await q<{ id: string }>(
-      `insert into projects (name, objective, owner_id, target_date, start_date, goal_id, status, created_by) values ($1,$2,$3,$4,current_date,$5,'active',$6) returning id`,
-      [i.name.trim(), i.objective?.trim() || null, i.ownerId || u.id, date(i.targetDate), i.goalId || null, u.id]);
+      `insert into projects (name, objective, owner_id, target_date, start_date, goal_id, status, created_by, scope) values ($1,$2,$3,$4,current_date,$5,'active',$6,$7) returning id`,
+      [i.name.trim(), i.objective?.trim() || null, i.ownerId || u.id, date(i.targetDate), i.goalId || null, u.id, i.overall ? "overall" : "private"]);
     await logActivity({ actorId: u.id, entityType: "project", entityId: p.id, action: "created", summary: i.name.trim() });
     refresh();
     return ok({ id: p.id }, "Project created");
@@ -51,4 +51,18 @@ export async function createProject(i: { name: string; objective?: string; owner
 
 export async function linkProjectToGoal(projectId: string, goalId: string | null): Promise<ActionResult> {
   try { await editor(); await q(`update projects set goal_id = $2 where id = $1`, [projectId, goalId]); refresh(); return ok(); } catch (e) { return fail(e); }
+}
+
+/** Owner, creator or a PM: make a goal / project visible to everyone ("overall program") or keep it to its people. */
+export async function setScope(kind: "goal" | "project", id: string, scope: "private" | "overall"): Promise<ActionResult> {
+  try {
+    const u = await editor();
+    const t = kind === "goal" ? "goals" : "projects";
+    const row = (await q<{ owner_id: string | null; created_by: string | null }>(`select owner_id, created_by from ${t} where id = $1`, [id]))[0];
+    if (!row) throw new Error("Not found");
+    if (!(u.role === "admin" || u.role === "pm" || row.owner_id === u.id || row.created_by === u.id)) throw new Error("Only the owner or a program manager can change who sees this");
+    await q(`update ${t} set scope = $2 where id = $1`, [id, scope === "overall" ? "overall" : "private"]);
+    refresh();
+    return ok(undefined, scope === "overall" ? "Visible to everyone (overall program)" : "Visible to its owner, team and managers");
+  } catch (e) { return fail(e); }
 }

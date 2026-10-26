@@ -2,7 +2,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/client";
-import { linkProjectToGoal, updateGoal } from "@/server/goals/actions";
+import { linkProjectToGoal, setScope, updateGoal } from "@/server/goals/actions";
 import type { GoalStatus } from "@/server/goals/queries";
 import { cn } from "@/lib/cn";
 
@@ -36,5 +36,19 @@ export function ProjectGoalSelect({ projectId, goalId, goals, disabled }: { proj
       <option value="">{goalId ? "Remove from goal" : "Map to a goal…"}</option>
       {goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
     </select>
+  );
+}
+
+/** Who sees it: its people (owner, team / function, managers) or everyone ("overall program"). Admins and PMs always see all. */
+export function ScopeToggle({ kind, id, scope, disabled }: { kind: "goal" | "project"; id: string; scope: "private" | "overall"; disabled?: boolean }) {
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  const router = useRouter();
+  return (
+    <button type="button" disabled={disabled || pending} onClick={(e) => { e.stopPropagation(); start(async () => { const r = await setScope(kind, id, scope === "overall" ? "private" : "overall"); if (!r.ok) toast(r.error, "error"); else { toast(r.message ?? "Saved", "success"); router.refresh(); } }); }}
+      title={scope === "overall" ? "Overall program — visible to everyone" : "Visible to its owner, their team / function and managers (admins & PMs see all)"}
+      className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset disabled:cursor-default", scope === "overall" ? "bg-info-soft text-info ring-info/30" : "text-ink-3 ring-line", !disabled && "hover:ring-line-strong")}>
+      {scope === "overall" ? "Overall" : "Team only"}
+    </button>
   );
 }

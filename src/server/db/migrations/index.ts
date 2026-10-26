@@ -31,6 +31,7 @@ import { sql as invSplit } from "./064_inventory_split";
 import { sql as packaging } from "./065_packaging";
 import { sql as sopMonthClose } from "./066_sop_month_close";
 import { sql as liqUpload } from "./067_liquidation_upload";
+import { sql as goalScope } from "./068_goal_scope";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -63,4 +64,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 65, name: "packaging", sql: packaging },
   { version: 66, name: "sop_month_close", sql: sopMonthClose },
   { version: 67, name: "liquidation_upload", sql: liqUpload },
+  { version: 68, name: "goal_scope", sql: goalScope },
 ];

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FolderKanban, Target } from "lucide-react";
 import { Badge, EmptyState, PageHeader } from "@/components/ui";
 import { Collapsible } from "@/components/ui/Collapsible";
-import { GoalStatusSelect, ProjectGoalSelect } from "@/components/tasks/GoalStatus";
+import { GoalStatusSelect, ProjectGoalSelect, ScopeToggle } from "@/components/tasks/GoalStatus";
 import { canEdit, requireUser } from "@/server/auth";
 import { goalProjects, goalTasks, listGoals } from "@/server/goals/queries";
 import { fmtDate, relDay, today } from "@/lib/dates";
@@ -13,7 +13,11 @@ export const metadata = { title: "Goals & projects" };
 /** Goals → their projects → tasks (linked to the goal directly or through a project). Add new ones from My list › Goal / Project. */
 export default async function GoalsPage() {
   const u = await requireUser();
-  const [goals, projects, tasks] = await Promise.all([listGoals(), goalProjects(), goalTasks()]);
+  const [goals, projects, allTasks] = await Promise.all([listGoals(u), goalProjects(u), goalTasks()]);
+  // only tasks under goals / projects this person can see
+  const seeG = new Set(goals.map((g) => g.id)), seeP = new Set(projects.map((p) => p.id));
+  const tasks = allTasks.filter((x) => (x.goal_id && seeG.has(x.goal_id)) || (x.project_id && seeP.has(x.project_id)));
+  const mayScope = (owner: string | null) => u.role === "admin" || u.role === "pm" || owner === u.id;
   const t = today();
   const loose = projects.filter((p) => !p.goal_id);
   const goalOpts = goals.filter((g) => !["done", "dropped"].includes(g.status)).map((g) => ({ id: g.id, title: g.title }));
@@ -42,12 +46,12 @@ export default async function GoalsPage() {
             return (
               <Collapsible key={g.id} id={`goal:${g.id}`} icon={<Target size={15} />} title={g.title}
                 sub={[g.owner_name, g.target_date ? `by ${fmtDate(g.target_date)}` : null, `${g.projects} project${g.projects === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}
-                summary={<>{bar(g.tasks_done, g.tasks_total)}{g.tasks_overdue > 0 && <Badge tone="red">{g.tasks_overdue} overdue</Badge>}<GoalStatusSelect id={g.id} status={g.status} disabled={!canEdit(u)} /></>}>
+                summary={<><ScopeToggle kind="goal" id={g.id} scope={g.scope} disabled={!mayScope(g.owner_id)} />{bar(g.tasks_done, g.tasks_total)}{g.tasks_overdue > 0 && <Badge tone="red">{g.tasks_overdue} overdue</Badge>}<GoalStatusSelect id={g.id} status={g.status} disabled={!canEdit(u)} /></>}>
                 {g.description && <p className="border-b border-line px-4 py-3 text-[12.5px] text-ink-2">{g.description}</p>}
                 {gp.map((p) => (
                   <div key={p.id} id={`project-${p.id}`} className="scroll-mt-20 border-b border-line last:border-0">
                     <div className="flex flex-wrap items-center gap-2 bg-subtle/40 px-4 py-2 text-[12.5px]"><FolderKanban size={13} className="text-ink-4" /><span className="font-semibold">{p.name}</span><span className="text-ink-4">{p.owner_name}</span>
-                      <span className="ml-auto flex items-center gap-3">{bar(p.tasks_done, p.tasks_total)}<ProjectGoalSelect projectId={p.id} goalId={p.goal_id} goals={goalOpts} disabled={!editable} /></span></div>
+                      <span className="ml-auto flex items-center gap-3"><ScopeToggle kind="project" id={p.id} scope={p.scope} disabled={!mayScope(p.owner_id)} />{bar(p.tasks_done, p.tasks_total)}<ProjectGoalSelect projectId={p.id} goalId={p.goal_id} goals={goalOpts} disabled={!editable} /></span></div>
                     {tasks.filter((x) => x.project_id === p.id).map((x) => <TaskLine key={x.id} x={x} />)}
                   </div>
                 ))}
@@ -64,7 +68,7 @@ export default async function GoalsPage() {
                   <div key={p.id} className="scroll-mt-20" id={`project-${p.id}`}>
                     <div className="flex flex-wrap items-center gap-3 px-4 py-2.5">
                       <FolderKanban size={14} className="text-ink-4" /><span className="min-w-0 flex-1 truncate text-[13px] font-medium">{p.name}</span>
-                      <span className="hidden text-[12px] text-ink-4 sm:inline">{p.owner_name}</span>{bar(p.tasks_done, p.tasks_total)}
+                      <span className="hidden text-[12px] text-ink-4 sm:inline">{p.owner_name}</span><ScopeToggle kind="project" id={p.id} scope={p.scope} disabled={!mayScope(p.owner_id)} />{bar(p.tasks_done, p.tasks_total)}
                       <ProjectGoalSelect projectId={p.id} goalId={null} goals={goalOpts} disabled={!editable || !goalOpts.length} />
                     </div>
                     {tasks.filter((x) => x.project_id === p.id).map((x) => <TaskLine key={x.id} x={x} />)}

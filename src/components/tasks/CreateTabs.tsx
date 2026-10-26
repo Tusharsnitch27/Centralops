@@ -34,7 +34,7 @@ export function CreateTabs({ people, meId, links, canProgram }: { people: Person
 }
 
 function GoalForm({ people, meId, projects, done }: { people: PersonOpt[]; meId: string; projects: LinkOpts["projects"]; done: () => void }) {
-  const [f, setF] = useState({ title: "", description: "", ownerId: meId, targetDate: "", projectIds: [] as string[] });
+  const [f, setF] = useState({ title: "", description: "", ownerId: meId, targetDate: "", projectIds: [] as string[], overall: false });
   const [pending, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
@@ -54,7 +54,7 @@ function GoalForm({ people, meId, projects, done }: { people: PersonOpt[]; meId:
           ); })}</div>
         </div>
       )}
-      <div className="flex justify-end"><Button variant="primary" disabled={pending || !f.title.trim()} onClick={() => start(async () => {
+      <div className="flex items-center justify-end gap-3"><label className="mr-auto flex items-center gap-2 text-[12.5px] text-ink-2" title="Off: only its owner, their team / function and managers see it (admins & PMs see all)"><input type="checkbox" checked={f.overall} onChange={(e) => setF({ ...f, overall: e.target.checked })} />Overall program — visible to everyone</label><Button variant="primary" disabled={pending || !f.title.trim()} onClick={() => start(async () => {
         const r = await createGoal(f); if (!r.ok) return toast(r.error, "error"); toast(r.message ?? "Goal added", "success"); router.refresh(); done();
       })}>{pending ? "Adding…" : "Add goal"}</Button></div>
     </div>
@@ -62,7 +62,7 @@ function GoalForm({ people, meId, projects, done }: { people: PersonOpt[]; meId:
 }
 
 function ProjectForm({ people, meId, goals, done }: { people: PersonOpt[]; meId: string; goals: LinkOpts["goals"]; done: () => void }) {
-  const [f, setF] = useState({ name: "", objective: "", ownerId: meId, targetDate: "", goalId: "" });
+  const [f, setF] = useState({ name: "", objective: "", ownerId: meId, targetDate: "", goalId: "", overall: false });
   const [pending, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
@@ -75,7 +75,7 @@ function ProjectForm({ people, meId, goals, done }: { people: PersonOpt[]; meId:
         <label className="block"><span className="label">Target date <span className="font-normal text-ink-4">(optional)</span></span><input type="date" min={today()} className="field" value={f.targetDate} onChange={(e) => setF({ ...f, targetDate: e.target.value })} /></label>
         <label className="block"><span className="label">Goal <span className="font-normal text-ink-4">(optional)</span></span><select className="field" value={f.goalId} onChange={(e) => setF({ ...f, goalId: e.target.value })}><option value="">—</option>{goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></label>
       </div>
-      <div className="flex justify-end"><Button variant="primary" disabled={pending || !f.name.trim()} onClick={() => start(async () => {
+      <div className="flex items-center justify-end gap-3"><label className="mr-auto flex items-center gap-2 text-[12.5px] text-ink-2" title="Off: only its owner, their team / function and managers see it (admins & PMs see all)"><input type="checkbox" checked={f.overall} onChange={(e) => setF({ ...f, overall: e.target.checked })} />Overall program — visible to everyone</label><Button variant="primary" disabled={pending || !f.name.trim()} onClick={() => start(async () => {
         const r = await createProject(f); if (!r.ok) return toast(r.error, "error"); toast(r.message ?? "Project created", "success"); router.refresh(); done();
       })}>{pending ? "Creating…" : "Create project"}</Button></div>
     </div>

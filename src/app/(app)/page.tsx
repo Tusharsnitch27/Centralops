@@ -6,7 +6,14 @@ import { HeroSpend } from "@/components/home/HeroSpend";
 import { StatCard } from "@/components/home/StatCard";
 import { homeSeries } from "@/server/home/series";
 import { TaskList } from "@/components/tasks/TaskRow";
-import { requireUser } from "@/server/auth";
+import { canManage, requireUser } from "@/server/auth";
+import { NewMeetingButton } from "@/components/meetings/NewMeeting";
+import { meetingFilterOptions } from "@/server/meetings/queries";
+import { listPeople } from "@/server/core/people";
+import { q } from "@/server/db";
+import { CalendarPrompt } from "@/components/settings/CalendarConnect";
+import { calendarMaster } from "@/server/integrations/actions";
+import { googleStatus } from "@/server/integrations/registry";
 import { runSweeps } from "@/server/inbox/sweep";
 import { attention } from "@/server/home/attention";
 import { aopOutcome, dueToday, homeStats, todaySchedule } from "@/server/home/overview";
@@ -26,9 +33,18 @@ function greeting() {
 export default async function CommandCentre() {
   const u = await requireUser();
   await runSweeps(u);
-  const [items, stats, schedule, due, aop, sop, series] = await Promise.all([
-    attention(u), homeStats(u), todaySchedule(u), dueToday(u), aopOutcome(), sopHeadline(), homeSeries(u),
+  const [items, stats, schedule, due, aop, sop, series, mopts, people, moms] = await Promise.all([
+    attention(u), homeStats(u), todaySchedule(u), dueToday(u), aopOutcome(), sopHeadline(), homeSeries(u), meetingFilterOptions(), listPeople(),
+    // minutes still to write / review: mine as MoM owner, or every one for PMs
+    q<{ id: string; title: string; starts_at: string; mom_status: string; owner: string | null }>(
+      `select m.id, m.title, m.starts_at::text, m.mom_status, o.name as owner from meetings m left join users o on o.id = m.mom_owner_id
+       where not m.cancelled and m.ends_at < now() and m.mom_status in ('pending','draft','submitted') and ($2 or m.mom_owner_id = $1)
+       order by m.starts_at desc limit 5`, [u.id, canManage(u)]),
   ]);
+  // ask each person to connect their own calendar — never connected for them; "Not now" hides it
+  const [master, g, dismissed] = await Promise.all([calendarMaster(), googleStatus(u.id), q(`select 1 from app_settings where key = $1`, [`calendar.prompt_dismissed.${u.id}`])]);
+  const askCalendar = master && g.configured && !g.connected && !dismissed.length;
+  const meetingOpts = { people: people.map((p) => ({ id: p.id, name: p.name, color: p.avatar_color, title: p.title })), reviews: mopts.reviews, projects: mopts.projects, programs: mopts.programs };
   const sum = (xs: { value: number }[], n = 7) => xs.slice(-n).reduce((a, x) => a + x.value, 0);
   const now = Date.now();
   const first = u.name.split(" ")[0];
@@ -49,6 +65,8 @@ export default async function CommandCentre() {
           <CalendarClock size={14} /> {fmtDate(today(), { dow: true })}
         </div>
       </header>
+
+      {askCalendar && <CalendarPrompt />}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         <StatCard label="Open tasks" value={stats.openTasks} href="/tasks" icon={<ListChecks size={15} />} bars={series.completed.map((d) => d.value)}
@@ -112,6 +130,24 @@ export default async function CommandCentre() {
 
         {/* Right rail */}
         <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <CardHeader title="Meetings & MoM" icon={<NotebookPen size={15} />} subtitle={moms.length ? `${moms.length} minute${moms.length === 1 ? "" : "s"} to write or review` : "All minutes are in"}
+              action={<NewMeetingButton options={meetingOpts} me={u.id} joinedAt={u.joined_at} variant="secondary" />} />
+            {moms.length ? (
+              <div className="divide-y divide-line/70">
+                {moms.map((m) => (
+                  <Link key={m.id} href={`/meetings/${m.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-subtle/60">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px]">{m.title}</div>
+                      <div className="text-[11.5px] text-ink-3">{fmtDate(m.starts_at.slice(0, 10))} · {m.owner ?? "No MoM owner"}</div>
+                    </div>
+                    <Badge tone={m.mom_status === "submitted" ? "info" : "amber"}>{m.mom_status === "submitted" ? "Review" : m.mom_status === "draft" ? "Draft" : "Write MoM"}</Badge>
+                  </Link>
+                ))}
+              </div>
+            ) : <EmptyState compact title="No minutes pending" body="Add a meeting here; its MoM, actions and AI brief live on the meeting." />}
+            <div className="border-t border-line px-4 py-2 text-right"><ButtonLink href="/meetings" variant="ghost" size="xs">All meetings <ArrowUpRight size={12} /></ButtonLink></div>
+          </Card>
           {aop && aop.lastClosed && (
             <HeroSpend title={aop.cycleName} ytdActual={aop.ytdActual} variance={aop.variance} variancePct={aop.variancePct} projection={aop.projection} fyPlan={aop.fyPlan}
               lastClosed={aop.lastClosed} labels={aop.labels} cost={cost} trend={aop.trend.map((t) => ({ period: t.period, plan: t.plan, actual: t.actual }))} />

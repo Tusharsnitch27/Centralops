@@ -99,7 +99,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
         </Card>
         {isPM ? (
           <ReviewPanel meetingId={id} items={items} engine={note.ai_engine} ownerName={note.author_name ?? m.mom_owner_name}
-            opts={{ people: peopleLite, teams: teams.map((t) => ({ id: t.id, name: t.name })), projects, goals: await goalOptions() }} />
+            opts={{ people: peopleLite, teams: teams.map((t) => ({ id: t.id, name: t.name })), projects, goals: await goalOptions(u) }} />
         ) : (
           <Card className="px-5 py-4">
             <div className="flex items-start gap-3">

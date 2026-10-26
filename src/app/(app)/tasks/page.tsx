@@ -22,7 +22,7 @@ export const metadata = { title: "Tasks" };
 export default async function MyTasks({ searchParams }: { searchParams: Promise<{ view?: string; person?: string; dept?: string }> }) {
   const sp = await searchParams;
   const u = await requireUser();
-  const [all, people, goals, projects, onMe, scope] = await Promise.all([myPending(u.id), listPeople(), goalOptions(), projectOptions(), blockersOnMe(u.id), taskScope(u)]);
+  const [all, people, goals, projects, onMe, scope] = await Promise.all([myPending(u.id), listPeople(), goalOptions(u), projectOptions(u), blockersOnMe(u.id), taskScope(u)]);
   // a team view for admins / program managers (everyone) and anyone with people reporting to them
   const canTeam = scope === null || scope.length > 1;
   if (canTeam && sp.view === "team") return <TeamView me={u.id} scope={scope} person={sp.person} dept={sp.dept} />;
