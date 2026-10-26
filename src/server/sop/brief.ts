@@ -22,7 +22,7 @@ export async function leaderBrief(months: string[], label: string) {
 
   // monthly misses (each flow)
   for (const r of d.overall.filter((x) => !x.kind && x.acc != null)) {
-    if (r.ta === 0 && r.tp > 0) { problems.push({ type: "Data gap", tone: "warn", score: 10, title: `${r.label}: no actuals for the period`, detail: `Planned ${k(r.tp)} — either nothing moved or there is no actual feed yet${r.key === "liquidation" ? " (liquidation has no Snowflake query yet)" : ""}.`, href: "/settings?tab=integrations" }); continue; }
+    if (r.ta === 0 && r.tp > 0) { problems.push({ type: "Data gap", tone: "warn", score: 10, title: `${r.label}: no actuals for the period`, detail: `Planned ${k(r.tp)} — either nothing moved or there is no actual feed yet${r.key === "liquidation" ? " (liquidation: Malhar uploads the gatepass actuals under Inputs)" : ""}.`, href: "/settings?tab=integrations" }); continue; }
     if (r.acc! < 0.85) problems.push({ type: "Monthly miss", tone: r.acc! < 0.7 ? "bad" : "warn", score: (1 - r.acc!) * 100,
       title: `${r.label}: ${pc(r.acc)} accurate (${r.devPct! > 0 ? "+" : ""}${pc(r.devPct)} vs plan)`,
       detail: `Plan ${k(r.tp)}, actual ${k(r.ta)} — ${r.dev > 0 ? `${k(r.dev)} more than planned` : `${k(-r.dev)} short`}. South ${pc(r.sAcc)}, North ${pc(r.nAcc)}.`, href: "/sop/monthly" });

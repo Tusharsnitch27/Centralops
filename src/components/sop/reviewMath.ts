@@ -79,7 +79,7 @@ export function viewInsights(v: ViewDef, raw: RawRow[], wh: { South: WhPoint | n
   const domWh = (r: Row, sign: 1 | -1): "South" | "North" => (sign * (r.sa - r.sp) >= sign * (r.na - r.np) ? "South" : "North");
   const out: Insight[] = [];
   // Sep 2026 onwards comes from Snowflake: no feed yet is a data gap, not "nothing moved" on every row
-  if (total.ta === 0 && total.tp > 0) return [{ key: "noactuals", tone: "info", score: 1, title: [{ b: "No actuals yet" }], impact: [`From Sep 2026 actuals come from the Snowflake pipelines — they appear after the next refresh${v.key === "liquidation" ? " (liquidation has no query yet)" : ""}.`] }];
+  if (total.ta === 0 && total.tp > 0) return [{ key: "noactuals", tone: "info", score: 1, title: [{ b: "No actuals yet" }], impact: [`From Sep 2026 actuals come from the Snowflake pipelines — they appear after the next refresh${v.key === "liquidation" ? " (liquidation comes from Malhar's gatepass upload under Inputs)" : ""}.`] }];
 
   for (const r of rows) {
     const what = v.weekly ? r.label.replace("Wk_0", "Week ").replace("Wk_", "Week ") : r.label;

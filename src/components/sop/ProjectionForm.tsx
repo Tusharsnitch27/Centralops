@@ -198,7 +198,7 @@ function DailyGrid({ lines, labels, cols, vals, initial, disabled, periodLabel, 
               <th rowSpan={cols.length > 1 ? 2 : 1} className="sticky left-0 z-20 border-b border-r border-line bg-surface px-3 py-2 text-left font-medium text-ink-3">Date</th>
               {lines.map((l) => <th key={l.id} colSpan={cols.length} className="border-b border-l border-line px-2 py-1.5 text-center font-medium text-ink-2">{l.name} <span className="font-normal text-ink-4">{metricLabel(l.metric)}</span></th>)}
             </tr>
-            {cols.length > 1 && <tr>{lines.map((l) => cols.map((d, i) => <th key={l.id + d} className={cn("border-b border-line px-2 py-1 text-right text-[11px] font-normal text-ink-4", i === 0 && "border-l")}>{d}</th>))}</tr>}
+            {cols.length > 1 && <tr>{lines.map((l) => cols.map((d, i) => <th key={l.id + d} title={/^pre-?pack/i.test(d) ? "Pre-pack inward in units (pieces) — a PP4 pack is 4 units" : undefined} className={cn("border-b border-line px-2 py-1 text-right text-[11px] font-normal text-ink-4", i === 0 && "border-l")}>{/^pre-?pack/i.test(d) ? `${d} (units)` : d}</th>))}</tr>}
           </thead>
           <tbody>
             {labels.map((lb) => {

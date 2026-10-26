@@ -304,7 +304,7 @@ export function viewOf(feed: string, label: string, day: string, knownB2B: strin
   if (feed === "b2c") return { view: "b2c", label: B2C_LABEL[norm(label)] ?? label };
   if (feed === "b2b_mp") return { view: "b2b_mp", label: b2bLabelSync(label, knownB2B) };
   if (feed === "retail") return { view: "retail_fwd", label: weekOfMonth(day) };
-  if (feed === "category_inward" || feed === "prepack") return { view: feed, label: weekOfMonth(day) };
+  if (feed === "category_inward" || feed === "prepack" || feed === "liquidation") return { view: feed, label: weekOfMonth(day) };
   if (feed === "category_view") return { view: "category_view", label };
   return null;
 }
@@ -358,6 +358,7 @@ export async function rebuild() {
     else if (d.feed === "retail") add(v("retail_fwd"), `${p}|${weekOfMonth(d.day)}`, d.region, Number(d.units));
     else if (d.feed === "category_inward") add(v("category_inward"), `${p}|${weekOfMonth(d.day)}`, d.region, Number(d.units));
     else if (d.feed === "prepack") add(v("prepack"), `${p}|${weekOfMonth(d.day)}`, d.region, Number(d.units));
+    else if (d.feed === "liquidation") add(v("liquidation"), `${p}|${weekOfMonth(d.day)}`, d.region, Number(d.units)); // uploaded by Malhar (gatepass)
     else if (d.feed === "category_view") add(v("category_view"), `${p}|${d.label}`, d.region, Number(d.units));
   }
   let written = 0;

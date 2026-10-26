@@ -21,6 +21,7 @@ const VIEWS: { key: string; src?: string; match?: (label: string) => boolean; ti
   { key: "retail_fwd", title: "B2B · Retail stores", flow: "Outwards", weekly: true, byLabel: false },
   { key: "category_inward", title: "Category inward", flow: "Inwards", weekly: true, byLabel: false },
   { key: "prepack", title: "Pre-pack inward", flow: "Inwards", weekly: true, byLabel: false },
+  { key: "liquidation", title: "Liquidation", flow: "Outwards", weekly: true, byLabel: false },
 ];
 const daysIn = (p: string) => new Date(Date.UTC(Number(p.slice(0, 4)), Number(p.slice(5, 7)), 0)).getUTCDate();
 const dayList = (p: string, through: number) => Array.from({ length: through }, (_, i) => `${p.slice(0, 8)}${String(i + 1).padStart(2, "0")}`);

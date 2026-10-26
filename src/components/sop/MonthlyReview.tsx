@@ -390,7 +390,7 @@ function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string })
                     <td className="text-right tabular">{fmt(r.tp)}</td>
                     {r.ta === 0 && r.tp > 0 ? (
                       // Sep onwards comes from Snowflake: no feed yet is not a −100% miss
-                      <td colSpan={6} className="text-right text-[12px] text-ink-4">Awaiting Snowflake actuals{r.key === "liquidation" ? " (no liquidation query yet)" : ""}</td>
+                      <td colSpan={6} className="text-right text-[12px] text-ink-4">Awaiting Snowflake actuals{r.key === "liquidation" ? " — Malhar uploads gatepass actuals (Inputs)" : ""}</td>
                     ) : (<>
                     <td className="text-right tabular">{fmt(r.ta)}</td>
                     <td className={cn("text-right tabular", r.dev < 0 ? "text-bad" : r.dev > 0 ? "text-warn" : "text-ink-3")}>{r.dev > 0 ? "+" : r.dev < 0 ? "−" : ""}{fmt(Math.abs(r.dev))}</td>

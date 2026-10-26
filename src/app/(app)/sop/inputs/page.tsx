@@ -6,6 +6,9 @@ import { RemindAllButton, RemindButton, SubmissionMenu } from "@/components/sop/
 import { ValuesForm } from "@/components/sop/ProjectionForm";
 import { canOverview, requireUser, canManage } from "@/server/auth";
 import { granted, grantsFor } from "@/server/auth/grants";
+import { LiquidationUpload } from "@/components/sop/LiquidationUpload";
+import { liquidationDays, liquidationOwner } from "@/server/sop/liquidation";
+import { refreshFrom } from "@/server/sop/sync";
 import { getGuidelines, getSubmissionGrid, inputPeriods, projectionLock } from "@/server/sop/queries";
 import { getStreamMonthForm } from "@/server/sop/form";
 import { currentPeriod, dueLabel, isOpenSub, SUB_META } from "@/server/sop/model";
@@ -46,6 +49,15 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
   const lock = defStream ? await projectionLock(defStream.id, formPeriod) : { locked: false, at: null, since: "" };
   const lockedForMe = lock.locked && u.role !== "admin";
   const formCell = defStream ? grid.cells.find((c) => c.stream_id === defStream.id && c.period === formPeriod) : null;
+
+  const liqOwner = await liquidationOwner();
+  const liq = u.role === "admin" || liqOwner?.id === u.id ? await (async () => {
+    // open months from the Snowflake cut-over (closed months only for admins)
+    const first = await refreshFrom();
+    const months = [cur, addMonths(cur, -1), addMonths(cur, -2)].filter((m) => m >= (u.role === "admin" ? "2026-09-01" : first));
+    const saved = Object.fromEntries(await Promise.all(months.map(async (m) => [m, await liquidationDays(m)] as const)));
+    return { months, saved, owner: liqOwner?.name ?? null };
+  })() : null;
 
   return (
     <div className="space-y-6">
@@ -148,6 +160,9 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
           ) : <EmptyState compact title="No streams" />}
         </div>
       </Card>
+
+      {/* liquidation actuals (gatepass) — the owner (Malhar) and admins */}
+      {liq && <LiquidationUpload months={liq.months} saved={liq.saved} ownerName={liq.owner} />}
 
       {/* guidelines */}
       <details className="card group">
