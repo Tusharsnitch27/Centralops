@@ -27,7 +27,7 @@ export async function integrationsData(userId: string) {
     myPhone: me?.phone ?? null,
     snowflake: { configured: sfConfigured(), env: sfEnv(), chosenWarehouse: await one<{ value: unknown }>(`select value from app_settings where key = 'snowflake.warehouse'`).then((r) => (typeof r?.value === "string" && r.value ? r.value : null)), syncTime: process.env.SOP_SYNC_TIME ?? "07:00", from: await refreshFrom(),
       feeds: [...Object.entries(FEEDS).map(([key, f]) => ({ key, title: f.title, fills: f.fills.join(" · "), sql: f.sql({ slaSku: null, putDate: "‹putaway updated column›" }), last: runs.find((r) => r.feed === key) ?? null })),
-        { key: "inventory", title: INVENTORY_FEED.title, fills: INVENTORY_FEED.fills.join(" · "), sql: "DESCRIBE + daily stock query — columns detected at run time (see S&OP › Data sources)", last: runs.find((r) => r.feed === "inventory") ?? null },
+        { key: "inventory", title: INVENTORY_FEED.title, fills: INVENTORY_FEED.fills.join(" · "), sql: "DESCRIBE + daily stock query — columns detected at run time (column detection shown after each run)", last: runs.find((r) => r.feed === "inventory") ?? null },
         { key: "packaging", title: PACKAGING_FEED.title, fills: PACKAGING_FEED.fills.join(" · "), sql: PKG_QUERY(PKG_FROM), last: runs.find((r) => r.feed === "packaging") ?? null }] },
     email: { webhookUrl: mail.webhookUrl, hasSecret: !!mail.secret, recipients: mail.recipients, cc: mail.cc },
     log, lastRun: lastRun?.value ?? null, phones: phones!,

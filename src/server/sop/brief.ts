@@ -22,7 +22,7 @@ export async function leaderBrief(months: string[], label: string) {
 
   // monthly misses (each flow)
   for (const r of d.overall.filter((x) => !x.kind && x.acc != null)) {
-    if (r.ta === 0 && r.tp > 0) { problems.push({ type: "Data gap", tone: "warn", score: 10, title: `${r.label}: no actuals for the period`, detail: `Planned ${k(r.tp)} — either nothing moved or there is no actual feed yet${r.key === "liquidation" ? " (liquidation has no Snowflake query yet)" : ""}.`, href: "/sop/data" }); continue; }
+    if (r.ta === 0 && r.tp > 0) { problems.push({ type: "Data gap", tone: "warn", score: 10, title: `${r.label}: no actuals for the period`, detail: `Planned ${k(r.tp)} — either nothing moved or there is no actual feed yet${r.key === "liquidation" ? " (liquidation has no Snowflake query yet)" : ""}.`, href: "/settings?tab=integrations" }); continue; }
     if (r.acc! < 0.85) problems.push({ type: "Monthly miss", tone: r.acc! < 0.7 ? "bad" : "warn", score: (1 - r.acc!) * 100,
       title: `${r.label}: ${pc(r.acc)} accurate (${r.devPct! > 0 ? "+" : ""}${pc(r.devPct)} vs plan)`,
       detail: `Plan ${k(r.tp)}, actual ${k(r.ta)} — ${r.dev > 0 ? `${k(r.dev)} more than planned` : `${k(-r.dev)} short`}. South ${pc(r.sAcc)}, North ${pc(r.nAcc)}.`, href: "/sop/monthly" });
@@ -57,9 +57,9 @@ export async function leaderBrief(months: string[], label: string) {
     problems.push({ type: "Capacity", tone: f.utilClose >= 1 ? "bad" : "warn", score: f.utilClose * 40, title: `${f.warehouse} WH closes ${MON(f.period)} at ${pc(f.utilClose)} of capacity`, detail: `Inward ${k(f.inward)} vs outward ${k(f.outward)}. Pre-pack stock is held separately and not counted here.`, href: "/sop/monthly" });
   // data gaps
   const failed = runs.filter((r) => r.status === "failed");
-  if (!runs.length) problems.push({ type: "Data gap", tone: "info", score: 5, title: "No actuals yet", detail: "Apr–Aug come from the workbook; Sep onwards needs the Snowflake refresh (Settings › Integrations).", href: "/sop/data" });
-  else if (failed.length) problems.push({ type: "Data gap", tone: "warn", score: 18, title: `${failed.length} data feed${failed.length > 1 ? "s" : ""} failed on the last refresh`, detail: failed.map((f) => `${f.feed}: ${(f.message ?? "").slice(0, 80)}`).join(" · "), href: "/sop/data" });
-  if (daily.hasActuals && daily.views.some((v) => v.total.basis === "monthly")) problems.push({ type: "Data gap", tone: "info", score: 4, title: "No day-level plan for some flows", detail: `${daily.views.filter((v) => v.total.basis !== "daily").map((v) => `${v.title} (${v.total.basis})`).join(", ")} — their daily plan is the ${"week/month"} spread evenly.`, href: "/sop/data" });
+  if (!runs.length) problems.push({ type: "Data gap", tone: "info", score: 5, title: "No actuals yet", detail: "Apr–Aug come from the workbook; Sep onwards needs the Snowflake refresh (Settings › Integrations).", href: "/settings?tab=integrations" });
+  else if (failed.length) problems.push({ type: "Data gap", tone: "warn", score: 18, title: `${failed.length} data feed${failed.length > 1 ? "s" : ""} failed on the last refresh`, detail: failed.map((f) => `${f.feed}: ${(f.message ?? "").slice(0, 80)}`).join(" · "), href: "/settings?tab=integrations" });
+  if (daily.hasActuals && daily.views.some((v) => v.total.basis === "monthly")) problems.push({ type: "Data gap", tone: "info", score: 4, title: "No day-level plan for some flows", detail: `${daily.views.filter((v) => v.total.basis !== "daily").map((v) => `${v.title} (${v.total.basis})`).join(", ")} — their daily plan is the ${"week/month"} spread evenly.`, href: "/settings?tab=integrations" });
 
   problems.sort((a, b) => b.score - a.score);
   // headline: the flow with the most deviation (monthly gap + day swings)

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireSopOverview } from "@/server/sop/access";
 import { Badge } from "@/components/ui";
 import { Collapsible } from "@/components/ui/Collapsible";
@@ -14,6 +15,8 @@ const MON = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { 
 /** What each S&OP number comes from, with which conditions — plus reconciliation and open questions. */
 export default async function DataSources() {
   await requireSopOverview();
+  // not in the menu any more; kept for admins only (opened from Settings › Integrations)
+  if ((await requireUser()).role !== "admin") redirect("/sop");
   const [runs, schema, recon, plans] = await Promise.all([
     lastRuns(), schemaInfo(),
     q<{ view_key: string; period: string; wb: number; sf: number }>(

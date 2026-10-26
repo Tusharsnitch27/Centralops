@@ -23,38 +23,40 @@ export function useSopAction() {
   return { pending, run };
 }
 
+// Leadership views first, then the working tabs. Projections and stream scorecards live inside Inputs; data lineage is not shown.
 const MAIN = [
   { key: "summary", href: "/sop", label: "Summary" },
   { key: "monthly", href: "/sop/monthly", label: "Monthly review" },
   { key: "detailed", href: "/sop/detailed", label: "Detailed" },
   { key: "inputs", href: "/sop/inputs", label: "Inputs" },
+  { key: "capacity", href: "/sop/capacity", label: "Capacity" },
+  { key: "review", href: "/sop/review", label: "Review meeting" },
   { key: "cost", href: "/sop/cost", label: "Processing cost" },
   { key: "productivity", href: "/sop/productivity", label: "Productivity" },
 ];
-const MORE = [
-  { key: "projections", href: "/sop/projections", label: "Projections" },
-  { key: "streams", href: "/sop/streams", label: "Streams" }, { key: "capacity", href: "/sop/capacity", label: "Capacity planning" },
-  { key: "review", href: "/sop/review", label: "Review meeting" }, { key: "data", href: "/sop/data", label: "Data sources" },
+const INPUT_TABS = [
+  { key: "inputs", href: "/sop/inputs", label: "Submit & track" },
+  { key: "streams", href: "/sop/streams", label: "Stream scorecards" },
+  { key: "projections", href: "/sop/projections", label: "Stream detail" },
 ];
 
-/** Leadership tabs first; the working pages (inputs, projections, capacity, meeting, data) sit in a quieter row. */
 export function SopNav({ counts, overview = true }: { counts?: { inputs?: number; capacity?: number }; overview?: boolean }) {
   const path = usePathname();
   if (!overview) return <div className="mb-6"><Tabs active="inputs" items={[{ key: "inputs", href: "/sop/inputs", label: "My inputs", count: counts?.inputs }]} /></div>;
   const seg = path.split("/")[2] ?? "summary";
   const active = seg === "" ? "summary" : seg;
+  const inInputs = INPUT_TABS.some((t) => t.key === active);
   const count = (k: string) => (k === "inputs" ? counts?.inputs : k === "capacity" ? counts?.capacity : undefined);
   return (
-    <div className="mb-6 space-y-2">
-      <Tabs active={active} items={MAIN.map((m) => (m.key === "inputs" ? { ...m, count: counts?.inputs } : m))} />
-      <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-1 text-[12px]">
-        <span className="mr-1 font-semibold uppercase tracking-[0.08em] text-ink-4 text-[10.5px]">Inputs &amp; data</span>
-        {MORE.map((m) => (
-          <Link key={m.key} href={m.href} className={`rounded-md px-2 py-0.5 ${active === m.key ? "bg-ink text-white" : "text-ink-3 hover:bg-subtle hover:text-ink"}`}>
-            {m.label}{count(m.key) ? <span className="ml-1 rounded bg-accent-soft px-1 text-[10.5px] font-semibold text-accent-ink">{count(m.key)}</span> : null}
-          </Link>
-        ))}
+    <div className="mb-6 space-y-3">
+      <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <Tabs className="min-w-max" active={inInputs ? "inputs" : active} items={MAIN.map((m) => ({ ...m, count: count(m.key) || undefined }))} />
       </div>
+      {inInputs && (
+        <div className="seg">
+          {INPUT_TABS.map((t) => <Link key={t.key} href={t.href} data-on={active === t.key} className="seg-item">{t.label}</Link>)}
+        </div>
+      )}
     </div>
   );
 }
