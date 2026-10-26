@@ -98,6 +98,8 @@ export async function detailedDaily(key: DetailKey, period: string, label: strin
     const off = ds.filter((d) => { const p = d.sp + d.np; return p > 0 && Math.abs((d.sa + d.na) / p - 1) > 0.2; }).length;
     return { label: l, plan: t.p, actual: t.a, off, judged: ds.filter((d) => d.sp + d.np > 0).length };
   });
-  return { view: v, period, basis, through: thru, labels, label: sel, days: build(sel), byLabel, hasActuals: act.size > 0 };
+  // every row's own days (one entry "" for views without channel rows) — the review tables expand into these
+  const perLabel: Record<string, DetailDay[]> = v.byLabel ? Object.fromEntries(labels.map((l) => [l, build(l)])) : { "": build(null) };
+  return { view: v, period, basis, through: thru, labels, label: sel, days: build(sel), byLabel, perLabel, hasActuals: act.size > 0 };
 }
 export type Detailed = Awaited<ReturnType<typeof detailedDaily>>;

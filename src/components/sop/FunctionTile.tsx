@@ -1,4 +1,5 @@
-import { CalendarDays, MessageSquareText, TriangleAlert, User } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, CalendarDays, MessageSquareText, TriangleAlert, User } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { DailyView, DaySeries } from "@/server/sop/daily";
 import { DEV_BAND, type Insight, type Row, type Seg } from "./reviewMath";
@@ -26,11 +27,21 @@ function merge(list: DaySeries[]) {
  * One function at a glance, beside its plan-vs-actual table: accuracy, days beyond ±20%, rows off plan (with their own day counts),
  * orders vs order plan where there is one, the top call-outs and the owners' remarks.
  */
-export function FunctionTile({ viewKey, total, rows, insights, daily, notes, owners }: {
-  viewKey: string; total: Row; rows: Row[]; insights: Insight[]; daily: DailyView[];
+export function FunctionTile({ viewKey, total, rows, insights, daily, notes, owners, period }: {
+  viewKey: string; total: Row; rows: Row[]; insights: Insight[]; daily: DailyView[]; period?: string | null;
   notes: { code: string; kind: string; body: string; author: string | null; at: string }[]; owners: Record<string, string | null>;
 }) {
   const dv = daily.filter((v) => DAILY[viewKey]?.includes(v.key));
+  // every day count opens the Detailed view of this function, filtered to the days it counts
+  const INWARD = ["category_inward", "prepack", "category_view"];
+  const det = (o: { f?: string; l?: string; dev?: "above" | "below" }) => {
+    if (!period) return null;
+    const p = new URLSearchParams({ flow: INWARD.includes(viewKey) ? "inward" : "outbound", f: o.f ?? viewKey, p: period });
+    if (o.l) p.set("l", o.l);
+    if (o.dev) p.set("dev", o.dev);
+    return `/sop/detailed?${p}`;
+  };
+  const L = ({ to, className, children }: { to: string | null; className?: string; children: React.ReactNode }) => (to ? <Link href={to} className={cn("hover:underline", className)}>{children}</Link> : <span className={className}>{children}</span>);
   const ov = daily.filter((v) => ORDERS[viewKey]?.includes(v.key));
   const days = dv.length ? merge(dv.map((v) => v.total)) : null;
   const strip = dv.length === 1 ? dv[0]!.total : null;
@@ -68,30 +79,30 @@ export function FunctionTile({ viewKey, total, rows, insights, daily, notes, own
       </div>
 
       <div className="rounded-xl bg-subtle/60 p-3">
-        <div className="mb-1.5 flex items-center gap-1.5 font-medium text-ink-2"><CalendarDays size={12} />Days beyond ±20%</div>
+        <L to={det({})} className="mb-1.5 flex items-center gap-1.5 font-medium text-ink-2"><CalendarDays size={12} />Days beyond ±20%{period && <ArrowUpRight size={11} className="text-ink-4" />}</L>
         {days && days.judged ? (
           <>
             <div className="flex items-baseline gap-3">
               <span className="text-[20px] font-semibold tabular leading-none">{days.up + days.down}<span className="text-[12px] font-normal text-ink-4"> / {days.judged} days</span></span>
-              <span className="text-[#2563eb] tabular">{days.up} above</span>
-              <span className="text-bad tabular">{days.down} below</span>
+              <L to={det({ dev: "above" })} className="text-[#2563eb] tabular">{days.up} above</L>
+              <L to={det({ dev: "below" })} className="text-bad tabular">{days.down} below</L>
             </div>
             {strip && <div className="mt-2"><Strip s={strip} small /></div>}
             {days.unplanned > 0 && <div className="mt-1.5 text-warn">{days.unplanned} day{days.unplanned > 1 ? "s" : ""} with volume but no plan</div>}
-            {dv.length > 1 && <div className="mt-1.5 space-y-0.5 text-ink-3">{dv.map((v) => <div key={v.key} className="flex justify-between gap-2"><span>{v.title.replace(/^B2C · /, "")}</span><span className="tabular">{v.total.up + v.total.down} / {v.total.judged}</span></div>)}</div>}
+            {dv.length > 1 && <div className="mt-1.5 space-y-0.5 text-ink-3">{dv.map((v) => <L key={v.key} to={det({})} className="flex justify-between gap-2"><span>{v.title.replace(/^B2C · /, "")}</span><span className="tabular">{v.total.up + v.total.down} / {v.total.judged}</span></L>)}</div>}
           </>
         ) : <div className="text-ink-4">Needs daily actuals (Snowflake refresh) to count days.</div>}
       </div>
 
       {ov.length > 0 && orderTot.plan > 0 && (
         <div className="rounded-xl bg-subtle/60 p-3">
-          <div className="mb-1 font-medium text-ink-2">Orders vs order plan</div>
+          <L to={det({ f: "b2c_orders" })} className="mb-1 block font-medium text-ink-2">Orders vs order plan</L>
           <div className="flex items-baseline gap-3 tabular">
             <span>Plan <b className="font-semibold">{fmt(orderTot.plan)}</b></span>
             <span>Actual <b className="font-semibold">{fmt(orderTot.actual)}</b></span>
             <span className={cn("font-semibold", Math.abs(orderTot.actual / orderTot.plan - 1) > DEV_BAND ? "text-bad" : "text-ok")}>{pc(orderTot.actual / orderTot.plan)}</span>
           </div>
-          <div className="mt-0.5 text-ink-4">{ov.reduce((a, v) => a + v.total.up + v.total.down, 0)} of {ov.reduce((a, v) => a + v.total.judged, 0)} days beyond ±20% on orders</div>
+          <div className="mt-0.5 text-ink-4">{ov.reduce((a, v) => a + v.total.up + v.total.down, 0)} of {ov.reduce((a, v) => a + v.total.judged, 0)} days beyond ±20% on orders · channels with an order plan only</div>
         </div>
       )}
 
@@ -109,7 +120,7 @@ export function FunctionTile({ viewKey, total, rows, insights, daily, notes, own
                   </div>
                   <div className="text-[11.5px] text-ink-4">
                     {r.su != null && r.nu != null ? `South ${pc(r.su)} · North ${pc(r.nu)}` : ""}
-                    {s && s.judged ? ` · ${s.up + s.down}/${s.judged} days off (${s.up}↑ ${s.down}↓)` : ""}
+                    {s && s.judged ? <> · <L to={det({ l: r.label })}>{s.up + s.down}/{s.judged} days off ({s.up}↑ {s.down}↓)</L></> : ""}
                     {o && o.judged ? ` · orders ${o.up + o.down}/${o.judged} days off` : ""}
                   </div>
                 </li>

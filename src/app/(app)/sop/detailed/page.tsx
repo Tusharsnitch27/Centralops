@@ -15,7 +15,7 @@ const dow = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN"
 const BAND = 0.2;
 
 /** Read-only, day-on-day plan vs actual for one function: pick Outbound / Inward, the function, the month (and a channel). */
-export default async function SopDetailed({ searchParams }: { searchParams: Promise<{ flow?: string; f?: string; p?: string; l?: string }> }) {
+export default async function SopDetailed({ searchParams }: { searchParams: Promise<{ flow?: string; f?: string; p?: string; l?: string; dev?: string }> }) {
   await requireSopOverview();
   const sp = await searchParams;
   const flow = sp.flow === "inward" ? "inward" : "outbound";
@@ -25,8 +25,9 @@ export default async function SopDetailed({ searchParams }: { searchParams: Prom
   const months = [...new Set([cur, ...(await reviewPeriods())])].sort().reverse();
   const period = sp.p && months.includes(sp.p) ? sp.p : months.find((m) => m <= cur) ?? cur;
   const d = await detailedDaily(view.key as DetailKey, period, sp.l ?? null);
-  const href = (o: Partial<Record<"flow" | "f" | "p" | "l", string | null>>) => {
-    const x = { flow, f: view.key, p: period, l: d.label, ...o };
+  const devF = sp.dev === "above" || sp.dev === "below" ? sp.dev : null;
+  const href = (o: Partial<Record<"flow" | "f" | "p" | "l" | "dev", string | null>>) => {
+    const x = { flow, f: view.key, p: period, l: d.label, dev: devF, ...o };
     return `/sop/detailed?${new URLSearchParams(Object.entries(x).filter(([, v]) => v) as [string, string][]).toString()}`;
   };
 
@@ -37,6 +38,9 @@ export default async function SopDetailed({ searchParams }: { searchParams: Prom
   const sum = (ds: DetailDay[]) => ds.reduce((a, x) => ({ sp: a.sp + x.sp, sa: a.sa + x.sa, np: a.np + x.np, na: a.na + x.na }), { sp: 0, sa: 0, np: 0, na: 0 });
   const mtd = sum(past), month = sum(d.days);
   const weeks = [...new Set(d.days.map((x) => x.week))];
+  // above / below filter: only the planned days beyond ±20% on that side
+  const match = (x: DetailDay) => { const v = dev(x); return !devF || (!x.future && v != null && (devF === "above" ? v > BAND : v < -BAND)); };
+  const shown = d.days.filter(match);
 
   return (
     <div className="space-y-4">
@@ -53,6 +57,12 @@ export default async function SopDetailed({ searchParams }: { searchParams: Prom
         </div>
         <div className="flex flex-wrap gap-1.5">
           {views.map((v) => <Link key={v.key} href={href({ f: v.key, l: null })} className={cn("rounded-lg px-3 py-1.5 text-[12.5px] font-medium", v.key === view.key ? "bg-info-soft text-info ring-1 ring-inset ring-info/30" : "text-ink-2 ring-1 ring-inset ring-line hover:ring-line-strong")}>{v.title}</Link>)}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-line pt-3">
+          <span className="text-[12px] text-ink-4">Days</span>
+          {([[null, `All (${d.days.filter((x) => !x.future).length})`], ["above", `Above +20% (${above})`], ["below", `Below −20% (${below})`]] as const).map(([k, l]) => (
+            <Link key={l} href={href({ dev: k })} className={cn("rounded-md px-2 py-0.5 text-[12px]", devF === k ? (k === "above" ? "bg-[#1d4ed8] text-white" : k === "below" ? "bg-bad text-white" : "bg-ink text-white") : "text-ink-3 ring-1 ring-inset ring-line hover:text-ink")}>{l}</Link>
+          ))}
         </div>
         {d.labels.length > 0 && (
           <div className="flex flex-wrap gap-1 border-t border-line pt-3">
@@ -82,16 +92,18 @@ export default async function SopDetailed({ searchParams }: { searchParams: Prom
           <thead className="sticky top-0 bg-surface">
             <tr className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-ink-4">
               <th className="px-3 py-2 text-left" rowSpan={2}>Date</th>
-              <th className="border-l border-line px-2 pt-2 text-center" colSpan={4}>Total</th>
+              <th className="border-l border-line px-2 pt-2 text-center" colSpan={5}>Total</th>
               <th className="border-l border-line bg-[#e8f0fe] px-2 pt-2 text-center text-[#1e40af]" colSpan={3}>South</th>
               <th className="border-l border-line bg-[#fdf2e3] px-2 pt-2 text-center text-[#9a3412]" colSpan={3}>North</th>
             </tr>
             <tr className="border-b border-line text-[10.5px] uppercase tracking-[0.06em] text-ink-4">
-              {["Plan", "Actual", "Variance", "% of plan", "Plan", "Actual", "%", "Plan", "Actual", "%"].map((h, i) => <th key={i} className={cn("px-2 py-1.5 text-right font-medium", [0, 4, 7].includes(i) && "border-l border-line")}>{h}</th>)}
+              {["Plan", "Actual", "Variance", "% of plan", "Deviation", "Plan", "Actual", "%", "Plan", "Actual", "%"].map((h, i) => <th key={i} className={cn("px-2 py-1.5 text-right font-medium", [0, 5, 8].includes(i) && "border-l border-line")}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {weeks.map((w) => {
+            {devF
+              ? (shown.length ? shown.map((x) => <DayRow key={x.day} x={x} />) : <tr><td colSpan={12} className="px-3 py-6 text-center text-[12.5px] text-ink-4">No days {devF === "above" ? "above +20%" : "below −20%"} this month.</td></tr>)
+              : weeks.map((w) => {
               const wd = d.days.filter((x) => x.week === w);
               return [
                 ...wd.map((x) => <DayRow key={x.day} x={x} />),
@@ -100,7 +112,8 @@ export default async function SopDetailed({ searchParams }: { searchParams: Prom
             })}
           </tbody>
           <tfoot>
-            <SumRow label={d.through && d.through < d.days.length ? `Month to date (1–${d.through})` : "Month"} x={mtd} />
+            {devF ? <SumRow label={`${shown.length} day${shown.length === 1 ? "" : "s"} ${devF === "above" ? "above +20%" : "below −20%"}`} x={sum(shown)} />
+              : <SumRow label={d.through && d.through < d.days.length ? `Month to date (1–${d.through})` : "Month"} x={mtd} />}
           </tfoot>
         </table>
         <div className="flex flex-wrap gap-3 border-t border-line px-3 py-2 text-[11.5px] text-ink-4">
@@ -126,6 +139,7 @@ function DayRow({ x }: { x: DetailDay }) {
       <td className="px-2 text-right tabular font-medium">{x.future ? "" : fmt(a)}</td>
       <td className={cn("px-2 text-right tabular", x.future ? "" : tone(a, p))}>{x.future || (!p && !a) ? "" : `${a - p >= 0 ? "+" : "−"}${fmt(Math.abs(a - p))}`}</td>
       <td className={cn("px-2 text-right tabular", x.future ? "" : tone(a, p))}>{x.future ? "" : p > 0 ? pct(a, p) : a > 0 ? "no plan" : "—"}</td>
+      <td className="px-2 text-right">{x.future || p <= 0 ? "" : <DevChip v={a / p - 1} />}</td>
       <td className="border-l border-line px-2 text-right tabular text-ink-3">{fmt(x.sp)}</td>
       <td className="px-2 text-right tabular">{x.future ? "" : fmt(x.sa)}</td>
       <td className={cn("px-2 text-right tabular", x.future ? "" : tone(x.sa, x.sp))}>{x.future ? "" : pct(x.sa, x.sp)}</td>
@@ -145,6 +159,7 @@ function SumRow({ label, x, sub }: { label: string; x: { sp: number; sa: number;
       <td className="px-2 text-right tabular">{fmt(a)}</td>
       <td className={cn("px-2 text-right tabular", tone(a, p))}>{p || a ? `${a - p >= 0 ? "+" : "−"}${fmt(Math.abs(a - p))}` : ""}</td>
       <td className={cn("px-2 text-right tabular", tone(a, p))}>{pct(a, p)}</td>
+      <td className="px-2 text-right">{p > 0 ? <DevChip v={a / p - 1} /> : ""}</td>
       <td className="border-l border-line px-2 text-right tabular">{fmt(x.sp)}</td>
       <td className="px-2 text-right tabular">{fmt(x.sa)}</td>
       <td className={cn("px-2 text-right tabular", tone(x.sa, x.sp))}>{pct(x.sa, x.sp)}</td>
@@ -163,4 +178,9 @@ function Tile({ label, value, sub, tone: t }: { label: string; value: string; su
       {sub && <div className="text-[11px] text-ink-4">{sub}</div>}
     </div>
   );
+}
+
+function DevChip({ v }: { v: number }) {
+  const cls = v > BAND ? "bg-[#e8f0fe] text-[#1d4ed8]" : v < -BAND ? "bg-bad-soft text-bad" : "bg-ok-soft text-ok";
+  return <span className={cn("inline-block min-w-[48px] rounded-full px-1.5 py-0.5 text-center text-[11.5px] font-semibold tabular", cls)}>{v > 0 ? "+" : ""}{Math.round(v * 100)}%</span>;
 }

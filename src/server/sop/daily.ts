@@ -94,11 +94,14 @@ export async function dailyDeviation(months: string[]): Promise<{ hasActuals: bo
         const useDaily = hasDaily(src, p);
         if (v.dailyOnly && !useDaily) continue;
         basis = useDaily ? "daily" : v.weekly ? "weekly" : "monthly";
+        // orders are judged like for like: only channels that have an order plan this month, only on days that have one
+        if (v.dailyOnly && !dayList(p, daysIn(p)).some((d) => (dailyPlan.get(`${src}|${v.byLabel ? label : ""}|${d}`) ?? 0) > 0)) continue;
         for (const d of dayList(p, n)) {
           let plan: number;
           if (useDaily) plan = dailyPlan.get(`${src}|${v.byLabel ? label : ""}|${d}`) ?? 0;
           else if (v.weekly) { const wk = weekOfMonth(d); const w = weekPlan(wk); plan = w != null ? w / Math.max(1, wkDays(wk)) : 0; }
           else plan = monthPlan(label) / daysIn(p);
+          if (v.dailyOnly && plan <= 0) continue;
           const actual = act.get(`${src}|${label}|${d}`) ?? 0;
           pts.push({ day: d, plan, actual, dev: plan > 0 ? (actual - plan) / plan : null });
           const t = totals.get(d) ?? { day: d, plan: 0, actual: 0, dev: null };

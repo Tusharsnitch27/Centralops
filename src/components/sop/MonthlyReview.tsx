@@ -5,6 +5,7 @@ import { Collapsible, ExpandAll } from "@/components/ui/Collapsible";
 import type { MonthlyReview as Data } from "@/server/sop/monthly";
 import type { DailyView } from "@/server/sop/daily";
 import { FunctionTile } from "./FunctionTile";
+import { ExpandTable } from "./ExpandTable";
 import { returnRate, type OverallRow, type FlowCalc, type Insight, type ReturnsRow, type Row, type Seg, type WhPoint } from "./reviewMath";
 
 const fmt = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
@@ -12,13 +13,8 @@ const lakh = (v: number) => `${(v / 100000).toFixed(2)}L`;
 const pc = (v: number | null) => (v == null ? "—" : `${Math.round(v * 100)}%`);
 const mon = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { month: "short", year: "2-digit", timeZone: "UTC" });
 
-/** Utilisation chip: green near plan, amber drifting, red far off; grey when nothing was planned. */
-export function UtilChip({ u, plan, actual, strong }: { u: number | null; plan: number; actual: number; strong?: boolean }) {
-  if (plan === 0) return actual > 0 ? <span className="rounded-full bg-warn-soft px-2 py-0.5 text-[11.5px] font-semibold text-warn">Unplanned</span> : <span className="text-ink-4">—</span>;
-  const v = u ?? 0;
-  const cls = v >= 1.5 ? "bg-bad text-white" : v > 1.2 ? "bg-bad-soft text-bad" : v >= 0.8 ? "bg-accent-soft text-accent-ink" : v > 0.5 ? "bg-bad-soft text-bad" : "bg-bad text-white";
-  return <span className={cn("inline-block min-w-[52px] rounded-full px-2 py-0.5 text-center text-[12px] font-semibold tabular", cls, strong && "ring-2 ring-white")}>{pc(u)}</span>;
-}
+export { UtilChip } from "./UtilChip";
+import { UtilChip } from "./UtilChip";
 
 function Rich({ segs }: { segs: Seg[] }) {
   return <>{segs.map((s, i) => typeof s === "string" ? <span key={i}>{s}</span>
@@ -265,8 +261,11 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
                 </div>
                 {/* table on the left, the function's own insight tile on the right (stacks on smaller screens) */}
                 <div className="grid gap-4 p-3 md:p-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-                  <div className="min-w-0 overflow-hidden rounded-xl border border-line"><ViewTable rows={v.rows} label={v.def.rowLabel} /></div>
-                  <FunctionTile viewKey={v.def.key} total={t} rows={v.rows} insights={v.insights} daily={daily} notes={d.notes} owners={d.owners} />
+                  <div className="min-w-0 overflow-hidden rounded-xl border border-line">
+                    {d.multi ? <ViewTable rows={v.rows} label={v.def.rowLabel} />
+                      : <ExpandTable rows={v.rows} label={v.def.rowLabel} viewKey={v.def.key} weekly={!!v.def.weekly} split={d.daySplit[v.def.key] ?? null} period={d.period} />}
+                  </div>
+                  <FunctionTile viewKey={v.def.key} total={t} rows={v.rows} insights={v.insights} daily={daily} notes={d.notes} owners={d.owners} period={d.multi ? null : d.period} />
                 </div>
               </Collapsible>
             );

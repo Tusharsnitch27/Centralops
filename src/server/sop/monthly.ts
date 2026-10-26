@@ -82,7 +82,18 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const flowNow = flow.filter((f) => f.period === period);
   const days = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0)).getUTCDate();
   const through = meta[0]?.through_day ?? days;
+  // single month with Snowflake days: each view's rows carry their days so the tables can expand row → week → day
+  const daySplit: Record<string, { through: number; basis: string; perLabel: Record<string, { day: string; week: string; future: boolean; sp: number; sa: number; np: number; na: number }[]> }> = {};
+  if (!multi) {
+    const { DETAIL_VIEWS, detailedDaily } = await import("./detailed");
+    for (const v of views) {
+      if (!DETAIL_VIEWS.some((x) => x.key === v.def.key)) continue;
+      const d = await detailedDaily(v.def.key as Parameters<typeof detailedDaily>[0], period, null).catch(() => null);
+      if (d?.hasActuals) daySplit[v.def.key] = { through: d.through, basis: d.basis, perLabel: d.perLabel };
+    }
+  }
   return {
+    daySplit,
     period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
     trend: trendTable(trendRows), flow, flowNow, flowInsights: flowInsights(flowNow.length ? flowNow : flow.filter((f) => f.period === flow.at(-1)?.period)),
     returns, returnsInsights: returnsInsights(returns), notes, owners: Object.fromEntries(owners.map((o) => [o.code, o.poc])) as Record<string, string | null>,
