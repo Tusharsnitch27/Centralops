@@ -8,6 +8,8 @@ import { canManage, canOverview, requireUser } from "@/server/auth";
 import { redirect } from "next/navigation";
 import { currentWeekOf, ensureReport, loadReport } from "@/server/weekly/model";
 import { emailConfig } from "@/server/weekly/delivery";
+import { FollowThroughPanel } from "@/components/weekly/FollowThrough";
+import { storedFollowThrough } from "@/server/weekly/followthrough";
 
 export const metadata = { title: "Weekly update · Document" };
 
@@ -24,11 +26,15 @@ export default async function WeeklyDocument({ searchParams }: { searchParams: P
   const { report } = v;
   const editable = manage && report.status !== "sent";
   const mail = manage ? await emailConfig() : null;
+  const ft = manage ? await storedFollowThrough(weekOf) : null;
   const groups = [...new Set(v.rows.map((r) => r.section.group_name))];
   return (
     <div className="mx-auto max-w-[900px]">
       <Link href={`/weekly?week=${weekOf}`} className="mb-3 inline-flex items-center gap-1 text-[12.5px] text-ink-3 hover:text-ink print:hidden"><ArrowLeft size={13} />Weekly updates</Link>
       {manage && <DocToolbar reportId={report.id} status={report.status} emailReady={!!(mail?.webhookUrl && mail.recipients)} />}
+
+      {/* reviewer prompts — never printed or sent */}
+      {manage && <div className="print:hidden"><FollowThroughPanel weekOf={weekOf} data={ft?.data ?? null} engine={ft?.engine ?? null} at={ft?.at ?? null} stale={!!ft?.stale} auto={v.counts.submitted > 0} /></div>}
 
       <article className="card p-5 md:p-9 print:border-0 print:p-0 print:shadow-none">
         <header className="mb-6 border-b border-line pb-4">

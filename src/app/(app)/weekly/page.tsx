@@ -8,6 +8,8 @@ import { RemindButton } from "@/components/weekly/WeeklyActions";
 import { WeeklyTabs } from "@/components/weekly/WeeklyTabs";
 import { Suspense } from "react";
 import { STATUS_LABEL, STATUS_TONE } from "@/components/weekly/meta";
+import { FollowThroughPanel, ResetWeek, SectionPrompts } from "@/components/weekly/FollowThrough";
+import { storedFollowThrough, type FollowSection } from "@/server/weekly/followthrough";
 import { canManage, canOverview, requireUser } from "@/server/auth";
 import { currentWeekOf, ensureReport, listReports, loadReport, type ReportView } from "@/server/weekly/model";
 import { fmtDate } from "@/lib/dates";
@@ -48,6 +50,9 @@ export default async function WeeklyPage({ searchParams }: { searchParams: Promi
   const notDone = v.rows.filter((r) => r.entry.status !== "submitted");
   const weeks = [...new Set([cur, ...reports.map((r) => r.week_of)])].sort().reverse().slice(0, 8);
   const pct = (n: number) => `${(n / Math.max(1, counts.total)) * 100}%`;
+  // follow-through vs last week: admins and program managers only
+  const ft = manage ? await storedFollowThrough(weekOf) : null;
+  const prompts = new Map<string, FollowSection>((ft?.data?.sections ?? []).map((s) => [s.section_id, s]));
 
   return (
     <div>
@@ -100,6 +105,8 @@ export default async function WeeklyPage({ searchParams }: { searchParams: Promi
         )}
       </div>
 
+      {manage && <FollowThroughPanel weekOf={weekOf} data={ft?.data ?? null} engine={ft?.engine ?? null} at={ft?.at ?? null} stale={!!ft?.stale} auto={counts.submitted > 0} />}
+
       {mine.length > 0 && !sent && (
         <section className="mb-6 space-y-2">
           <h2 className="label-caps px-1">Your sections</h2>
@@ -112,28 +119,32 @@ export default async function WeeklyPage({ searchParams }: { searchParams: Promi
         {groups.map((g) => (
           <section key={g} className="space-y-2">
             <h2 className="label-caps px-1">{g}</h2>
-            {v.rows.filter((r) => r.section.group_name === g).map((r) => <Row key={r.entry.id} r={r} sent={sent} anchor />)}
+            {v.rows.filter((r) => r.section.group_name === g).map((r) => <Row key={r.entry.id} r={r} sent={sent} anchor prompts={prompts.get(r.section.id)} />)}
           </section>
         ))}
       </div>
       <Link href={`/weekly/document?week=${weekOf}`} className="mt-6 flex items-center gap-1 px-1 text-[12.5px] text-ink-3 hover:text-ink">Open the compiled document <ArrowRight size={12} /></Link>
+      {u.role === "admin" && <ResetWeek reportId={report.id} weekOf={weekOf} title={report.title} />}
     </div>
   );
 }
 
-function Row({ r, sent, idPrefix = "weekly:", anchor }: { r: ReportView["rows"][number]; sent: boolean; idPrefix?: string; anchor?: boolean }) {
+function Row({ r, sent, idPrefix = "weekly:", anchor, prompts }: { r: ReportView["rows"][number]; sent: boolean; idPrefix?: string; anchor?: boolean; prompts?: FollowSection }) {
   const st = ENTRY[r.entry.status];
   const editable = r.mine && !sent;
   return (
     <div id={anchor ? r.entry.id : undefined} className="scroll-mt-20">
+      {anchor && <span id={`sec-${r.section.id}`} className="block scroll-mt-20" />}
       <Collapsible id={`${idPrefix}${r.entry.id}`} title={r.section.name}
         sub={`${r.section.owners.join(", ") || "No owner"}${r.entry.submitted_at ? ` · submitted ${fmtDate(r.entry.submitted_at.slice(0, 10))}` : ""}`}
         summary={<>
           {r.entry.images.length > 0 && <span className="text-ink-4">{r.entry.images.length} img</span>}
+          {prompts && <Badge tone="info">{prompts.items.length} to ask</Badge>}
           {r.entry.pm_comment && r.entry.status !== "submitted" && <Badge tone="amber">Feedback</Badge>}
           <Badge tone={st.tone} dot>{st.label}</Badge>
           {editable && <span className="hidden text-[11.5px] text-accent-ink sm:inline">{r.entry.status === "submitted" ? "Edit" : "Fill in"}</span>}
         </>}>
+        {prompts && <SectionPrompts s={prompts} />}
         {editable
           ? <SectionEditor e={r.entry} lastAhead={r.lastAhead} />
           : (

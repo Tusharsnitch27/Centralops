@@ -217,3 +217,38 @@ export async function markSent(reportId: string, to: string): Promise<ActionResu
     return ok(undefined, "Marked as sent");
   } catch (err) { return fail(err); }
 }
+
+/** PM / admin: re-run the follow-through check (last week's next steps, weak metrics and blockers vs this week). */
+export async function runFollowThrough(weekOf: string): Promise<ActionResult<{ sections: number; engine: string }>> {
+  try {
+    const u = await requireUser();
+    if (!canManage(u)) throw new Error("Only admins and program managers see the follow-through check");
+    const { buildFollowThrough } = await import("./followthrough");
+    const { result, engine } = await buildFollowThrough(weekOf, u);
+    revalidatePath("/weekly", "layout");
+    const n = result.sections.reduce((a, s) => a + s.items.length, 0);
+    return ok({ sections: result.sections.length, engine }, result.prev_week_of ? `${n} item${n === 1 ? "" : "s"} to question across ${result.sections.length} function${result.sections.length === 1 ? "" : "s"}` : "No earlier week to compare with");
+  } catch (e) { return fail(e); }
+}
+
+/**
+ * Admin only: wipe every update of a week (entries, screenshots, tables, exec summary, approval / sent state) so it can be rewritten.
+ * Second confirmation: the week's date must be typed exactly.
+ */
+export async function resetWeek(reportId: string, typed: string): Promise<ActionResult> {
+  try {
+    const u = await requireUser();
+    if (u.role !== "admin") throw new Error("Admins only");
+    const r = await one<{ week_of: string; title: string }>(`select week_of::text as week_of, title from weekly_reports where id = $1`, [reportId]);
+    if (!r) throw new Error("Week not found");
+    if (typed.trim() !== r.week_of) throw new Error(`Type ${r.week_of} exactly to confirm`);
+    const n = (await one<{ n: number }>(`select count(*)::int as n from weekly_entries where report_id = $1 and (status <> 'pending' or updates <> '' or ahead <> '' or metrics <> '[]'::jsonb)`, [reportId]))?.n ?? 0;
+    await q(`delete from weekly_entries where report_id = $1`, [reportId]); // images cascade
+    await q(`update weekly_reports set status = 'collecting', exec_summary = '', exec_engine = null, pm_notes = '', approved_by = null, approved_at = null,
+             sent_at = null, sent_by = null, sent_to = null, followthrough = null, followthrough_engine = null, followthrough_at = null, updated_at = now() where id = $1`, [reportId]);
+    await q(`insert into weekly_entries (report_id, section_id) select $1, s.id from weekly_sections s where s.active on conflict do nothing`, [reportId]);
+    await logActivity({ actorId: u.id, entityType: "weekly_report", entityId: reportId, action: "reset", summary: `${u.name} cleared all updates of ${r.title} (${n} sections had content) to be rewritten` });
+    revalidatePath("/weekly", "layout");
+    return ok(undefined, `${r.title}: all updates cleared — owners can fill it in again`);
+  } catch (e) { return fail(e); }
+}
