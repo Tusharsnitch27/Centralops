@@ -65,3 +65,32 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
   setTimeout(syncTick, 60_000);
   console.log(`[sop-sync] daily Snowflake refresh at ${process.env.SOP_SYNC_TIME ?? "07:00"} IST`);
 }
+
+// Daily manpower pull from the manpower tool's read-only API at MANPOWER_SYNC_TIME IST (default 08:00); a failed day retries hourly.
+const gm = globalThis as unknown as { __mpSyncTimer?: ReturnType<typeof setInterval> };
+if (enabled && process.env.DATABASE_URL && process.env.MANPOWER_API_URL && !gm.__mpSyncTimer) {
+  const [mh, mmin] = (process.env.MANPOWER_SYNC_TIME ?? "08:00").split(":").map(Number);
+  const mpTick = async () => {
+    try {
+      const now = new Date();
+      const ist = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false }).format(now).split(":").map(Number);
+      if (ist[0] * 60 + ist[1] < mh * 60 + mmin) return;
+      const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
+      const { one, q } = await import("./server/db");
+      const set = (k: string, v: string) => q(`insert into app_settings (key, value) values ($1, to_jsonb($2::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`, [k, v]);
+      if ((await one<{ value: string }>(`select value from app_settings where key = 'manpower.sync_day'`))?.value === day) return;
+      const last = await one<{ value: string }>(`select value from app_settings where key = 'manpower.sync_attempt'`);
+      if (last?.value && Date.now() - Date.parse(last.value) < 55 * 60_000) return;
+      await set("manpower.sync_attempt", now.toISOString());
+      const { pullManpower } = await import("./server/manpower/feed");
+      const r = await pullManpower("schedule");
+      if (r.ok) await set("manpower.sync_day", day);
+      console.log(`[manpower] ${day}: ${r.ok ? r.note : `failed — ${r.error}`}`);
+    } catch (e) {
+      console.error("[manpower] run failed", e instanceof Error ? e.message : e);
+    }
+  };
+  gm.__mpSyncTimer = setInterval(mpTick, 10 * 60_000);
+  setTimeout(mpTick, 90_000);
+  console.log(`[manpower] daily pull at ${process.env.MANPOWER_SYNC_TIME ?? "08:00"} IST`);
+}

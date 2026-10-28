@@ -33,6 +33,7 @@ import { sql as sopMonthClose } from "./066_sop_month_close";
 import { sql as liqUpload } from "./067_liquidation_upload";
 import { sql as goalScope } from "./068_goal_scope";
 import { sql as weeklyFollow } from "./069_weekly_followthrough";
+import { sql as manpower } from "./070_manpower";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -67,4 +68,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 67, name: "liquidation_upload", sql: liqUpload },
   { version: 68, name: "goal_scope", sql: goalScope },
   { version: 69, name: "weekly_followthrough", sql: weeklyFollow },
+  { version: 70, name: "manpower", sql: manpower },
 ];
