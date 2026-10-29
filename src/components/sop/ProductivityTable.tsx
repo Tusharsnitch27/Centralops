@@ -26,7 +26,7 @@ export function ProductivityTable({ wh, lines }: { wh: string; lines: MpLine[] }
       <table className="table-base min-w-[980px]">
         <thead>
           <tr>
-            <th>{wh} · department</th>
+            <th>{wh} · function</th>
             <th className="text-right">Heads / day</th>
             <th className="text-right" title="Standard units per head per day (Standards tab)">Std / head</th>
             <th className="text-right">Actual capacity / day</th>
@@ -46,10 +46,10 @@ export function ProductivityTable({ wh, lines }: { wh: string; lines: MpLine[] }
                 <tr className="cursor-pointer hover:bg-subtle/60" onClick={() => toggle(k)}>
                   <td>
                     <div className="flex items-center gap-1.5 font-medium"><ChevronRight size={13} className={cn("shrink-0 text-ink-4 transition", isOpen && "rotate-90")} />{l.department}</div>
-                    <div className="pl-5 text-[11px] text-ink-4">{l.source ?? "no output feed — heads only"}</div>
+                    <div className="pl-5 text-[11px] text-ink-4">{l.source ?? "no output feed — heads & capacity only"}{l.covers.length > 1 && <> · plan = {l.covers.join(" + ")}</>}</div>
                   </td>
                   <td className="text-right tabular">{n(l.headsAvg)}</td>
-                  <td className={cn("text-right tabular", l.rateNow == null && "text-warn")}>{l.rateNow == null ? "set" : n(l.rateNow)}</td>
+                  <td className={cn("text-right tabular", l.rateNow == null && l.department !== "Support" && "text-warn")}>{l.department === "Support" ? "—" : l.rateNow == null ? "set" : n(l.rateNow)}</td>
                   <td className="text-right tabular font-medium">{n(l.capDay)}</td>
                   <td className="text-right tabular text-ink-3">{n(l.required)}</td>
                   <td className={cn("text-right tabular", coverTone(l.cover))}>{pc(l.cover)}</td>
@@ -66,7 +66,7 @@ export function ProductivityTable({ wh, lines }: { wh: string; lines: MpLine[] }
         <tfoot>
           <tr className="bg-subtle font-semibold">
             <td>{wh} total</td><td className="text-right tabular">{n(tot.heads)}</td><td />
-            <td className="text-right tabular">{n(tot.cap)}</td><td className="text-right tabular" title="Departments with manpower only">{n(tot.req || null)}</td>
+            <td className="text-right tabular">{n(tot.cap || null)}</td><td className="text-right tabular" title="Departments with manpower only">{n(tot.req || null)}</td>
             <td className={cn("text-right tabular", coverTone(tot.req ? tot.cap / tot.req : null))}>{pc(tot.req && tot.cap ? tot.cap / tot.req : null)}</td>
             <td className="text-right tabular">{n(tot.out || null)}</td>
             <td className={cn("text-right tabular", achTone(tot.capJ ? tot.outJ / tot.capJ : null))}>{pc(tot.capJ ? tot.outJ / tot.capJ : null)}</td>

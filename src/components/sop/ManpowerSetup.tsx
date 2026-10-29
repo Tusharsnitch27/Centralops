@@ -73,10 +73,10 @@ export function ManpowerMapping({ sites, funcs, departments, canEdit }: {
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.6fr]">
       <div className="card overflow-hidden">
-        <div className="border-b border-line px-4 py-3"><div className="text-[13.5px] font-semibold">Sites → warehouse</div><div className="text-[12px] text-ink-3">Guessed from the name on arrival; change if wrong.</div></div>
+        <div className="border-b border-line px-4 py-3"><div className="text-[13.5px] font-semibold">Facilities → warehouse</div><div className="text-[12px] text-ink-3">Guessed from the name on arrival; change if wrong.</div></div>
         {sites.length ? (
           <table className="table-base">
-            <thead><tr><th>Site (manpower tool)</th><th className="text-right">Avg heads</th><th>Counts as</th></tr></thead>
+            <thead><tr><th>Facility (attendance app)</th><th className="text-right">Avg heads</th><th>Counts as</th></tr></thead>
             <tbody>{sites.map((s) => (
               <tr key={s.site}>
                 <td className="font-medium">{s.site}</td><td className="text-right tabular text-ink-3">{s.days ? fmt(s.heads) : "—"}</td>
@@ -88,10 +88,10 @@ export function ManpowerMapping({ sites, funcs, departments, canEdit }: {
         ) : <p className="px-4 py-3 text-[12.5px] text-ink-4">Sites appear after the first pull.</p>}
       </div>
       <div className="card overflow-hidden">
-        <div className="border-b border-line px-4 py-3"><div className="flex items-center gap-2 text-[13.5px] font-semibold">Functions → department {unmapped > 0 && <Badge tone="amber">{unmapped} unmapped</Badge>}</div><div className="text-[12px] text-ink-3">Several functions can feed one department (e.g. GRN + Putaway → Inward). Unmapped functions aren’t counted.</div></div>
+        <div className="border-b border-line px-4 py-3"><div className="flex items-center gap-2 text-[13.5px] font-semibold">Their departments → function {unmapped > 0 && <Badge tone="amber">{unmapped} unmapped</Badge>}</div><div className="text-[12px] text-ink-3">Matched by name on arrival; Admin / Ops / Logistics count as Support (overhead). Unmapped names aren’t counted.</div></div>
         {funcs.length ? (
           <table className="table-base">
-            <thead><tr><th>Function (manpower tool)</th><th className="text-right">Heads / day</th><th>Department</th></tr></thead>
+            <thead><tr><th>Department (attendance app)</th><th className="text-right">Heads / day</th><th>Function</th></tr></thead>
             <tbody>{funcs.map((f) => (
               <tr key={f.func} className={cn(!f.department && "bg-warn-soft/30")}>
                 <td className="font-medium">{f.func}</td><td className="text-right tabular text-ink-3">{f.days ? fmt(f.heads) : "—"}</td>
@@ -107,7 +107,7 @@ export function ManpowerMapping({ sites, funcs, departments, canEdit }: {
 }
 
 /** Units per head per day per department × warehouse; a change applies from its date onwards. */
-export function ManpowerStandards({ rates, departments, canEdit }: { rates: RateRow[]; departments: string[]; canEdit: boolean }) {
+export function ManpowerStandards({ rates, departments, canEdit, refs = {} }: { rates: RateRow[]; departments: string[]; canEdit: boolean; refs?: Record<string, { actual: number | null; plan: number | null }> }) {
   const { pending, run } = useRun();
   const [f, setF] = useState({ department: "", south: true, north: true, rate: "", from: today(), note: "" });
   const t = today();
@@ -125,7 +125,7 @@ export function ManpowerStandards({ rates, departments, canEdit }: { rates: Rate
         <div className="card p-3 md:p-4">
           <div className="mb-2 text-[13px] font-semibold">Set a standard</div>
           <div className="grid gap-2 sm:grid-cols-[1.6fr_auto_0.8fr_0.9fr_1.2fr_auto] sm:items-end">
-            <label className="block"><span className="label">Department</span><select className="field" value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })}><option value="">Pick…</option>{departments.map((d) => <option key={d}>{d}</option>)}</select></label>
+            <label className="block"><span className="label">Function</span><select className="field" value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })}><option value="">Pick…</option>{departments.map((d) => <option key={d}>{d}</option>)}</select></label>
             <div className="flex h-9 items-center gap-3 text-[12.5px]"><label className="flex items-center gap-1.5"><input type="checkbox" checked={f.south} onChange={(e) => setF({ ...f, south: e.target.checked })} />South</label><label className="flex items-center gap-1.5"><input type="checkbox" checked={f.north} onChange={(e) => setF({ ...f, north: e.target.checked })} />North</label></div>
             <label className="block"><span className="label">Units / head / day</span><input className="field tabular" inputMode="decimal" value={f.rate} onChange={(e) => setF({ ...f, rate: e.target.value })} placeholder="e.g. 180" /></label>
             <label className="block"><span className="label">From</span><input type="date" className="field" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} /></label>
@@ -136,12 +136,12 @@ export function ManpowerStandards({ rates, departments, canEdit }: { rates: Rate
               return r;
             })}><Plus size={13} />Save</Button>
           </div>
-          <p className="mt-2 text-[11.5px] text-ink-4">Days before the date keep the earlier standard, so past achieved % doesn’t move.</p>
+          <p className="mt-2 text-[11.5px] text-ink-4">Days before the date keep the earlier standard, so past achieved % doesn’t move. Under each cell: units per head <b>did</b> this month and what the capacity <b>plan needs</b> per head — click one to fill the form.</p>
         </div>
       )}
       <div className="card overflow-x-auto">
         <table className="table-base min-w-[640px]">
-          <thead><tr><th>Department {missing > 0 && <span className="ml-1 font-normal normal-case text-warn">· {missing} not set</span>}</th><th className="text-right">South · units / head / day</th><th className="text-right">North · units / head / day</th></tr></thead>
+          <thead><tr><th>Function {missing > 0 && <span className="ml-1 font-normal normal-case text-warn">· {missing} not set</span>}</th><th className="text-right">South · units / head / day</th><th className="text-right">North · units / head / day</th></tr></thead>
           <tbody>{grid.map((g) => (
             <tr key={g.d} className="align-top">
               <td className="font-medium">{g.d}</td>
@@ -150,6 +150,14 @@ export function ManpowerStandards({ rates, departments, canEdit }: { rates: Rate
                   {c.cur ? <span className="tabular font-medium">{c.cur.units_per_head}</span> : <span className="text-warn">not set</span>}
                   {c.cur && <span className="ml-1 text-[11px] text-ink-4">since {c.cur.effective_from}</span>}
                   {c.next && <div className="text-[11px] text-info">→ {c.next.units_per_head} from {c.next.effective_from}</div>}
+                  {(() => { const r = refs[`${g.d}|${wh}`]; if (!r || (r.actual == null && r.plan == null)) return null;
+                    const use = (v: number) => canEdit && setF({ ...f, department: g.d, south: wh === "South", north: wh === "North", rate: String(Math.round(v)) });
+                    return (
+                      <div className="mt-0.5 flex justify-end gap-2 text-[11px] text-ink-4">
+                        {r.actual != null && <button type="button" disabled={!canEdit} onClick={() => use(r.actual!)} className="hover:text-ink hover:underline" title="Units per head achieved this month — click to use">did {fmt(r.actual)}</button>}
+                        {r.plan != null && <button type="button" disabled={!canEdit} onClick={() => use(r.plan!)} className="hover:text-ink hover:underline" title="Capacity-plan required ÷ heads this month — click to use">plan needs {fmt(r.plan)}</button>}
+                      </div>
+                    ); })()}
                   {canEdit && c.history.length > 0 && (
                     <details className="mt-0.5 text-[11px] text-ink-4"><summary className="cursor-pointer">history</summary>
                       {c.history.map((h) => (

@@ -44,7 +44,7 @@ export async function mapFunction(func: string, department: string | null): Prom
 export async function setStandard(i: { department: string; warehouses: ("South" | "North")[]; unitsPerHead: number; effectiveFrom: string; note?: string }): Promise<ActionResult> {
   try {
     const u = await pm();
-    if (!i.department.trim()) throw new Error("Pick a department");
+    if (!i.department.trim()) throw new Error("Pick a function");
     if (!i.warehouses.length) throw new Error("Pick at least one warehouse");
     if (!Number.isFinite(i.unitsPerHead) || i.unitsPerHead < 0) throw new Error("Enter units per head per day");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(i.effectiveFrom)) throw new Error("Pick the date it applies from");

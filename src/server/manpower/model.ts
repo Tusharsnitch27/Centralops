@@ -1,7 +1,6 @@
 import "server-only";
 import { q } from "../db";
 import { isB2BReturn } from "../sop/sync";
-import { sortDepts } from "../sop/queries";
 
 export const WHS = ["South", "North"] as const;
 export type Wh = (typeof WHS)[number];
@@ -9,34 +8,34 @@ export type Wh = (typeof WHS)[number];
 export const ACH_BAND = 0.2;
 
 /**
- * Which S&OP daily actuals count as a department's output (units). Matched on the department name so a renamed / new
- * department still lands somewhere sensible; departments with no feed (e.g. Inventory / Audit / CC) show heads only.
+ * Productivity is measured at the attendance app's function level (its departments), which is coarser than capacity
+ * planning's 10 departments: each function rolls up the capacity departments it covers (for plan required) and the S&OP
+ * daily actuals it produces (for output). "Support" (Admin / Ops / Logistics) is overhead — heads only, not in achieved %.
  */
-export function outputRule(dept: string): { text: string; match: (feed: string, label: string) => boolean } | null {
-  const d = dept.toLowerCase();
-  const shop = (l: string) => /shopify|website|d2c|own/i.test(l);
-  const store = (l: string) => /store|retail|sor/i.test(l);
-  if (d.includes("return")) {
-    if (/b2b|store/.test(d)) {
-      if (/store|retail/.test(d)) return { text: "Returns · store / retail", match: (f, l) => f === "returns" && isB2BReturn(l) && store(l) };
-      return { text: "Returns · marketplace B2B", match: (f, l) => f === "returns" && isB2BReturn(l) && !store(l) };
-    }
-    if (d.includes("shopify")) return { text: "Returns · Shopify (B2C)", match: (f, l) => f === "returns" && !isB2BReturn(l) && shop(l) };
-    return { text: "Returns · marketplace (B2C)", match: (f, l) => f === "returns" && !isB2BReturn(l) && !shop(l) };
-  }
-  if (d.includes("inward") || d.includes("put")) return { text: "Category inward (putaway)", match: (f) => f === "category_inward" };
-  if (d.includes("forward") || d.includes("dispatch") || d.includes("outward")) {
-    if (d.includes("b2b") && d.includes("retail")) return { text: "Retail dispatch", match: (f) => f === "retail" };
-    if (d.includes("b2b")) return { text: "B2B marketplace dispatch", match: (f) => f === "b2b_mp" };
-    if (d.includes("shopify")) return { text: "B2C dispatch · Shopify", match: (f, l) => f === "b2c" && /shopify/i.test(l) };
-    return { text: "B2C dispatch · marketplaces", match: (f, l) => f === "b2c" && !/shopify/i.test(l) };
-  }
+export interface Func { name: string; output: string | null; match: ((feed: string, label: string) => boolean) | null; covers: (capDept: string) => boolean }
+export const SUPPORT = "Support";
+export const FUNCS: Func[] = [
+  { name: "Inward", output: "Category inward (putaway)", match: (f) => f === "category_inward", covers: (d) => /inward|put.?away/i.test(d) },
+  { name: "B2C Forward", output: "B2C dispatch (Shopify + marketplaces)", match: (f) => f === "b2c", covers: (d) => /forward/i.test(d) && !/b2b/i.test(d) },
+  { name: "B2B Forward", output: "B2B marketplace + retail dispatch", match: (f) => f === "b2b_mp" || f === "retail", covers: (d) => /forward/i.test(d) && /b2b/i.test(d) },
+  { name: "B2C Return", output: "B2C returns", match: (f, l) => f === "returns" && !isB2BReturn(l), covers: (d) => /return/i.test(d) && !/b2b|store/i.test(d) },
+  { name: "B2B Return", output: "B2B / store returns", match: (f, l) => f === "returns" && isB2BReturn(l), covers: (d) => /return/i.test(d) && /b2b|store/i.test(d) },
+  { name: "Inventory", output: null, match: null, covers: (d) => /inventory|audit|\bcc\b/i.test(d) },
+  { name: SUPPORT, output: null, match: null, covers: () => false },
+];
+export const FUNC_NAMES = FUNCS.map((f) => f.name);
+/** A new name from the attendance app → our function, when it is obvious. */
+export function guessFunc(name: string): string | null {
+  const n = name.trim().toLowerCase();
+  const exact = FUNCS.find((f) => f.name.toLowerCase() === n);
+  if (exact) return exact.name;
+  if (/^(admin|ops|operations|logistics|security|housekeeping|hr|supervisor)/.test(n)) return SUPPORT;
   return null;
 }
 
 export interface MpDay { day: string; heads: number; rate: number | null; cap: number | null; out: number | null; ach: number | null }
 export interface MpLine {
-  department: string; warehouse: Wh; source: string | null;
+  department: string; warehouse: Wh; source: string | null; covers: string[];
   headsAvg: number | null; rateNow: number | null; capDay: number | null; outDay: number | null; ach: number | null; uph: number | null;
   required: number | null; available: number | null; cover: number | null;
   under: number; over: number; judged: number; days: MpDay[];
@@ -53,16 +52,14 @@ const rateOn = (rates: RateRow[], dept: string, wh: Wh, day: string) =>
 const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 const monthEnd = (p: string) => new Date(Date.UTC(Number(p.slice(0, 4)), Number(p.slice(5, 7)), 0)).toISOString().slice(0, 10);
 
-export async function departments() {
-  const rows = await q<{ department: string }>(`select distinct department from sop_capacity union select distinct department from mp_func_map where department is not null`);
-  return sortDepts(rows.map((r) => r.department));
-}
+/** Functions that carry a standard (Support has none). */
+export const departments = async () => FUNC_NAMES.filter((n) => n !== SUPPORT);
 
 /** Heads → actual capacity (heads × standard) → output → achieved %, per department × warehouse, daily and for the month so far. */
 export async function productivity(period: string) {
   const today = istToday();
   const to = [monthEnd(period), today].sort()[0]!; // today counts as it lands (MTD)
-  const [heads, out, plan, rates, depts] = await Promise.all([
+  const [heads, out, plan, rates] = await Promise.all([
     q<{ day: string; department: string; warehouse: Wh; heads: number }>(
       `select d.day::text as day, f.department, s.warehouse, sum(d.heads)::float8 as heads
          from mp_daily d join mp_func_map f on f.func = d.func and f.department is not null
@@ -74,16 +71,19 @@ export async function productivity(period: string) {
     q<{ department: string; warehouse: Wh; required: number | null; available: number | null }>(
       `select department, warehouse, required::float8, available::float8 from sop_capacity where period = $1`, [period]),
     listRates(),
-    departments(),
   ]);
   const days: string[] = [];
   for (let t = Date.parse(`${period}T00:00:00Z`); t <= Date.parse(`${to}T00:00:00Z`); t += 864e5) days.push(new Date(t).toISOString().slice(0, 10));
   const hasOut = new Set(out.map((o) => o.day));
 
   const lines: MpLine[] = [];
-  for (const wh of WHS) for (const department of depts) {
-    const rule = outputRule(department);
-    const p = plan.find((x) => x.department === department && x.warehouse === wh);
+  for (const wh of WHS) for (const fn of FUNCS) {
+    const department = fn.name;
+    const rule = fn.match ? { text: fn.output!, match: fn.match } : null;
+    // plan required / available = the capacity departments this function covers
+    const ps = plan.filter((x) => x.warehouse === wh && fn.covers(x.department));
+    const covered = ps.map((x) => x.department);
+    const p = ps.length ? { required: ps.some((x) => x.required != null) ? ps.reduce((a, x) => a + (x.required ?? 0), 0) : null, available: ps.some((x) => x.available != null) ? ps.reduce((a, x) => a + (x.available ?? 0), 0) : null } : null;
     const dl: MpDay[] = days.map((day) => {
       const h = heads.filter((x) => x.day === day && x.department === department && x.warehouse === wh).reduce((a, x) => a + x.heads, 0);
       const rate = rateOn(rates, department, wh, day);
@@ -99,7 +99,7 @@ export async function productivity(period: string) {
     const capDays = dl.filter((d) => d.cap != null);
     const capDay = capDays.length ? capDays.reduce((a, d) => a + d.cap!, 0) / capDays.length : null;
     lines.push({
-      department, warehouse: wh, source: rule?.text ?? null,
+      department, warehouse: wh, source: rule?.text ?? (department === SUPPORT ? "overhead — not in achieved %" : null), covers: covered,
       headsAvg: worked.length ? worked.reduce((a, d) => a + d.heads, 0) / worked.length : null,
       rateNow: rateOn(rates, department, wh, to),
       capDay,

@@ -1,6 +1,7 @@
 import "server-only";
 import { one, q } from "../db";
 import { SOP_CUTOVER } from "../sop/sync";
+import { guessFunc } from "./model";
 
 /**
  * Pulls daily manpower from the warehouse manpower tool's read-only API and keeps only heads per day × site × function.
@@ -157,7 +158,8 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
         // new names show up unmapped until someone maps them
         await q(`insert into mp_site_map (site, warehouse) select distinct s, case when s ~* 'north|tauru|ggn|gurgaon|delhi|ncr' then 'North' when s ~* 'south|blr|bangalore|bengaluru|wh1|wh2|sapl-wh' then 'South' else 'ignore' end
                  from unnest($1::text[]) s on conflict (site) do nothing`, [[...new Set(rows.map((x) => x.site))]]);
-        await q(`insert into mp_func_map (func, department) select distinct f, null from unnest($1::text[]) f on conflict (func) do nothing`, [[...new Set(rows.map((x) => x.func))]]);
+        const fs = [...new Set(rows.map((x) => x.func))];
+        await q(`insert into mp_func_map (func, department) select * from unnest($1::text[], $2::text[]) on conflict (func) do nothing`, [fs, fs.map(guessFunc)]);
       }
       written += rows.length;
     }

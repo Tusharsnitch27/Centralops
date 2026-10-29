@@ -5,7 +5,7 @@ import { canManage } from "@/server/auth";
 import { engineScenario } from "@/server/sop/capacityTools";
 import { SOP_CUTOVER } from "@/server/sop/sync";
 import { q } from "@/server/db";
-import { departments, listRates, mappingState, productivity, WHS, type MpLine } from "@/server/manpower/model";
+import { departments, FUNC_NAMES, listRates, mappingState, productivity, SUPPORT, WHS, type MpLine } from "@/server/manpower/model";
 import { lastManpowerRuns, manpowerConfigured, manpowerUrl } from "@/server/manpower/feed";
 import { ProductivityTable } from "@/components/sop/ProductivityTable";
 import { ManpowerFeed, ManpowerMapping, ManpowerStandards } from "@/components/sop/ManpowerSetup";
@@ -44,15 +44,23 @@ export default async function Productivity({ searchParams }: { searchParams: Pro
         )}
       </div>
       {tab === "overview" && <Overview month={month} unmapped={unmapped} configured={manpowerConfigured()} />}
-      {tab === "standards" && <ManpowerStandards rates={await listRates()} departments={depts} canEdit={edit} />}
+      {tab === "standards" && <ManpowerStandards rates={await listRates()} departments={depts} canEdit={edit} refs={await standardRefs(cur)} />}
       {tab === "feed" && (
         <div className="space-y-4">
           <ManpowerFeed configured={manpowerConfigured()} host={hostOf(manpowerUrl())} runs={await lastManpowerRuns()} lastDay={map.lastDay} canEdit={edit} />
-          <ManpowerMapping sites={map.sites} funcs={map.funcs} departments={depts} canEdit={edit} />
+          <ManpowerMapping sites={map.sites} funcs={map.funcs} departments={FUNC_NAMES} canEdit={edit} />
         </div>
       )}
     </div>
   );
+}
+
+/** What each function × warehouse actually did per head this month, and what the capacity plan needs per head. */
+async function standardRefs(month: string) {
+  const { lines } = await productivity(month);
+  const out: Record<string, { actual: number | null; plan: number | null }> = {};
+  for (const l of lines) out[`${l.department}|${l.warehouse}`] = { actual: l.uph, plan: l.required && l.headsAvg ? l.required / l.headsAvg : null };
+  return out;
 }
 
 const hostOf = (url: string | null) => { try { return url ? new URL(url).host : null; } catch { return url; } };
@@ -84,7 +92,7 @@ async function Overview({ month, unmapped, configured }: { month: string; unmapp
       )}
       {WHS.map((wh) => { const ls = lines.filter((l) => l.warehouse === wh); return ls.length ? <ProductivityTable key={wh} wh={`${wh} WH`} lines={ls} /> : null; })}
       <p className="px-1 text-[11.5px] text-ink-4">
-        Heads = manpower tool, per day (functions mapped to departments). Actual capacity = heads × standard (Standards tab). Output = S&amp;OP Snowflake daily actuals for that department (units, dispatch by packed time, inward by putaway updated). Achieved = output ÷ actual capacity on days with both; amber below 80% (idle heads), red above 120% (standard too low or heads under-reported). Cover = actual capacity ÷ Capacity planning’s required per day.
+        Heads = attendance app, present day-equivalents per day by function (Support = admin / ops / logistics, overhead). Plan required = the capacity-planning departments each function covers. Actual capacity = heads × standard (Standards tab). Output = S&amp;OP Snowflake daily actuals for that department (units, dispatch by packed time, inward by putaway updated). Achieved = output ÷ actual capacity on days with both; amber below 80% (idle heads), red above 120% (standard too low or heads under-reported). Cover = actual capacity ÷ Capacity planning’s required per day.
       </p>
       <Collapsible id="prod-throughput" title="Throughput vs facility capacity" sub="Inward / outward per day against the facility capacity engine">
         <Throughput month={month} />
@@ -102,8 +110,12 @@ function insights(lines: MpLine[]) {
   for (const l of idle.slice(0, 3)) out.push({ bad: true, text: `${l.warehouse} ${l.department} achieved ${pc(l.ach)} of capacity — ~${n((l.headsAvg ?? 0) * (1 - l.ach!))} heads/day more than the output needed (${l.under} of ${l.judged} days under 80%).` });
   const hot = lines.filter((l) => l.ach != null && l.ach > 1.2).sort((a, b) => b.ach! - a.ach!);
   for (const l of hot.slice(0, 2)) out.push({ bad: true, text: `${l.warehouse} ${l.department} ran at ${pc(l.ach)} of standard — check the standard or heads not reported.` });
-  const noStd = lines.filter((l) => l.headsAvg && l.rateNow == null);
-  if (noStd.length) out.push({ bad: false, text: `${noStd.length} department × warehouse ${noStd.length === 1 ? "has" : "have"} heads but no standard yet: ${noStd.map((l) => `${l.warehouse} ${l.department}`).slice(0, 4).join(", ")}${noStd.length > 4 ? "…" : ""}.` });
+  const noStd = lines.filter((l) => l.headsAvg && l.rateNow == null && l.department !== SUPPORT);
+  if (noStd.length) out.push({ bad: false, text: `${noStd.length} function × warehouse ${noStd.length === 1 ? "has" : "have"} heads but no standard yet: ${noStd.map((l) => `${l.warehouse} ${l.department}`).slice(0, 4).join(", ")}${noStd.length > 4 ? "…" : ""}.` });
+  for (const wh of WHS) {
+    const all = lines.filter((l) => l.warehouse === wh).reduce((a, l) => a + (l.headsAvg ?? 0), 0), sup = lines.find((l) => l.warehouse === wh && l.department === SUPPORT)?.headsAvg ?? 0;
+    if (all && sup / all > 0.15) out.push({ bad: false, text: `${wh}: Support (admin / ops / logistics) is ${pc(sup / all)} of heads — ${n(sup)} of ${n(all)} a day.` });
+  }
   const noHeads = lines.filter((l) => !l.headsAvg && l.required);
   if (noHeads.length) out.push({ bad: false, text: `No manpower mapped for ${noHeads.map((l) => `${l.warehouse} ${l.department}`).slice(0, 4).join(", ")}${noHeads.length > 4 ? "…" : ""}.` });
   return out;
