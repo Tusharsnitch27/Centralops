@@ -26,7 +26,19 @@ export function manpowerUrl() {
   if (base) return new URL(env("MANPOWER_API_PATH") ?? "/api/v1/integrations/manpower", base).toString();
   return env("MANPOWER_API_URL");
 }
-const apiKey = () => env("ATTENDANCE_MANPOWER_API_TOKEN") ?? env("MANPOWER_API_KEY");
+// tolerate a pasted "Bearer " prefix or "NAME=value" line
+const apiKey = () => (env("ATTENDANCE_MANPOWER_API_TOKEN") ?? env("MANPOWER_API_KEY"))?.replace(/^ATTENDANCE_MANPOWER_API_TOKEN=/, "").replace(/^bearer\s+/i, "").trim() || null;
+/** What the configured token looks like — never the value — so a 401 says which mistake it is. */
+function tokenShape() {
+  const t = apiKey();
+  if (!t) return "no token is set";
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuid.test(t)) return "the token looks like MANPOWER_TOKEN_ID (a bare UUID) — paste ATTENDANCE_MANPOWER_API_TOKEN instead";
+  const okShape = /^sapl_mp_[0-9a-f-]{36}\.[A-Za-z0-9_-]{40,}$/.test(t);
+  const id = env("MANPOWER_TOKEN_ID");
+  const idMatch = id && t.startsWith("sapl_mp_") ? (t.slice(8, 44).toLowerCase() === id.toLowerCase() ? "matches MANPOWER_TOKEN_ID" : "does NOT match MANPOWER_TOKEN_ID") : null;
+  return `token is ${t.length} chars, ${okShape ? "in the sapl_mp_<id>.<secret> format" : `NOT in the sapl_mp_<id>.<secret> format (starts "${t.slice(0, 8)}", ${/\s/.test(t) ? "contains spaces/line breaks" : "no spaces"})`}${idMatch ? `, its id ${idMatch}` : ""} — if the format is right it is revoked, rotated, expired or a synthetic (test) token`;
+}
 /** The attendance app only has captured days from its release; earlier dates are refused (400). */
 const COVERAGE_START = () => env("MANPOWER_COVERAGE_START") ?? "2026-10-29";
 export const manpowerConfigured = () => !!manpowerUrl();
@@ -103,7 +115,7 @@ async function fetchDay(url: string, day: string) {
   });
   // 503 = that day's capture isn't available (or their DB is down) — never treated as zero manpower
   if (res.status === 503) return { missing: true as const };
-  if (res.status === 401) throw new Error("Manpower API refused the token (401) — check ATTENDANCE_MANPOWER_API_TOKEN (revoked, rotated or expired?)");
+  if (res.status === 401) throw new Error(`Manpower API refused the token (401): ${tokenShape()}`);
   if (res.status === 403) throw new Error("Manpower API: token isn't granted all facilities (403) — it needs WH1, WH2 and NORTH");
   if (!res.ok) throw new Error(`Manpower API answered ${res.status} for ${day}: ${(await res.text()).slice(0, 160)}`);
   const text = await res.text();
