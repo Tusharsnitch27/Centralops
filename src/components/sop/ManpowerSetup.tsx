@@ -88,7 +88,7 @@ export function ManpowerMapping({ sites, funcs, departments, canEdit }: {
         ) : <p className="px-4 py-3 text-[12.5px] text-ink-4">Sites appear after the first pull.</p>}
       </div>
       <div className="card overflow-hidden">
-        <div className="border-b border-line px-4 py-3"><div className="flex items-center gap-2 text-[13.5px] font-semibold">Their departments → function {unmapped > 0 && <Badge tone="amber">{unmapped} unmapped</Badge>}</div><div className="text-[12px] text-ink-3">Matched by name on arrival; Admin / Ops / Logistics count as Support (overhead). Unmapped names aren’t counted.</div></div>
+        <div className="border-b border-line px-4 py-3"><div className="flex items-center gap-2 text-[13.5px] font-semibold">Their departments → function {unmapped > 0 && <Badge tone="amber">{unmapped} unmapped</Badge>}</div><div className="text-[12px] text-ink-3">Matched by name on arrival. Ops & Logistics = loading, unloading, housekeeping (overhead). Admin and unmapped names aren’t counted.</div></div>
         {funcs.length ? (
           <table className="table-base">
             <thead><tr><th>Department (attendance app)</th><th className="text-right">Heads / day</th><th>Function</th></tr></thead>

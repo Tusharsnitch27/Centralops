@@ -92,7 +92,7 @@ async function Overview({ month, unmapped, configured }: { month: string; unmapp
       )}
       {WHS.map((wh) => { const ls = lines.filter((l) => l.warehouse === wh); return ls.length ? <ProductivityTable key={wh} wh={`${wh} WH`} lines={ls} /> : null; })}
       <p className="px-1 text-[11.5px] text-ink-4">
-        Heads = attendance app, present day-equivalents per day by function (Support = admin / ops / logistics, overhead). Plan required = the capacity-planning departments each function covers. Actual capacity = heads × standard (Standards tab). Output = S&amp;OP Snowflake daily actuals for that department (units, dispatch by packed time, inward by putaway updated). Achieved = output ÷ actual capacity on days with both; amber below 80% (idle heads), red above 120% (standard too low or heads under-reported). Cover = actual capacity ÷ Capacity planning’s required per day.
+        Heads = attendance app, present day-equivalents per day by function (Ops & Logistics = loading, unloading, housekeeping + logistics: overhead; Admin not counted). Plan required = the capacity-planning departments each function covers. Actual capacity = heads × standard (Standards tab). Output = S&amp;OP Snowflake daily actuals per function (units; dispatch by packed time; Inward = category putaway, Inventory = return putaway, both by putaway updated). B2B covers marketplace + retail. Achieved = output ÷ actual capacity on days with both; amber below 80% (idle heads), red above 120% (standard too low or heads under-reported). Cover = actual capacity ÷ Capacity planning’s required per day.
       </p>
       <Collapsible id="prod-throughput" title="Throughput vs facility capacity" sub="Inward / outward per day against the facility capacity engine">
         <Throughput month={month} />
@@ -114,7 +114,7 @@ function insights(lines: MpLine[]) {
   if (noStd.length) out.push({ bad: false, text: `${noStd.length} function × warehouse ${noStd.length === 1 ? "has" : "have"} heads but no standard yet: ${noStd.map((l) => `${l.warehouse} ${l.department}`).slice(0, 4).join(", ")}${noStd.length > 4 ? "…" : ""}.` });
   for (const wh of WHS) {
     const all = lines.filter((l) => l.warehouse === wh).reduce((a, l) => a + (l.headsAvg ?? 0), 0), sup = lines.find((l) => l.warehouse === wh && l.department === SUPPORT)?.headsAvg ?? 0;
-    if (all && sup / all > 0.15) out.push({ bad: false, text: `${wh}: Support (admin / ops / logistics) is ${pc(sup / all)} of heads — ${n(sup)} of ${n(all)} a day.` });
+    if (all && sup / all > 0.15) out.push({ bad: false, text: `${wh}: Ops & Logistics (loading, unloading, housekeeping, logistics) is ${pc(sup / all)} of heads — ${n(sup)} of ${n(all)} a day.` });
   }
   const noHeads = lines.filter((l) => !l.headsAvg && l.required);
   if (noHeads.length) out.push({ bad: false, text: `No manpower mapped for ${noHeads.map((l) => `${l.warehouse} ${l.department}`).slice(0, 4).join(", ")}${noHeads.length > 4 ? "…" : ""}.` });

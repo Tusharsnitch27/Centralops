@@ -49,7 +49,7 @@ export function ProductivityTable({ wh, lines }: { wh: string; lines: MpLine[] }
                     <div className="pl-5 text-[11px] text-ink-4">{l.source ?? "no output feed — heads & capacity only"}{l.covers.length > 1 && <> · plan = {l.covers.join(" + ")}</>}</div>
                   </td>
                   <td className="text-right tabular">{n(l.headsAvg)}</td>
-                  <td className={cn("text-right tabular", l.rateNow == null && l.department !== "Support" && "text-warn")}>{l.department === "Support" ? "—" : l.rateNow == null ? "set" : n(l.rateNow)}</td>
+                  <td className={cn("text-right tabular", l.rateNow == null && l.department !== "Ops & Logistics" && "text-warn")}>{l.department === "Ops & Logistics" ? "—" : l.rateNow == null ? "set" : n(l.rateNow)}</td>
                   <td className="text-right tabular font-medium">{n(l.capDay)}</td>
                   <td className="text-right tabular text-ink-3">{n(l.required)}</td>
                   <td className={cn("text-right tabular", coverTone(l.cover))}>{pc(l.cover)}</td>

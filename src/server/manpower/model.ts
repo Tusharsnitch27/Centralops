@@ -10,17 +10,21 @@ export const ACH_BAND = 0.2;
 /**
  * Productivity is measured at the attendance app's function level (its departments), which is coarser than capacity
  * planning's 10 departments: each function rolls up the capacity departments it covers (for plan required) and the S&OP
- * daily actuals it produces (for output). "Support" (Admin / Ops / Logistics) is overhead — heads only, not in achieved %.
+ * daily actuals it produces (for output). Scope as defined by the warehouse:
+ *  - B2B Forward / B2B Return serve both marketplace and retail.
+ *  - Inward = putaway only (category inward); return putaway is done by Inventory.
+ *  - Inventory = shelf transfer, CC, audit, return putaway… — only return putaway has a feed, so that is its measured output.
+ *  - Ops (loading, unloading, housekeeping) and Logistics are overhead: heads only, not in achieved %. Admin isn't counted.
  */
 export interface Func { name: string; output: string | null; match: ((feed: string, label: string) => boolean) | null; covers: (capDept: string) => boolean }
-export const SUPPORT = "Support";
+export const SUPPORT = "Ops & Logistics";
 export const FUNCS: Func[] = [
-  { name: "Inward", output: "Category inward (putaway)", match: (f) => f === "category_inward", covers: (d) => /inward|put.?away/i.test(d) },
+  { name: "Inward", output: "Putaway (category inward)", match: (f) => f === "category_inward", covers: (d) => /inward|put.?away/i.test(d) },
   { name: "B2C Forward", output: "B2C dispatch (Shopify + marketplaces)", match: (f) => f === "b2c", covers: (d) => /forward/i.test(d) && !/b2b/i.test(d) },
   { name: "B2B Forward", output: "B2B marketplace + retail dispatch", match: (f) => f === "b2b_mp" || f === "retail", covers: (d) => /forward/i.test(d) && /b2b/i.test(d) },
   { name: "B2C Return", output: "B2C returns", match: (f, l) => f === "returns" && !isB2BReturn(l), covers: (d) => /return/i.test(d) && !/b2b|store/i.test(d) },
   { name: "B2B Return", output: "B2B / store returns", match: (f, l) => f === "returns" && isB2BReturn(l), covers: (d) => /return/i.test(d) && /b2b|store/i.test(d) },
-  { name: "Inventory", output: null, match: null, covers: (d) => /inventory|audit|\bcc\b/i.test(d) },
+  { name: "Inventory", output: "Return putaway (shelf transfer / CC / audit have no feed)", match: (f) => f === "returns", covers: (d) => /inventory|audit|\bcc\b/i.test(d) },
   { name: SUPPORT, output: null, match: null, covers: () => false },
 ];
 export const FUNC_NAMES = FUNCS.map((f) => f.name);
@@ -29,7 +33,7 @@ export function guessFunc(name: string): string | null {
   const n = name.trim().toLowerCase();
   const exact = FUNCS.find((f) => f.name.toLowerCase() === n);
   if (exact) return exact.name;
-  if (/^(admin|ops|operations|logistics|security|housekeeping|hr|supervisor)/.test(n)) return SUPPORT;
+  if (/^(ops|operations|logistics|loading|unloading|housekeeping)/.test(n)) return SUPPORT; // Admin stays uncounted
   return null;
 }
 
@@ -99,7 +103,7 @@ export async function productivity(period: string) {
     const capDays = dl.filter((d) => d.cap != null);
     const capDay = capDays.length ? capDays.reduce((a, d) => a + d.cap!, 0) / capDays.length : null;
     lines.push({
-      department, warehouse: wh, source: rule?.text ?? (department === SUPPORT ? "overhead — not in achieved %" : null), covers: covered,
+      department, warehouse: wh, source: rule?.text ?? (department === SUPPORT ? "loading / unloading / housekeeping + logistics — overhead, not in achieved %" : null), covers: covered,
       headsAvg: worked.length ? worked.reduce((a, d) => a + d.heads, 0) / worked.length : null,
       rateNow: rateOn(rates, department, wh, to),
       capDay,
