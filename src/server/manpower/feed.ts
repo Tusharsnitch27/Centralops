@@ -13,14 +13,22 @@ const KEYS = {
   day: ["date", "day", "work_date", "attendance_date", "shift_date", "dt", "for_date"],
   site: ["warehouse", "wh", "site", "facility", "location", "warehouse_name", "site_name", "facility_name", "branch", "region"],
   func: ["function", "department", "dept", "process", "function_name", "department_name", "team", "sub_department", "activity"],
-  heads: ["headcount", "head_count", "heads", "manpower", "present", "present_count", "count", "hc", "total", "man_days", "mandays", "total_manpower"],
+  heads: ["present_day_equivalent", "present_headcount", "headcount", "head_count", "heads", "manpower", "present", "present_count", "count", "hc", "total", "man_days", "mandays", "total_manpower"],
   person: ["employee_id", "emp_id", "emp_code", "employee_code", "employee_no", "staff_id", "user_id"],
   status: ["status", "attendance_status", "attendance", "present_status"],
 };
 const ABSENT = /^(a|ab|absent|leave|l|wo|week ?off|off|holiday|h|lwp|cl|sl|el|na)$/i;
 
-export function manpowerUrl() { return process.env.MANPOWER_API_URL?.trim().replace(/^["']|["']$/g, "") || null; }
-const apiKey = () => process.env.MANPOWER_API_KEY?.trim().replace(/^["']|["']$/g, "") || null;
+const env = (k: string) => process.env[k]?.trim().replace(/^["']|["']$/g, "") || null;
+/** The attendance app hands over ATTENDANCE_API_BASE_URL + MANPOWER_API_PATH + ATTENDANCE_MANPOWER_API_TOKEN; MANPOWER_API_URL / _KEY also work. */
+export function manpowerUrl() {
+  const base = env("ATTENDANCE_API_BASE_URL");
+  if (base) return new URL(env("MANPOWER_API_PATH") ?? "/api/v1/integrations/manpower", base).toString();
+  return env("MANPOWER_API_URL");
+}
+const apiKey = () => env("ATTENDANCE_MANPOWER_API_TOKEN") ?? env("MANPOWER_API_KEY");
+/** The attendance app only has captured days from its release; earlier dates are refused (400). */
+const COVERAGE_START = () => env("MANPOWER_COVERAGE_START") ?? "2026-10-29";
 export const manpowerConfigured = () => !!manpowerUrl();
 
 const pick = (row: Record<string, unknown>, names: string[]) => {
@@ -87,44 +95,64 @@ function withRange(url: string, from: string, to: string) {
 const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 const minus = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) - n * 864e5).toISOString().slice(0, 10);
 
-/** First pull goes back to the S&OP cutover; after that the last 10 days are re-read each morning (late corrections land). */
+async function fetchDay(url: string, day: string) {
+  const key = apiKey();
+  const res = await fetch(withRange(url, day, day), {
+    headers: { accept: "application/json", ...(key ? { authorization: `Bearer ${key}` } : {}) },
+    signal: AbortSignal.timeout(60_000), cache: "no-store",
+  });
+  // 503 = that day's capture isn't available (or their DB is down) — never treated as zero manpower
+  if (res.status === 503) return { missing: true as const };
+  if (res.status === 401) throw new Error("Manpower API refused the token (401) — check ATTENDANCE_MANPOWER_API_TOKEN (revoked, rotated or expired?)");
+  if (res.status === 403) throw new Error("Manpower API: token isn't granted all facilities (403) — it needs WH1, WH2 and NORTH");
+  if (!res.ok) throw new Error(`Manpower API answered ${res.status} for ${day}: ${(await res.text()).slice(0, 160)}`);
+  const text = await res.text();
+  let body: unknown;
+  try { body = JSON.parse(text); } catch { throw new Error(`Manpower API didn't return JSON (starts with: ${text.slice(0, 80)})`); }
+  return { missing: false as const, ...parseManpower(body) };
+}
+
+/**
+ * One request per day, and each answered day replaces that day completely (transfers move heads between departments, so
+ * nothing is appended or kept from an earlier poll). First pull starts at the API's coverage; after that the last 10 days are
+ * re-read each morning so attendance corrections land. Days the API reports as not captured are skipped, never zeroed.
+ */
 export async function pullManpower(trigger: "manual" | "schedule" = "manual", actorId: string | null = null, fromOverride?: string) {
   const url = manpowerUrl();
-  if (!url) throw new Error("MANPOWER_API_URL isn't set on the server");
+  if (!url) throw new Error("ATTENDANCE_API_BASE_URL (or MANPOWER_API_URL) isn't set on the server");
   const to = istToday();
   const any = await one<{ n: number }>(`select count(*)::int as n from mp_daily`);
-  const from = fromOverride ?? (any?.n ? minus(to, 10) : SOP_CUTOVER);
+  const cover = COVERAGE_START();
+  const from = [fromOverride ?? (any?.n ? minus(to, 10) : cover), cover].sort().at(-1)!;
   const [run] = await q<{ id: string }>(`insert into mp_sync_runs (trigger, from_date, to_date, actor_id) values ($1,$2,$3,$4) returning id`, [trigger, from, to, actorId]);
   try {
-    const key = apiKey();
-    const res = await fetch(withRange(url, from, to), {
-      headers: { accept: "application/json", ...(key ? { authorization: `Bearer ${key}`, "x-api-key": key } : {}) },
-      signal: AbortSignal.timeout(60_000), cache: "no-store",
-    });
-    if (!res.ok) throw new Error(`Manpower API answered ${res.status} ${res.statusText}${res.status === 401 || res.status === 403 ? " — check MANPOWER_API_KEY" : ""}`);
-    const text = await res.text();
-    let body: unknown;
-    try { body = JSON.parse(text); } catch { throw new Error(`Manpower API didn't return JSON (starts with: ${text.slice(0, 80)})`); }
-    const { rows, shape, skipped } = parseManpower(body);
-    const inRange = rows.filter((r) => r.day >= from && r.day <= to);
-    if (inRange.length) {
-      // replace only the days the API returned, so a partial answer never wipes other days
-      const days = [...new Set(inRange.map((r) => r.day))];
-      await q(`delete from mp_daily where day = any($1::date[])`, [days]);
-      for (let i = 0; i < inRange.length; i += 500) {
-        const c = inRange.slice(i, i + 500);
+    if (from > to) throw new Error(`Manpower data starts ${cover} — nothing to pull yet`);
+    const days: string[] = [];
+    for (let d = from; d <= to; d = minus(d, -1)) days.push(d);
+    if (days.length > 400) throw new Error("Pick a back-fill date within 400 days");
+    const missing: string[] = [];
+    let written = 0, skipped = 0, shape = "";
+    for (const day of days) {
+      const r = await fetchDay(url, day);
+      if (r.missing) { missing.push(day); continue; }
+      shape = r.shape; skipped += r.skipped;
+      const rows = r.rows.filter((x) => x.day === day);
+      await q(`delete from mp_daily where day = $1`, [day]);
+      if (rows.length) {
         await q(`insert into mp_daily (day, site, func, heads) select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[])
                  on conflict (day, site, func) do update set heads = excluded.heads, fetched_at = now()`,
-          [c.map((x) => x.day), c.map((x) => x.site), c.map((x) => x.func), c.map((x) => x.heads)]);
+          [rows.map((x) => x.day), rows.map((x) => x.site), rows.map((x) => x.func), rows.map((x) => x.heads)]);
+        // new names show up unmapped until someone maps them
+        await q(`insert into mp_site_map (site, warehouse) select distinct s, case when s ~* 'north|tauru|ggn|gurgaon|delhi|ncr' then 'North' when s ~* 'south|blr|bangalore|bengaluru|wh1|wh2|sapl-wh' then 'South' else 'ignore' end
+                 from unnest($1::text[]) s on conflict (site) do nothing`, [[...new Set(rows.map((x) => x.site))]]);
+        await q(`insert into mp_func_map (func, department) select distinct f, null from unnest($1::text[]) f on conflict (func) do nothing`, [[...new Set(rows.map((x) => x.func))]]);
       }
-      // new names show up unmapped until someone maps them
-      await q(`insert into mp_site_map (site, warehouse) select distinct s, case when s ~* 'north|tauru|ggn|gurgaon|delhi|ncr' then 'North' when s ~* 'south|blr|bangalore|bengaluru|wh1|wh2|sapl-wh' then 'South' else 'ignore' end
-               from unnest($1::text[]) s on conflict (site) do nothing`, [[...new Set(inRange.map((r) => r.site))]]);
-      await q(`insert into mp_func_map (func, department) select distinct f, null from unnest($1::text[]) f on conflict (func) do nothing`, [[...new Set(inRange.map((r) => r.func))]]);
+      written += rows.length;
     }
-    const note = `${shape} · ${inRange.length} day × site × function rows${skipped ? ` · ${skipped} skipped (absent / no date)` : ""}`;
-    await q(`update mp_sync_runs set status = 'ok', rows_read = $2, rows_written = $3, message = $4, finished_at = now() where id = $1`, [run!.id, rows.length + skipped, inRange.length, note]);
-    return { ok: true as const, read: rows.length, written: inRange.length, note, from, to };
+    if (missing.length === days.length) throw new Error(`Manpower capture unavailable for ${missing.length === 1 ? missing[0] : `all ${missing.length} days`} (503) — will retry`);
+    const note = `${days.length - missing.length} days · ${written} day × facility × department rows${shape ? ` · ${shape}` : ""}${skipped ? ` · ${skipped} skipped` : ""}${missing.length ? ` · not captured yet: ${missing.join(", ")}` : ""}`;
+    await q(`update mp_sync_runs set status = 'ok', rows_read = $2, rows_written = $3, message = $4, finished_at = now() where id = $1`, [run!.id, written + skipped, written, note]);
+    return { ok: true as const, read: written, written, note, from, to };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     await q(`update mp_sync_runs set status = 'failed', message = $2, finished_at = now() where id = $1`, [run!.id, msg.slice(0, 1000)]);

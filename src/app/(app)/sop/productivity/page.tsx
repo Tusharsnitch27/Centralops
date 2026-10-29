@@ -66,7 +66,7 @@ async function Overview({ month, unmapped, configured }: { month: string; unmapp
         <div className="card flex flex-wrap items-center gap-3 px-4 py-3">
           <Users size={16} className="text-ink-3" />
           <div className="min-w-0 flex-1 text-[13px] text-ink-2">
-            {!configured ? "Manpower isn’t connected yet — set MANPOWER_API_URL in Coolify." : unmapped ? `No mapped manpower for ${fmtMonth(month)} — ${unmapped} function${unmapped === 1 ? "" : "s"} from the manpower tool still need a department.` : `No manpower for ${fmtMonth(month)} yet.`}
+            {!configured ? "Manpower isn’t connected yet — set the attendance app’s API variables in Coolify." : unmapped ? `No mapped manpower for ${fmtMonth(month)} — ${unmapped} function${unmapped === 1 ? "" : "s"} from the manpower tool still need a department.` : `No manpower for ${fmtMonth(month)} yet.`}
             <span className="text-ink-4"> Capacity-planning numbers are shown meanwhile.</span>
           </div>
           <Link href="/sop/productivity?tab=feed" className="text-[12.5px] font-medium text-info hover:underline">Feed & mapping →</Link>

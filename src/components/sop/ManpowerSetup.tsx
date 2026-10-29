@@ -34,8 +34,8 @@ export function ManpowerFeed({ configured, host, runs, lastDay, canEdit }: { con
             {!configured ? <Badge tone="amber" dot>Not connected</Badge> : last?.status === "failed" ? <Badge tone="red" dot>Last pull failed</Badge> : last ? <Badge tone="green" dot>Connected</Badge> : <Badge tone="neutral" dot>Waiting for first pull</Badge>}
           </div>
           <div className="text-[12.5px] text-ink-3">
-            {configured ? <>Read-only from <span className="font-medium text-ink-2">{host}</span> every morning at 08:00 IST (last 10 days re-read, so late corrections land). Only heads per day × site × function are kept — no attendance.</>
-              : <>Set <code className="text-[11.5px]">MANPOWER_API_URL</code> (and <code className="text-[11.5px]">MANPOWER_API_KEY</code> if the endpoint needs one) in Coolify, then redeploy.</>}
+            {configured ? <>Read-only from <span className="font-medium text-ink-2">{host}</span> every morning at 08:00 IST (last 10 days re-read, so late corrections land). Present day-equivalents (half day = 0.5) per day × facility × department, Day + Night shifts added — no attendance detail kept.</>
+              : <>Set <code className="text-[11.5px]">ATTENDANCE_API_BASE_URL</code>, <code className="text-[11.5px]">MANPOWER_API_PATH</code> and <code className="text-[11.5px]">ATTENDANCE_MANPOWER_API_TOKEN</code> (from the attendance app) in Coolify, then redeploy.</>}
             {lastDay && <> Latest day in: <b className="text-ink-2">{lastDay}</b>.</>}
           </div>
         </div>

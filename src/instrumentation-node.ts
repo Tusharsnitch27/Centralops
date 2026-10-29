@@ -68,7 +68,7 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
 
 // Daily manpower pull from the manpower tool's read-only API at MANPOWER_SYNC_TIME IST (default 08:00); a failed day retries hourly.
 const gm = globalThis as unknown as { __mpSyncTimer?: ReturnType<typeof setInterval> };
-if (enabled && process.env.DATABASE_URL && process.env.MANPOWER_API_URL && !gm.__mpSyncTimer) {
+if (enabled && process.env.DATABASE_URL && (process.env.ATTENDANCE_API_BASE_URL || process.env.MANPOWER_API_URL) && !gm.__mpSyncTimer) {
   const [mh, mmin] = (process.env.MANPOWER_SYNC_TIME ?? "08:00").split(":").map(Number);
   const mpTick = async () => {
     try {
