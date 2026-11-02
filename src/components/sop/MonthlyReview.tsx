@@ -182,7 +182,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
 export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyView[] }) {
   const flows: { key: "outbound" | "inbound"; title: string }[] = [
     { key: "outbound", title: "Outbound — channels & stores" },
-    { key: "inbound", title: "Inbound — inward, pre-pack & categories" },
+    { key: "inbound", title: "Inbound — inward, pre-pack, returns & categories" },
   ];
   const days = d.through;
   const ids = ["sop:trend", "sop:wh", "sop:flow", "sop:returns", ...d.views.map((v) => `sop:${v.def.key}`)];
@@ -368,7 +368,7 @@ function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string })
       </span>
     );
   };
-  const groups = ["Inwards", "Outwards"] as const;
+  const groups = ["Inwards", "Outwards", "Returns"] as const;
   return (
     <section className="space-y-2">
       <h2 className="label-caps px-1">Overall accuracy · {label}</h2>

@@ -1,6 +1,6 @@
 // S&OP monthly review: view definitions, utilisation maths and top-3 insights (pure; server + client).
 
-export type ViewKey = "b2c" | "b2b_mp" | "retail_fwd" | "liquidation" | "category_inward" | "prepack" | "category_view";
+export type ViewKey = "b2c" | "b2b_mp" | "retail_fwd" | "liquidation" | "category_inward" | "prepack" | "returns" | "category_view";
 export interface ViewDef { key: ViewKey; title: string; sub: string; flow: "outbound" | "inbound"; rowLabel: string; weekly?: boolean; subtotalGroup?: string }
 export const VIEWS: ViewDef[] = [
   { key: "b2c", title: "B2C channels", sub: "Item-level orders by channel", flow: "outbound", rowLabel: "Channel", subtotalGroup: "Marketplace" },
@@ -9,6 +9,8 @@ export const VIEWS: ViewDef[] = [
   { key: "liquidation", title: "Liquidation", sub: "Aging / liquidation dispatch plan vs actual by week", flow: "outbound", rowLabel: "Week", weekly: true },
   { key: "category_inward", title: "Category inward", sub: "Inward plan vs received by week", flow: "inbound", rowLabel: "Week", weekly: true },
   { key: "prepack", title: "Pre-pack", sub: "Pre-pack plan vs actual by week", flow: "inbound", rowLabel: "Week", weekly: true },
+  // plan from the projection sheet (monthly); actual = return putaway (B2B = final type B2B / store / retail / SOR)
+  { key: "returns", title: "Returns", sub: "Units returned (putaway) vs plan · B2C, and B2B from stores + marketplaces", flow: "inbound", rowLabel: "Returns" },
   { key: "category_view", title: "Category-wise inward", sub: "Inward by category", flow: "inbound", rowLabel: "Category" },
 ];
 
@@ -247,8 +249,8 @@ export function returnsInsights(rows: ReturnsRow[]): Insight[] {
 /* ---------- overall accuracy ---------- */
 /** Forecast accuracy: 1 − |actual − plan| ÷ plan (0 when off by 100%+); null without a plan. */
 export const accuracy = (plan: number, actual: number) => (plan > 0 ? Math.max(0, 1 - Math.abs(actual - plan) / plan) : null);
-export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null }
-const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp"; label: string; flow: "Inwards" | "Outwards" }[] = [
+export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards" | "Returns"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null }
+const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp" | "returns_b2c" | "returns_b2b"; label: string; flow: OverallRow["flow"] }[] = [
   { key: "category_inward", label: "Category inward", flow: "Inwards" },
   { key: "prepack", label: "Pre-pack", flow: "Inwards" },
   { key: "b2c_sf", label: "B2C · Shopify", flow: "Outwards" },
@@ -256,6 +258,8 @@ const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp"; label: string; flow: "Inwar
   { key: "b2b_mp", label: "B2B · Marketplace", flow: "Outwards" },
   { key: "retail_fwd", label: "B2B · Retail stores", flow: "Outwards" },
   { key: "liquidation", label: "Liquidation", flow: "Outwards" },
+  { key: "returns_b2c", label: "B2C returns", flow: "Returns" },
+  { key: "returns_b2b", label: "B2B returns", flow: "Returns" },
 ];
 const mk = (key: string, label: string, flow: OverallRow["flow"], s: { sp: number; sa: number; np: number; na: number }, kind?: OverallRow["kind"]): OverallRow => {
   const tp = s.sp + s.np, ta = s.sa + s.na;
@@ -264,19 +268,21 @@ const mk = (key: string, label: string, flow: OverallRow["flow"], s: { sp: numbe
 /** One row per flow (inwards / outwards by channel) from each view's total, plus subtotals. */
 export function overallTable(views: { def: ViewDef; rows: Row[] }[]): OverallRow[] {
   const out: OverallRow[] = [];
-  for (const flow of ["Inwards", "Outwards"] as const) {
+  for (const flow of ["Inwards", "Outwards", "Returns"] as const) {
     const part: OverallRow[] = [];
     for (const o of OVERALL.filter((x) => x.flow === flow)) {
       // B2C splits into Shopify and the marketplaces
       const t = o.key === "b2c_sf" || o.key === "b2c_mp"
         ? (views.find((v) => v.def.key === "b2c")?.rows ?? []).filter((r) => !r.kind && (o.key === "b2c_sf") === isShopify(r.label)).reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na, tp: a.tp + r.tp, ta: a.ta + r.ta }), { sp: 0, sa: 0, np: 0, na: 0, tp: 0, ta: 0 })
-        : views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
+        : o.key === "returns_b2c" || o.key === "returns_b2b"
+          ? views.find((v) => v.def.key === "returns")?.rows.find((r) => !r.kind && r.label === o.label)
+          : views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
       if (t && (t.tp > 0 || t.ta > 0)) part.push(mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }));
     }
     if (!part.length) continue;
     out.push(...part);
     const sum = part.reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na }), { sp: 0, sa: 0, np: 0, na: 0 });
-    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal"));
+    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal")); // Returns → overall returns
   }
   return out;
 }

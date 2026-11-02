@@ -35,17 +35,32 @@ export function periodOptions(months: string[], grain: Grain): PeriodOption[] {
   });
 }
 
+/** Returns plan rows (sop_review_rows) get their actuals from sop_returns (return putaway: B2C / B2B by warehouse). */
+type PlanRow = { period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null };
+function withReturnActuals<T extends Omit<PlanRow, "row_group" | "sort"> & Partial<PlanRow>>(rows: T[], ret: ReturnsRow[]): T[] {
+  const out = rows.map((r) => (r.view_key === "returns" ? { ...r, south_actual: null, north_actual: null } : r));
+  for (const x of ret) for (const [label, v] of [["B2C returns", x.b2c], ["B2B returns", x.b2b]] as const) {
+    if (v == null) continue;
+    let r = out.find((y) => y.view_key === "returns" && y.period === x.period && y.row_label === label);
+    if (!r) { r = { period: x.period, view_key: "returns", row_label: label, row_group: null, sort: label.startsWith("B2C") ? 1 : 2, south_plan: null, south_actual: null, north_plan: null, north_actual: null } as unknown as T; out.push(r); }
+    if (x.warehouse === "South") r.south_actual = Number(v); else r.north_actual = Number(v);
+  }
+  return out;
+}
+
 export async function monthlyReview(input: string | string[], label?: string) {
   const months = (Array.isArray(input) ? input : [input]).slice().sort();
   const period = months.at(-1)!; // latest month in the range drives warehouse context and inventory flow
   const multi = months.length > 1;
-  const [rowsRaw, caps] = await Promise.all([
+  const [rowsDb, caps, retAct] = await Promise.all([
     q<{ period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null }>(
       `select period::text as period, view_key, row_label, row_group, sort, south_plan, south_actual, north_plan, north_actual from sop_review_rows where period = any($1::date[]) order by period, view_key, sort, row_label`, [months]),
     q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null }>(
       `select period::text as period, warehouse, capacity::float8 as capacity, inventory::float8 as inventory, good_units::float8 as good, bad_units::float8 as bad, other_units::float8 as other, prepack_units::float8 as prepack_units
        from sop_wh_capacity order by period`),
+    q<ReturnsRow>(`select period::text as period, warehouse, b2c::float8 as b2c, b2b::float8 as b2b, fwd_b2c, fwd_retail from sop_returns where period = any($1::date[])`, [months]),
   ]);
+  const rowsRaw = withReturnActuals(rowsDb, retAct);
   const wh = whSeries(caps as WhCap[]);
   const prepack: Record<string, { South?: number; North?: number }> = {};
   for (const c of caps) if (c.prepack_units != null) (prepack[c.period] ??= {})[c.warehouse] = Number(c.prepack_units);
@@ -95,7 +110,8 @@ export async function monthlyReview(input: string | string[], label?: string) {
   return {
     daySplit,
     period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
-    trend: trendTable(trendRows), flow, flowNow, flowInsights: flowInsights(flowNow.length ? flowNow : flow.filter((f) => f.period === flow.at(-1)?.period)),
+    trend: trendTable(withReturnActuals(trendRows.map((r) => ({ period: r.period, view_key: r.view_key, row_label: r.row_label, south_plan: Number(r.sp), south_actual: Number(r.sa), north_plan: Number(r.np), north_actual: Number(r.na) })), returns)
+      .map((r) => ({ view_key: r.view_key, row_label: r.row_label, period: r.period, sp: r.south_plan ?? 0, sa: r.south_actual ?? 0, np: r.north_plan ?? 0, na: r.north_actual ?? 0 }))), flow, flowNow, flowInsights: flowInsights(flowNow.length ? flowNow : flow.filter((f) => f.period === flow.at(-1)?.period)),
     returns, returnsInsights: returnsInsights(returns), notes, owners: Object.fromEntries(owners.map((o) => [o.code, o.poc])) as Record<string, string | null>,
   };
 }
