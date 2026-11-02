@@ -50,6 +50,32 @@ export async function seedSopPlanDaily(S: RunQ, which: "items" | "orders" = "ite
   }
 }
 
+/** Monthly B2C reviews from here on take their plan from the projection sheet; earlier months keep the reviewed plan. */
+const B2C_REVIEW_FROM = "2026-11-01";
+
+/** Re-load the B2C daily plan (items or orders) from the projection sheet: each month it covers is replaced whole. */
+export async function reloadSopB2cPlan(S: RunQ, which: "items" | "orders") {
+  const view = which === "orders" ? "b2c_orders" : "b2c";
+  const rows = ((which === "orders" ? planDailyOrders.rows : planDaily.rows) as [string, string, string, number, number][]).filter((r) => r[0] === view);
+  const months = [...new Set(rows.map((r) => `${r[1].slice(0, 7)}-01`))];
+  await S(`delete from sop_plan_daily where view_key = $1 and date_trunc('month', day)::date = any($2::date[])`, [view, months]);
+  await seedSopPlanDaily(S, which);
+  if (view !== "b2c") return; // order plans only drive the day-level order comparison
+  const month = new Map<string, { period: string; label: string; south: number; north: number }>();
+  for (const [, day, label, south, north] of rows) {
+    const period = `${day.slice(0, 7)}-01`;
+    if (period < B2C_REVIEW_FROM) continue;
+    const m = month.get(`${period}|${label}`) ?? { period, label, south: 0, north: 0 };
+    m.south += south; m.north += north;
+    month.set(`${period}|${label}`, m);
+  }
+  for (const m of month.values())
+    await S(`insert into sop_review_rows (view_key, period, row_label, row_group, sort, south_plan, north_plan)
+             values ('b2c',$1,$2,$3,(select coalesce(max(sort),0)+1 from sop_review_rows where view_key = 'b2c' and period = $1),$4,$5)
+             on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
+      [m.period, m.label, m.label.startsWith("Shopify") ? null : "Marketplace", Math.round(m.south), Math.round(m.north)]);
+}
+
 /** Workbook actuals for the months before the Snowflake cut-over (Apr–Aug 2026): inventory flow, returns, review periods. */
 export async function seedSopWorkbookActuals(S: RunQ, cutover: string) {
   for (const p of data.periods.filter((x) => x.period < cutover))

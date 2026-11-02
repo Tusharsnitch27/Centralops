@@ -6,7 +6,7 @@ import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
-import { seedSopHistory, seedSopPlanDaily } from "./sopHistory";
+import { reloadSopB2cPlan, seedSopHistory, seedSopPlanDaily } from "./sopHistory";
 import { seedWeekly } from "./weekly";
 import { seedHandbook, seedLibrary } from "./library";
 import { seedPackaging } from "./packaging";
@@ -118,6 +118,17 @@ export async function bootstrap(rawQ: RunQ) {
     await seedSopPlanDaily(rawQ, "orders");
     await setSetting("seed.sop_plan_daily_orders", "v1");
     console.log("[seed] S&OP daily order-level plans (B2C) loaded");
+  }
+  // v2: S&OP_Projection_FY'27 (2).xlsx — B2C item + order plans through Jan 2027
+  if ((await setting("seed.sop_plan_b2c")) !== "v2") {
+    await rawQ("begin");
+    try {
+      await reloadSopB2cPlan(rawQ, "items");
+      await reloadSopB2cPlan(rawQ, "orders");
+      await setSetting("seed.sop_plan_b2c", "v2");
+      await rawQ("commit");
+    } catch (e) { await rawQ("rollback"); throw e; }
+    console.log("[seed] S&OP B2C item + order plans reloaded (v2)");
   }
 
   if ((await setting("seed.weekly")) !== "v1") {
