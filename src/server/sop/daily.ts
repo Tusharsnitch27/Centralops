@@ -12,12 +12,12 @@ export interface DailyView { key: string; title: string; metric: "items" | "orde
 
 const shopify = (l: string) => /^shopify/i.test(l);
 // Like is compared with like: item plans vs items dispatched, order plans vs orders. Order views are judged only on days with an order-level plan.
+// B2B marketplace is planned per month only (dispatch can fall on any day), so it has no day-level view
 const VIEWS: { key: string; src?: string; match?: (label: string) => boolean; title: string; flow: "Outwards" | "Inwards"; weekly: boolean; byLabel: boolean; metric?: "items" | "orders"; dailyOnly?: boolean }[] = [
   { key: "b2c_sf", src: "b2c", match: shopify, title: "B2C · Shopify (items)", flow: "Outwards", weekly: false, byLabel: true, metric: "items" },
   { key: "b2c_mp", src: "b2c", match: (l) => !shopify(l), title: "B2C · Marketplaces (items)", flow: "Outwards", weekly: false, byLabel: true, metric: "items" },
   { key: "b2c_sf_orders", src: "b2c_orders", match: shopify, title: "B2C · Shopify (orders)", flow: "Outwards", weekly: false, byLabel: true, metric: "orders", dailyOnly: true },
   { key: "b2c_mp_orders", src: "b2c_orders", match: (l) => !shopify(l), title: "B2C · Marketplaces (orders)", flow: "Outwards", weekly: false, byLabel: true, metric: "orders", dailyOnly: true },
-  { key: "b2b_mp", title: "B2B · Marketplace", flow: "Outwards", weekly: false, byLabel: true },
   { key: "retail_fwd", title: "B2B · Retail stores", flow: "Outwards", weekly: true, byLabel: false },
   { key: "category_inward", title: "Category inward", flow: "Inwards", weekly: true, byLabel: false },
   { key: "prepack", title: "Pre-pack inward", flow: "Inwards", weekly: true, byLabel: false },

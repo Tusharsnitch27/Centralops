@@ -11,7 +11,7 @@ const plain = (segs: Seg[]) => segs.map((s) => (typeof s === "string" ? s : s.b)
 const clean = (l: string) => l.replace(/\s*\(items\)$/i, "");
 
 // review view → the day-level views and the streams (owners) behind it
-const DAILY: Record<string, string[]> = { b2c: ["b2c_sf", "b2c_mp"], b2b_mp: ["b2b_mp"], retail_fwd: ["retail_fwd"], category_inward: ["category_inward"], prepack: ["prepack"] };
+const DAILY: Record<string, string[]> = { b2c: ["b2c_sf", "b2c_mp"], retail_fwd: ["retail_fwd"], category_inward: ["category_inward"], prepack: ["prepack"] };
 const ORDERS: Record<string, string[]> = { b2c: ["b2c_sf_orders", "b2c_mp_orders"] };
 export const STREAMS: Record<string, string[]> = {
   b2c: ["b2c-sf", "b2c-mp"], b2b_mp: ["b2b-mp"], retail_fwd: ["retail-forward"], liquidation: ["liquidation"],

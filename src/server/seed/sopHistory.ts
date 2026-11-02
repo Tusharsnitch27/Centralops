@@ -1,9 +1,11 @@
 import "server-only";
 import type { RunQ } from "../db";
+import { weekOfMonth } from "@/lib/sopWeeks";
 import data from "../../db/seed/sop-history-fy27.json";
 import plan from "../../db/seed/sop-fy27.json";
 import planDaily from "../../db/seed/sop-plan-daily-fy27.json";
 import planDailyOrders from "../../db/seed/sop-plan-daily-orders-fy27.json";
+import planB2bMp from "../../db/seed/sop-plan-b2bmp-fy27.json";
 
 /** Apr–Oct 2026 plans, outbound capacity and meeting call-outs from "(Plan vs Actual) S&OP_FY'26-27.xlsx".
  *  Workbook actuals land in wb_*; months before the Sep 2026 cut-over show them as actuals (seedSopWorkbookActuals), later months use Snowflake. */
@@ -72,6 +74,40 @@ export async function reloadSopB2cPlan(S: RunQ, which: "items" | "orders") {
              values ('b2c',$1,$2,$3,(select coalesce(max(sort),0)+1 from sop_review_rows where view_key = 'b2c' and period = $1),$4,$5)
              on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
       [m.period, m.label, m.label.startsWith("Shopify") ? null : "Marketplace", Math.round(m.south), Math.round(m.north)]);
+}
+
+/** Retail forward from the projection sheet: day plan per WH, and the review's week rows = those days summed by week of the month. */
+export async function reloadSopRetailPlan(S: RunQ) {
+  const rows = (planDaily.rows as [string, string, string, number, number][]).filter((r) => r[0] === "retail_fwd");
+  const months = [...new Set(rows.map((r) => `${r[1].slice(0, 7)}-01`))];
+  await S(`delete from sop_plan_daily where view_key = 'retail_fwd' and date_trunc('month', day)::date = any($1::date[])`, [months]);
+  await S(`insert into sop_plan_daily (day, view_key, row_label, south, north, source)
+           select d::date, 'retail_fwd', '', s, n, 'workbook' from unnest($1::text[], $2::numeric[], $3::numeric[]) as t(d, s, n)`,
+    [rows.map((r) => r[1]), rows.map((r) => r[3]), rows.map((r) => r[4])]);
+  const week = new Map<string, { period: string; wk: string; south: number; north: number }>();
+  for (const [, day, , south, north] of rows) {
+    const period = `${day.slice(0, 7)}-01`, wk = weekOfMonth(day);
+    const w = week.get(`${period}|${wk}`) ?? { period, wk, south: 0, north: 0 };
+    w.south += south; w.north += north;
+    week.set(`${period}|${wk}`, w);
+  }
+  await S(`update sop_review_rows set south_plan = null, north_plan = null where view_key = 'retail_fwd' and period = any($1::date[])`, [months]);
+  for (const w of week.values())
+    await S(`insert into sop_review_rows (view_key, period, row_label, sort, south_plan, north_plan) values ('retail_fwd',$1,$2,$3,$4,$5)
+             on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
+      [w.period, w.wk, Number(w.wk.slice(3)), Math.round(w.south), Math.round(w.north)]);
+}
+
+/** B2B marketplace monthly plan from the projection sheet. It has no warehouse split, so each channel is split 50/50 South / North. */
+export async function reloadSopB2bMpPlan(S: RunQ) {
+  const rows = planB2bMp.rows as [string, string, number][];
+  const months = [...new Set(rows.map((r) => r[0]))];
+  await S(`update sop_review_rows set south_plan = null, north_plan = null where view_key = 'b2b_mp' and period = any($1::date[])`, [months]);
+  for (const [period, label, total] of rows)
+    await S(`insert into sop_review_rows (view_key, period, row_label, sort, south_plan, north_plan)
+             values ('b2b_mp',$1,$2,(select coalesce(max(sort),0)+1 from sop_review_rows where view_key = 'b2b_mp' and period = $1),$3,$4)
+             on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
+      [period, label, Math.ceil(total / 2), Math.floor(total / 2)]);
 }
 
 /** Workbook actuals for the months before the Snowflake cut-over (Apr–Aug 2026): inventory flow, returns, review periods. */

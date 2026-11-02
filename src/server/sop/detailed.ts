@@ -7,10 +7,10 @@ import { weekOfMonth } from "@/lib/sopWeeks";
  * Day-on-day plan vs actual for one function and one month, South / North, optionally per channel.
  * Everything is computed per day; weeks are only summaries of those days.
  */
+// B2B marketplace is left out: its plan is a month total that can be dispatched on any day
 export const DETAIL_VIEWS = [
   { key: "b2c", flow: "outbound", title: "B2C · items", src: "b2c", byLabel: true, unit: "items" },
   { key: "b2c_orders", flow: "outbound", title: "B2C · orders", src: "b2c_orders", byLabel: true, unit: "orders" },
-  { key: "b2b_mp", flow: "outbound", title: "B2B marketplace", src: "b2b_mp", byLabel: true, unit: "units" },
   { key: "retail_fwd", flow: "outbound", title: "B2B retail stores", src: "retail_fwd", byLabel: false, unit: "units" },
   { key: "liquidation", flow: "outbound", title: "Liquidation", src: "liquidation", byLabel: false, unit: "units" },
   { key: "category_inward", flow: "inward", title: "Category inward", src: "category_inward", byLabel: false, unit: "units" },
