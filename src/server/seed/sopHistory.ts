@@ -50,9 +50,6 @@ export async function seedSopPlanDaily(S: RunQ, which: "items" | "orders" = "ite
   }
 }
 
-/** Monthly B2C reviews from here on take their plan from the projection sheet; earlier months keep the reviewed plan. */
-const B2C_REVIEW_FROM = "2026-11-01";
-
 /** Re-load the B2C daily plan (items or orders) from the projection sheet: each month it covers is replaced whole. */
 export async function reloadSopB2cPlan(S: RunQ, which: "items" | "orders") {
   const view = which === "orders" ? "b2c_orders" : "b2c";
@@ -64,11 +61,12 @@ export async function reloadSopB2cPlan(S: RunQ, which: "items" | "orders") {
   const month = new Map<string, { period: string; label: string; south: number; north: number }>();
   for (const [, day, label, south, north] of rows) {
     const period = `${day.slice(0, 7)}-01`;
-    if (period < B2C_REVIEW_FROM) continue;
     const m = month.get(`${period}|${label}`) ?? { period, label, south: 0, north: 0 };
     m.south += south; m.north += north;
     month.set(`${period}|${label}`, m);
   }
+  // the sheet is the plan for every month it covers: a channel it leaves out has no plan that month
+  await S(`update sop_review_rows set south_plan = null, north_plan = null where view_key = 'b2c' and period = any($1::date[])`, [months]);
   for (const m of month.values())
     await S(`insert into sop_review_rows (view_key, period, row_label, row_group, sort, south_plan, north_plan)
              values ('b2c',$1,$2,$3,(select coalesce(max(sort),0)+1 from sop_review_rows where view_key = 'b2c' and period = $1),$4,$5)
