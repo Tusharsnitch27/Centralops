@@ -143,14 +143,14 @@ function AreaMeter({ p }: { p: WhPoint }) {
   return (
     <div className="mt-3 border-t border-line pt-2.5">
       <div className="flex items-baseline justify-between text-[12px]">
-        <span className="font-semibold text-ink-2">Pre-pack area</span>
-        <span className="text-ink-3"><b className="font-semibold tabular text-ink">{lakh(p.spUsed ?? 0)}</b>{p.spCap ? <> of {lakh(p.spCap)} · <b className={cn("font-semibold tabular", (p.spUtil ?? 0) >= 0.9 ? "text-bad" : (p.spUtil ?? 0) >= 0.8 ? "text-warn" : "text-ok")}>{pc(p.spUtil)}</b></> : <span className="text-ink-4"> · set its capacity above</span>}</span>
+        <span className="font-semibold text-ink-2">Floor space (pre-pack area)</span>
+        <span className="text-ink-3"><b className="font-semibold tabular text-ink">{lakh(p.spUsed ?? 0)}</b>{p.spCap ? <> of {lakh(p.spCap)} · <b className={cn("font-semibold tabular", (p.spUtil ?? 0) >= 0.9 ? "text-bad" : (p.spUtil ?? 0) >= 0.8 ? "text-warn" : "text-ok")}>{pc(p.spUtil)}</b></> : <span className="text-ink-4"> · set its capacity in Controls</span>}</span>
       </div>
       <div className="mt-1.5 flex h-2 rounded-full bg-muted">
         {parts.map((x, i, all) => (
           <span key={x.label} className={cn("group relative h-full cursor-default transition-transform hover:scale-y-[1.6]", x.cls, i === 0 && "rounded-l-full", i === all.length - 1 && "rounded-r-full")} style={{ width: `${Math.min(100, (x.v / cap) * 100)}%` }}>
             <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11.5px] font-medium text-white shadow-lg group-hover:block">
-              {x.label} · <b className="tabular">{lakh(x.v)}</b>{p.spCap ? ` · ${pc(x.v / p.spCap)} of area` : ""}
+              {x.label} · <b className="tabular">{lakh(x.v)}</b>{p.spCap ? ` · ${pc(x.v / p.spCap)} of floor space` : ""}
             </span>
           </span>
         ))}
@@ -203,7 +203,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
                   </td>
                 ))}
               </tr>
-              {hasArea && ([["spCap", "Pre-pack area capacity (lakh units)"], ["packs", "Pre-pack stock (packs)"], ["special", "Non-apparel (accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys)"], ["spUsed", "Pre-pack area used"]] as const).map(([k, label]) => (
+              {hasArea && ([["spCap", "Floor space capacity (lakh units)"], ["packs", "Pre-pack stock (packs)"], ["special", "Non-apparel (accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys)"], ["spUsed", "Floor space used"]] as const).map(([k, label]) => (
                 <tr key={k} className="border-t border-line/60">
                   <td className={cn(PIN2, k === "spUsed" ? "font-medium text-ink-2" : "text-ink-3")}>{label}</td>
                   {pts.map((p) => <td key={p.period} className={cn("px-4 py-2 text-right tabular", k === "spUsed" ? "font-semibold" : "text-ink-3")}>{p[k] != null ? (p[k]! / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
@@ -211,7 +211,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
               ))}
               {hasArea && (
                 <tr className="border-t border-line/60 bg-subtle/50">
-                  <td className={cn(PIN2, "bg-subtle font-semibold")}>Pre-pack area utilisation %</td>
+                  <td className={cn(PIN2, "bg-subtle font-semibold")}>Floor space utilisation %</td>
                   {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right">{p.spUtil != null ? <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-semibold tabular", p.spUtil >= 0.9 ? "bg-bad-soft text-bad" : p.spUtil >= 0.8 ? "bg-warn-soft text-warn" : "bg-accent-soft text-accent-ink")}>{(p.spUtil * 100).toFixed(2)}%</span> : <span className="text-ink-4">—</span>}</td>)}
                 </tr>
               )}
@@ -257,6 +257,12 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
 
       <section className="space-y-2">
         <h2 className="label-caps px-1">Capacity</h2>
+        {/* how stock is counted — once, for utilisation and the inventory flow below */}
+        <div className="card space-y-1 px-4 py-3 text-[12px] text-ink-3 md:px-5">
+          <p><b className="font-semibold text-ink">Stock</b> = <span className="font-mono text-[11.5px] text-ink-2">INVENTORY + Inventory Blocked + Not Found + Bad Inventory + Putaway Pending</span> <span className="text-ink-4">(Putback Pending and Pending Inventory Assessment not counted)</span></p>
+          <p><b className="font-semibold text-ink">Warehouse utilisation</b> = stock of warehouse categories ÷ warehouse capacity · <b className="font-semibold text-ink">Floor space utilisation</b> = (pre-pack stock in packs + non-apparel stock) ÷ floor space capacity</p>
+          <p><b className="font-semibold text-ink">Inventory flow</b> · opening = stock on the last day before the month, closing = stock on the last day in it (both areas) · inward = category putaway + return putaway · outward = B2C + B2B marketplace + store dispatch · capacity = warehouse + floor space</p>
+        </div>
         <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · space used = good + bad + blocked + not found + putaway pending, vs capacity, by month"
           summary={<>
             {whTotal && <span className="flex items-center gap-1.5 text-ink-3">Total <span className="font-semibold text-ink tabular">{pc(whTotal.util)}</span><span className="text-ink-4">· {mon(whTotal.period)}</span></span>}
