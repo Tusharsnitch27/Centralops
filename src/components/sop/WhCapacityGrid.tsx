@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 export interface CapSetting { warehouse: "South" | "North"; from: string; capacity: number; special: number | null; by: string | null; at: string }
 const mon = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { month: "short", year: "2-digit", timeZone: "UTC" });
 const WH = [["South", "South (BLR)"], ["North", "North (GGN)"]] as const;
-const FIELDS = [["capacity", "Warehouse capacity"], ["special", "Floor space (pre-pack area)"]] as const;
+const FIELDS = [["capacity", "Bin space (warehouse)"], ["special", "Floor space (pre-pack area)"]] as const;
 
 /**
  * Capacity by month: a value entered for a month carries forward (auto-filled) to every later month until the next month that has its own.
@@ -75,8 +75,8 @@ export function WhCapacityGrid({ months, settings, canEdit }: { months: string[]
         </tbody>
       </table>
       <div className="grid gap-x-6 gap-y-1 border-t border-line px-4 py-3 text-[11.5px] md:grid-cols-2">
-        <p className="text-ink-3"><b className="font-semibold text-ink-2">Warehouse capacity</b> · {WAREHOUSE_CATEGORIES.join(", ")} — and any other category</p>
-        <p className="text-ink-3"><b className="font-semibold text-ink-2">Floor space (pre-pack area)</b> · Pre-packs (a set of any category, counted as packs), {PREPACK_AREA_CATEGORIES.join(", ")}</p>
+        <p className="text-ink-3"><b className="font-semibold text-ink-2">Bin space (warehouse)</b> · {WAREHOUSE_CATEGORIES.join(", ")} — and any other category</p>
+        <p className="text-ink-3"><b className="font-semibold text-ink-2">Floor space (pre-pack area)</b> · Pre-packs (a set of any category, counted in pieces — PP4 = 4), {PREPACK_AREA_CATEGORIES.join(", ")}</p>
         <p className="text-ink-4 md:col-span-2">Type a month&apos;s capacity and press Enter: later months fill with it until the next month you change. Bold = set that month · grey = carried forward.</p>
       </div>
     </div>

@@ -138,7 +138,7 @@ const PIN2 = "pin left-[140px] whitespace-nowrap px-4 py-2 shadow-[inset_-1px_0_
 /** The pre-pack area (pre-packs as packs + perfumes / shoes / bags / trolleys) against its own capacity, hoverable like the main bar. */
 function AreaMeter({ p }: { p: WhPoint }) {
   const cap = p.spCap || Math.max(1, p.spUsed ?? 0);
-  const parts = [{ label: "Pre-packs (packs)", cls: "bg-accent", v: p.packs ?? 0 }, { label: "Non-apparel (accessories, bags, perfumes, shoes …)", cls: "bg-[#7c5cbf]", v: p.special ?? 0 },
+  const parts = [{ label: "Pre-packs (pieces)", cls: "bg-accent", v: p.prepack ?? 0 }, { label: "Non-apparel (accessories, bags, perfumes, shoes …)", cls: "bg-[#7c5cbf]", v: p.special ?? 0 },
     ...(p.spCap ? [{ label: "Free", cls: "", v: Math.max(0, p.spCap - (p.spUsed ?? 0)) }] : [])].filter((x) => x.v > 0);
   return (
     <div className="mt-3 border-t border-line pt-2.5">
@@ -156,7 +156,7 @@ function AreaMeter({ p }: { p: WhPoint }) {
         ))}
       </div>
       <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11.5px] text-ink-3">
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-accent" />Pre-packs <b className="tabular text-ink">{lakh(p.packs ?? 0)}</b></span>
+        <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-accent" />Pre-packs (pieces) <b className="tabular text-ink">{lakh(p.prepack ?? 0)}</b></span>
         <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#7c5cbf]" />Non-apparel <b className="tabular text-ink">{lakh(p.special ?? 0)}</b></span>
       </div>
     </div>
@@ -203,7 +203,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
                   </td>
                 ))}
               </tr>
-              {hasArea && ([["spCap", "Floor space capacity (lakh units)"], ["packs", "Pre-pack stock (packs)"], ["special", "Non-apparel (accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys)"], ["spUsed", "Floor space used"]] as const).map(([k, label]) => (
+              {hasArea && ([["spCap", "Floor space capacity (lakh units)"], ["prepack", "Pre-pack stock (pieces, PP4 = 4)"], ["special", "Non-apparel (accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys)"], ["spUsed", "Floor space used"]] as const).map(([k, label]) => (
                 <tr key={k} className="border-t border-line/60">
                   <td className={cn(PIN2, k === "spUsed" ? "font-medium text-ink-2" : "text-ink-3")}>{label}</td>
                   {pts.map((p) => <td key={p.period} className={cn("px-4 py-2 text-right tabular", k === "spUsed" ? "font-semibold" : "text-ink-3")}>{p[k] != null ? (p[k]! / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
@@ -260,8 +260,8 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
         {/* how stock is counted — once, for utilisation and the inventory flow below */}
         <div className="card space-y-1 px-4 py-3 text-[12px] text-ink-3 md:px-5">
           <p><b className="font-semibold text-ink">Stock</b> = <span className="font-mono text-[11.5px] text-ink-2">INVENTORY + Inventory Blocked + Not Found + Bad Inventory + Putaway Pending</span> <span className="text-ink-4">(Putback Pending and Pending Inventory Assessment not counted)</span></p>
-          <p><b className="font-semibold text-ink">Warehouse utilisation</b> = stock of warehouse categories ÷ warehouse capacity · <b className="font-semibold text-ink">Floor space utilisation</b> = (pre-pack stock in packs + non-apparel stock) ÷ floor space capacity</p>
-          <p><b className="font-semibold text-ink">Inventory flow</b> · opening = stock on the last day before the month, closing = stock on the last day in it (both areas) · inward = category putaway + return putaway · outward = B2C + B2B marketplace + store dispatch · capacity = warehouse + floor space</p>
+          <p><b className="font-semibold text-ink">Bin space utilisation</b> = stock of warehouse categories ÷ bin space (warehouse) capacity · <b className="font-semibold text-ink">Floor space utilisation</b> = (pre-pack stock in pieces — PP4 = 4 — + non-apparel stock) ÷ floor space capacity</p>
+          <p><b className="font-semibold text-ink">Inventory flow</b> · opening = stock on the last day before the month, closing = stock on the last day in it (both areas) · inward = category putaway + return putaway · outward = B2C + B2B marketplace + store dispatch · capacity = bin space + floor space, each also on its own line</p>
         </div>
         <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · space used = good + bad + blocked + not found + putaway pending, vs capacity, by month"
           summary={<>
@@ -361,14 +361,17 @@ function TrendTable({ trend, current, mtdLabel }: { trend: { def: { key: string;
   );
 }
 
-/** Opening → closing per warehouse (both areas), with the floor space (pre-pack area) on its own line under it. */
+/** Opening → closing per warehouse (both areas), with bin space (racked categories) and floor space (pre-pack area) each on a line under it. */
 function FlowTable({ rows, current, wh }: { rows: FlowCalc[]; current: string; wh: Data["wh"] }) {
   const periods = [...new Set(rows.map((r) => r.period))].sort().reverse();
   const cell = (v: number) => <td className="text-right tabular">{lakh(v)}</td>;
-  const floor = (w: "South" | "North", p: string) => {
+  const area = (w: "South" | "North", p: string) => {
     const pts = wh[w], i = pts.findIndex((x) => x.period === p), at = pts[i], prev = i > 0 ? pts[i - 1] : undefined;
     if (!at || (at.spUsed == null && at.spCap == null)) return null;
-    return { cap: at.spCap, open: prev?.spUsed ?? null, close: at.spUsed };
+    return {
+      bin: { label: "Bin space", note: "warehouse categories", cap: at.capacity || null, open: prev?.inventory ?? null, close: at.inventory },
+      floor: { label: "Floor space", note: "pre-packs (pieces) + non-apparel", cap: at.spCap, open: prev?.spUsed ?? null, close: at.spUsed },
+    };
   };
   const u = (v: number | null, c: number | null) => (v != null && c ? v / c : null);
   const utilCls = (x: number | null) => (x == null ? "text-ink-4" : x >= 1 ? "text-bad" : x >= 0.9 ? "text-warn" : "text-ink");
@@ -377,7 +380,7 @@ function FlowTable({ rows, current, wh }: { rows: FlowCalc[]; current: string; w
       <table className="table-base min-w-[900px]">
         <thead><tr><th>Month</th><th>WH</th><th className="text-right">Capacity</th><th className="text-right">Opening</th><th className="text-right">Util (open)</th><th className="text-right">Inward · category</th><th className="text-right">Inward · returns</th><th className="text-right">Outward</th><th className="text-right">Closing</th><th className="text-right">Util (close)</th><th className="text-right">Change</th></tr></thead>
         <tbody>{periods.flatMap((p) => rows.filter((r) => r.period === p).flatMap((r, i) => {
-          const fl = floor(r.warehouse, p);
+          const ar = area(r.warehouse, p);
           // the warehouse line holds both areas (capacity already = warehouse + floor space)
           const cap = r.capacity, uo = u(r.opening, cap), uc = u(r.closing, cap);
           return [
@@ -390,18 +393,18 @@ function FlowTable({ rows, current, wh }: { rows: FlowCalc[]; current: string; w
             <td className={cn("text-right font-semibold tabular", utilCls(uc))}>{pc(uc)}</td>
             <td className={cn("text-right tabular", r.build > 0 ? "text-warn" : "text-ok")}>{r.build >= 0 ? "+" : "−"}{lakh(Math.abs(r.build))}</td>
           </tr>,
-          ...(fl ? [
-          <tr key={`${p}${r.warehouse}floor`} className={cn("text-[12px] text-ink-3", p === current && "bg-subtle/50")}>
+          ...(ar ? [ar.bin, ar.floor].map((fl) => (
+          <tr key={`${p}${r.warehouse}${fl.label}`} className={cn("text-[12px] text-ink-3", p === current && "bg-subtle/50")}>
             <td />
-            <td className="pl-5">↳ Floor space</td>
+            <td className="whitespace-nowrap pl-5">↳ {fl.label}</td>
             <td className="text-right tabular">{fl.cap != null ? lakh(fl.cap) : "—"}</td>
             <td className="text-right tabular">{fl.open != null ? lakh(fl.open) : "—"}</td>
             <td className="text-right tabular">{pc(u(fl.open, fl.cap))}</td>
-            <td colSpan={3} className="text-right text-[11.5px] text-ink-4">pre-packs + non-apparel</td>
+            <td colSpan={3} className="text-right text-[11.5px] text-ink-4">{fl.note}</td>
             <td className="text-right tabular">{fl.close != null ? lakh(fl.close) : "—"}</td>
             <td className={cn("text-right font-semibold tabular", utilCls(u(fl.close, fl.cap)))}>{pc(u(fl.close, fl.cap))}</td>
             <td className="text-right tabular">{fl.open != null && fl.close != null ? `${fl.close >= fl.open ? "+" : "−"}${lakh(Math.abs(fl.close - fl.open))}` : "—"}</td>
-          </tr>] : []),
+          </tr>)) : []),
           ];
         }))}</tbody>
       </table>

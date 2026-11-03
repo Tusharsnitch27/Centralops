@@ -432,7 +432,7 @@ export async function rebuild() {
             sum(special_units)::float8 as special, sum(prepack_units)::float8 as prepack_units, sum(prepack_packs)::float8 as prepack_packs from sop_inventory_daily group by day, region order by day`);
   // units = main area; special = perfumes / shoes / bags / trolleys; all = every stock column of both areas (pre-pack as quantity): the flow's opening / closing
   const invAt = new Map<string, { units: number; good: number; bad: number; other: number; special: number; prepack: number; packs: number; all: number }>(); // "day|region"
-  for (const x of inv) invAt.set(`${x.day}|${x.region}`, { units: Number(x.units), good: Number(x.good), bad: Number(x.bad), other: Number(x.other), special: Number(x.special), prepack: Number(x.prepack_units), packs: Number(x.prepack_packs), all: Number(x.units) + Number(x.special) + Number(x.prepack_packs) });
+  for (const x of inv) invAt.set(`${x.day}|${x.region}`, { units: Number(x.units), good: Number(x.good), bad: Number(x.bad), other: Number(x.other), special: Number(x.special), prepack: Number(x.prepack_units), packs: Number(x.prepack_packs), all: Number(x.units) + Number(x.special) + Number(x.prepack_units) });
   const capAt = await whCapacityAt();
   const invDays = [...new Set(inv.map((x) => x.day))].sort();
   const lastInvIn = (p: string) => invDays.filter((d) => d.startsWith(p.slice(0, 7))).at(-1);
@@ -444,6 +444,10 @@ export async function rebuild() {
       if (!at) continue;
       await q(`update sop_wh_capacity set special_units = $3, prepack_packs = $4, prepack_units = coalesce(prepack_units, $5), special_capacity = coalesce(special_capacity, $6)
                where period = $1 and warehouse = $2`, [p, wh, Math.round(at.special), Math.round(at.packs), Math.round(at.prepack), capAt(wh, p).special]);
+      // Snowflake-built flow of a closed month: opening / closing re-counted with every area (pre-packs in pieces)
+      const openDay = invDays.filter((x) => x < p).at(-1), open = openDay ? invAt.get(`${openDay}|${region}`) : undefined;
+      await q(`update sop_inventory_flow set closing = $3, opening = coalesce($4, opening) where period = $1 and warehouse = $2 and source = 'snowflake'`,
+        [p, wh, Math.round(at.all), open ? Math.round(open.all) : null]);
     }
   }
   for (const p of months) {

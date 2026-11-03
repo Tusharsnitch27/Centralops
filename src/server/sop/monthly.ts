@@ -56,9 +56,9 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const [rowsDb, caps, retAct] = await Promise.all([
     q<{ period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null }>(
       `select period::text as period, view_key, row_label, row_group, sort, south_plan, south_actual, north_plan, north_actual from sop_review_rows where period = any($1::date[]) order by period, view_key, sort, row_label`, [months]),
-    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null; special_capacity: number | null; special: number | null; packs: number | null }>(
+    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null; special_capacity: number | null; special: number | null; prepack_pcs: number | null }>(
       `select period::text as period, warehouse, capacity::float8 as capacity, inventory::float8 as inventory, good_units::float8 as good, bad_units::float8 as bad, other_units::float8 as other, prepack_units::float8 as prepack_units,
-              special_capacity::float8 as special_capacity, special_units::float8 as special, prepack_packs::float8 as packs
+              special_capacity::float8 as special_capacity, special_units::float8 as special, prepack_units::float8 as prepack_pcs
        from sop_wh_capacity order by period`),
     q<ReturnsRow>(`select period::text as period, warehouse, b2c::float8 as b2c, b2b::float8 as b2b, fwd_b2c, fwd_retail from sop_returns where period = any($1::date[])`, [months]),
   ]);

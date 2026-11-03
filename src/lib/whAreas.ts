@@ -1,5 +1,5 @@
 // Warehouse areas by category (capacity is set per area: S&OP › Monthly review › Warehouse utilisation › capacity control).
-// Pre-packs are not a category: a pre-pack is a set of any category's pieces, and always sits in the pre-pack area (counted as packs).
+// Pre-packs are not a category: a pre-pack is a set of any category's pieces, and always sits in the pre-pack area (counted in pieces: PP4 = 4).
 
 /** Non-apparel categories that sit in the pre-pack area with the pre-packs. */
 export const PREPACK_AREA_CATEGORIES = ["Accessories", "Bags", "Belts", "Caps", "Perfumes", "Shoes", "Socks", "Sunglasses", "Trolley"];
