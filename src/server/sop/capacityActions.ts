@@ -60,3 +60,46 @@ export async function updateCallout(id: string, patch: { status?: "open" | "done
     return ok();
   } catch (e) { return fail(e); }
 }
+
+/** Warehouse capacity from a month onwards: main area + pre-pack area (pre-packs, perfumes, shoes, bags, trolleys). Months already loaded take it at once. */
+export async function setWhCapacity(i: { warehouse: "South" | "North"; from: string; capacity: number; special: number | null }): Promise<ActionResult> {
+  try {
+    const u = await requireUser();
+    if (!canManage(u)) throw new Error("Only the PM can change warehouse capacity");
+    if (!["South", "North"].includes(i.warehouse)) throw new Error("Pick South or North");
+    if (!/^\d{4}-\d{2}-01$/.test(i.from)) throw new Error("Pick the month it applies from");
+    const cap = Math.round(Number(i.capacity));
+    if (!Number.isFinite(cap) || cap <= 0) throw new Error("Enter the warehouse capacity in units");
+    const sp = i.special == null || String(i.special) === "" ? null : Math.round(Number(i.special));
+    if (sp != null && (!Number.isFinite(sp) || sp < 0)) throw new Error("Enter the pre-pack area capacity in units");
+    await q(`insert into sop_wh_capacity_settings (warehouse, effective_from, capacity, special_capacity, updated_by) values ($1,$2,$3,$4,$5)
+             on conflict (warehouse, effective_from) do update set capacity = excluded.capacity, special_capacity = excluded.special_capacity, updated_by = excluded.updated_by, updated_at = now()`,
+      [i.warehouse, i.from, cap, sp, u.id]);
+    // months from here until the next change take the new capacity
+    const until = `(select min(effective_from) from sop_wh_capacity_settings where warehouse = $1 and effective_from > $2)`;
+    await q(`update sop_wh_capacity set capacity = $3, special_capacity = $4 where warehouse = $1 and period >= $2 and (${until} is null or period < ${until})`, [i.warehouse, i.from, cap, sp]);
+    await q(`update sop_inventory_flow set capacity = $3 where warehouse = $1 and period >= $2 and (${until} is null or period < ${until})`, [i.warehouse, i.from, cap]);
+    revalidatePath("/sop", "layout");
+    return ok(undefined, `${i.warehouse}: ${(cap / 100000).toFixed(2)}L warehouse${sp != null ? ` · ${(sp / 100000).toFixed(2)}L pre-pack area` : ""} from ${i.from.slice(0, 7)}`);
+  } catch (e) { return fail(e); }
+}
+
+export async function deleteWhCapacity(warehouse: "South" | "North", from: string): Promise<ActionResult> {
+  try {
+    const u = await requireUser();
+    if (!canManage(u)) throw new Error("Only the PM can change warehouse capacity");
+    const n = await q<{ c: number }>(`select count(*)::int as c from sop_wh_capacity_settings where warehouse = $1`, [warehouse]);
+    if ((n[0]?.c ?? 0) <= 1) throw new Error("Keep at least one capacity per warehouse");
+    await q(`delete from sop_wh_capacity_settings where warehouse = $1 and effective_from = $2`, [warehouse, from]);
+    // re-apply the capacity now in force to every month
+    const { whCapacityAt } = await import("./sync");
+    const at = await whCapacityAt();
+    for (const r of await q<{ period: string }>(`select period::text as period from sop_wh_capacity where warehouse = $1`, [warehouse])) {
+      const c = at(warehouse, r.period);
+      await q(`update sop_wh_capacity set capacity = $3, special_capacity = $4 where warehouse = $1 and period = $2`, [warehouse, r.period, c.capacity, c.special]);
+      await q(`update sop_inventory_flow set capacity = $3 where warehouse = $1 and period = $2`, [warehouse, r.period, c.capacity]);
+    }
+    revalidatePath("/sop", "layout");
+    return ok(undefined, "Capacity change removed");
+  } catch (e) { return fail(e); }
+}

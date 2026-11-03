@@ -17,7 +17,9 @@ export const VIEWS: ViewDef[] = [
 export interface RawRow { label: string; group: string | null; sp: number; sa: number; np: number; na: number }
 export interface Row extends RawRow { tp: number; ta: number; tu: number | null; su: number | null; nu: number | null; gap: number; kind?: "subtotal" | "total" }
 /** inventory = total space used; good / bad / other split it (other = blocked + not found + putaway pending). */
-export interface WhCap { period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good?: number | null; bad?: number | null; other?: number | null }
+export interface WhCap { period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good?: number | null; bad?: number | null; other?: number | null;
+  /** pre-pack area: pre-pack stock (packs) + perfumes / shoes / bags / trolleys, against its own capacity */
+  special_capacity?: number | null; special?: number | null; packs?: number | null }
 
 const u = (a: number, p: number) => (p > 0 ? a / p : null);
 export function enrich(r: RawRow, kind?: Row["kind"]): Row {
@@ -42,19 +44,24 @@ export function tableRows(v: ViewDef, raw: RawRow[]): Row[] {
 }
 
 /* ---------- warehouse utilisation ---------- */
-export interface WhPoint { period: string; capacity: number; inventory: number | null; util: number | null; good: number | null; bad: number | null; other: number | null }
+export interface WhPoint { period: string; capacity: number; inventory: number | null; util: number | null; good: number | null; bad: number | null; other: number | null;
+  spCap: number | null; special: number | null; packs: number | null; spUsed: number | null; spUtil: number | null }
 export function whSeries(caps: WhCap[]) {
   const months = [...new Set(caps.map((c) => c.period))].sort();
   const n = (v: number | null | undefined) => (v == null ? null : Number(v));
   const pick = (wh: "South" | "North"): WhPoint[] => months.map((p) => {
     const c = caps.find((x) => x.period === p && x.warehouse === wh);
-    const inv = n(c?.inventory);
-    return { period: p, capacity: Number(c?.capacity ?? 0), inventory: inv, util: inv != null && c?.capacity ? inv / Number(c.capacity) : null, good: n(c?.good), bad: n(c?.bad), other: n(c?.other) };
+    const inv = n(c?.inventory), spCap = n(c?.special_capacity), special = n(c?.special), packs = n(c?.packs);
+    const spUsed = special == null && packs == null ? null : (special ?? 0) + (packs ?? 0);
+    return { period: p, capacity: Number(c?.capacity ?? 0), inventory: inv, util: inv != null && c?.capacity ? inv / Number(c.capacity) : null, good: n(c?.good), bad: n(c?.bad), other: n(c?.other),
+      spCap, special, packs, spUsed, spUtil: spUsed != null && spCap ? spUsed / spCap : null };
   });
   const S = pick("South"), N = pick("North");
   const add = (a: number | null, b: number | null) => (a == null && b == null ? null : (a ?? 0) + (b ?? 0));
   const T: WhPoint[] = months.map((p, i) => { const inv = add(S[i].inventory, N[i].inventory); const cap = S[i].capacity + N[i].capacity;
-    return { period: p, capacity: cap, inventory: inv, util: inv != null && cap ? inv / cap : null, good: add(S[i].good, N[i].good), bad: add(S[i].bad, N[i].bad), other: add(S[i].other, N[i].other) }; });
+    const spCap = add(S[i].spCap, N[i].spCap), spUsed = add(S[i].spUsed, N[i].spUsed);
+    return { period: p, capacity: cap, inventory: inv, util: inv != null && cap ? inv / cap : null, good: add(S[i].good, N[i].good), bad: add(S[i].bad, N[i].bad), other: add(S[i].other, N[i].other),
+      spCap, special: add(S[i].special, N[i].special), packs: add(S[i].packs, N[i].packs), spUsed, spUtil: spUsed != null && spCap ? spUsed / spCap : null }; });
   return { months, South: S, North: N, Total: T };
 }
 /** Latest month with inventory for a WH. */

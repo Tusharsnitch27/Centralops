@@ -8,13 +8,14 @@ import { monthlyReview } from "@/server/sop/monthly";
 import { dailyDeviation } from "@/server/sop/daily";
 import { resolvePeriod } from "@/server/sop/period";
 import { lastRuns } from "@/server/sop/sync";
-import { requireUser } from "@/server/auth";
+import { canManage, requireUser } from "@/server/auth";
 import { ago } from "@/lib/dates";
 
 export const metadata = { title: "S&OP · Monthly review" };
 
 export default async function SopMonthlyReview({ searchParams }: { searchParams: Promise<{ grain?: string; p?: string; period?: string }> }) {
   await requireSopOverview();
+  const u = await requireUser();
   const per = await resolvePeriod(await searchParams);
   if (!per.sel) return <EmptyState title="No monthly review data yet" body="Plan vs actual by channel, week and category will appear here." />;
   const [d, daily, runs] = await Promise.all([monthlyReview(per.sel.months, per.label), dailyDeviation(per.sel.months), lastRuns()]);
@@ -26,7 +27,7 @@ export default async function SopMonthlyReview({ searchParams }: { searchParams:
       <p className="-mt-2 mb-5 px-1 text-[12px] text-ink-4">
         {per.sel.months.length > 1 ? `${per.sel.months.length} months added up · ` : ""}{lastOk ? `Apr–Aug actuals from the workbook · Sep onwards from Snowflake, refreshed ${ago(lastOk)} · finished months frozen` : "Apr–Aug 2026 actuals from the Plan vs Actual workbook · Sep onwards from Snowflake once refreshed"}
       </p>
-      <MonthlyReviewView d={d} daily={daily.views} />
+      <MonthlyReviewView d={d} daily={daily.views} canEditCapacity={canManage(u)} />
       <section id="daily" className="mt-6 scroll-mt-20 space-y-2">
         <h2 className="label-caps px-1">Day by day · plan vs actual</h2>
         {!daily.hasActuals

@@ -15,6 +15,7 @@ const mon = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { 
 
 export { UtilChip } from "./UtilChip";
 import { UtilChip } from "./UtilChip";
+import { WhCapacityBar } from "./WhCapacityBar";
 
 function Rich({ segs }: { segs: Seg[] }) {
   return <>{segs.map((s, i) => typeof s === "string" ? <span key={i}>{s}</span>
@@ -124,6 +125,7 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
           <span className="col-span-2 mt-1 flex items-center gap-1.5 border-t border-line pt-1.5 text-ink-2"><b className="font-semibold">Total used</b><b className="ml-auto font-semibold tabular text-ink">{lakh(cur!.inventory ?? 0)}</b><span className="text-ink-4">of {lakh(cur!.capacity)} capacity</span></span>
         </div>
       ) : <div className="mt-2 text-[12.5px] text-ink-3"><b className="font-semibold text-ink">{cur?.inventory != null ? lakh(cur.inventory) : "—"}</b> used of <b className="font-semibold text-ink">{cur ? lakh(cur.capacity) : "—"}</b> capacity</div>}
+      {cur && cur.spUsed != null && <AreaMeter p={cur} />}
       {notSellable != null && notSellable > 0 && (
         <div className={cn("mt-2.5 rounded-lg px-2.5 py-1.5 text-[12px]", notSellable >= 0.08 ? "bg-bad-soft text-bad" : "bg-subtle text-ink-2")}>
           <b className="font-semibold">{pc(notSellable)}</b> of used space isn’t sellable (bad + blocked / not found / pending)
@@ -134,10 +136,38 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
 }
 // the Details column stays pinned beside the Warehouse column while months scroll
 const PIN2 = "pin left-[140px] whitespace-nowrap px-4 py-2 shadow-[inset_-1px_0_0_var(--color-line)]";
+/** The pre-pack area (pre-packs as packs + perfumes / shoes / bags / trolleys) against its own capacity, hoverable like the main bar. */
+function AreaMeter({ p }: { p: WhPoint }) {
+  const cap = p.spCap || Math.max(1, p.spUsed ?? 0);
+  const parts = [{ label: "Pre-packs (packs)", cls: "bg-accent", v: p.packs ?? 0 }, { label: "Perfumes / shoes / bags / trolleys", cls: "bg-[#7c5cbf]", v: p.special ?? 0 },
+    ...(p.spCap ? [{ label: "Free", cls: "", v: Math.max(0, p.spCap - (p.spUsed ?? 0)) }] : [])].filter((x) => x.v > 0);
+  return (
+    <div className="mt-3 border-t border-line pt-2.5">
+      <div className="flex items-baseline justify-between text-[12px]">
+        <span className="font-semibold text-ink-2">Pre-pack area</span>
+        <span className="text-ink-3"><b className="font-semibold tabular text-ink">{lakh(p.spUsed ?? 0)}</b>{p.spCap ? <> of {lakh(p.spCap)} · <b className={cn("font-semibold tabular", (p.spUtil ?? 0) >= 0.9 ? "text-bad" : (p.spUtil ?? 0) >= 0.8 ? "text-warn" : "text-ok")}>{pc(p.spUtil)}</b></> : <span className="text-ink-4"> · set its capacity above</span>}</span>
+      </div>
+      <div className="mt-1.5 flex h-2 rounded-full bg-muted">
+        {parts.map((x, i, all) => (
+          <span key={x.label} className={cn("group relative h-full cursor-default transition-transform hover:scale-y-[1.6]", x.cls, i === 0 && "rounded-l-full", i === all.length - 1 && "rounded-r-full")} style={{ width: `${Math.min(100, (x.v / cap) * 100)}%` }}>
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11.5px] font-medium text-white shadow-lg group-hover:block">
+              {x.label} · <b className="tabular">{lakh(x.v)}</b>{p.spCap ? ` · ${pc(x.v / p.spCap)} of area` : ""}
+            </span>
+          </span>
+        ))}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11.5px] text-ink-3">
+        <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-accent" />Pre-packs <b className="tabular text-ink">{lakh(p.packs ?? 0)}</b></span>
+        <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#7c5cbf]" />Perfumes / shoes / bags / trolleys <b className="tabular text-ink">{lakh(p.special ?? 0)}</b></span>
+      </div>
+    </div>
+  );
+}
 function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) {
   const blocks: [string, WhPoint[], string][] = [["South (BLR)", wh.South, "#e8f0fe"], ["North (GGN)", wh.North, "#fdf2e3"], ["Total", wh.Total, "#e7f7ed"]];
   const pp = (name: string, m: string) => { const k = name.startsWith("South") ? "South" : name.startsWith("North") ? "North" : null; const v = prepack[m]; if (!v) return null; return k ? v[k] : (v.South ?? 0) + (v.North ?? 0); };
   const hasPP = Object.keys(prepack).length > 0;
+  const hasArea = wh.Total.some((p) => p.spUsed != null || p.spCap != null);
   const hasSplit = wh.Total.some((p) => p.good != null);
   return (
     <div className="card overflow-x-auto">
@@ -152,7 +182,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
           {blocks.map(([name, pts, bg]) => (
             <Fragment key={name}>
               <tr className="border-t border-line">
-                <td rowSpan={(hasPP ? 4 : 3) + (hasSplit ? 3 : 0)} className="pin left-0 w-[140px] min-w-[140px] px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
+                <td rowSpan={(hasArea ? 6 : hasPP ? 4 : 3) + (hasSplit ? 3 : 0)} className="pin left-0 w-[140px] min-w-[140px] px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
                 <td className={cn(PIN2, "text-ink-3")}>Capacity (lakh units)</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right tabular">{(p.capacity / 100000).toFixed(2)}</td>)}
               </tr>
@@ -174,7 +204,19 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
                   </td>
                 ))}
               </tr>
-              {hasPP && (
+              {hasArea && ([["spCap", "Pre-pack area capacity (lakh units)"], ["packs", "Pre-pack stock (packs)"], ["special", "Perfumes / shoes / bags / trolleys"], ["spUsed", "Pre-pack area used"]] as const).map(([k, label]) => (
+                <tr key={k} className="border-t border-line/60">
+                  <td className={cn(PIN2, k === "spUsed" ? "font-medium text-ink-2" : "text-ink-3")}>{label}</td>
+                  {pts.map((p) => <td key={p.period} className={cn("px-4 py-2 text-right tabular", k === "spUsed" ? "font-semibold" : "text-ink-3")}>{p[k] != null ? (p[k]! / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
+                </tr>
+              ))}
+              {hasArea && (
+                <tr className="border-t border-line/60 bg-subtle/50">
+                  <td className={cn(PIN2, "bg-subtle font-semibold")}>Pre-pack area utilisation %</td>
+                  {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right">{p.spUtil != null ? <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-semibold tabular", p.spUtil >= 0.9 ? "bg-bad-soft text-bad" : p.spUtil >= 0.8 ? "bg-warn-soft text-warn" : "bg-accent-soft text-accent-ink")}>{(p.spUtil * 100).toFixed(2)}%</span> : <span className="text-ink-4">—</span>}</td>)}
+                </tr>
+              )}
+              {hasPP && !hasArea && (
                 <tr className="border-t border-line/60">
                   <td className={cn(PIN2, "text-ink-3")}>Pre-pack stock (separate area, units)</td>
                   {pts.map((p) => { const v = pp(name, p.period); return <td key={p.period} className="px-4 py-2 text-right tabular text-ink-3">{v != null ? (v / 100000).toFixed(2) : "—"}</td>; })}
@@ -188,7 +230,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
   );
 }
 
-export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyView[] }) {
+export function MonthlyReviewView({ d, daily = [], canEditCapacity = false }: { d: Data; daily?: DailyView[]; canEditCapacity?: boolean }) {
   const flows: { key: "outbound" | "inbound"; title: string }[] = [
     { key: "outbound", title: "Outbound — channels & stores" },
     { key: "inbound", title: "Inbound — inward, pre-pack, returns & categories" },
@@ -221,6 +263,7 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
             {whTotal && <span className="flex items-center gap-1.5 text-ink-3">Total <span className="font-semibold text-ink tabular">{pc(whTotal.util)}</span><span className="text-ink-4">· {mon(whTotal.period)}</span></span>}
             <Flags items={d.whInsights} />
           </>}>
+          <WhCapacityBar settings={d.capSettings} canEdit={canEditCapacity} />
           <div className="space-y-4 p-4 md:p-5">
             <div className="grid gap-3 lg:grid-cols-3">
               <WhTile name="South (BLR)" pts={d.wh.South} tone="#2563eb" />

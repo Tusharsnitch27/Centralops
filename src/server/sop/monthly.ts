@@ -55,8 +55,9 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const [rowsDb, caps, retAct] = await Promise.all([
     q<{ period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null }>(
       `select period::text as period, view_key, row_label, row_group, sort, south_plan, south_actual, north_plan, north_actual from sop_review_rows where period = any($1::date[]) order by period, view_key, sort, row_label`, [months]),
-    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null }>(
-      `select period::text as period, warehouse, capacity::float8 as capacity, inventory::float8 as inventory, good_units::float8 as good, bad_units::float8 as bad, other_units::float8 as other, prepack_units::float8 as prepack_units
+    q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null; special_capacity: number | null; special: number | null; packs: number | null }>(
+      `select period::text as period, warehouse, capacity::float8 as capacity, inventory::float8 as inventory, good_units::float8 as good, bad_units::float8 as bad, other_units::float8 as other, prepack_units::float8 as prepack_units,
+              special_capacity::float8 as special_capacity, special_units::float8 as special, prepack_packs::float8 as packs
        from sop_wh_capacity order by period`),
     q<ReturnsRow>(`select period::text as period, warehouse, b2c::float8 as b2c, b2b::float8 as b2b, fwd_b2c, fwd_retail from sop_returns where period = any($1::date[])`, [months]),
   ]);
@@ -107,7 +108,11 @@ export async function monthlyReview(input: string | string[], label?: string) {
       if (d?.hasActuals) daySplit[v.def.key] = { through: d.through, basis: d.basis, perLabel: d.perLabel };
     }
   }
+  const capSettings = await q<{ warehouse: "South" | "North"; from: string; capacity: number; special: number | null; by: string | null; at: string }>(
+    `select s.warehouse, s.effective_from::text as from, s.capacity::float8 as capacity, s.special_capacity::float8 as special, u.name as by, s.updated_at::text as at
+     from sop_wh_capacity_settings s left join users u on u.id = s.updated_by order by s.warehouse desc, s.effective_from desc`);
   return {
+    capSettings,
     daySplit,
     period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
     trend: trendTable(withReturnActuals(trendRows.map((r) => ({ period: r.period, view_key: r.view_key, row_label: r.row_label, south_plan: Number(r.sp), south_actual: Number(r.sa), north_plan: Number(r.np), north_actual: Number(r.na) })), returns)
