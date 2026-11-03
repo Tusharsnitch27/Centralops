@@ -33,6 +33,7 @@ const MAIN = [
   { key: "review", href: "/sop/review", label: "Review meeting" },
   { key: "cost", href: "/sop/cost", label: "Processing cost" },
   { key: "productivity", href: "/sop/productivity", label: "Productivity" },
+  { key: "controls", href: "/sop/controls", label: "Controls" },
 ];
 const INPUT_TABS = [
   { key: "inputs", href: "/sop/inputs", label: "Submit & track" },

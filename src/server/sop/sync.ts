@@ -35,6 +35,8 @@ async function closeFinishedMonths() {
     await q(`insert into sop_month_status (period, status, source, closed_at) values ($1,'closed','snowflake',now()) on conflict (period) do update set status = 'closed', closed_at = now()`, [p]);
   return months;
 }
+/** First stock day read for the area split (day before FY start = April opening). */
+const INVENTORY_HISTORY_FROM = "2026-03-31";
 const INV_TABLE = () => process.env.SNOWFLAKE_INVENTORY_TABLE ?? "snitch_db.maplemonk.snitch_final_inventory_wh2";
 const SLA_TABLE = "maplemonk.warehouse_sla_performance";
 const PUT_TABLE = "snitch_db.maplemonk.putaway_tracking";
@@ -270,7 +272,9 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
   const MAIN = `(NOT ${isPP} AND NOT ${isSP})`;
   const ppMult = `COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR(${S}, '^PP([0-9]+)', 1, 1, 'ie', 1)), TRY_TO_NUMBER(REGEXP_SUBSTR(${N}, 'PP ?([0-9]+)', 1, 1, 'ie', 1)),
     TRY_TO_NUMBER(REGEXP_SUBSTR(${N}, '([0-9]+) ?(pcs|pc|pieces|piece)', 1, 1, 'ie', 1)), 1)`;
-  const from = new Date(new Date(`${FROM()}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10); // + the day before, for April's opening
+  // + the day before, for the month's opening. Once, the whole FY is re-read so closed months get the pre-pack area split (pre-packs, non-apparel) too
+  const backfilled = (await one<{ value: unknown }>(`select value from app_settings where key = 'sop.inventory_area_backfill'`))?.value === "v1";
+  const from = backfilled ? new Date(new Date(`${FROM()}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10) : INVENTORY_HISTORY_FROM;
   const rows = await sfQuery<{ day: string; warehouse: string; good: number; bad: number; other: number; special: number; prepack_packs: number; prepack_units: number }>(
     `SELECT TO_VARCHAR(${D}, 'YYYY-MM-DD') AS day, UPPER(${W}) AS warehouse,
        SUM(CASE WHEN ${MAIN} THEN ${Q} ELSE 0 END) AS good,
@@ -296,7 +300,8 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
                special_units = excluded.special_units, prepack_packs = excluded.prepack_packs, prepack_units = excluded.prepack_units`,
       [r.day, r.warehouse, region, good + bad + other, good, bad, other, Number(r.special) || 0, Number(r.prepack_packs) || 0, Number(r.prepack_units) || 0]);
   }
-  return { read: rows.length, written: rows.length, note: `columns: date=${date}, warehouse=${wh}, sku=${sku}, name=${name ?? "—"}, category=${category ?? "— (item name)"}, good=${qty}, bad=${bad ?? "—"}, other=${[blocked, notFound, putawayP].filter(Boolean).join(" + ") || "—"}` };
+  if (!backfilled) await q(`insert into app_settings (key, value) values ('sop.inventory_area_backfill', '"v1"') on conflict (key) do update set value = excluded.value, updated_at = now()`);
+  return { read: rows.length, written: rows.length, note: `${backfilled ? "" : `history re-read from ${from} · `}columns: date=${date}, warehouse=${wh}, sku=${sku}, name=${name ?? "—"}, category=${category ?? "— (item name)"}, good=${qty}, bad=${bad ?? "—"}, other=${[blocked, notFound, putawayP].filter(Boolean).join(" + ") || "—"}` };
 }
 
 /** Capacity in force for a warehouse in a month (S&OP › Warehouse utilisation › capacity bar): main area + pre-pack area. */
@@ -432,6 +437,15 @@ export async function rebuild() {
   const invDays = [...new Set(inv.map((x) => x.day))].sort();
   const lastInvIn = (p: string) => invDays.filter((d) => d.startsWith(p.slice(0, 7))).at(-1);
   const months = [...new Set(invDays.map((d) => month(d)))].filter((p) => p >= from);
+  for (const p of [...new Set(invDays.map((d) => month(d)))].filter((p) => p < from)) {
+    const d = lastInvIn(p)!;
+    for (const [region, wh] of [["south", "South"], ["north", "North"]] as const) {
+      const at = invAt.get(`${d}|${region}`);
+      if (!at) continue;
+      await q(`update sop_wh_capacity set special_units = $3, prepack_packs = $4, prepack_units = coalesce(prepack_units, $5), special_capacity = coalesce(special_capacity, $6)
+               where period = $1 and warehouse = $2`, [p, wh, Math.round(at.special), Math.round(at.packs), Math.round(at.prepack), capAt(wh, p).special]);
+    }
+  }
   for (const p of months) {
     const d = lastInvIn(p)!;
     for (const [region, wh] of [["south", "South"], ["north", "North"]] as const) {

@@ -96,7 +96,9 @@ export async function monthlyReview(input: string | string[], label?: string) {
        left join users u on u.id = n.author_id where n.period = any($1::date[]) order by n.created_at desc`, [months]),
     q<{ code: string; poc: string | null }>(`select s.code, coalesce(u.name, s.poc_label) as poc from sop_streams s left join users u on u.id = s.poc_id where s.active`),
   ]);
-  const flow = flowRows.map(flowCalc);
+  // opening / closing hold both areas, so capacity = warehouse + floor space (pre-pack area) where it is set
+  const floorCap = (p: string, w: string) => Number(caps.find((c) => c.period === p && c.warehouse === w)?.special_capacity ?? 0);
+  const flow = flowRows.map((r) => flowCalc({ ...r, capacity: Number(r.capacity) + floorCap(r.period, r.warehouse) }));
   const flowNow = flow.filter((f) => f.period === period);
   const days = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0)).getUTCDate();
   const through = meta[0]?.through_day ?? days;
@@ -110,11 +112,7 @@ export async function monthlyReview(input: string | string[], label?: string) {
       if (d?.hasActuals) daySplit[v.def.key] = { through: d.through, basis: d.basis, perLabel: d.perLabel };
     }
   }
-  const capSettings = await q<{ warehouse: "South" | "North"; from: string; capacity: number; special: number | null; by: string | null; at: string }>(
-    `select s.warehouse, s.effective_from::text as from, s.capacity::float8 as capacity, s.special_capacity::float8 as special, u.name as by, s.updated_at::text as at
-     from sop_wh_capacity_settings s left join users u on u.id = s.updated_by order by s.warehouse desc, s.effective_from desc`);
   return {
-    capSettings,
     daySplit,
     period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
     trend: trendTable(withReturnActuals(trendRows.map((r) => ({ period: r.period, view_key: r.view_key, row_label: r.row_label, south_plan: Number(r.sp), south_actual: Number(r.sa), north_plan: Number(r.np), north_actual: Number(r.na) })), returns)

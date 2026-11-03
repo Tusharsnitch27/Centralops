@@ -15,7 +15,6 @@ const mon = (p: string) => new Date(`${p}T00:00:00Z`).toLocaleString("en-IN", { 
 
 export { UtilChip } from "./UtilChip";
 import { UtilChip } from "./UtilChip";
-import { WhCapacityBar } from "./WhCapacityBar";
 
 function Rich({ segs }: { segs: Seg[] }) {
   return <>{segs.map((s, i) => typeof s === "string" ? <span key={i}>{s}</span>
@@ -139,7 +138,7 @@ const PIN2 = "pin left-[140px] whitespace-nowrap px-4 py-2 shadow-[inset_-1px_0_
 /** The pre-pack area (pre-packs as packs + perfumes / shoes / bags / trolleys) against its own capacity, hoverable like the main bar. */
 function AreaMeter({ p }: { p: WhPoint }) {
   const cap = p.spCap || Math.max(1, p.spUsed ?? 0);
-  const parts = [{ label: "Pre-packs (packs)", cls: "bg-accent", v: p.packs ?? 0 }, { label: "Perfumes / shoes / bags / trolleys", cls: "bg-[#7c5cbf]", v: p.special ?? 0 },
+  const parts = [{ label: "Pre-packs (packs)", cls: "bg-accent", v: p.packs ?? 0 }, { label: "Non-apparel (accessories, bags, perfumes, shoes …)", cls: "bg-[#7c5cbf]", v: p.special ?? 0 },
     ...(p.spCap ? [{ label: "Free", cls: "", v: Math.max(0, p.spCap - (p.spUsed ?? 0)) }] : [])].filter((x) => x.v > 0);
   return (
     <div className="mt-3 border-t border-line pt-2.5">
@@ -158,7 +157,7 @@ function AreaMeter({ p }: { p: WhPoint }) {
       </div>
       <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11.5px] text-ink-3">
         <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-accent" />Pre-packs <b className="tabular text-ink">{lakh(p.packs ?? 0)}</b></span>
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#7c5cbf]" />Perfumes / shoes / bags / trolleys <b className="tabular text-ink">{lakh(p.special ?? 0)}</b></span>
+        <span className="flex items-center gap-1.5"><span className="size-2 rounded-sm bg-[#7c5cbf]" />Non-apparel <b className="tabular text-ink">{lakh(p.special ?? 0)}</b></span>
       </div>
     </div>
   );
@@ -182,7 +181,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
           {blocks.map(([name, pts, bg]) => (
             <Fragment key={name}>
               <tr className="border-t border-line">
-                <td rowSpan={(hasArea ? 6 : hasPP ? 4 : 3) + (hasSplit ? 3 : 0)} className="pin left-0 w-[140px] min-w-[140px] px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
+                <td rowSpan={3 + (hasSplit ? 3 : 0) + (hasArea ? 5 : hasPP ? 1 : 0)} className="pin left-0 w-[140px] min-w-[140px] px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
                 <td className={cn(PIN2, "text-ink-3")}>Capacity (lakh units)</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right tabular">{(p.capacity / 100000).toFixed(2)}</td>)}
               </tr>
@@ -204,7 +203,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
                   </td>
                 ))}
               </tr>
-              {hasArea && ([["spCap", "Pre-pack area capacity (lakh units)"], ["packs", "Pre-pack stock (packs)"], ["special", "Perfumes / shoes / bags / trolleys"], ["spUsed", "Pre-pack area used"]] as const).map(([k, label]) => (
+              {hasArea && ([["spCap", "Pre-pack area capacity (lakh units)"], ["packs", "Pre-pack stock (packs)"], ["special", "Non-apparel (accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys)"], ["spUsed", "Pre-pack area used"]] as const).map(([k, label]) => (
                 <tr key={k} className="border-t border-line/60">
                   <td className={cn(PIN2, k === "spUsed" ? "font-medium text-ink-2" : "text-ink-3")}>{label}</td>
                   {pts.map((p) => <td key={p.period} className={cn("px-4 py-2 text-right tabular", k === "spUsed" ? "font-semibold" : "text-ink-3")}>{p[k] != null ? (p[k]! / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
@@ -230,7 +229,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
   );
 }
 
-export function MonthlyReviewView({ d, daily = [], canEditCapacity = false }: { d: Data; daily?: DailyView[]; canEditCapacity?: boolean }) {
+export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyView[] }) {
   const flows: { key: "outbound" | "inbound"; title: string }[] = [
     { key: "outbound", title: "Outbound — channels & stores" },
     { key: "inbound", title: "Inbound — inward, pre-pack, returns & categories" },
@@ -263,7 +262,7 @@ export function MonthlyReviewView({ d, daily = [], canEditCapacity = false }: { 
             {whTotal && <span className="flex items-center gap-1.5 text-ink-3">Total <span className="font-semibold text-ink tabular">{pc(whTotal.util)}</span><span className="text-ink-4">· {mon(whTotal.period)}</span></span>}
             <Flags items={d.whInsights} />
           </>}>
-          <WhCapacityBar settings={d.capSettings} canEdit={canEditCapacity} />
+          <p className="border-b border-line bg-subtle/50 px-4 py-2 text-[12px] text-ink-3 md:px-5">Warehouse and floor-space capacity are set by month in <a href="/sop/controls" className="font-medium text-ink underline underline-offset-2">S&amp;OP › Controls</a>.</p>
           <div className="space-y-4 p-4 md:p-5">
             <div className="grid gap-3 lg:grid-cols-3">
               <WhTile name="South (BLR)" pts={d.wh.South} tone="#2563eb" />
@@ -281,7 +280,7 @@ export function MonthlyReviewView({ d, daily = [], canEditCapacity = false }: { 
           </>}>
           <div className="space-y-4 p-4 md:p-5">
             {d.flowInsights.length > 0 && <InsightCards items={d.flowInsights} />}
-            <FlowTable rows={d.flow} current={d.period} />
+            <FlowTable rows={d.flow} current={d.period} wh={d.wh} />
           </div>
         </Collapsible>
         <Collapsible id="sop:returns" title="Returns" sub="Units returned into each warehouse, and as a share of forward volume"
@@ -356,24 +355,49 @@ function TrendTable({ trend, current, mtdLabel }: { trend: { def: { key: string;
   );
 }
 
-function FlowTable({ rows, current }: { rows: FlowCalc[]; current: string }) {
+/** Opening → closing per warehouse (both areas), with the floor space (pre-pack area) on its own line under it. */
+function FlowTable({ rows, current, wh }: { rows: FlowCalc[]; current: string; wh: Data["wh"] }) {
   const periods = [...new Set(rows.map((r) => r.period))].sort().reverse();
   const cell = (v: number) => <td className="text-right tabular">{lakh(v)}</td>;
+  const floor = (w: "South" | "North", p: string) => {
+    const pts = wh[w], i = pts.findIndex((x) => x.period === p), at = pts[i], prev = i > 0 ? pts[i - 1] : undefined;
+    if (!at || (at.spUsed == null && at.spCap == null)) return null;
+    return { cap: at.spCap, open: prev?.spUsed ?? null, close: at.spUsed };
+  };
+  const u = (v: number | null, c: number | null) => (v != null && c ? v / c : null);
+  const utilCls = (x: number | null) => (x == null ? "text-ink-4" : x >= 1 ? "text-bad" : x >= 0.9 ? "text-warn" : "text-ink");
   return (
     <div className="card overflow-x-auto">
       <table className="table-base min-w-[900px]">
         <thead><tr><th>Month</th><th>WH</th><th className="text-right">Capacity</th><th className="text-right">Opening</th><th className="text-right">Util (open)</th><th className="text-right">Inward · category</th><th className="text-right">Inward · returns</th><th className="text-right">Outward</th><th className="text-right">Closing</th><th className="text-right">Util (close)</th><th className="text-right">Change</th></tr></thead>
-        <tbody>{periods.flatMap((p) => rows.filter((r) => r.period === p).map((r, i) => (
+        <tbody>{periods.flatMap((p) => rows.filter((r) => r.period === p).flatMap((r, i) => {
+          const fl = floor(r.warehouse, p);
+          // the warehouse line holds both areas (capacity already = warehouse + floor space)
+          const cap = r.capacity, uo = u(r.opening, cap), uc = u(r.closing, cap);
+          return [
           <tr key={`${p}${r.warehouse}`} className={cn(p === current && "bg-subtle/50")}>
             <td className="font-medium">{i === 0 ? monL(p) : ""}</td>
             <td>{r.warehouse}</td>
-            {cell(r.capacity)}{cell(r.opening)}
-            <td className="text-right tabular text-ink-3">{pc(r.utilOpen)}</td>
+            {cell(cap)}{cell(r.opening)}
+            <td className="text-right tabular text-ink-3">{pc(uo)}</td>
             {cell(r.inward_category)}{cell(r.inward_returns)}{cell(r.outward)}{cell(r.closing)}
-            <td className={cn("text-right font-semibold tabular", r.utilClose >= 1 ? "text-bad" : r.utilClose >= 0.9 ? "text-warn" : "text-ink")}>{pc(r.utilClose)}</td>
+            <td className={cn("text-right font-semibold tabular", utilCls(uc))}>{pc(uc)}</td>
             <td className={cn("text-right tabular", r.build > 0 ? "text-warn" : "text-ok")}>{r.build >= 0 ? "+" : "−"}{lakh(Math.abs(r.build))}</td>
-          </tr>
-        )))}</tbody>
+          </tr>,
+          ...(fl ? [
+          <tr key={`${p}${r.warehouse}floor`} className={cn("text-[12px] text-ink-3", p === current && "bg-subtle/50")}>
+            <td />
+            <td className="pl-5">↳ Floor space</td>
+            <td className="text-right tabular">{fl.cap != null ? lakh(fl.cap) : "—"}</td>
+            <td className="text-right tabular">{fl.open != null ? lakh(fl.open) : "—"}</td>
+            <td className="text-right tabular">{pc(u(fl.open, fl.cap))}</td>
+            <td colSpan={3} className="text-right text-[11.5px] text-ink-4">pre-packs + non-apparel</td>
+            <td className="text-right tabular">{fl.close != null ? lakh(fl.close) : "—"}</td>
+            <td className={cn("text-right font-semibold tabular", utilCls(u(fl.close, fl.cap)))}>{pc(u(fl.close, fl.cap))}</td>
+            <td className="text-right tabular">{fl.open != null && fl.close != null ? `${fl.close >= fl.open ? "+" : "−"}${lakh(Math.abs(fl.close - fl.open))}` : "—"}</td>
+          </tr>] : []),
+          ];
+        }))}</tbody>
       </table>
     </div>
   );
