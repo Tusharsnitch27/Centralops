@@ -2,6 +2,7 @@ import "server-only";
 import { one, q } from "../db";
 import { sfConfigured, sfQuery } from "../snowflake";
 import { weekOfMonth } from "@/lib/sopWeeks";
+import { PREPACK_AREA_REGEX } from "@/lib/whAreas";
 
 /**
  * Snowflake → S&OP, daily grain. Each feed pulls one row per day (× channel / category / region) from FY27 start
@@ -103,7 +104,7 @@ GROUP BY 1, 2, 3`;
 
 const CATEGORY_BUCKET = `CASE TRIM(LOWER(category))
     WHEN 't-shirts' THEN 'T-Shirts' WHEN 'joggers & trackpants' THEN 'Joggers & Trackpants' WHEN 'sweatshirts' THEN 'Sweatshirts'
-    WHEN 'sweater' THEN 'Sweater' WHEN 'accessories' THEN 'Accessories' WHEN 'shirts' THEN 'Shirts' WHEN 'jackets' THEN 'Jackets'
+    WHEN 'sweater' THEN 'Sweaters' WHEN 'accessories' THEN 'Accessories' WHEN 'shirts' THEN 'Shirts' WHEN 'jackets' THEN 'Jackets'
     WHEN 'blazers' THEN 'Blazers' WHEN 'sunglasses' THEN 'Sunglasses' WHEN 'overshirt' THEN 'Overshirt' WHEN 'hoodies' THEN 'Hoodies'
     WHEN 'trousers' THEN 'Trousers' WHEN 'cargo pants' THEN 'Cargo Pants' WHEN 'jeans' THEN 'Jeans' WHEN 'chinos' THEN 'Chinos'
     WHEN 'shorts' THEN 'Shorts' WHEN 'trouser' THEN 'Trousers' WHEN 'sweaters' THEN 'Sweaters' WHEN 'socks' THEN 'Socks' WHEN 'bags' THEN 'Bags'
@@ -177,7 +178,7 @@ export const INVENTORY_FEED = {
   conditions: ["warehouses SAPL-WH1, SAPL-WH2 (South) and SAPL-NORTH-TAURU (North)", "columns detected automatically — see the detected columns below"],
   transforms: ["stock = INVENTORY + Inventory Blocked + Not Found + Bad Inventory + Putaway Pending (good / bad / other kept apart); Putback Pending and Pending Inventory Assessment not counted",
     "pre-pack: Item SkuCode starting PP (PP4 = 4 pieces), else Item Type Name (PP4… / 'pre pack' / '4 pcs') → pre-pack area, kept OUT of capacity",
-    "everything else → against capacity (South 16L = WH1 + WH2, North 12L)", "inventory flow opening / closing = all of it, pre-pack stock included (as quantity)", "one snapshot per day; month = last day available in the month"],
+    "pre-pack area (own capacity) = pre-packs + accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys; everything else → warehouse capacity", "inventory flow opening / closing = all of it, pre-pack stock included (as quantity)", "one snapshot per day; month = last day available in the month"],
   fills: ["Monthly review › Warehouse utilisation (+ pre-pack stock shown apart)", "Inventory flow opening / closing"],
 };
 export const PACKAGING_FEED = {
@@ -263,9 +264,9 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
   // pre-pack: from the SKU code (PP4-…); when the code doesn't say, from the item name (PP4… / "pre pack" / "4 pcs")
   const N = name ? `COALESCE(${quote(name)}, '')` : "''";
   const isPP = `(${S} ILIKE 'PP%' OR ${N} ILIKE 'PP%' OR ${N} ILIKE '%pre%pack%')`;
-  // pre-pack area also holds perfumes, shoes, bags and trolleys (by category, else by item name); everything else is the main area
+  // pre-pack area also holds the non-apparel categories (whAreas: accessories, bags, belts, caps, perfumes, shoes, socks, sunglasses, trolleys) by category, else item name
   const C = category ? `COALESCE(${quote(category)}, '')` : N;
-  const isSP = `(NOT ${isPP} AND REGEXP_LIKE(${C}, '.*(^|[^a-z])(perfume|shoe|footwear|bag|trolley)s?([^a-z]|$).*', 'i'))`;
+  const isSP = `(NOT ${isPP} AND REGEXP_LIKE(${C}, '${PREPACK_AREA_REGEX}', 'i'))`;
   const MAIN = `(NOT ${isPP} AND NOT ${isSP})`;
   const ppMult = `COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR(${S}, '^PP([0-9]+)', 1, 1, 'ie', 1)), TRY_TO_NUMBER(REGEXP_SUBSTR(${N}, 'PP ?([0-9]+)', 1, 1, 'ie', 1)),
     TRY_TO_NUMBER(REGEXP_SUBSTR(${N}, '([0-9]+) ?(pcs|pc|pieces|piece)', 1, 1, 'ie', 1)), 1)`;

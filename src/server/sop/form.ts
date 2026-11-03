@@ -23,6 +23,8 @@ export async function getStreamMonthForm(stream: Stream, period: string) {
     const k = `${v.line_id}|${v.dimension}`;
     prev[k] = (prev[k] ?? 0) + (v.revised_projection ?? v.projection ?? 0);
   }
-  return { lines: lines.map((l) => ({ id: l.id, name: l.name, metric: l.metric })), labels, dims: dims.length ? dims : [""], cells, prev };
+  // category inward lines read A → Z
+  const ordered = stream.code === "inbound-category-wise" ? [...lines].sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" })) : lines;
+  return { lines: ordered.map((l) => ({ id: l.id, name: l.name, metric: l.metric })), labels, dims: dims.length ? dims : [""], cells, prev };
 }
 

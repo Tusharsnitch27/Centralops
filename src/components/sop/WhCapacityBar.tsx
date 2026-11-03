@@ -6,6 +6,7 @@ import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/client";
 import { deleteWhCapacity, setWhCapacity } from "@/server/sop/capacityActions";
 import { cn } from "@/lib/cn";
+import { PREPACK_AREA_CATEGORIES, WAREHOUSE_CATEGORIES } from "@/lib/whAreas";
 
 export interface CapSetting { warehouse: "South" | "North"; from: string; capacity: number; special: number | null; by: string | null; at: string }
 const lakh = (v: number | null) => (v == null ? "—" : `${(v / 100000).toFixed(2)}L`);
@@ -27,7 +28,10 @@ export function WhCapacityBar({ settings, canEdit }: { settings: CapSetting[]; c
     <div className="border-b border-line bg-subtle/50 px-4 py-3 md:px-5">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <span className="label-caps">Capacity control</span>
-        <span className="text-[11.5px] text-ink-4">Warehouse = every category except pre-pack area items · Pre-pack area = pre-packs (packs) + perfumes, shoes, bags, trolleys</span>
+      </div>
+      <div className="mb-3 grid gap-x-6 gap-y-1 text-[11.5px] md:grid-cols-2">
+        <p className="text-ink-3"><b className="font-semibold text-ink-2">Warehouse capacity</b> · {WAREHOUSE_CATEGORIES.join(", ")} — and any other category</p>
+        <p className="text-ink-3"><b className="font-semibold text-ink-2">Pre-pack area capacity</b> · Pre-packs (a set of any category, counted as packs), {PREPACK_AREA_CATEGORIES.join(", ")}</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {(["South", "North"] as const).map((wh) => {

@@ -1,5 +1,6 @@
 import "server-only";
 import { q } from "../db";
+import { categoryName } from "@/lib/whAreas";
 import { VIEWS, overallTable, flowCalc, flowInsights, latestUtil, returnsInsights, tableRows, trendTable, viewInsights, whInsights, whSeries, type FlowRow, type RawRow, type ReturnsRow, type WhCap } from "@/components/sop/reviewMath";
 
 export async function reviewPeriods() {
@@ -72,12 +73,13 @@ export async function monthlyReview(input: string | string[], label?: string) {
     const acc = new Map<string, RawRow>();
     for (const r of rowsRaw.filter((x) => x.view_key === v.key)) {
       // Amazon and Cocoblu are one B2C channel
-      const label = multi && v.weekly ? MON(r.period) : v.key === "b2c" && /^cocoblu$/i.test(r.row_label) ? "Amazon" : r.row_label;
+      const label = multi && v.weekly ? MON(r.period) : v.key === "b2c" && /^cocoblu$/i.test(r.row_label) ? "Amazon" : v.key === "category_view" ? categoryName(r.row_label) : r.row_label;
       const cur = acc.get(label) ?? { label, group: r.row_group, sp: 0, sa: 0, np: 0, na: 0 };
       cur.sp += r.south_plan ?? 0; cur.sa += r.south_actual ?? 0; cur.np += r.north_plan ?? 0; cur.na += r.north_actual ?? 0;
       acc.set(label, cur);
     }
-    const raw = [...acc.values()];
+    // categories read A → Z
+    const raw = v.key === "category_view" ? [...acc.values()].sort((a, b) => a.label.localeCompare(b.label)) : [...acc.values()];
     const def = multi && v.weekly ? { ...v, rowLabel: "Month", weekly: false } : v;
     return { def, rows: tableRows(def, raw), insights: viewInsights(def, raw, ctx) };
   }).filter((v) => v.rows.length > 1);
