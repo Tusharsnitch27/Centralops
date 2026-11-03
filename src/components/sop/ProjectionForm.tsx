@@ -18,13 +18,18 @@ const parse = (s: string) => { const t = s.replace(/[, ]/g, "").trim(); if (!t) 
  * Grid editor for one stream × month. mode 'projection' writes projections (revisions once the month has started);
  * mode 'actual' writes manual actuals.
  */
-export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels, dims, cells, prev, started, disabled, disabledReason, submitLabel }: {
+/** What the downloaded template says about the stream it is for (sheet "About"). */
+export interface TemplateInfo { stream: string; owner?: string | null; due?: string | null; guideline?: string | null }
+
+export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels, dims, cells, prev, started, disabled, disabledReason, submitLabel, monthOnly, info }: {
   mode: "projection" | "actual";
   streamId: string; period: string; periodLabel: string;
   lines: FormLine[]; labels: string[]; dims: string[];
   cells: Record<string, FormCell>;
   prev?: Record<string, number | null>;   // previous month total per line|dim (projection mode, monthly)
   started?: boolean; disabled?: boolean; disabledReason?: string; submitLabel?: string;
+  /** one month-total row (stored on the 1st) instead of a row per day */
+  monthOnly?: boolean; info?: TemplateInfo;
 }) {
   const initial = useMemo(() => {
     const m: Record<string, string> = {};
@@ -41,7 +46,7 @@ export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels,
   const dirty = Object.keys(vals).filter((k) => vals[k] !== initial[k]);
   const invalid = Object.values(vals).some((v) => Number.isNaN(parse(v)));
   const daily = labels.length > 1 && isDayLabel(labels[0]!);
-  const weekly = !daily && (labels.length > 1 || labels[0] !== "");
+  const weekly = !daily && !monthOnly && (labels.length > 1 || labels[0] !== "");
   const showPrev = mode === "projection" && !weekly && !!prev;
   const cols = dims.length ? dims : [""];
 
@@ -76,14 +81,18 @@ export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels,
           <Lock size={13} className="text-ink-3" />{periodLabel} has started — changes are stored as revisions; the locked projection stays as the baseline for accuracy.
         </p>
       )}
-      {daily ? <DailyGrid lines={lines} labels={labels} cols={cols} vals={vals} initial={initial} disabled={disabled} periodLabel={periodLabel}
-        onChange={(k, v) => setVals((x) => ({ ...x, [k]: v }))} onBulk={(m) => setVals((x) => ({ ...x, ...m }))} /> : (
+      {daily ? <DailyGrid lines={lines} labels={labels} cols={cols} vals={vals} initial={initial} disabled={disabled} periodLabel={periodLabel} info={info} prev={prev}
+        onChange={(k, v) => setVals((x) => ({ ...x, [k]: v }))} onBulk={(m) => setVals((x) => ({ ...x, ...m }))} /> : (<>
+      <TemplateTools lines={lines} labels={labels} cols={cols} vals={vals} disabled={disabled} periodLabel={periodLabel} info={info} prev={prev} monthOnly={monthOnly}
+        summary={monthOnly ? `Month total · planned for the month, any day · ${cols.filter(Boolean).join(" / ") || "total"}` : weekly ? `Weekly · ${labels.length} weeks` : "Monthly"}
+        onBulk={(m) => setVals((x) => ({ ...x, ...m }))} />
       <div className="overflow-x-auto rounded-lg border border-line">
         <table className="table-base">
           <thead className="bg-subtle/50">
             <tr>
               <th className="w-[38%]">Line</th>
               {weekly && <th>Week</th>}
+              {monthOnly && <th>Month</th>}
               {showPrev && <th className="text-right">Prev month</th>}
               {cols.map((d) => <th key={d} className="w-36 text-right">{d || (mode === "actual" ? "Actual" : "Projection")}</th>)}
               {dims.length > 1 && <th className="w-28 text-right">Total</th>}
@@ -98,6 +107,7 @@ export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels,
                       {i === 0 && <><span className="text-ink">{l.name}</span> <span className="ml-1 text-[11.5px] text-ink-4">{metricLabel(l.metric)}</span></>}
                     </td>
                     {weekly && <td className="text-[12.5px] text-ink-3" title={lb}>{weekShort(lb)}</td>}
+                    {monthOnly && <td className="text-[12.5px] text-ink-3">{periodLabel} total</td>}
                     {showPrev && <td className="text-right tabular text-ink-3">{num(cols.reduce((a, d) => a + (prev![`${l.id}|${d}`] ?? 0), 0) || null)}</td>}
                     {cols.map((d) => <td key={d} className="py-1.5">{input(key(l.id, lb, d), cells[key(l.id, lb, d)])}</td>)}
                     {dims.length > 1 && <td className="text-right tabular text-ink-2">{num(total(l.id, lb) || null)}</td>}
@@ -107,7 +117,7 @@ export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels,
             ))}
           </tbody>
         </table>
-      </div>)}
+      </div></>)}
       <div className="mt-3 flex flex-wrap items-end gap-3">
         {mode === "projection" && (
           <label className="min-w-[260px] flex-1"><span className="label">Commentary (optional)</span>
@@ -126,29 +136,45 @@ export function ValuesForm({ mode, streamId, period, periodLabel, lines, labels,
   );
 }
 
-const colName = (l: FormLine, d: string) => `${l.name}${d ? ` — ${d}` : ""}`;
-const dayName = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", timeZone: "UTC" });
+const unitOf = (l: FormLine, d: string) => (/^pre-?pack/i.test(d) ? "units (pieces — a PP4 pack = 4)" : metricLabel(l.metric) || "units");
 
-/** Day-wise entry: one row per date, one column per line × warehouse. Template download / upload round-trips the same layout as Excel. */
-function DailyGrid({ lines, labels, cols, vals, initial, disabled, periodLabel, onChange, onBulk }: {
-  lines: FormLine[]; labels: string[]; cols: string[]; vals: Record<string, string>; initial: Record<string, string>; disabled?: boolean; periodLabel: string;
-  onChange: (k: string, v: string) => void; onBulk: (m: Record<string, string>) => void;
+/**
+ * Template download / upload for the stream being filled: the data sheet has exactly this stream's lines × warehouses and this month's
+ * rows (days, weeks, or one month total), pre-filled with what is entered so far; the "About" sheet says what each column is.
+ */
+function TemplateTools({ lines, labels, cols, vals, disabled, periodLabel, info, prev, monthOnly, summary, onBulk }: {
+  lines: FormLine[]; labels: string[]; cols: string[]; vals: Record<string, string>; disabled?: boolean; periodLabel: string;
+  info?: TemplateInfo; prev?: Record<string, number | null>; monthOnly?: boolean; summary: string; onBulk: (m: Record<string, string>) => void;
 }) {
   const file = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const today = new Date().toISOString().slice(0, 10);
-  const colTotal = (lineId: string, d: string) => labels.reduce((a, lb) => a + (parse(vals[key(lineId, lb, d)] ?? "") || 0), 0);
+  const daily = labels.length > 1 && isDayLabel(labels[0]!);
+  const rowHead = daily || monthOnly ? "Date" : labels[0] === "" ? "Month" : "Week";
+  const rowName = (lb: string) => (monthOnly ? `${periodLabel} total (any day)` : daily ? dayName(lb) : lb === "" ? periodLabel : weekShort(lb));
+  const stream = info?.stream ?? "S&OP";
 
   async function download() {
     const XLSX = await import("xlsx");
-    const header = ["Date", "Day", ...lines.flatMap((l) => cols.map((d) => colName(l, d)))];
-    const rows = labels.map((lb) => [lb, dayName(lb), ...lines.flatMap((l) => cols.map((d) => { const v = parse(vals[key(l.id, lb, d)] ?? ""); return v == null || Number.isNaN(v) ? null : v; }))]);
+    const header = [rowHead, daily || monthOnly ? "Day" : "Label", ...lines.flatMap((l) => cols.map((d) => colName(l, d)))];
+    const rows = labels.map((lb) => [lb || periodLabel, rowName(lb), ...lines.flatMap((l) => cols.map((d) => { const v = parse(vals[key(l.id, lb, d)] ?? ""); return v == null || Number.isNaN(v) ? null : v; }))]);
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-    ws["!cols"] = header.map((h, i) => ({ wch: i < 2 ? 11 : Math.max(10, Math.min(28, h.length + 2)) }));
+    ws["!cols"] = header.map((h, i) => ({ wch: i < 2 ? (i === 1 && monthOnly ? 24 : 11) : Math.max(10, Math.min(30, h.length + 2)) }));
     ws["!freeze"] = { xSplit: 2, ySplit: 1 };
+    const about: (string | number | null)[][] = [
+      ["Stream", stream], ["Month", periodLabel], ["Owner", info?.owner ?? ""], ["Due", info?.due ?? ""],
+      ["Rows", monthOnly ? "One month total per channel and warehouse — planned for the month, can be dispatched any day" : daily ? `One row per day (${labels.length})` : rowHead === "Week" ? "One row per week" : "One row for the month"],
+      ["How to fill", `Fill the "${stream}" sheet: one number per cell, no formulas or text; leave a cell empty for nothing. Keep the header row and the ${rowHead} column as they are, then upload it in S&OP › Inputs › Upload filled.`],
+      [],
+      ["Column", "What it is", "Unit", "Last month"],
+      ...lines.flatMap((l) => cols.map((d) => [colName(l, d), `${l.name}${d ? ` · ${d}` : ""}`, unitOf(l, d), prev?.[`${l.id}|${d}`] ?? null])),
+      ...(info?.guideline ? [[], ["Guideline", info.guideline]] : []),
+    ];
+    const wa = XLSX.utils.aoa_to_sheet(about);
+    wa["!cols"] = [{ wch: 26 }, { wch: 60 }, { wch: 26 }, { wch: 14 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Day-wise");
-    XLSX.writeFile(wb, `S&OP inputs - ${periodLabel}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, stream.replace(/[\\/?*[\]:]/g, "-").slice(0, 31));
+    XLSX.utils.book_append_sheet(wb, wa, "About");
+    XLSX.writeFile(wb, `S&OP inputs - ${stream.replace(/[\\/:*?"<>|]/g, "-")} - ${periodLabel}.xlsx`);
   }
 
   async function upload(f: File) {
@@ -159,19 +185,21 @@ function DailyGrid({ lines, labels, cols, vals, initial, disabled, periodLabel, 
       const head = (aoa[0] ?? []).map((h) => String(h ?? "").trim().toLowerCase());
       const byCol = new Map<number, { lineId: string; d: string }>();
       for (const l of lines) for (const d of cols) { const i = head.indexOf(colName(l, d).toLowerCase()); if (i >= 0) byCol.set(i, { lineId: l.id, d }); }
-      const dateCol = head.indexOf("date");
-      if (dateCol < 0 || !byCol.size) throw new Error("This doesn't look like the template — keep the header row as downloaded.");
+      const rowCol = ["date", "week", "month"].map((h) => head.indexOf(h)).find((i) => i >= 0) ?? -1;
+      if (rowCol < 0 || !byCol.size) throw new Error(`This doesn't look like the ${stream} template — keep the header row as downloaded.`);
       const want = new Set(labels);
       const next: Record<string, string> = {};
       let n = 0, skipped = 0;
       for (const row of aoa.slice(1)) {
-        const raw = row[dateCol];
-        const iso = raw instanceof Date ? new Date(raw.getTime() - raw.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : String(raw ?? "").trim().slice(0, 10);
-        if (!want.has(iso)) { if (raw != null && raw !== "") skipped++; continue; }
+        const raw = row[rowCol];
+        const txt = raw instanceof Date ? new Date(raw.getTime() - raw.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : String(raw ?? "").trim();
+        // days by date; a month total / single month row by position; weeks by their label
+        const lb = daily || monthOnly ? txt.slice(0, 10) : labels[0] === "" ? "" : txt;
+        if (!want.has(lb)) { if (raw != null && raw !== "") skipped++; continue; }
         for (const [i, c] of byCol) {
           const v = row[i];
           if (v == null || v === "") continue;
-          next[key(c.lineId, iso, c.d)] = String(typeof v === "number" ? Math.round(v * 100) / 100 : v).trim();
+          next[key(c.lineId, lb, c.d)] = String(typeof v === "number" ? Math.round(v * 100) / 100 : v).trim();
           n++;
         }
       }
@@ -181,16 +209,35 @@ function DailyGrid({ lines, labels, cols, vals, initial, disabled, periodLabel, 
   }
 
   return (
-    <div>
+    <>
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="text-[12px] text-ink-3">Day-wise · {labels.length} days · {cols.filter(Boolean).join(" / ") || "total"}</span>
+        <span className="text-[12px] text-ink-3">{summary}</span>
         <span className="ml-auto flex gap-2">
-          <Button size="sm" onClick={download}><Download size={13} />Template</Button>
+          <Button size="sm" onClick={download}><Download size={13} />{stream} template</Button>
           <Button size="sm" disabled={disabled} onClick={() => file.current?.click()}><Upload size={13} />Upload filled</Button>
           <input ref={file} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
         </span>
       </div>
       {msg && <p className={cn("mb-2 rounded-md px-3 py-1.5 text-[12px]", msg.ok ? "bg-info-soft text-info" : "bg-bad-soft text-bad")}>{msg.text}</p>}
+    </>
+  );
+}
+
+const colName = (l: FormLine, d: string) => `${l.name}${d ? ` — ${d}` : ""}`;
+const dayName = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", timeZone: "UTC" });
+
+/** Day-wise entry: one row per date, one column per line × warehouse. Template download / upload round-trips the same layout as Excel. */
+function DailyGrid({ lines, labels, cols, vals, initial, disabled, periodLabel, info, prev, onChange, onBulk }: {
+  lines: FormLine[]; labels: string[]; cols: string[]; vals: Record<string, string>; initial: Record<string, string>; disabled?: boolean; periodLabel: string;
+  info?: TemplateInfo; prev?: Record<string, number | null>;
+  onChange: (k: string, v: string) => void; onBulk: (m: Record<string, string>) => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const colTotal = (lineId: string, d: string) => labels.reduce((a, lb) => a + (parse(vals[key(lineId, lb, d)] ?? "") || 0), 0);
+  return (
+    <div>
+      <TemplateTools lines={lines} labels={labels} cols={cols} vals={vals} disabled={disabled} periodLabel={periodLabel} info={info} prev={prev}
+        summary={`Day-wise · ${labels.length} days · ${cols.filter(Boolean).join(" / ") || "total"}`} onBulk={onBulk} />
       <div className="max-h-[560px] overflow-auto rounded-lg border border-line">
         <table className="w-max min-w-full border-separate border-spacing-0 text-[12.5px]">
           <thead className="sticky top-0 z-10 bg-surface">

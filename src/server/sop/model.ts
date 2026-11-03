@@ -133,6 +133,8 @@ export function weekLabels(period: string) {
   for (let d = 1; d <= days; d++) if (new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 1) mondays++;
   return Array.from({ length: Math.max(4, mondays) }, (_, i) => `${MON[m - 1]}_WK_${pad2(i + 1)}`);
 }
+/** Streams planned per month only (dispatch can fall on any day): one month-total row, stored on the 1st. */
+export const MONTH_ONLY_STREAMS = new Set(["b2b-mp"]);
 /** Every date of a month as 'YYYY-MM-DD' — the row labels of a day-wise stream. */
 export function dayLabels(period: string) {
   const y = Number(period.slice(0, 4)), m = Number(period.slice(5, 7));

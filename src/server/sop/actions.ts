@@ -9,7 +9,7 @@ import { notify, resolveInbox, toInbox } from "../core/notify";
 import { fail, ok, type ActionResult } from "../core/result";
 import { createTask } from "../tasks/core";
 import { fmtDate, fmtMonth, today } from "@/lib/dates";
-import { currentPeriod, dueDateFor, isOpenSub, subState, type ActualSource, type Stream } from "./model";
+import { currentPeriod, dueDateFor, isOpenSub, MONTH_ONLY_STREAMS, subState, type ActualSource, type Stream } from "./model";
 import { projectionLock } from "./queries";
 
 const refresh = () => revalidatePath("/sop", "layout");
@@ -121,6 +121,10 @@ export async function submitProjections(input: { streamId: string; period: strin
         }
         changed++;
       }
+      // month-only streams hold one month total on the 1st: values left on other days are folded into it, so clear them
+      if (s.code && MONTH_ONLY_STREAMS.has(s.code))
+        await x.q(`update sop_values set projection = null, revised_projection = null where line_id = any($1::uuid[]) and period = $2 and period_label ~ '^\\d{4}-\\d{2}-\\d{2}$' and period_label <> $3`,
+          [[...lineIds], input.period, `${input.period.slice(0, 7)}-01`]);
       await x.q(
         `insert into sop_submissions (stream_id, period, status, due_date, submitted_at, submitted_by, note) values ($1,$2,'submitted',$3,now(),$4,$5)
          on conflict (stream_id, period) do update set status = 'submitted', submitted_at = now(), submitted_by = excluded.submitted_by, note = coalesce(excluded.note, sop_submissions.note)`,

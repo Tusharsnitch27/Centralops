@@ -4,6 +4,7 @@ import { Avatar, Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 import { SubChip } from "@/components/sop/bits";
 import { RemindAllButton, RemindButton, SubmissionMenu } from "@/components/sop/actions";
 import { ValuesForm } from "@/components/sop/ProjectionForm";
+import { InputPicker } from "@/components/sop/InputPicker";
 import { canOverview, requireUser, canManage } from "@/server/auth";
 import { granted, grantsFor } from "@/server/auth/grants";
 import { LiquidationUpload } from "@/components/sop/LiquidationUpload";
@@ -50,6 +51,8 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
   const lockedForMe = lock.locked && u.role !== "admin";
   const formCell = defStream ? grid.cells.find((c) => c.stream_id === defStream.id && c.period === formPeriod) : null;
 
+  // the workbook guideline(s) for this stream, by its leading word (B2C, B2B, Retail, Inbound, Pre-pack, Liquidation)
+  const guidelineFor = (name: string) => { const k = name.split(/[\s-]/)[0]!.toLowerCase(); const g = guidelines.filter((x) => (x.sheet ?? "").toLowerCase().includes(k)); return g.length ? g.map((x) => `${x.sheet}: ${x.text}`).join("\n\n") : null; };
   const liqOwner = await liquidationOwner();
   const liq = u.role === "admin" || liqOwner?.id === u.id ? await (async () => {
     // open months from the Snowflake cut-over (closed months only for admins)
@@ -133,19 +136,7 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
         <CardHeader title="Enter projections" subtitle={defStream ? `${defStream.name} · ${fmtMonth(formPeriod)} · ${defStream.granularity === "day" ? "day by day" : defStream.granularity === "week" ? "weekly rows" : "monthly"}${defStream.dimensions.length ? ` · by ${defStream.dimensions.join(" / ")}` : ""}` : undefined}
           action={formCell && <SubChip cell={formCell} showDue />} />
         <div className="p-4">
-          <form className="mb-4 flex flex-wrap items-end gap-3" action="/sop/inputs#submit">
-            <label><span className="label">Stream</span>
-              <select name="stream" defaultValue={defStream?.id} className="field h-9 w-64 py-1">
-                {grid.streams.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.poc_name ?? s.poc_label}</option>)}
-              </select>
-            </label>
-            <label><span className="label">Month</span>
-              <select name="period" defaultValue={formPeriod} className="field h-9 w-40 py-1">
-                {formPeriods.map((p) => <option key={p} value={p}>{fmtMonth(p)}</option>)}
-              </select>
-            </label>
-            <button className="h-9 rounded-lg border border-line-strong bg-surface px-3 text-[13px] hover:bg-subtle">Open</button>
-          </form>
+          <InputPicker streams={grid.streams.map((s) => ({ id: s.id, label: `${s.name} — ${s.poc_name ?? s.poc_label ?? "no POC"}` }))} periods={formPeriods} stream={defStream?.id} period={formPeriod} />
           {lock.locked && (
             <div className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] ${lockedForMe ? "bg-warn-soft text-warn" : "bg-info-soft text-info"}`}>
               <Lock size={13} />{lockedForMe ? <>Locked — submitted {lock.since}. Projections lock 24 hours after submission; only an admin can change them.</> : <>Locked for the owner (submitted {lock.since}). As an admin you can still change it.</>}
@@ -154,7 +145,8 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
           {defStream && form ? (
             form.lines.length ? (
               <ValuesForm key={`${defStream.id}:${formPeriod}`} mode="projection" streamId={defStream.id} period={formPeriod} periodLabel={fmtMonth(formPeriod)}
-                lines={form.lines} labels={form.labels} dims={form.dims} cells={form.cells} prev={form.prev} started={formPeriod <= cur}
+                lines={form.lines} labels={form.labels} dims={form.dims} cells={form.cells} prev={form.prev} started={formPeriod <= cur} monthOnly={form.monthOnly}
+                info={{ stream: defStream.name, owner: defStream.poc_name ?? defStream.poc_label, due: formCell ? fmtDate(formCell.due_date) : null, guideline: guidelineFor(defStream.name) }}
                 disabled={!canSubmit || lockedForMe} disabledReason={lockedForMe ? `Locked — submitted ${lock.since}. Projections lock 24 hours after submission; ask an admin to change them.` : canSubmit ? undefined : `Only ${defStream.poc_name ?? "the POC"} or a PM can submit`} />
             ) : <EmptyState compact title="No lines configured" body="Add lines for this stream in Projections → Data source." />
           ) : <EmptyState compact title="No streams" />}
