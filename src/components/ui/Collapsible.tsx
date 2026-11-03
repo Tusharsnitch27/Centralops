@@ -28,13 +28,13 @@ export function Collapsible({ id, title, sub, summary, icon, children, className
   return (
     <div className={cn("card overflow-hidden", className)}>
       <button type="button" onClick={toggle} aria-expanded={open}
-        className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-left transition-colors hover:bg-subtle/60 md:px-5">
+        className="bar-dark flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-left transition-colors md:px-5">
         <span className="flex min-w-0 flex-1 items-center gap-2.5">
-          <ChevronRight size={15} className={cn("shrink-0 text-ink-4 transition-transform", open && "rotate-90")} />
-          {icon && <span className="shrink-0 text-ink-4">{icon}</span>}
+          <ChevronRight size={15} className={cn("shrink-0 text-white/70 transition-transform", open && "rotate-90")} />
+          {icon && <span className="shrink-0 text-white/70">{icon}</span>}
           <span className="min-w-0">
-            <span className="block truncate text-[13.5px] font-semibold text-ink">{title}</span>
-            {sub && <span className="block truncate text-[11.5px] text-ink-4">{sub}</span>}
+            <span className="block truncate text-[13.5px] font-semibold text-white">{title}</span>
+            {sub && <span className="block truncate text-[11.5px] text-white/65">{sub}</span>}
           </span>
         </span>
         {summary && <span className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-7 text-[12px] md:pl-0">{summary}</span>}

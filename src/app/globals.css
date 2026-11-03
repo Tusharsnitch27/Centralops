@@ -108,7 +108,15 @@ html[data-theme="mono"]   { --color-accent: #1c1c1c; --color-accent-2: #6b6b6b; 
   /* highlighted headers: tables, section bars */
   .thead-hl { background: var(--color-head); color: var(--color-head-ink); }
   .thead-hl th, .thead-hl > * { color: var(--color-head-ink) !important; }
-  .label-caps { @apply text-[10.5px] font-semibold uppercase tracking-[0.08em]; color: var(--color-ink-4); }
+  .label-caps { @apply text-[10.5px] font-bold uppercase tracking-[0.08em]; color: var(--color-ink); }
+  /* dropdown / section bars: dark, high contrast; text inside turns light, chips keep their own colours */
+  .bar-dark { background: var(--color-hero-2); color: #fff; }
+  .bar-dark:hover { background: #2c2c2c; }
+  .bar-dark :is(.text-ink, .text-ink-2, .text-ink-3):not([class*="-soft"], [class*="-soft"] *) { color: #f2f2f0 !important; }
+  .bar-dark .text-ink-4:not([class*="-soft"], [class*="-soft"] *) { color: #b9bab6 !important; }
+  .bar-dark .text-bad:not([class*="-soft"], [class*="-soft"] *) { color: #ff8a80 !important; }
+  .bar-dark .text-ok:not([class*="-soft"], [class*="-soft"] *) { color: #7ddc9a !important; }
+  .bar-dark .text-warn:not([class*="-soft"], [class*="-soft"] *) { color: #ffc56b !important; }
   .hero { color: #fff; background: var(--color-hero); border-radius: 12px; }
   .kpi { position: relative; overflow: hidden; }
   .kpi::before { content: none; }
@@ -116,6 +124,24 @@ html[data-theme="mono"]   { --color-accent: #1c1c1c; --color-accent-2: #6b6b6b; 
   .seg-label { @apply shrink-0 pl-2.5 pr-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4; }
   .seg-item { @apply flex h-7 shrink-0 items-center rounded-[7px] px-3 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink; }
   .seg-item[data-on="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgb(20 20 18 / 0.08), 0 0 0 1px rgb(20 20 18 / 0.04); }
+}
+
+/* ---------- Frozen header row + first column, every table ----------
+   A table's own box scrolls (both ways) so the header stays on top and the first column stays left while reading across.
+   Tables with merged rows (rowspan) freeze only the header; they pin their own columns (e.g. warehouse utilisation). */
+@layer components {
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) { overflow: auto; max-height: min(78vh, 960px); }
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) > table > thead { position: sticky; top: 0; z-index: 3; }
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) > table > thead th { background: var(--color-head); }
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) > table:not(:has(tbody [rowspan])) :is(thead th, tbody td):first-child { position: sticky; left: 0; z-index: 1; background: var(--color-surface); box-shadow: inset -1px 0 0 var(--color-line); }
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) > table:not(:has(tbody [rowspan])) thead th:first-child { z-index: 4; background: var(--color-head); }
+  /* the frozen cell follows its row: shaded rows, and the row under the pointer */
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) > table:not(:has(tbody [rowspan])) tbody tr[class*="bg-"] > td:first-child { background: color-mix(in srgb, var(--color-subtle) 70%, var(--color-surface)); }
+  :is(.card, .overflow-x-auto, .table-wrap):has(> table) > table:not(:has(tbody [rowspan])) tbody tr:hover > td:first-child { background: var(--color-subtle); }
+  /* pinned columns in tables that pin their own (sticky + solid background) */
+  .pin { position: sticky; z-index: 1; background: var(--color-surface); }
+  thead .pin { z-index: 4; background: var(--color-head); }
+  tr:hover > .pin:not([rowspan]) { background: var(--color-subtle); }
 }
 
 /* Display numbers & titles: bold, tight sans (the "font-serif" utility is repurposed as the display face). */

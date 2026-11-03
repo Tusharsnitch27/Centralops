@@ -16,7 +16,7 @@ export const VIEWS: ViewDef[] = [
 
 export interface RawRow { label: string; group: string | null; sp: number; sa: number; np: number; na: number }
 export interface Row extends RawRow { tp: number; ta: number; tu: number | null; su: number | null; nu: number | null; gap: number; kind?: "subtotal" | "total" }
-/** inventory = total space used; good / bad / other split it (other = blocked + putaway pending + putback pending). */
+/** inventory = total space used; good / bad / other split it (other = blocked + not found + putaway pending). */
 export interface WhCap { period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good?: number | null; bad?: number | null; other?: number | null }
 
 const u = (a: number, p: number) => (p > 0 ? a / p : null);
@@ -150,7 +150,7 @@ export function whInsights(s: ReturnType<typeof whSeries>): Insight[] {
     out.push({ key: w, tone: (cur.util ?? 0) >= 0.9 ? "bad" : (cur.util ?? 0) >= 0.8 ? "warn" : "good", score: cur.util ?? 0,
       title: [`${w} WH at `, { b: pc(cur.util), tone: (cur.util ?? 0) >= 0.9 ? "bad" : "warn" }, ` in ${mon}`, ...(prev ? [` (`, { b: `${(((cur.util ?? 0) - (prev.util ?? 0)) * 100).toFixed(1)} pts`, tone: (cur.util ?? 0) < (prev.util ?? 0) ? "good" as const : "bad" as const }, ` vs last month)`] : [])],
       impact: [`Headroom `, { b: `${k(head)} units` }, (cur.util ?? 0) >= 0.9 ? ` — little room for OND peak inward; prioritise liquidation / North allocation.` : ` before hitting capacity.`] });
-    // space that isn't sellable: bad stock and stock stuck in blocked / putaway / putback
+    // space that isn't sellable: bad stock and stock stuck in blocked / not found / putaway pending
     const used = cur.inventory ?? 0;
     if (used > 0 && cur.bad != null && cur.bad / used >= 0.02) {
       const sh = cur.bad / used, pb = prev?.bad != null && prev.inventory ? prev.bad / prev.inventory : null;
@@ -161,8 +161,8 @@ export function whInsights(s: ReturnType<typeof whSeries>): Insight[] {
     if (used > 0 && cur.other != null && cur.other / used >= 0.03) {
       const sh = cur.other / used;
       out.push({ key: `${w}:other`, tone: sh >= 0.08 ? "bad" : "warn", score: sh * 3,
-        title: [`${w}: `, { b: `${k(cur.other)} units`, tone: "warn" }, ` blocked or waiting for putaway / putback (`, { b: pc(sh) }, ` of used space)`],
-        impact: [`Clear the putaway / putback backlog and unblock stock — it fills space without being sellable.`] });
+        title: [`${w}: `, { b: `${k(cur.other)} units`, tone: "warn" }, ` blocked, not found or waiting for putaway (`, { b: pc(sh) }, ` of used space)`],
+        impact: [`Clear the putaway backlog, trace not-found stock and unblock it — it fills space without being sellable.`] });
     }
   }
   return out;

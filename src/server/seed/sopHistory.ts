@@ -7,6 +7,7 @@ import planDaily from "../../db/seed/sop-plan-daily-fy27.json";
 import planDailyOrders from "../../db/seed/sop-plan-daily-orders-fy27.json";
 import planB2bMp from "../../db/seed/sop-plan-b2bmp-fy27.json";
 import planReturns from "../../db/seed/sop-plan-returns-fy27.json";
+import planInward from "../../db/seed/sop-plan-inward-fy27.json";
 
 /** Apr–Oct 2026 plans, outbound capacity and meeting call-outs from "(Plan vs Actual) S&OP_FY'26-27.xlsx".
  *  Workbook actuals land in wb_*; months before the Sep 2026 cut-over show them as actuals (seedSopWorkbookActuals), later months use Snowflake. */
@@ -97,6 +98,29 @@ export async function reloadSopRetailPlan(S: RunQ) {
     await S(`insert into sop_review_rows (view_key, period, row_label, sort, south_plan, north_plan) values ('retail_fwd',$1,$2,$3,$4,$5)
              on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
       [w.period, w.wk, Number(w.wk.slice(3)), Math.round(w.south), Math.round(w.north)]);
+}
+
+/**
+ * Inward plans from the projection sheet: category inward and pre-pack by week, category-wise by category. Each month the sheet covers
+ * is replaced; a week keeps the label its row already has (e.g. "Apr_Wk_01" from the Plan vs Actual workbook, with its actuals).
+ */
+export async function reloadSopInwardPlan(S: RunQ) {
+  const rows = planInward.rows as [string, string, string, number, number][];
+  for (const view of ["category_inward", "prepack", "category_view"]) {
+    const vr = rows.filter((r) => r[0] === view);
+    const months = [...new Set(vr.map((r) => r[1]))];
+    if (!months.length) continue;
+    await S(`update sop_review_rows set south_plan = null, north_plan = null where view_key = $1 and period = any($2::date[])`, [view, months]);
+    const have = await S<{ period: string; row_label: string }>(`select period::text as period, row_label from sop_review_rows where view_key = $1 and period = any($2::date[])`, [view, months]);
+    for (const [, period, label, south, north] of vr) {
+      const same = (l: string) => (view === "category_view" ? l.toLowerCase() === label.toLowerCase() : l.slice(-5).toLowerCase() === label.toLowerCase());
+      const row = have.find((h) => h.period === period && same(h.row_label))?.row_label ?? label;
+      await S(`insert into sop_review_rows (view_key, period, row_label, sort, south_plan, north_plan)
+               values ($1,$2,$3,(select coalesce(max(sort),0)+1 from sop_review_rows where view_key = $1 and period = $2),$4,$5)
+               on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
+        [view, period, row, south, north]);
+    }
+  }
 }
 
 /** Returns plan per month from the projection sheet: "B2C returns" and "B2B returns" (stores + marketplaces), South / North. */

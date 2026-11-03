@@ -79,11 +79,11 @@ function ViewTable({ rows, label }: { rows: Row[]; label: string }) {
   );
 }
 
-// space used, split: sellable · bad · other (blocked + putaway pending + putback pending)
+// space used, split: sellable · bad · other (blocked + not found + putaway pending)
 const SEG = [
   { k: "good" as const, label: "Good", cls: "bg-ink/80" },
   { k: "bad" as const, label: "Bad", cls: "bg-bad" },
-  { k: "other" as const, label: "Blocked / putaway / putback", cls: "bg-warn" },
+  { k: "other" as const, label: "Blocked / not found / putaway", cls: "bg-warn" },
 ];
 function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: string }) {
   const cur = [...pts].reverse().find((p) => p.util != null);
@@ -105,9 +105,15 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
         {prev?.util != null && cur?.util != null && <span className={cn("mb-1 ml-auto text-[12px] font-semibold tabular", cur.util > prev.util ? "text-bad" : "text-ok")}>{cur.util > prev.util ? "▲" : "▼"} {Math.abs((cur.util - prev.util) * 100).toFixed(1)} pts</span>}
       </div>
       {/* capacity bar: good | bad | other | free */}
-      <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-muted">
-        {split ? SEG.map((sg) => <span key={sg.k} className={sg.cls} style={{ width: `${((cur![sg.k] ?? 0) / cap) * 100}%` }} title={`${sg.label}: ${lakh(cur![sg.k] ?? 0)}`} />)
-          : <span className="bg-ink/80" style={{ width: `${Math.min(1, u) * 100}%` }} />}
+      <div className="mt-3 flex h-2.5 rounded-full bg-muted">
+        {(split ? [...SEG.map((sg) => ({ label: sg.label, cls: sg.cls, v: cur![sg.k] ?? 0 })), { label: "Free", cls: "", v: free }]
+          : [{ label: "Used", cls: "bg-ink/80", v: cur?.inventory ?? 0 }, { label: "Free", cls: "", v: free }]).filter((x) => x.v > 0).map((x, i, all) => (
+          <span key={x.label} className={cn("group relative h-full cursor-default transition-transform hover:scale-y-[1.6]", x.cls, i === 0 && "rounded-l-full", i === all.length - 1 && "rounded-r-full")} style={{ width: `${Math.min(100, (x.v / cap) * 100)}%` }}>
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11.5px] font-medium text-white shadow-lg group-hover:block">
+              {x.label} · <b className="tabular">{lakh(x.v)}</b> · {pc(x.v / cap)} of capacity
+            </span>
+          </span>
+        ))}
       </div>
       {split ? (
         <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
@@ -115,16 +121,19 @@ function WhTile({ name, pts, tone }: { name: string; pts: WhPoint[]; tone: strin
             <span key={sg.k} className="flex items-center gap-1.5 text-ink-3"><span className={cn("size-2 rounded-sm", sg.cls)} />{sg.label}<b className="ml-auto font-semibold tabular text-ink">{lakh(cur![sg.k] ?? 0)}</b></span>
           ))}
           <span className="flex items-center gap-1.5 text-ink-3"><span className="size-2 rounded-sm bg-muted ring-1 ring-inset ring-line" />Free<b className="ml-auto font-semibold tabular text-ink">{lakh(free)}</b></span>
+          <span className="col-span-2 mt-1 flex items-center gap-1.5 border-t border-line pt-1.5 text-ink-2"><b className="font-semibold">Total used</b><b className="ml-auto font-semibold tabular text-ink">{lakh(cur!.inventory ?? 0)}</b><span className="text-ink-4">of {lakh(cur!.capacity)} capacity</span></span>
         </div>
       ) : <div className="mt-2 text-[12.5px] text-ink-3"><b className="font-semibold text-ink">{cur?.inventory != null ? lakh(cur.inventory) : "—"}</b> used of <b className="font-semibold text-ink">{cur ? lakh(cur.capacity) : "—"}</b> capacity</div>}
       {notSellable != null && notSellable > 0 && (
         <div className={cn("mt-2.5 rounded-lg px-2.5 py-1.5 text-[12px]", notSellable >= 0.08 ? "bg-bad-soft text-bad" : "bg-subtle text-ink-2")}>
-          <b className="font-semibold">{pc(notSellable)}</b> of used space isn’t sellable (bad + blocked / pending)
+          <b className="font-semibold">{pc(notSellable)}</b> of used space isn’t sellable (bad + blocked / not found / pending)
         </div>
       )}
     </div>
   );
 }
+// the Details column stays pinned beside the Warehouse column while months scroll
+const PIN2 = "pin left-[140px] whitespace-nowrap px-4 py-2 shadow-[inset_-1px_0_0_var(--color-line)]";
 function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) {
   const blocks: [string, WhPoint[], string][] = [["South (BLR)", wh.South, "#e8f0fe"], ["North (GGN)", wh.North, "#fdf2e3"], ["Total", wh.Total, "#e7f7ed"]];
   const pp = (name: string, m: string) => { const k = name.startsWith("South") ? "South" : name.startsWith("North") ? "North" : null; const v = prepack[m]; if (!v) return null; return k ? v[k] : (v.South ?? 0) + (v.North ?? 0); };
@@ -135,7 +144,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
       <table className="w-full min-w-[900px] border-collapse text-[13px]">
         <thead>
           <tr className="thead-hl text-[10.5px] font-semibold uppercase tracking-[0.08em]">
-            <th className="px-4 py-2.5 text-left">Warehouse</th><th className="px-4 py-2.5 text-left">Details</th>
+            <th className="pin left-0 w-[140px] min-w-[140px] px-4 py-2.5 text-left">Warehouse</th><th className="pin left-[140px] px-4 py-2.5 text-left shadow-[inset_-1px_0_0_var(--color-line)]">Details</th>
             {wh.months.map((m) => <th key={m} className="px-4 py-2.5 text-right">{new Date(`${m}T00:00:00Z`).toLocaleString("en-IN", { month: "short", year: "numeric", timeZone: "UTC" })}</th>)}
           </tr>
         </thead>
@@ -143,22 +152,22 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
           {blocks.map(([name, pts, bg]) => (
             <Fragment key={name}>
               <tr className="border-t border-line">
-                <td rowSpan={(hasPP ? 4 : 3) + (hasSplit ? 3 : 0)} className="px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
-                <td className="whitespace-nowrap px-4 py-2 text-ink-3">Capacity (lakh units)</td>
+                <td rowSpan={(hasPP ? 4 : 3) + (hasSplit ? 3 : 0)} className="pin left-0 w-[140px] min-w-[140px] px-4 py-2 align-middle text-[13px] font-semibold" style={{ background: bg }}>{name}</td>
+                <td className={cn(PIN2, "text-ink-3")}>Capacity (lakh units)</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right tabular">{(p.capacity / 100000).toFixed(2)}</td>)}
               </tr>
-              {hasSplit && ([["good", "Good stock"], ["bad", "Bad inventory"], ["other", "Blocked + putaway / putback pending"]] as const).map(([k, label]) => (
+              {hasSplit && ([["good", "Good stock"], ["bad", "Bad inventory"], ["other", "Blocked + not found + putaway pending"]] as const).map(([k, label]) => (
                 <tr key={k} className="border-t border-line/60">
-                  <td className={cn("whitespace-nowrap px-4 py-2", k === "bad" ? "text-bad" : k === "other" ? "text-warn" : "text-ink-3")}>{label}</td>
+                  <td className={cn(PIN2, k === "bad" ? "text-bad" : k === "other" ? "text-warn" : "text-ink-3")}>{label}</td>
                   {pts.map((p) => <td key={p.period} className={cn("px-4 py-2 text-right tabular", k === "good" ? "text-ink-2" : k === "bad" ? "text-bad" : "text-warn")}>{p[k] != null ? (p[k]! / 100000).toFixed(2) : <span className="text-ink-4">—</span>}</td>)}
                 </tr>
               ))}
               <tr className="border-t border-line/60">
-                <td className="whitespace-nowrap px-4 py-2 text-ink-3">{hasSplit ? "Space used (lakh units)" : "Inventory (lakh units)"}</td>
+                <td className={cn(PIN2, "text-ink-3")}>{hasSplit ? "Space used (lakh units)" : "Inventory (lakh units)"}</td>
                 {pts.map((p) => <td key={p.period} className="px-4 py-2 text-right font-semibold tabular">{p.inventory != null ? (p.inventory / 100000).toFixed(2) : <span className="font-normal text-ink-4">—</span>}</td>)}
               </tr>
               <tr className="border-t border-line/60 bg-subtle/50">
-                <td className="whitespace-nowrap px-4 py-2 font-semibold">Utilisation %</td>
+                <td className={cn(PIN2, "bg-subtle font-semibold")}>Utilisation %</td>
                 {pts.map((p) => (
                   <td key={p.period} className="px-4 py-2 text-right">
                     {p.util != null ? <span className={cn("rounded-full px-2 py-0.5 text-[12px] font-semibold tabular", p.util >= 0.9 ? "bg-bad-soft text-bad" : p.util >= 0.8 ? "bg-warn-soft text-warn" : "bg-accent-soft text-accent-ink")}>{(p.util * 100).toFixed(2)}%</span> : <span className="text-ink-4">—</span>}
@@ -167,7 +176,7 @@ function WhTable({ wh, prepack }: { wh: Data["wh"]; prepack: Data["prepack"] }) 
               </tr>
               {hasPP && (
                 <tr className="border-t border-line/60">
-                  <td className="whitespace-nowrap px-4 py-2 text-ink-3">Pre-pack stock (separate area, units)</td>
+                  <td className={cn(PIN2, "text-ink-3")}>Pre-pack stock (separate area, units)</td>
                   {pts.map((p) => { const v = pp(name, p.period); return <td key={p.period} className="px-4 py-2 text-right tabular text-ink-3">{v != null ? (v / 100000).toFixed(2) : "—"}</td>; })}
                 </tr>
               )}
@@ -207,7 +216,7 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
 
       <section className="space-y-2">
         <h2 className="label-caps px-1">Capacity</h2>
-        <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · space used = good + bad + blocked / putaway / putback, vs capacity, by month"
+        <Collapsible id="sop:wh" icon={<Warehouse size={15} />} title="Warehouse utilisation" sub="South (BLR) · North (GGN) · space used = good + bad + blocked + not found + putaway pending, vs capacity, by month"
           summary={<>
             {whTotal && <span className="flex items-center gap-1.5 text-ink-3">Total <span className="font-semibold text-ink tabular">{pc(whTotal.util)}</span><span className="text-ink-4">· {mon(whTotal.period)}</span></span>}
             <Flags items={d.whInsights} />

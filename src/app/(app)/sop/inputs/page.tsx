@@ -166,7 +166,7 @@ export default async function SopInputs({ searchParams }: { searchParams: Promis
 
       {/* guidelines */}
       <details className="card group">
-        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13px] font-semibold text-ink">
+        <summary className="bar-dark flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13px] font-semibold">
           <BookOpen size={15} className="text-ink-3" />Methodology & guidelines
           <span className="text-[12px] font-normal text-ink-3">· from the S&OP workbook</span>
           <ChevronDown size={14} className="ml-auto text-ink-4 transition group-open:rotate-180" />

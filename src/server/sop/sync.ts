@@ -175,9 +175,9 @@ export type FeedKey = keyof typeof FEEDS | "inventory" | "packaging";
 export const INVENTORY_FEED = {
   title: "Warehouse inventory (daily)", grain: "day × warehouse",
   conditions: ["warehouses SAPL-WH1, SAPL-WH2 (South) and SAPL-NORTH-TAURU (North)", "columns detected automatically — see the detected columns below"],
-  transforms: ["space used = good (INVENTORY) + bad (Bad Inventory) + other (Inventory Blocked + Putaway Pending + Putback Pending), each kept apart; Pending Inventory Assessment ignored",
+  transforms: ["stock = INVENTORY + Inventory Blocked + Not Found + Bad Inventory + Putaway Pending (good / bad / other kept apart); Putback Pending and Pending Inventory Assessment not counted",
     "pre-pack: Item SkuCode starting PP (PP4 = 4 pieces), else Item Type Name (PP4… / 'pre pack' / '4 pcs') → pre-pack area, kept OUT of capacity",
-    "everything else → against capacity (South 16L = WH1 + WH2, North 12L)", "one snapshot per day; month = last day available in the month"],
+    "everything else → against capacity (South 16L = WH1 + WH2, North 12L)", "inventory flow opening / closing = all of it, pre-pack stock included (as quantity)", "one snapshot per day; month = last day available in the month"],
   fills: ["Monthly review › Warehouse utilisation (+ pre-pack stock shown apart)", "Inventory flow opening / closing"],
 };
 export const PACKAGING_FEED = {
@@ -245,9 +245,9 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
   const bad = pick(cols, ["Bad Inventory", "BAD_INVENTORY"]);
   const blocked = pick(cols, ["Inventory Blocked", "INVENTORY_BLOCKED", "BLOCKED_INVENTORY"]);
   const putawayP = pick(cols, ["Putaway Pending", "PUTAWAY_PENDING"]);
-  const putbackP = pick(cols, ["Putback Pending", "PUTBACK_PENDING"]);
+  const notFound = pick(cols, ["Not Found", "NOT_FOUND"]);
   const qty = pick(cols, ["INVENTORY", "TOTAL_INVENTORY", "QUANTITY", "QTY", "INVENTORY_QTY", "TOTAL_QTY", "ON_HAND", "AVAILABLE_INVENTORY", "GOOD_INVENTORY"]) ?? pick(cols, [], /^(inv|qty|quant)/i, /number|int|float|decimal|numeric/i);
-  await saveSchema("inventory", { table: t, columns: cols.map((c) => c.name), picked: { date, warehouse: wh, sku, name, quantity: qty, bad, blocked, putaway_pending: putawayP, putback_pending: putbackP }, checkedAt: new Date().toISOString() });
+  await saveSchema("inventory", { table: t, columns: cols.map((c) => c.name), picked: { date, warehouse: wh, sku, name, quantity: qty, bad, blocked, not_found: notFound, putaway_pending: putawayP }, checkedAt: new Date().toISOString() });
   const missing = Object.entries({ date, warehouse: wh, sku, quantity: qty }).filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) throw new Error(`Couldn't identify the ${missing.join(", ")} column in ${t}. Columns: ${cols.map((c) => c.name).join(", ")}`);
   // text-safe: '2026-10-21', '2026-10-21 10:00:00' and real DATE/TIMESTAMP all become a date; '1,234' / '12.0' / numbers become numbers
@@ -256,7 +256,8 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
   const num = (c: string | null) => (c ? `COALESCE(TRY_TO_NUMBER(REPLACE(TO_VARCHAR(${quote(c)}), ',', ''), 38, 4), 0)` : "0");
   const Q = num(qty);                                                     // good, sellable stock
   const BAD = num(bad);                                                   // bad inventory — its own line
-  const OTH = `(${num(blocked)} + ${num(putawayP)} + ${num(putbackP)})`;  // blocked + putaway pending + putback pending
+  // stock = INVENTORY + "Inventory Blocked" + "Not Found" + "Bad Inventory" + "Putaway Pending" (the warehouse team formula)
+  const OTH = `(${num(blocked)} + ${num(notFound)} + ${num(putawayP)})`;  // blocked + not found + putaway pending
   // "Pending Inventory Assessment" is ignored on purpose (not physical space yet)
   // pre-pack: from the SKU code (PP4-…); when the code doesn't say, from the item name (PP4… / "pre pack" / "4 pcs")
   const N = name ? `COALESCE(${quote(name)}, '')` : "''";
@@ -288,7 +289,7 @@ async function pullInventory(): Promise<{ read: number; written: number; note: s
                prepack_packs = excluded.prepack_packs, prepack_units = excluded.prepack_units`,
       [r.day, r.warehouse, region, good + bad + other, good, bad, other, Number(r.prepack_packs) || 0, Number(r.prepack_units) || 0]);
   }
-  return { read: rows.length, written: rows.length, note: `columns: date=${date}, warehouse=${wh}, sku=${sku}, name=${name ?? "—"}, good=${qty}, bad=${bad ?? "—"}, other=${[blocked, putawayP, putbackP].filter(Boolean).join(" + ") || "—"}` };
+  return { read: rows.length, written: rows.length, note: `columns: date=${date}, warehouse=${wh}, sku=${sku}, name=${name ?? "—"}, good=${qty}, bad=${bad ?? "—"}, other=${[blocked, notFound, putawayP].filter(Boolean).join(" + ") || "—"}` };
 }
 
 /* ------------------------------------------------------------------ */
@@ -404,11 +405,12 @@ export async function rebuild() {
     }
 
   // --- inventory: month = last day available; pre-packs apart
-  const inv = await q<{ day: string; region: string; units: number; good: number; bad: number; other: number; prepack_units: number }>(
+  const inv = await q<{ day: string; region: string; units: number; good: number; bad: number; other: number; prepack_units: number; prepack_packs: number }>(
     `select day::text as day, region, sum(units)::float8 as units, sum(good_units)::float8 as good, sum(bad_units)::float8 as bad, sum(other_units)::float8 as other,
-            sum(prepack_units)::float8 as prepack_units from sop_inventory_daily group by day, region order by day`);
-  const invAt = new Map<string, { units: number; good: number; bad: number; other: number; prepack: number }>(); // "day|region"
-  for (const x of inv) invAt.set(`${x.day}|${x.region}`, { units: Number(x.units), good: Number(x.good), bad: Number(x.bad), other: Number(x.other), prepack: Number(x.prepack_units) });
+            sum(prepack_units)::float8 as prepack_units, sum(prepack_packs)::float8 as prepack_packs from sop_inventory_daily group by day, region order by day`);
+  // all = every stock column with pre-pack stock included (as quantity): the inventory flow's opening / closing
+  const invAt = new Map<string, { units: number; good: number; bad: number; other: number; prepack: number; all: number }>(); // "day|region"
+  for (const x of inv) invAt.set(`${x.day}|${x.region}`, { units: Number(x.units), good: Number(x.good), bad: Number(x.bad), other: Number(x.other), prepack: Number(x.prepack_units), all: Number(x.units) + Number(x.prepack_packs) });
   const invDays = [...new Set(inv.map((x) => x.day))].sort();
   const lastInvIn = (p: string) => invDays.filter((d) => d.startsWith(p.slice(0, 7))).at(-1);
   const months = [...new Set(invDays.map((d) => month(d)))].filter((p) => p >= from);
@@ -446,7 +448,7 @@ export async function rebuild() {
         await q(`insert into sop_inventory_flow (period, warehouse, capacity, opening, inward_category, inward_returns, outward, closing, source) values ($1,$2,$3,$4,$5,$6,$7,$8,'snowflake')
                  on conflict (period, warehouse) do update set capacity = excluded.capacity, opening = excluded.opening, inward_category = excluded.inward_category,
                    inward_returns = excluded.inward_returns, outward = excluded.outward, closing = excluded.closing, source = 'snowflake'`,
-          [p, wh, cap, open ? Math.round(open.units) : null, Math.round(x.cat), Math.round(x.ret), Math.round(x.out), Math.round(close.units)]);
+          [p, wh, cap, open ? Math.round(open.all) : null, Math.round(x.cat), Math.round(x.ret), Math.round(x.out), Math.round(close.all)]);
       }
     }
   }

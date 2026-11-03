@@ -71,7 +71,7 @@ export default async function SopSummary({ searchParams }: { searchParams: Promi
               <tr key={r.def.key}><td className="font-medium">{r.def.title}</td>
                 {r.cells.map((c, i) => <td key={i} className={cn("text-right", per.sel.months.includes(r.periods[i]) && "bg-subtle/60")} title={c ? `Plan ${L(c.plan)} · Actual ${L(c.actual)}` : undefined}>{c ? <UtilChip u={c.util} plan={c.plan} actual={c.actual} /> : <span className="text-ink-4">—</span>}</td>)}</tr>
             ))}
-            <tr><td colSpan={(d.trend[0]?.periods.length ?? 0) + 1} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">Capacity · warehouse utilisation (good + bad + blocked / putaway / putback ÷ capacity, pre-packs apart)</td></tr>
+            <tr><td colSpan={(d.trend[0]?.periods.length ?? 0) + 1} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">Capacity · warehouse utilisation (good + bad + blocked + not found + putaway pending ÷ capacity, pre-packs apart)</td></tr>
             {(["South", "North", "Total"] as const).map((w) => (
               <tr key={w}><td className="font-medium">{w === "Total" ? "Total (28L)" : `${w} WH`}</td>
                 {(d.trend[0]?.periods ?? []).map((p) => { const pt = d.wh[w].find((x) => x.period === p); const u = pt?.util ?? null; return (

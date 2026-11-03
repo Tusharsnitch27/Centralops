@@ -117,7 +117,7 @@ export function MomView({ note, collapsed }: { note: MomNote; collapsed?: boolea
   if (collapsed) {
     return (
       <details className="group card">
-        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-[13px] font-medium text-ink">
+        <summary className="bar-dark flex cursor-pointer list-none items-center justify-between px-4 py-3 text-[13px] font-medium">
           <span>Minutes {note.author_name ? <span className="font-normal text-ink-3">by {note.author_name}</span> : null}</span>
           <span className="flex items-center gap-1 text-[12px] font-normal text-ink-3">Show <ArrowUpRight size={12} className="transition-transform group-open:rotate-90" /></span>
         </summary>
