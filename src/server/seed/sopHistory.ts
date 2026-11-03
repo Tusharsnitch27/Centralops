@@ -8,6 +8,7 @@ import planDailyOrders from "../../db/seed/sop-plan-daily-orders-fy27.json";
 import planB2bMp from "../../db/seed/sop-plan-b2bmp-fy27.json";
 import planReturns from "../../db/seed/sop-plan-returns-fy27.json";
 import planInward from "../../db/seed/sop-plan-inward-fy27.json";
+import sheetInputs from "../../db/seed/sop-inputs-fy27.json";
 
 /** Apr–Oct 2026 plans, outbound capacity and meeting call-outs from "(Plan vs Actual) S&OP_FY'26-27.xlsx".
  *  Workbook actuals land in wb_*; months before the Sep 2026 cut-over show them as actuals (seedSopWorkbookActuals), later months use Snowflake. */
@@ -120,6 +121,29 @@ export async function reloadSopInwardPlan(S: RunQ) {
                on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
         [view, period, row, south, north]);
     }
+  }
+}
+
+/**
+ * Future months' projections from the projection sheet entered as each stream's day-wise inputs (North / South), so the Inputs grids
+ * show them. Each touched line × month is replaced; actuals and submission status are left alone (owners still review and submit).
+ */
+export async function loadSopSheetInputs(S: RunQ) {
+  const rows = sheetInputs.rows as [string, string, string, string, number][];
+  const lines = await S<{ id: string; code: string; name: string }>(`select l.id, s.code, l.name from sop_lines l join sop_streams s on s.id = l.stream_id where l.active`);
+  const lineId = new Map(lines.map((l) => [`${l.code}|${l.name}`, l.id]));
+  const missing = [...new Set(rows.filter((r) => !lineId.has(`${r[0]}|${r[1]}`)).map((r) => `${r[0]} · ${r[1]}`))];
+  if (missing.length) console.warn(`[seed] S&OP inputs: no line for ${missing.join(", ")} — skipped`);
+  const ok = rows.filter((r) => lineId.has(`${r[0]}|${r[1]}`));
+  const touched = [...new Set(ok.map((r) => `${lineId.get(`${r[0]}|${r[1]}`)}|${r[2].slice(0, 7)}-01`))];
+  await S(`update sop_values v set projection = null, revised_projection = null from unnest($1::uuid[], $2::date[]) t(l, p) where v.line_id = t.l and v.period = t.p`,
+    [touched.map((t) => t.split("|")[0]), touched.map((t) => t.split("|")[1])]);
+  for (let i = 0; i < ok.length; i += 1000) {
+    const c = ok.slice(i, i + 1000);
+    await S(`insert into sop_values (line_id, period, period_label, dimension, projection)
+             select l, date_trunc('month', d::date)::date, d, dim, v from unnest($1::uuid[], $2::text[], $3::text[], $4::numeric[]) as t(l, d, dim, v)
+             on conflict (line_id, period, period_label, dimension) do update set projection = excluded.projection, revised_projection = null, updated_at = now()`,
+      [c.map((r) => lineId.get(`${r[0]}|${r[1]}`)), c.map((r) => r[2]), c.map((r) => r[3]), c.map((r) => r[4])]);
   }
 }
 

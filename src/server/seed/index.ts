@@ -6,7 +6,7 @@ import { seedReference } from "./reference";
 import { seedDemo } from "./demo";
 import { syncDirectory } from "./directory";
 import { seedSopReview } from "./sopReview";
-import { reloadSopB2bMpPlan, reloadSopB2cPlan, reloadSopInwardPlan, reloadSopRetailPlan, reloadSopReturnsPlan, seedSopHistory, seedSopPlanDaily } from "./sopHistory";
+import { loadSopSheetInputs, reloadSopB2bMpPlan, reloadSopB2cPlan, reloadSopInwardPlan, reloadSopRetailPlan, reloadSopReturnsPlan, seedSopHistory, seedSopPlanDaily } from "./sopHistory";
 import { seedWeekly } from "./weekly";
 import { seedHandbook, seedLibrary } from "./library";
 import { seedPackaging } from "./packaging";
@@ -158,6 +158,15 @@ export async function bootstrap(rawQ: RunQ) {
       await rawQ("commit");
     } catch (e) { await rawQ("rollback"); throw e; }
     console.log("[seed] S&OP inward plans (category, pre-pack, category-wise) loaded from the projection sheet");
+  }
+  if ((await setting("seed.sop_sheet_inputs")) !== "v1") {
+    await rawQ("begin");
+    try {
+      await loadSopSheetInputs(rawQ);
+      await setSetting("seed.sop_sheet_inputs", "v1");
+      await rawQ("commit");
+    } catch (e) { await rawQ("rollback"); throw e; }
+    console.log("[seed] S&OP inputs Nov 2026 – Jan 2027 entered from the projection sheet");
   }
 
   if ((await setting("seed.weekly")) !== "v1") {
