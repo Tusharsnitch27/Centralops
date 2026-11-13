@@ -5,7 +5,7 @@ import { monthlyReview } from "./monthly";
 import { dailyDeviation, DAY_BAND, type DailyView } from "./daily";
 import { lastRuns } from "./sync";
 
-export type ProblemType = "Monthly miss" | "Day-to-day swings" | "Unplanned volume" | "Warehouse skew" | "Capacity" | "Data gap";
+export type ProblemType = "Monthly miss" | "MTD miss" | "Day-to-day swings" | "Unplanned volume" | "Warehouse skew" | "Capacity" | "Data gap";
 export interface Problem { type: ProblemType; tone: "bad" | "warn" | "info"; title: string; detail: string; score: number; href?: string }
 
 const pc = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
@@ -23,9 +23,11 @@ export async function leaderBrief(months: string[], label: string) {
   // monthly misses (each flow)
   for (const r of d.overall.filter((x) => !x.kind && x.acc != null)) {
     if (r.ta === 0 && r.tp > 0) { problems.push({ type: "Data gap", tone: "warn", score: 10, title: `${r.label}: no actuals for the period`, detail: `Planned ${k(r.tp)} — either nothing moved or there is no actual feed yet${r.key === "liquidation" ? " (liquidation: Malhar uploads the gatepass actuals under Inputs)" : ""}.`, href: "/settings?tab=integrations" }); continue; }
-    if (r.acc! < 0.85) problems.push({ type: "Monthly miss", tone: r.acc! < 0.7 ? "bad" : "warn", score: (1 - r.acc!) * 100,
-      title: `${r.label}: ${pc(r.acc)} accurate (${r.devPct! > 0 ? "+" : ""}${pc(r.devPct)} vs plan)`,
-      detail: `Plan ${k(r.tp)}, actual ${k(r.ta)} — ${r.dev > 0 ? `${k(r.dev)} more than planned` : `${k(-r.dev)} short`}. South ${pc(r.sAcc)}, North ${pc(r.nAcc)}.`, href: "/sop/monthly" });
+    // a month still running is judged on its MTD plan (plan through the last day with actuals)
+    const P = d.mtd ? `MTD plan (1–${d.through})` : "plan";
+    if (r.acc! < 0.85) problems.push({ type: d.mtd ? "MTD miss" : "Monthly miss", tone: r.acc! < 0.7 ? "bad" : "warn", score: (1 - r.acc!) * 100,
+      title: `${r.label}: ${pc(r.acc)} accurate (${r.devPct! > 0 ? "+" : ""}${pc(r.devPct)} vs ${P})`,
+      detail: `${d.mtd ? "MTD plan" : "Plan"} ${k(r.tp)}${d.mtd && r.ftp != null ? ` of ${k(r.ftp)} for the month` : ""}, actual ${k(r.ta)} — ${r.dev > 0 ? `${k(r.dev)} more than planned` : `${k(-r.dev)} short`}. South ${pc(r.sAcc)}, North ${pc(r.nAcc)}.`, href: "/sop/monthly" });
   }
   // day-to-day swings, incl. the ones hidden by an on-plan month
   const swing = (name: string, s: DailyView["total"], monthAcc: number | null, href: string) => {

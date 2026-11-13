@@ -5,7 +5,7 @@ import type { DailyView, DaySeries } from "@/server/sop/daily";
 import { cn } from "@/lib/cn";
 
 const TYPE_TONE: Record<string, string> = {
-  "Monthly miss": "bg-bad-soft text-bad", "Day-to-day swings": "bg-violet-soft text-violet", "Unplanned volume": "bg-warn-soft text-warn",
+  "Monthly miss": "bg-bad-soft text-bad", "MTD miss": "bg-bad-soft text-bad", "Day-to-day swings": "bg-violet-soft text-violet", "Unplanned volume": "bg-warn-soft text-warn",
   "Warehouse skew": "bg-info-soft text-info", Capacity: "bg-bad-soft text-bad", "Data gap": "bg-subtle text-ink-3",
 };
 

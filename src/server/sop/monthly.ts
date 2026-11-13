@@ -1,6 +1,7 @@
 import "server-only";
 import { q } from "../db";
 import { categoryName } from "@/lib/whAreas";
+import { weekOfMonth } from "@/lib/sopWeeks";
 import { VIEWS, overallTable, flowCalc, flowInsights, latestUtil, returnsInsights, tableRows, trendTable, viewInsights, whInsights, whSeries, type FlowRow, type RawRow, type ReturnsRow, type WhCap } from "@/components/sop/reviewMath";
 
 export async function reviewPeriods() {
@@ -49,11 +50,53 @@ function withReturnActuals<T extends Omit<PlanRow, "row_group" | "sort"> & Parti
   return out;
 }
 
+/**
+ * MTD plan for a month still running (through = last day with actuals). Rows keep the full-month plan in fs / fn and are judged on sp / np:
+ * B2C channels and retail = the day plan summed to date; weekly flows (category inward, pre-pack, liquidation) = each sheet week's plan for
+ * its days gone (week n = days 7n−6 … 7n, the last week to month end); category-wise = each category × category inward's share to date;
+ * returns = pro rata by days; B2B marketplace = month plan only (dispatch can fall on any day), no MTD plan.
+ */
+async function mtdPlanner(period: string, through: number, days: number) {
+  const end = `${period.slice(0, 8)}${String(through).padStart(2, "0")}`;
+  const daily = await q<{ view_key: string; row_label: string; day: string; s: number; n: number }>(
+    `select view_key, row_label, day::text as day, south::float8 as s, north::float8 as n from sop_plan_daily where view_key in ('b2c', 'retail_fwd') and day between $1 and $2`, [period, end]);
+  const hasDaily = (view: string) => daily.some((d) => d.view_key === view);
+  const sumDaily = (pick: (d: (typeof daily)[number]) => boolean) => daily.filter(pick).reduce((a, d) => ({ s: a.s + d.s, n: a.n + d.n }), { s: 0, n: 0 });
+  const weekNo = (label: string) => Number(/(\d+)\s*$/.exec(label)?.[1] ?? 0);
+  const dayShare = through / days;
+  let catShare = { s: dayShare, n: dayShare };
+  const set = (r: RawRow, s: number, n: number): RawRow => ({ ...r, fs: r.sp, fn: r.np, sp: s, np: n });
+  return {
+    apply(view: string, rows: RawRow[]): RawRow[] {
+      if (view === "b2b_mp") return rows.map((r) => ({ ...r, fs: r.sp, fn: r.np }));
+      if (view === "b2c" && hasDaily("b2c")) return rows.map((r) => { const x = sumDaily((d) => d.view_key === "b2c" && (d.row_label === r.label || (r.label === "Amazon" && /^cocoblu$/i.test(d.row_label)))); return set(r, x.s, x.n); });
+      if (view === "retail_fwd" && hasDaily("retail_fwd")) return rows.map((r) => { const x = sumDaily((d) => d.view_key === "retail_fwd" && weekOfMonth(d.day) === `Wk_${String(weekNo(r.label)).padStart(2, "0")}`); return set(r, x.s, x.n); });
+      if (view === "category_inward" || view === "prepack" || view === "liquidation" || view === "retail_fwd") {
+        const weeks = Math.max(1, ...rows.map((r) => weekNo(r.label)));
+        const out = rows.map((r) => {
+          const n = weekNo(r.label); if (!n) return set(r, r.sp * dayShare, r.np * dayShare);
+          const a = 7 * (n - 1) + 1, b = n === weeks ? days : Math.min(days, 7 * n);
+          const f = b < a ? 0 : Math.max(0, Math.min(1, (through - a + 1) / (b - a + 1)));
+          return set(r, r.sp * f, r.np * f);
+        });
+        if (view === "category_inward") {
+          const m = rows.reduce((x, r) => ({ s: x.s + r.sp, n: x.n + r.np }), { s: 0, n: 0 }), t = out.reduce((x, r) => ({ s: x.s + r.sp, n: x.n + r.np }), { s: 0, n: 0 });
+          catShare = { s: m.s ? t.s / m.s : dayShare, n: m.n ? t.n / m.n : dayShare };
+        }
+        return out;
+      }
+      if (view === "category_view") return rows.map((r) => set(r, r.sp * catShare.s, r.np * catShare.n));
+      return rows.map((r) => set(r, r.sp * dayShare, r.np * dayShare)); // returns, and any flow without a day / week plan
+    },
+  };
+}
+
 export async function monthlyReview(input: string | string[], label?: string) {
   const months = (Array.isArray(input) ? input : [input]).slice().sort();
   const period = months.at(-1)!; // latest month in the range drives warehouse context and inventory flow
   const multi = months.length > 1;
-  const [rowsDb, caps, retAct] = await Promise.all([
+  const days = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0)).getUTCDate();
+  const [rowsDb, caps, retAct, meta] = await Promise.all([
     q<{ period: string; view_key: string; row_label: string; row_group: string | null; sort: number; south_plan: number | null; south_actual: number | null; north_plan: number | null; north_actual: number | null }>(
       `select period::text as period, view_key, row_label, row_group, sort, south_plan, south_actual, north_plan, north_actual from sop_review_rows where period = any($1::date[]) order by period, view_key, sort, row_label`, [months]),
     q<{ period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good: number | null; bad: number | null; other: number | null; prepack_units: number | null; special_capacity: number | null; special: number | null; prepack_pcs: number | null }>(
@@ -61,7 +104,12 @@ export async function monthlyReview(input: string | string[], label?: string) {
               special_capacity::float8 as special_capacity, special_units::float8 as special, prepack_units::float8 as prepack_pcs
        from sop_wh_capacity order by period`),
     q<ReturnsRow>(`select period::text as period, warehouse, b2c::float8 as b2c, b2b::float8 as b2b, fwd_b2c, fwd_retail from sop_returns where period = any($1::date[])`, [months]),
+    q<{ through_day: number }>(`select through_day from sop_review_periods where period = $1`, [period]),
   ]);
+  const through = meta[0]?.through_day ?? days;
+  // a single month still running: everything is judged against the plan through the last day with actuals (MTD)
+  const mtdOn = !multi && through > 0 && through < days;
+  const toDate = mtdOn ? await mtdPlanner(period, through, days) : null;
   const rowsRaw = withReturnActuals(rowsDb, retAct);
   const wh = whSeries(caps as WhCap[]);
   const prepack: Record<string, { South?: number; North?: number }> = {};
@@ -79,12 +127,13 @@ export async function monthlyReview(input: string | string[], label?: string) {
       acc.set(label, cur);
     }
     // categories read A → Z
-    const raw = v.key === "category_view" ? [...acc.values()].sort((a, b) => a.label.localeCompare(b.label)) : [...acc.values()];
+    const raw0 = v.key === "category_view" ? [...acc.values()].sort((a, b) => a.label.localeCompare(b.label)) : [...acc.values()];
+    const noMtd = !!toDate && v.key === "b2b_mp";
+    const raw = toDate ? toDate.apply(v.key, raw0) : raw0;
     const def = multi && v.weekly ? { ...v, rowLabel: "Month", weekly: false } : v;
-    return { def, rows: tableRows(def, raw), insights: viewInsights(def, raw, ctx) };
+    return { def, rows: tableRows(def, raw), insights: noMtd ? [] : viewInsights(def, raw, ctx), noMtd };
   }).filter((v) => v.rows.length > 1);
-  const [meta, trendRows, flowRows, returns, notes, owners] = await Promise.all([
-    q<{ through_day: number }>(`select through_day from sop_review_periods where period = $1`, [period]),
+  const [trendRows, flowRows, returns, notes, owners] = await Promise.all([
     q<{ view_key: string; row_label: string; period: string; sp: number; sa: number; np: number; na: number }>(
       `select view_key, row_label, period::text as period, coalesce(south_plan,0) as sp, coalesce(south_actual,0) as sa, coalesce(north_plan,0) as np, coalesce(north_actual,0) as na
        from sop_review_rows where period in (select period from sop_review_rows where view_key <> 'liquidation')`),
@@ -100,8 +149,6 @@ export async function monthlyReview(input: string | string[], label?: string) {
   const floorCap = (p: string, w: string) => Number(caps.find((c) => c.period === p && c.warehouse === w)?.special_capacity ?? 0);
   const flow = flowRows.map((r) => flowCalc({ ...r, capacity: Number(r.capacity) + floorCap(r.period, r.warehouse) }));
   const flowNow = flow.filter((f) => f.period === period);
-  const days = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0)).getUTCDate();
-  const through = meta[0]?.through_day ?? days;
   // single month with Snowflake days: each view's rows carry their days so the tables can expand row → week → day
   const daySplit: Record<string, { through: number; basis: string; perLabel: Record<string, { day: string; week: string; future: boolean; sp: number; sa: number; np: number; na: number }[]> }> = {};
   if (!multi) {
@@ -114,7 +161,7 @@ export async function monthlyReview(input: string | string[], label?: string) {
   }
   return {
     daySplit,
-    period, months, label: label ?? MON(period), multi, prepack, through, mtd: through < days, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
+    period, months, label: label ?? MON(period), multi, prepack, through, mtd: mtdOn, days, wh, whInsights: whInsights(wh), views, overall: overallTable(views),
     trend: trendTable(withReturnActuals(trendRows.map((r) => ({ period: r.period, view_key: r.view_key, row_label: r.row_label, south_plan: Number(r.sp), south_actual: Number(r.sa), north_plan: Number(r.np), north_actual: Number(r.na) })), returns)
       .map((r) => ({ view_key: r.view_key, row_label: r.row_label, period: r.period, sp: r.south_plan ?? 0, sa: r.south_actual ?? 0, np: r.north_plan ?? 0, na: r.north_actual ?? 0 }))), flow, flowNow, flowInsights: flowInsights(flowNow.length ? flowNow : flow.filter((f) => f.period === flow.at(-1)?.period)),
     returns, returnsInsights: returnsInsights(returns), notes, owners: Object.fromEntries(owners.map((o) => [o.code, o.poc])) as Record<string, string | null>,

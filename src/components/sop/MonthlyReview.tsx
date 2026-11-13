@@ -245,7 +245,7 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
   return (
     <div className="space-y-6">
       <div className="flex justify-end -mt-2"><ExpandAll ids={ids} /></div>
-      <OverallAccuracy rows={d.overall} label={d.multi ? d.label : `${mon(d.period)}${d.mtd ? ` · 1–${d.through}` : ""}`} />
+      <OverallAccuracy rows={d.overall} label={d.multi ? d.label : `${mon(d.period)}${d.mtd ? ` · MTD 1–${d.through}` : ""}`} mtd={d.mtd ? { through: d.through, days: d.days } : null} />
 
       <section className="space-y-2">
         <h2 className="label-caps px-1">Overview</h2>
@@ -303,26 +303,35 @@ export function MonthlyReviewView({ d, daily = [] }: { d: Data; daily?: DailyVie
           <h2 className="label-caps flex items-center gap-1.5 px-1">{f.key === "outbound" ? <ArrowUpFromLine size={12} /> : <ArrowDownToLine size={12} />}{f.title}</h2>
           {d.views.filter((v) => v.def.flow === f.key).map((v) => {
             const t = v.rows.find((r) => r.kind === "total")!;
+            // month still running: the plan shown is the MTD plan (B2B marketplace: month plan and % of month)
+            const monthOnly = d.mtd && v.noMtd, full = t.ftp ?? t.tp;
+            const planLabel = monthOnly ? "Month plan" : d.mtd ? `MTD plan 1–${d.through}` : "Plan";
+            const planVal = monthOnly ? full : t.tp;
             return (
               <Collapsible key={v.def.key} id={`sop:${v.def.key}`} title={v.def.title} sub={d.multi ? `${v.def.sub.replace(/ by week$/, "")} · ${d.label}` : `${v.def.sub} · 1–${days} ${mon(d.period)}`}
                 summary={<>
-                  <span className="hidden text-ink-3 sm:inline">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
+                  <span className="hidden text-ink-3 sm:inline">{planLabel} <b className="font-semibold text-ink tabular">{fmt(planVal)}</b></span>
                   <span className="hidden text-ink-3 sm:inline">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
-                  {t.ta === 0 && t.tp > 0 ? <span className="text-[12px] text-ink-4">awaiting actuals</span> : <><UtilChip u={t.tu} plan={t.tp} actual={t.ta} /><Flags items={v.insights} /></>}
+                  {t.ta === 0 && planVal > 0 ? <span className="text-[12px] text-ink-4">awaiting actuals</span>
+                    : monthOnly ? <span className="text-ink-3"><b className="font-semibold text-ink tabular">{full > 0 ? Math.round((t.ta / full) * 100) : 0}%</b> of month</span>
+                    : <><UtilChip u={t.tu} plan={t.tp} actual={t.ta} /><Flags items={v.insights} /></>}
                 </>}>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-4 py-2.5 text-[12px] md:px-5">
-                  <span className="text-ink-3">Plan <b className="font-semibold text-ink tabular">{fmt(t.tp)}</b></span>
+                  {d.mtd && !monthOnly && <span className="text-ink-3">Month plan <b className="font-semibold text-ink tabular">{fmt(full)}</b></span>}
+                  <span className="text-ink-3">{planLabel} <b className="font-semibold text-ink tabular">{fmt(planVal)}</b></span>
                   <span className="text-ink-3">Actual <b className="font-semibold text-ink tabular">{fmt(t.ta)}</b></span>
+                  {monthOnly ? <span className="text-ink-3">Achieved <b className="font-semibold text-ink tabular">{full > 0 ? Math.round((t.ta / full) * 100) : 0}%</b> of month · balance <b className="font-semibold text-ink tabular">{fmt(Math.max(0, full - t.ta))}</b></span> : (<>
                   <span className="flex items-center gap-1.5 text-ink-3">South <UtilChip u={t.su} plan={t.sp} actual={t.sa} /></span>
                   <span className="flex items-center gap-1.5 text-ink-3">North <UtilChip u={t.nu} plan={t.np} actual={t.na} /></span>
+                  {d.mtd && <span className="text-ink-3">Achieved <b className="font-semibold text-ink tabular">{full > 0 ? Math.round((t.ta / full) * 100) : 0}%</b> of month ({Math.round((d.through / d.days) * 100)}% of days gone)</span>}</>)}
                 </div>
                 {/* table on the left, the function's own insight tile on the right (stacks on smaller screens) */}
                 <div className="grid gap-4 p-3 md:p-4 xl:grid-cols-[minmax(0,1fr)_320px]">
                   <div className="min-w-0 overflow-hidden rounded-xl border border-line">
                     {d.multi ? <ViewTable rows={v.rows} label={v.def.rowLabel} />
-                      : <ExpandTable rows={v.rows} label={v.def.rowLabel} viewKey={v.def.key} weekly={!!v.def.weekly} split={d.daySplit[v.def.key] ?? null} period={d.period} />}
+                      : <ExpandTable rows={v.rows} label={v.def.rowLabel} viewKey={v.def.key} weekly={!!v.def.weekly} split={d.daySplit[v.def.key] ?? null} period={d.period} mtd={d.mtd ? { through: d.through, days: d.days } : null} noMtd={v.noMtd} />}
                   </div>
-                  <FunctionTile viewKey={v.def.key} total={t} rows={v.rows} insights={v.insights} daily={daily} notes={d.notes} owners={d.owners} period={d.multi ? null : d.period} />
+                  <FunctionTile viewKey={v.def.key} total={t} rows={v.rows} insights={v.insights} daily={daily} notes={d.notes} owners={d.owners} period={d.multi ? null : d.period} mtd={d.mtd ? { through: d.through, days: d.days } : null} noMtd={v.noMtd} />
                 </div>
               </Collapsible>
             );
@@ -441,8 +450,10 @@ function ReturnsTable({ rows }: { rows: ReturnsRow[] }) {
 }
 
 /** Overall plan vs actual by flow: plan, actual, deviation and forecast accuracy (Total / South / North). */
-function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string }) {
+function OverallAccuracy({ rows, label, mtd }: { rows: OverallRow[]; label: string; mtd?: { through: number; days: number } | null }) {
   if (!rows.length) return null;
+  const left = mtd ? Math.max(1, mtd.days - mtd.through) : 0;
+  const cols = mtd ? 12 : 8;
   const accCell = (a: number | null, strong?: boolean) => {
     if (a == null) return <span className="text-ink-4">—</span>;
     const tone = a >= 0.9 ? "bg-ok" : a >= 0.75 ? "bg-warn" : "bg-bad";
@@ -460,29 +471,41 @@ function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string })
       <div className="card overflow-x-auto">
         <table className="table-base min-w-[860px]">
           <thead><tr>
-            <th>Flow</th><th className="text-right">Plan</th><th className="text-right">Actual</th><th className="text-right">Deviation</th><th className="text-right">Deviation %</th>
-            <th className="text-right">Accuracy</th><th className="text-right">South acc.</th><th className="text-right">North acc.</th>
+            <th>Flow</th>{mtd && <th className="text-right">Month plan</th>}<th className="text-right">{mtd ? `MTD plan · 1–${mtd.through}` : "Plan"}</th><th className="text-right">{mtd ? "MTD actual" : "Actual"}</th><th className="text-right">Deviation</th><th className="text-right">Deviation %</th>
+            <th className="text-right">{mtd ? "MTD accuracy" : "Accuracy"}</th><th className="text-right">South acc.</th><th className="text-right">North acc.</th>
+            {mtd && <><th className="text-right">% of month</th><th className="text-right">Balance to go</th><th className="text-right">Needed / day</th></>}
           </tr></thead>
           {groups.map((g) => {
             const rs = rows.filter((r) => r.flow === g);
             if (!rs.length) return null;
             return (
               <tbody key={g}>
-                <tr><td colSpan={8} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">{g}</td></tr>
+                <tr><td colSpan={cols} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">{g}</td></tr>
                 {rs.map((r) => (
                   <tr key={r.key} className={cn(r.kind === "subtotal" && "bg-subtle/40 font-semibold")}>
-                    <td className={cn(r.kind ? "font-semibold" : "pl-5")}>{r.label}</td>
-                    <td className="text-right tabular">{fmt(r.tp)}</td>
-                    {r.ta === 0 && r.tp > 0 ? (
+                    <td className={cn(r.kind ? "font-semibold" : "pl-5")}>{r.label}{r.noMtd && <span className="ml-1.5 text-[11px] font-normal text-ink-4">month plan only</span>}</td>
+                    {mtd && <td className="text-right tabular text-ink-3">{fmt(r.ftp ?? r.tp)}</td>}
+                    <td className="text-right tabular">{r.noMtd ? <span className="text-ink-4">—</span> : fmt(r.tp)}</td>
+                    {(r.fta ?? r.ta) === 0 && (r.ftp ?? r.tp) > 0 ? (
                       // Sep onwards comes from Snowflake: no feed yet is not a −100% miss
-                      <td colSpan={6} className="text-right text-[12px] text-ink-4">Awaiting Snowflake actuals{r.key === "liquidation" ? " — Malhar uploads gatepass actuals (Inputs)" : ""}</td>
+                      <td colSpan={cols - (mtd ? 3 : 2)} className="text-right text-[12px] text-ink-4">Awaiting Snowflake actuals{r.key === "liquidation" ? " — Malhar uploads gatepass actuals (Inputs)" : ""}</td>
                     ) : (<>
-                    <td className="text-right tabular">{fmt(r.ta)}</td>
+                    <td className="text-right tabular">{fmt(r.noMtd ? (r.fta ?? r.ta) : r.ta)}</td>
+                    {r.noMtd ? <td colSpan={5} className="text-right text-[11.5px] text-ink-4">planned for the month — any day</td> : (<>
                     <td className={cn("text-right tabular", r.dev < 0 ? "text-bad" : r.dev > 0 ? "text-warn" : "text-ink-3")}>{r.dev > 0 ? "+" : r.dev < 0 ? "−" : ""}{fmt(Math.abs(r.dev))}</td>
                     <td className={cn("text-right tabular", r.devPct == null ? "text-ink-4" : Math.abs(r.devPct) > 0.2 ? "font-semibold text-bad" : "text-ink-2")}>{r.devPct == null ? "—" : `${r.devPct > 0 ? "+" : ""}${Math.round(r.devPct * 100)}%`}</td>
                     <td className="text-right">{accCell(r.acc, true)}</td>
                     <td className="text-right">{accCell(r.sAcc)}</td>
                     <td className="text-right">{accCell(r.nAcc)}</td>
+                    </>)}
+                    {mtd && (() => {
+                      const full = r.ftp ?? r.tp, got = r.fta ?? r.ta, bal = full - got, share = full > 0 ? got / full : null;
+                      return (<>
+                        <td className="text-right tabular">{share == null ? "—" : <span className={cn(share >= mtd.through / mtd.days * 0.8 ? "text-ink-2" : "text-bad")}>{pc(share)}</span>}<span className="ml-1 text-[11px] text-ink-4">/ {pc(mtd.through / mtd.days)}</span></td>
+                        <td className="text-right tabular">{bal > 0 ? fmt(bal) : <span className="text-ok">done</span>}</td>
+                        <td className="text-right tabular text-ink-2">{bal > 0 ? fmt(bal / left) : "—"}</td>
+                      </>);
+                    })()}
                     </>)}
                   </tr>
                 ))}
@@ -490,7 +513,9 @@ function OverallAccuracy({ rows, label }: { rows: OverallRow[]; label: string })
             );
           })}
         </table>
-        <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">Accuracy = 1 − |actual − plan| ÷ plan. Deviation + means more than planned, − means less. Detailed views follow below.</p>
+        <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">{mtd
+          ? <>Month to date (1–{mtd.through} of {mtd.days}): actuals are judged against the MTD plan — the plan through the same day (day plans to date; weekly plans for the days gone; returns pro rata). % of month = achieved ÷ month plan, against {pc(mtd.through / mtd.days)} of days gone · Balance = month plan − achieved · Needed / day over the {left} days left. B2B marketplace is planned for the month (any day), so it has no MTD plan; totals&apos; MTD figures leave it out.</>
+          : <>Accuracy = 1 − |actual − plan| ÷ plan. Deviation + means more than planned, − means less. Detailed views follow below.</>}</p>
       </div>
     </section>
   );

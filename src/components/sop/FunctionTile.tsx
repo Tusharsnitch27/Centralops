@@ -27,8 +27,10 @@ function merge(list: DaySeries[]) {
  * One function at a glance, beside its plan-vs-actual table: accuracy, days beyond ±20%, rows off plan (with their own day counts),
  * orders vs order plan where there is one, the top call-outs and the owners' remarks.
  */
-export function FunctionTile({ viewKey, total, rows, insights, daily, notes, owners, period }: {
+export function FunctionTile({ viewKey, total, rows, insights, daily, notes, owners, period, mtd, noMtd }: {
   viewKey: string; total: Row; rows: Row[]; insights: Insight[]; daily: DailyView[]; period?: string | null;
+  /** month still running: stats are against the MTD plan, with the month plan, % of month and balance beside them */
+  mtd?: { through: number; days: number } | null; noMtd?: boolean;
   notes: { code: string; kind: string; body: string; author: string | null; at: string }[]; owners: Record<string, string | null>;
 }) {
   const dv = daily.filter((v) => DAILY[viewKey]?.includes(v.key));
@@ -52,8 +54,10 @@ export function FunctionTile({ viewKey, total, rows, insights, daily, notes, own
   const orderTot = ov.flatMap((v) => v.total.days).reduce((a, d) => ({ plan: a.plan + d.plan, actual: a.actual + d.actual }), { plan: 0, actual: 0 });
 
   const acc = total.tp > 0 ? Math.max(0, 1 - Math.abs(total.ta - total.tp) / total.tp) : null;
-  const off = total.tu != null && Math.abs(total.tu - 1) > DEV_BAND;
-  const offRows = rows.filter((r) => !r.kind && r.tp > 0 && r.tu != null && Math.abs(r.tu - 1) > DEV_BAND).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+  const monthOnly = !!mtd && !!noMtd; // B2B marketplace mid-month: nothing to judge until the month ends
+  const off = !monthOnly && total.tu != null && Math.abs(total.tu - 1) > DEV_BAND;
+  const full = total.ftp ?? total.tp, ofMonth = full > 0 ? total.ta / full : null;
+  const offRows = monthOnly ? [] : rows.filter((r) => !r.kind && r.tp > 0 && r.tu != null && Math.abs(r.tu - 1) > DEV_BAND).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
   const unplanned = rows.filter((r) => !r.kind && r.tp === 0 && r.ta > 0);
   // rows on plan for the month but swinging day to day
   const swingy = rows.filter((r) => !r.kind && !offRows.includes(r)).map((r) => ({ r, s: rowDays.get(clean(r.label)) }))
@@ -69,14 +73,24 @@ export function FunctionTile({ viewKey, total, rows, insights, daily, notes, own
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">Function insight</div>
           {who && <div className="mt-0.5 flex items-center gap-1 text-ink-3"><User size={11} />{who}</div>}
         </div>
-        <span className={cn("rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold", off ? "bg-bad-soft text-bad" : "bg-accent-soft text-accent-ink")}>{off ? "Off plan" : "Within ±20%"}</span>
+        <span className={cn("rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold", monthOnly ? "bg-subtle text-ink-3" : off ? "bg-bad-soft text-bad" : "bg-accent-soft text-accent-ink")}>{monthOnly ? "Month plan" : off ? (mtd ? "Off MTD plan" : "Off plan") : "Within ±20%"}</span>
       </div>
 
+      {monthOnly ? (
+        <div className="grid grid-cols-3 gap-2">
+          <Stat label="Month plan" value={fmt(full)} />
+          <Stat label="Achieved" value={`${fmt(total.ta)} · ${pc(ofMonth)}`} />
+          <Stat label="Balance" value={full > total.ta ? fmt(full - total.ta) : "done"} />
+        </div>
+      ) : (
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Accuracy" value={pc(acc)} tone={acc == null ? undefined : acc >= 0.8 ? "ok" : "bad"} />
-        <Stat label="Of plan" value={pc(total.tu)} tone={off ? "bad" : "ok"} />
-        <Stat label="Variance" value={`${total.gap > 0 ? "+" : total.gap < 0 ? "−" : ""}${fmt(Math.abs(total.gap))}`} />
-      </div>
+        <Stat label={mtd ? "MTD accuracy" : "Accuracy"} value={pc(acc)} tone={acc == null ? undefined : acc >= 0.8 ? "ok" : "bad"} />
+        <Stat label={mtd ? "Of MTD plan" : "Of plan"} value={pc(total.tu)} tone={off ? "bad" : "ok"} />
+        <Stat label={mtd ? "MTD variance" : "Variance"} value={`${total.gap > 0 ? "+" : total.gap < 0 ? "−" : ""}${fmt(Math.abs(total.gap))}`} />
+      </div>)}
+      {mtd && !monthOnly && (
+        <div className="-mt-1 text-[11.5px] text-ink-3">MTD plan {fmt(total.tp)} (1–{mtd.through}) of {fmt(full)} for the month · achieved {pc(ofMonth)} of month · {full > total.ta ? `${fmt(full - total.ta)} to go, ${fmt((full - total.ta) / Math.max(1, mtd.days - mtd.through))}/day` : "month plan reached"}</div>
+      )}
 
       <div className="rounded-xl bg-subtle/60 p-3">
         <L to={det({})} className="mb-1.5 flex items-center gap-1.5 font-medium text-ink-2"><CalendarDays size={12} />Days beyond ±20%{period && <ArrowUpRight size={11} className="text-ink-4" />}</L>

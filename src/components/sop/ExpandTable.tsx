@@ -38,7 +38,13 @@ const addDays = (lists: SplitDay[][]) => {
  * Plan vs actual table where every row opens up: a channel / category row → its weeks → their days, a week row → its days.
  * The right-hand column counts the days beyond ±20% (above / below of the planned days) and opens the Detailed view filtered to them.
  */
-export function ExpandTable({ rows, label, viewKey, weekly, split, period }: { rows: Row[]; label: string; viewKey: string; weekly: boolean; split?: Split | null; period: string }) {
+export function ExpandTable({ rows, label, viewKey, weekly, split, period, mtd, noMtd }: {
+  rows: Row[]; label: string; viewKey: string; weekly: boolean; split?: Split | null; period: string;
+  /** month still running: plan columns are the MTD plan (1–through), with the month plan beside them */
+  mtd?: { through: number; days: number } | null;
+  /** planned for the month only (B2B marketplace): no MTD plan — show achieved against the month plan */
+  noMtd?: boolean;
+}) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const toggle = (k: string) => setOpen((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const all = split ? Object.values(split.perLabel) : [];
@@ -56,9 +62,23 @@ export function ExpandTable({ rows, label, viewKey, weekly, split, period }: { r
     if (dev) p.set("dev", dev);
     return `/sop/detailed?${p}`;
   };
-  const Cells = ({ x, strong }: { x: { sp: number; sa: number; np: number; na: number }; strong?: boolean }) => {
-    const tp = x.sp + x.np, ta = x.sa + x.na, gap = ta - tp;
+  const Cells = ({ x, strong }: { x: { sp: number; sa: number; np: number; na: number; fs?: number; fn?: number }; strong?: boolean }) => {
+    const tp = x.sp + x.np, ta = x.sa + x.na, gap = ta - tp, full = (x.fs ?? x.sp) + (x.fn ?? x.np);
+    if (mtd && noMtd) return (<>
+      <td className="px-3 text-right tabular text-ink-3">{fmt(full)}</td>
+      <td className="px-3 text-right text-ink-4">—</td>
+      <td className={cn("px-3 text-right tabular", strong && "font-semibold")}>{fmt(ta)}</td>
+      <td className="px-3 text-right tabular text-ink-3">{full > ta ? `${fmt(full - ta)} to go` : "done"}</td>
+      <td className="px-3 text-right tabular text-ink-2">{full > 0 ? `${Math.round((ta / full) * 100)}% of month` : "—"}</td>
+      <td className="px-3 text-right tabular text-ink-3">{fmt(x.fs ?? x.sp)}</td>
+      <td className="px-3 text-right tabular">{fmt(x.sa)}</td>
+      <td className="px-3 text-right tabular text-ink-3">{(x.fs ?? x.sp) > 0 ? `${Math.round((x.sa / (x.fs ?? x.sp)) * 100)}%` : "—"}</td>
+      <td className="px-3 text-right tabular text-ink-3">{fmt(x.fn ?? x.np)}</td>
+      <td className="px-3 text-right tabular">{fmt(x.na)}</td>
+      <td className="px-3 text-right tabular text-ink-3">{(x.fn ?? x.np) > 0 ? `${Math.round((x.na / (x.fn ?? x.np)) * 100)}%` : "—"}</td>
+    </>);
     return (<>
+      {mtd && <td className="px-3 text-right tabular text-ink-3">{fmt(full)}</td>}
       <td className="px-3 text-right tabular">{fmt(tp)}</td>
       <td className={cn("px-3 text-right tabular", strong && "font-semibold")}>{fmt(ta)}</td>
       <td className={cn("px-3 text-right tabular", strong && "font-semibold", gap > 0 ? "text-bad" : gap < 0 ? "text-warn" : "text-ink-4")}>{gap === 0 ? "—" : `${gap > 0 ? "+" : "−"}${fmt(Math.abs(gap))}`}</td>
@@ -91,7 +111,7 @@ export function ExpandTable({ rows, label, viewKey, weekly, split, period }: { r
         <td className="py-1.5 pr-3 text-ink-3" style={{ paddingLeft: 12 + depth * 18 }}>
           {Number(d.day.slice(8))} {new Date(`${d.day}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", month: "short", timeZone: "UTC" })}
         </td>
-        {d.future ? <td colSpan={10} className="px-3 text-right text-[11px]">plan {fmt(p)}</td> : <Cells x={d} />}
+        {d.future ? <td colSpan={mtd ? 11 : 10} className="px-3 text-right text-[11px]">plan {fmt(p)}</td> : <Cells x={d} />}
         <td className="px-3 text-right text-[11.5px] tabular">{dev == null ? <span className="text-ink-4">—</span> : <span className={cn("font-semibold", dev > BAND ? "text-[#1d4ed8]" : dev < -BAND ? "text-bad" : "text-ok")}>{dev > 0 ? "+" : ""}{Math.round(dev * 100)}%</span>}</td>
       </tr>
     );
@@ -103,14 +123,16 @@ export function ExpandTable({ rows, label, viewKey, weekly, split, period }: { r
         <thead>
           <tr className="text-[10.5px] font-semibold uppercase tracking-[0.08em]">
             <th rowSpan={2} className="thead-hl rounded-tl-xl px-3 py-2 text-left">{label}</th>
-            <th colSpan={4} className="border-l-2 border-white px-3 py-1.5 text-center text-white" style={{ background: "var(--color-hero)" }}>Total</th>
+            <th colSpan={mtd ? 5 : 4} className="border-l-2 border-white px-3 py-1.5 text-center text-white" style={{ background: "var(--color-hero)" }}>{mtd ? (noMtd ? "Total · month plan, any day" : `Total · MTD 1–${mtd.through}`) : "Total"}</th>
             <th colSpan={3} className="border-l-2 border-white bg-[#e8f0fe] px-3 py-1.5 text-center text-[#1e40af]">South</th>
             <th colSpan={3} className="border-l-2 border-white bg-[#fdf2e3] px-3 py-1.5 text-center text-[#9a3412]">North</th>
             <th rowSpan={2} className="thead-hl rounded-tr-xl border-l-2 border-white px-3 py-2 text-right" title="Days beyond ±20% of the day plan (above ↑ / below ↓) of the planned days">Days ±20%</th>
           </tr>
           <tr className="thead-hl text-[10.5px] font-semibold uppercase tracking-[0.06em]">
-            {["Plan", "Actual", "Variance", "Util %", "Plan", "Actual", "Util %", "Plan", "Actual", "Util %"].map((h, i) => (
-              <th key={i} className={cn("px-3 py-2 text-right", (i === 0 || i === 4 || i === 7) && "border-l-2 border-white")}>{h}</th>
+            {(mtd ? (noMtd ? ["Month plan", "MTD plan", "Actual", "Balance", "Achieved", "Month plan", "Actual", "Achieved", "Month plan", "Actual", "Achieved"]
+                : ["Month plan", "MTD plan", "Actual", "Variance", "Util %", "MTD plan", "Actual", "Util %", "MTD plan", "Actual", "Util %"])
+              : ["Plan", "Actual", "Variance", "Util %", "Plan", "Actual", "Util %", "Plan", "Actual", "Util %"]).map((h, i) => (
+              <th key={i} className={cn("px-3 py-2 text-right", (mtd ? [0, 5, 8] : [0, 4, 7]).includes(i) && "border-l-2 border-white")}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -144,7 +166,7 @@ export function ExpandTable({ rows, label, viewKey, weekly, split, period }: { r
                             <button type="button" onClick={() => toggle(wk)} className="flex items-center gap-1 font-medium text-ink-2 hover:text-info">
                               <ChevronRight size={12} className={cn("shrink-0 text-ink-4 transition-transform", wOpen && "rotate-90")} />{w.replace("_", " ")}</button>
                           </td>
-                          <Cells x={sum(wd.filter((d) => !d.future))} />
+                          <Cells x={{ ...sum(wd.filter((d) => !d.future)), ...(mtd ? { fs: sum(wd).sp, fn: sum(wd).np } : {}) }} />
                           <Beyond days={wd} r={r.kind === "total" ? null : r} />
                         </tr>
                         {wOpen && <DayRows days={wd} depth={2} />}

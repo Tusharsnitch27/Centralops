@@ -14,8 +14,12 @@ export const VIEWS: ViewDef[] = [
   { key: "category_view", title: "Category-wise inward", sub: "Inward by category", flow: "inbound", rowLabel: "Category" },
 ];
 
-export interface RawRow { label: string; group: string | null; sp: number; sa: number; np: number; na: number }
-export interface Row extends RawRow { tp: number; ta: number; tu: number | null; su: number | null; nu: number | null; gap: number; kind?: "subtotal" | "total" }
+/**
+ * sp / np = the plan actuals are judged against. During an open month that is the MTD plan (plan through the last day with actuals)
+ * and fs / fn carry the full-month plan beside it; for a closed month fs / fn are absent and sp / np are the month plan.
+ */
+export interface RawRow { label: string; group: string | null; sp: number; sa: number; np: number; na: number; fs?: number; fn?: number }
+export interface Row extends RawRow { tp: number; ta: number; tu: number | null; su: number | null; nu: number | null; gap: number; kind?: "subtotal" | "total"; ftp?: number }
 /** inventory = total space used; good / bad / other split it (other = blocked + not found + putaway pending). */
 export interface WhCap { period: string; warehouse: "South" | "North"; capacity: number; inventory: number | null; good?: number | null; bad?: number | null; other?: number | null;
   /** floor space (pre-pack area): pre-pack stock in pieces (PP4 = 4) + non-apparel stock, against its own capacity */
@@ -24,11 +28,12 @@ export interface WhCap { period: string; warehouse: "South" | "North"; capacity:
 const u = (a: number, p: number) => (p > 0 ? a / p : null);
 export function enrich(r: RawRow, kind?: Row["kind"]): Row {
   const tp = r.sp + r.np, ta = r.sa + r.na;
-  return { ...r, tp, ta, tu: u(ta, tp), su: u(r.sa, r.sp), nu: u(r.na, r.np), gap: ta - tp, kind };
+  return { ...r, tp, ta, tu: u(ta, tp), su: u(r.sa, r.sp), nu: u(r.na, r.np), gap: ta - tp, kind, ftp: r.fs != null || r.fn != null ? (r.fs ?? 0) + (r.fn ?? 0) : undefined };
 }
 export function sumRows(rows: RawRow[], label: string, kind: Row["kind"]): Row {
   const s = rows.reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na }), { sp: 0, sa: 0, np: 0, na: 0 });
-  return enrich({ label, group: null, ...s }, kind);
+  const mtd = rows.some((r) => r.fs != null || r.fn != null);
+  return enrich({ label, group: null, ...s, ...(mtd ? { fs: rows.reduce((a, r) => a + (r.fs ?? r.sp), 0), fn: rows.reduce((a, r) => a + (r.fn ?? r.np), 0) } : {}) }, kind);
 }
 
 /** Display rows: data rows, optional subtotal of a group (e.g. Marketplace), grand total. */
@@ -256,7 +261,9 @@ export function returnsInsights(rows: ReturnsRow[]): Insight[] {
 /* ---------- overall accuracy ---------- */
 /** Forecast accuracy: 1 − |actual − plan| ÷ plan (0 when off by 100%+); null without a plan. */
 export const accuracy = (plan: number, actual: number) => (plan > 0 ? Math.max(0, 1 - Math.abs(actual - plan) / plan) : null);
-export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards" | "Returns"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null }
+/** ftp / fta = full-month plan and actual so far (MTD views); noMtd = month plan only (B2B marketplace), so no MTD plan / accuracy. */
+export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards" | "Returns"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null;
+  ftp?: number; fta?: number; noMtd?: boolean }
 const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp" | "returns_b2c" | "returns_b2b"; label: string; flow: OverallRow["flow"] }[] = [
   { key: "category_inward", label: "Category inward", flow: "Inwards" },
   { key: "prepack", label: "Pre-pack", flow: "Inwards" },
@@ -268,28 +275,33 @@ const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp" | "returns_b2c" | "returns_b
   { key: "returns_b2c", label: "B2C returns", flow: "Returns" },
   { key: "returns_b2b", label: "B2B returns", flow: "Returns" },
 ];
-const mk = (key: string, label: string, flow: OverallRow["flow"], s: { sp: number; sa: number; np: number; na: number }, kind?: OverallRow["kind"]): OverallRow => {
+const mk = (key: string, label: string, flow: OverallRow["flow"], s: { sp: number; sa: number; np: number; na: number }, kind?: OverallRow["kind"], extra?: { ftp?: number; fta?: number; noMtd?: boolean }): OverallRow => {
   const tp = s.sp + s.np, ta = s.sa + s.na;
-  return { key, label, flow, kind, ...s, tp, ta, dev: ta - tp, devPct: tp > 0 ? (ta - tp) / tp : null, acc: accuracy(tp, ta), sAcc: accuracy(s.sp, s.sa), nAcc: accuracy(s.np, s.na) };
+  if (extra?.noMtd) return { key, label, flow, kind, ...s, tp, ta, dev: 0, devPct: null, acc: null, sAcc: null, nAcc: null, ...extra };
+  return { key, label, flow, kind, ...s, tp, ta, dev: ta - tp, devPct: tp > 0 ? (ta - tp) / tp : null, acc: accuracy(tp, ta), sAcc: accuracy(s.sp, s.sa), nAcc: accuracy(s.np, s.na), ...extra };
 };
 /** One row per flow (inwards / outwards by channel) from each view's total, plus subtotals. */
-export function overallTable(views: { def: ViewDef; rows: Row[] }[]): OverallRow[] {
+export function overallTable(views: { def: ViewDef; rows: Row[]; noMtd?: boolean }[]): OverallRow[] {
+  const mtd = views.some((v) => v.rows.some((r) => r.ftp != null));
   const out: OverallRow[] = [];
   for (const flow of ["Inwards", "Outwards", "Returns"] as const) {
     const part: OverallRow[] = [];
     for (const o of OVERALL.filter((x) => x.flow === flow)) {
       // B2C splits into Shopify and the marketplaces
       const t = o.key === "b2c_sf" || o.key === "b2c_mp"
-        ? (views.find((v) => v.def.key === "b2c")?.rows ?? []).filter((r) => !r.kind && (o.key === "b2c_sf") === isShopify(r.label)).reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na, tp: a.tp + r.tp, ta: a.ta + r.ta }), { sp: 0, sa: 0, np: 0, na: 0, tp: 0, ta: 0 })
+        ? (views.find((v) => v.def.key === "b2c")?.rows ?? []).filter((r) => !r.kind && (o.key === "b2c_sf") === isShopify(r.label)).reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na, tp: a.tp + r.tp, ta: a.ta + r.ta, ftp: a.ftp + (r.ftp ?? r.tp) }), { sp: 0, sa: 0, np: 0, na: 0, tp: 0, ta: 0, ftp: 0 })
         : o.key === "returns_b2c" || o.key === "returns_b2b"
           ? views.find((v) => v.def.key === "returns")?.rows.find((r) => !r.kind && r.label === o.label)
           : views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
-      if (t && (t.tp > 0 || t.ta > 0)) part.push(mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }));
+      const noMtd = mtd && !!views.find((v) => v.def.key === (o.key.startsWith("returns_") ? "returns" : o.key))?.noMtd;
+      if (t && (t.tp > 0 || t.ta > 0)) part.push(mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }, undefined, mtd ? { ftp: t.ftp ?? t.tp, fta: t.ta, noMtd } : undefined));
     }
     if (!part.length) continue;
     out.push(...part);
-    const sum = part.reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na }), { sp: 0, sa: 0, np: 0, na: 0 });
-    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal")); // Returns → overall returns
+    // MTD plan / accuracy add up the flows that have an MTD plan; month plan and achieved add up every flow
+    const judged = part.filter((r) => !r.noMtd);
+    const sum = judged.reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na }), { sp: 0, sa: 0, np: 0, na: 0 });
+    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal", mtd ? { ftp: part.reduce((a, r) => a + (r.ftp ?? r.tp), 0), fta: part.reduce((a, r) => a + (r.fta ?? r.ta), 0) } : undefined)); // Returns → overall returns
   }
   return out;
 }
