@@ -483,7 +483,7 @@ function OverallAccuracy({ rows, label, mtd }: { rows: OverallRow[]; label: stri
                 <tr><td colSpan={cols} className="!h-8 bg-subtle/60 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">{g}</td></tr>
                 {rs.map((r) => (
                   <tr key={r.key} className={cn(r.kind === "subtotal" && "bg-subtle/40 font-semibold")}>
-                    <td className={cn(r.kind ? "font-semibold" : "pl-5")}>{r.label}{r.noMtd && <span className="ml-1.5 text-[11px] font-normal text-ink-4">month plan only</span>}</td>
+                    <td className={cn(r.kind ? "font-semibold" : r.subset ? "pl-8 text-ink-3" : "pl-5")}>{r.label}{r.noMtd && <span className="ml-1.5 text-[11px] font-normal text-ink-4">month plan only</span>}</td>
                     {mtd && <td className="text-right tabular text-ink-3">{fmt(r.ftp ?? r.tp)}</td>}
                     <td className="text-right tabular">{r.noMtd ? <span className="text-ink-4">—</span> : fmt(r.tp)}</td>
                     {(r.fta ?? r.ta) === 0 && (r.ftp ?? r.tp) > 0 ? (
@@ -514,8 +514,8 @@ function OverallAccuracy({ rows, label, mtd }: { rows: OverallRow[]; label: stri
           })}
         </table>
         <p className="border-t border-line px-3 py-2 text-[11.5px] text-ink-4">{mtd
-          ? <>Month to date (1–{mtd.through} of {mtd.days}): actuals are judged against the MTD plan — the plan through the same day (day plans to date; weekly plans for the days gone; returns pro rata). % of month = achieved ÷ month plan, against {pc(mtd.through / mtd.days)} of days gone · Balance = month plan − achieved · Needed / day over the {left} days left. B2B marketplace is planned for the month (any day), so it has no MTD plan; totals&apos; MTD figures leave it out.</>
-          : <>Accuracy = 1 − |actual − plan| ÷ plan. Deviation + means more than planned, − means less. Detailed views follow below.</>}</p>
+          ? <>Month to date (1–{mtd.through} of {mtd.days}): actuals are judged against the MTD plan — the plan through the same day (day plans to date; weekly plans for the days gone; returns pro rata). % of month = achieved ÷ month plan, against {pc(mtd.through / mtd.days)} of days gone · Balance = month plan − achieved · Needed / day over the {left} days left. B2B marketplace is planned for the month (any day), so it has no MTD plan; totals&apos; MTD figures leave it out. Pre-pack is part of category inward, so Total inwards counts it once.</>
+          : <>Accuracy = 1 − |actual − plan| ÷ plan. Deviation + means more than planned, − means less. Pre-pack is part of category inward, so Total inwards counts it once. Detailed views follow below.</>}</p>
       </div>
     </section>
   );

@@ -150,20 +150,20 @@ export async function bootstrap(rawQ: RunQ) {
     } catch (e) { await rawQ("rollback"); throw e; }
     console.log("[seed] S&OP returns plan (B2C, B2B) loaded from the projection sheet");
   }
-  if ((await setting("seed.sop_plan_inward")) !== "v1") {
+  if ((await setting("seed.sop_plan_inward")) !== "v2") {
     await rawQ("begin");
     try {
       await reloadSopInwardPlan(rawQ);
-      await setSetting("seed.sop_plan_inward", "v1");
+      await setSetting("seed.sop_plan_inward", "v2");
       await rawQ("commit");
     } catch (e) { await rawQ("rollback"); throw e; }
     console.log("[seed] S&OP inward plans (category, pre-pack, category-wise) loaded from the projection sheet");
   }
-  if ((await setting("seed.sop_sheet_inputs")) !== "v1") {
+  if ((await setting("seed.sop_sheet_inputs")) !== "v2") {
     await rawQ("begin");
     try {
       await loadSopSheetInputs(rawQ);
-      await setSetting("seed.sop_sheet_inputs", "v1");
+      await setSetting("seed.sop_sheet_inputs", "v2");
       await rawQ("commit");
     } catch (e) { await rawQ("rollback"); throw e; }
     console.log("[seed] S&OP inputs Nov 2026 – Jan 2027 entered from the projection sheet");

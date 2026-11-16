@@ -1,6 +1,6 @@
 import "server-only";
 import type { RunQ } from "../db";
-import { weekOfMonth } from "@/lib/sopWeeks";
+import { sheetWeekDays, weekOfMonth } from "@/lib/sopWeeks";
 import data from "../../db/seed/sop-history-fy27.json";
 import plan from "../../db/seed/sop-fy27.json";
 import planDaily from "../../db/seed/sop-plan-daily-fy27.json";
@@ -102,9 +102,12 @@ export async function reloadSopRetailPlan(S: RunQ) {
 }
 
 /**
- * Inward plans from the projection sheet: category inward and pre-pack by week, category-wise by category. Each month the sheet covers
- * is replaced; a week keeps the label its row already has (e.g. "Apr_Wk_01" from the Plan vs Actual workbook, with its actuals).
+ * Inward plans from the projection sheet: category inward and pre-pack by week, category-wise by category. Each month the sheet covers is
+ * replaced. Sheet weeks are not calendar weeks (a 4-week month is 1–7, 8–15, 16–23, 24 → end): from the Snowflake cut-over each sheet week is
+ * spread over its own days (day plan) and the review's week rows are those days by calendar week — the weeks actuals are counted in.
+ * Earlier months keep the sheet's weeks (their workbook actuals were recorded that way). Pre-pack is part of category inward, not added to it.
  */
+const INWARD_DAY_PLAN_FROM = "2026-09-01";
 export async function reloadSopInwardPlan(S: RunQ) {
   const rows = planInward.rows as [string, string, string, number, number][];
   for (const view of ["category_inward", "prepack", "category_view"]) {
@@ -113,13 +116,33 @@ export async function reloadSopInwardPlan(S: RunQ) {
     if (!months.length) continue;
     await S(`update sop_review_rows set south_plan = null, north_plan = null where view_key = $1 and period = any($2::date[])`, [view, months]);
     const have = await S<{ period: string; row_label: string }>(`select period::text as period, row_label from sop_review_rows where view_key = $1 and period = any($2::date[])`, [view, months]);
-    for (const [, period, label, south, north] of vr) {
+    const put = async (period: string, label: string, south: number, north: number) => {
       const same = (l: string) => (view === "category_view" ? l.toLowerCase() === label.toLowerCase() : l.slice(-5).toLowerCase() === label.toLowerCase());
       const row = have.find((h) => h.period === period && same(h.row_label))?.row_label ?? label;
       await S(`insert into sop_review_rows (view_key, period, row_label, sort, south_plan, north_plan)
                values ($1,$2,$3,(select coalesce(max(sort),0)+1 from sop_review_rows where view_key = $1 and period = $2),$4,$5)
                on conflict (view_key, period, row_label) do update set south_plan = excluded.south_plan, north_plan = excluded.north_plan`,
-        [view, period, row, south, north]);
+        [view, period, row, Math.round(south), Math.round(north)]);
+    };
+    const weekly = view !== "category_view";
+    for (const period of months) {
+      const mr = vr.filter((r) => r[1] === period);
+      if (!weekly || period < INWARD_DAY_PLAN_FROM) { for (const [, , label, south, north] of mr) await put(period, label, south, north); continue; }
+      // sheet weeks → days → calendar weeks
+      const weeks = Math.max(...mr.map((r) => Number(r[2].slice(-2)) || 0));
+      const day = new Map<string, { s: number; n: number }>();
+      for (const [, , label, south, north] of mr) {
+        const ds = sheetWeekDays(period, Number(label.slice(-2)), weeks);
+        for (const d of ds) { const x = day.get(d) ?? { s: 0, n: 0 }; x.s += south / ds.length; x.n += north / ds.length; day.set(d, x); }
+      }
+      await S(`delete from sop_plan_daily where view_key = $1 and date_trunc('month', day)::date = $2::date`, [view, period]);
+      const ds = [...day.entries()];
+      if (ds.length) await S(`insert into sop_plan_daily (day, view_key, row_label, south, north, source)
+               select d::date, $1, '', s, n, 'workbook' from unnest($2::text[], $3::numeric[], $4::numeric[]) as t(d, s, n)`,
+        [view, ds.map(([d]) => d), ds.map(([, x]) => Math.round(x.s * 10) / 10), ds.map(([, x]) => Math.round(x.n * 10) / 10)]);
+      const wk = new Map<string, { s: number; n: number }>();
+      for (const [d, x] of ds) { const w = weekOfMonth(d), y = wk.get(w) ?? { s: 0, n: 0 }; y.s += x.s; y.n += x.n; wk.set(w, y); }
+      for (const [w, x] of [...wk.entries()].sort()) await put(period, w, x.s, x.n);
     }
   }
 }
@@ -134,7 +157,9 @@ export async function loadSopSheetInputs(S: RunQ) {
   const lineId = new Map(lines.map((l) => [`${l.code}|${l.name}`, l.id]));
   const missing = [...new Set(rows.filter((r) => !lineId.has(`${r[0]}|${r[1]}`)).map((r) => `${r[0]} · ${r[1]}`))];
   if (missing.length) console.warn(`[seed] S&OP inputs: no line for ${missing.join(", ")} — skipped`);
-  const ok = rows.filter((r) => lineId.has(`${r[0]}|${r[1]}`));
+  // a line × month an owner has entered or changed (updated_by set) is theirs — never overwritten from the sheet
+  const owned = new Set((await S<{ k: string }>(`select distinct line_id::text || '|' || period::text as k from sop_values where updated_by is not null and period >= '2026-11-01'`)).map((r) => r.k));
+  const ok = rows.filter((r) => lineId.has(`${r[0]}|${r[1]}`) && !owned.has(`${lineId.get(`${r[0]}|${r[1]}`)}|${r[2].slice(0, 7)}-01`));
   const touched = [...new Set(ok.map((r) => `${lineId.get(`${r[0]}|${r[1]}`)}|${r[2].slice(0, 7)}-01`))];
   await S(`update sop_values v set projection = null, revised_projection = null from unnest($1::uuid[], $2::date[]) t(l, p) where v.line_id = t.l and v.period = t.p`,
     [touched.map((t) => t.split("|")[0]), touched.map((t) => t.split("|")[1])]);

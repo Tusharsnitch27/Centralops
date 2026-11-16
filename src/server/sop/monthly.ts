@@ -1,7 +1,7 @@
 import "server-only";
 import { q } from "../db";
 import { categoryName } from "@/lib/whAreas";
-import { weekOfMonth } from "@/lib/sopWeeks";
+import { sheetWeekDays, weekOfMonth } from "@/lib/sopWeeks";
 import { VIEWS, overallTable, flowCalc, flowInsights, latestUtil, returnsInsights, tableRows, trendTable, viewInsights, whInsights, whSeries, type FlowRow, type RawRow, type ReturnsRow, type WhCap } from "@/components/sop/reviewMath";
 
 export async function reviewPeriods() {
@@ -52,14 +52,14 @@ function withReturnActuals<T extends Omit<PlanRow, "row_group" | "sort"> & Parti
 
 /**
  * MTD plan for a month still running (through = last day with actuals). Rows keep the full-month plan in fs / fn and are judged on sp / np:
- * B2C channels and retail = the day plan summed to date; weekly flows (category inward, pre-pack, liquidation) = each sheet week's plan for
- * its days gone (week n = days 7n−6 … 7n, the last week to month end); category-wise = each category × category inward's share to date;
+ * B2C channels, retail, category inward and pre-pack = the day plan summed to date (sheet weeks spread over 1–7, 8–15, 16–23, 24 → end);
+ * liquidation = each sheet week's plan for its days gone; category-wise = each category × category inward's share to date;
  * returns = pro rata by days; B2B marketplace = month plan only (dispatch can fall on any day), no MTD plan.
  */
 async function mtdPlanner(period: string, through: number, days: number) {
   const end = `${period.slice(0, 8)}${String(through).padStart(2, "0")}`;
   const daily = await q<{ view_key: string; row_label: string; day: string; s: number; n: number }>(
-    `select view_key, row_label, day::text as day, south::float8 as s, north::float8 as n from sop_plan_daily where view_key in ('b2c', 'retail_fwd') and day between $1 and $2`, [period, end]);
+    `select view_key, row_label, day::text as day, south::float8 as s, north::float8 as n from sop_plan_daily where view_key in ('b2c', 'retail_fwd', 'category_inward', 'prepack') and day between $1 and $2`, [period, end]);
   const hasDaily = (view: string) => daily.some((d) => d.view_key === view);
   const sumDaily = (pick: (d: (typeof daily)[number]) => boolean) => daily.filter(pick).reduce((a, d) => ({ s: a.s + d.s, n: a.n + d.n }), { s: 0, n: 0 });
   const weekNo = (label: string) => Number(/(\d+)\s*$/.exec(label)?.[1] ?? 0);
@@ -70,13 +70,24 @@ async function mtdPlanner(period: string, through: number, days: number) {
     apply(view: string, rows: RawRow[]): RawRow[] {
       if (view === "b2b_mp") return rows.map((r) => ({ ...r, fs: r.sp, fn: r.np }));
       if (view === "b2c" && hasDaily("b2c")) return rows.map((r) => { const x = sumDaily((d) => d.view_key === "b2c" && (d.row_label === r.label || (r.label === "Amazon" && /^cocoblu$/i.test(d.row_label)))); return set(r, x.s, x.n); });
-      if (view === "retail_fwd" && hasDaily("retail_fwd")) return rows.map((r) => { const x = sumDaily((d) => d.view_key === "retail_fwd" && weekOfMonth(d.day) === `Wk_${String(weekNo(r.label)).padStart(2, "0")}`); return set(r, x.s, x.n); });
+      // day plans (calendar-week rows): the plan of each row's days to date
+      const byWeek = (v: string) => rows.map((r) => { const x = sumDaily((d) => d.view_key === v && weekOfMonth(d.day) === `Wk_${String(weekNo(r.label)).padStart(2, "0")}`); return set(r, x.s, x.n); });
+      if (view === "retail_fwd" && hasDaily("retail_fwd")) return byWeek("retail_fwd");
+      if ((view === "category_inward" || view === "prepack") && hasDaily(view)) {
+        const out = byWeek(view);
+        if (view === "category_inward") {
+          const m = rows.reduce((x, r) => ({ s: x.s + r.sp, n: x.n + r.np }), { s: 0, n: 0 }), t = out.reduce((x, r) => ({ s: x.s + r.sp, n: x.n + r.np }), { s: 0, n: 0 });
+          catShare = { s: m.s ? t.s / m.s : dayShare, n: m.n ? t.n / m.n : dayShare };
+        }
+        return out;
+      }
       if (view === "category_inward" || view === "prepack" || view === "liquidation" || view === "retail_fwd") {
         const weeks = Math.max(1, ...rows.map((r) => weekNo(r.label)));
         const out = rows.map((r) => {
           const n = weekNo(r.label); if (!n) return set(r, r.sp * dayShare, r.np * dayShare);
-          const a = 7 * (n - 1) + 1, b = n === weeks ? days : Math.min(days, 7 * n);
-          const f = b < a ? 0 : Math.max(0, Math.min(1, (through - a + 1) / (b - a + 1)));
+          // sheet weeks (no day plan): 1–7, 8–15, 16–23, 24 → end (5-week months: 7-day blocks)
+          const wd = sheetWeekDays(period, n, weeks);
+          const f = wd.length ? wd.filter((d) => Number(d.slice(8)) <= through).length / wd.length : 0;
           return set(r, r.sp * f, r.np * f);
         });
         if (view === "category_inward") {

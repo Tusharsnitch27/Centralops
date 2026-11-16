@@ -263,10 +263,11 @@ export function returnsInsights(rows: ReturnsRow[]): Insight[] {
 export const accuracy = (plan: number, actual: number) => (plan > 0 ? Math.max(0, 1 - Math.abs(actual - plan) / plan) : null);
 /** ftp / fta = full-month plan and actual so far (MTD views); noMtd = month plan only (B2B marketplace), so no MTD plan / accuracy. */
 export interface OverallRow { key: string; label: string; flow: "Inwards" | "Outwards" | "Returns"; kind?: "subtotal" | "total"; sp: number; sa: number; np: number; na: number; tp: number; ta: number; dev: number; devPct: number | null; acc: number | null; sAcc: number | null; nAcc: number | null;
-  ftp?: number; fta?: number; noMtd?: boolean }
-const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp" | "returns_b2c" | "returns_b2b"; label: string; flow: OverallRow["flow"] }[] = [
+  ftp?: number; fta?: number; noMtd?: boolean; subset?: boolean }
+const OVERALL: { key: ViewKey | "b2c_sf" | "b2c_mp" | "returns_b2c" | "returns_b2b"; label: string; flow: OverallRow["flow"]; subset?: boolean }[] = [
   { key: "category_inward", label: "Category inward", flow: "Inwards" },
-  { key: "prepack", label: "Pre-pack", flow: "Inwards" },
+  // pre-pack is part of category inward (a pre-pack T-shirt is category inward too): shown, never added to the total
+  { key: "prepack", label: "↳ of which pre-pack", flow: "Inwards", subset: true },
   { key: "b2c_sf", label: "B2C · Shopify", flow: "Outwards" },
   { key: "b2c_mp", label: "B2C · Marketplaces", flow: "Outwards" },
   { key: "b2b_mp", label: "B2B · Marketplace", flow: "Outwards" },
@@ -294,14 +295,14 @@ export function overallTable(views: { def: ViewDef; rows: Row[]; noMtd?: boolean
           ? views.find((v) => v.def.key === "returns")?.rows.find((r) => !r.kind && r.label === o.label)
           : views.find((v) => v.def.key === o.key)?.rows.find((r) => r.kind === "total");
       const noMtd = mtd && !!views.find((v) => v.def.key === (o.key.startsWith("returns_") ? "returns" : o.key))?.noMtd;
-      if (t && (t.tp > 0 || t.ta > 0)) part.push(mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }, undefined, mtd ? { ftp: t.ftp ?? t.tp, fta: t.ta, noMtd } : undefined));
+      if (t && (t.tp > 0 || t.ta > 0)) part.push({ ...mk(o.key, o.label, flow, { sp: t.sp, sa: t.sa, np: t.np, na: t.na }, undefined, mtd ? { ftp: t.ftp ?? t.tp, fta: t.ta, noMtd } : undefined), subset: o.subset });
     }
     if (!part.length) continue;
     out.push(...part);
     // MTD plan / accuracy add up the flows that have an MTD plan; month plan and achieved add up every flow
-    const judged = part.filter((r) => !r.noMtd);
+    const counted = part.filter((r) => !r.subset), judged = counted.filter((r) => !r.noMtd);
     const sum = judged.reduce((a, r) => ({ sp: a.sp + r.sp, sa: a.sa + r.sa, np: a.np + r.np, na: a.na + r.na }), { sp: 0, sa: 0, np: 0, na: 0 });
-    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal", mtd ? { ftp: part.reduce((a, r) => a + (r.ftp ?? r.tp), 0), fta: part.reduce((a, r) => a + (r.fta ?? r.ta), 0) } : undefined)); // Returns → overall returns
+    out.push(mk(`${flow}:total`, `Total ${flow.toLowerCase()}`, flow, sum, "subtotal", mtd ? { ftp: counted.reduce((a, r) => a + (r.ftp ?? r.tp), 0), fta: counted.reduce((a, r) => a + (r.fta ?? r.ta), 0) } : undefined)); // Returns → overall returns
   }
   return out;
 }
