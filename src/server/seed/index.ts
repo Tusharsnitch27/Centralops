@@ -218,6 +218,17 @@ export async function bootstrap(rawQ: RunQ) {
       console.log(`[seed] AOP Logistics re-read from the Cost Master (Apr–Nov, 4-column layout): ${r.updated} cells set, ${r.kept} owner-edited cells kept`);
     } catch (e) { await rawQ("rollback"); throw e; }
   }
+  if ((await setting("seed.wcm_snapshot")) !== "costmaster-2026-11-20") {
+    const { seedWcmSnapshot } = await import("./wcm");
+    await rawQ("begin");
+    try {
+      const r = await seedWcmSnapshot(rawQ);
+      await setSetting("wcm.snapshot", r.snapshot); // the snapshot the Cost Master reads
+      await setSetting("seed.wcm_snapshot", r.snapshot);
+      await rawQ("commit");
+      console.log(`[seed] Warehouse Cost Master snapshot ${r.snapshot}: ${r.lines} source lines`);
+    } catch (e) { await rawQ("rollback"); throw e; }
+  }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
     await setSetting("seed.handbook", "v1");
