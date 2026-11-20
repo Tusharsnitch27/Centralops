@@ -14,7 +14,7 @@ import { AOP_LINES, aopLineOf, normType, rateOn, type AopLine, type RateRow } fr
 export const PKG_FROM = "2026-09-01";
 const SOURCE = "snitch_db.maplemonk.warehouse_sla_performance";
 export const PKG_QUERY = (from: string) => `SELECT TO_VARCHAR(TRY_TO_DATE(LEFT(TO_VARCHAR(dispatch_date), 10)), 'YYYY-MM-DD') AS day,
-  UPPER(TRIM(COALESCE(shippingpackagetype, 'DEFAULT'))) AS package_type, UPPER(TRIM(COALESCE(marketplacemapped, 'UNKNOWN'))) AS marketplace,
+  UPPER(TRIM(COALESCE(shipping_package_type, 'DEFAULT'))) AS package_type, UPPER(TRIM(COALESCE(marketplace_mapped, 'UNKNOWN'))) AS marketplace,
   COUNT(DISTINCT shippingpackagecode) AS packages
 FROM ${SOURCE}
 WHERE dispatched_timestamp IS NOT NULL AND TRY_TO_DATE(LEFT(TO_VARCHAR(dispatch_date), 10)) >= '${from}'
@@ -30,8 +30,10 @@ export async function pullPackaging(): Promise<{ read: number; written: number; 
   let from = PKG_FROM;
   while (closed.includes(monthOf(from))) { const d = new Date(`${from}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + 1); from = d.toISOString().slice(0, 10); }
   const rows = await sfQuery<{ day: string | null; package_type: string; marketplace: string; packages: number }>(PKG_QUERY(from));
-  await q(`delete from pkg_usage_daily where day >= $1`, [from]);
   const ok = rows.filter((r) => r.day);
+  // the source keeps ~60 days: replace only from the first day it returned, so days that aged out of it are kept
+  const first = ok.reduce((m, r) => (r.day! < m ? r.day! : m), "9999-12-31");
+  if (ok.length) await q(`delete from pkg_usage_daily where day >= $1`, [first > from ? first : from]);
   for (let i = 0; i < ok.length; i += 1000) {
     const c = ok.slice(i, i + 1000);
     await q(`insert into pkg_usage_daily (day, marketplace, package_type, packages)
