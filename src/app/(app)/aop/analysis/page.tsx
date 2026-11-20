@@ -147,9 +147,14 @@ function Economics({ months, rows }: { months: string[]; rows: AttributionRow[] 
     const rs = rows.filter((r) => r.period === p && r.family === f);
     const amt = rs.reduce((a, r) => a + r.amount, 0);
     const byCh = new Map<string, number>();
-    for (const r of rs) if (r.channel !== "Shared") byCh.set(r.channel, Math.max(byCh.get(r.channel) ?? 0, r.units ?? 0));
+    // warehouse: process rows share a volume → max per channel × warehouse; logistics: vendor rows are disjoint AWBs → sum
+    for (const r of rs) if (r.channel !== "Shared") {
+      const k = f === "logistics" ? `${r.channel}|${r.process}` : `${r.channel}|${r.warehouse}`;
+      byCh.set(k, f === "logistics" ? (byCh.get(k) ?? 0) + (r.units ?? 0) : Math.max(byCh.get(k) ?? 0, r.units ?? 0));
+    }
     const units = [...byCh.values()].reduce((a, v) => a + v, 0);
-    return { amt, units, cpi: units ? amt / units : null, pending: rs.some((r) => r.basis === "pending") };
+    const pendingAmt = rs.filter((r) => r.basis === "pending").reduce((a, r) => a + r.amount, 0), mapped = amt - pendingAmt;
+    return { amt, mapped, units, cpi: units ? mapped / units : null, pending: pendingAmt > 0, pendingAmt };
   };
   return (
     <div className="overflow-x-auto">
@@ -161,9 +166,9 @@ function Economics({ months, rows }: { months: string[]; rows: AttributionRow[] 
             <tr key={p}>
               <td className="font-medium">{monLabel(p)}</td>
               <td className="text-right tabular">{inr(w.amt || null)}</td><td className="text-right tabular text-ink-3">{w.units ? new Intl.NumberFormat("en-IN").format(Math.round(w.units)) : "—"}</td><td className="text-right tabular">{cpi(w.cpi)}</td>
-              <td className="text-right tabular">{l.pending ? <span className="text-[12px] text-ink-4">awaiting split</span> : inr(l.amt || null)}</td>
-              <td className="text-right tabular text-ink-3">{l.units ? new Intl.NumberFormat("en-IN").format(Math.round(l.units)) : "—"}</td><td className="text-right tabular">{l.pending ? "—" : cpi(l.cpi)}</td>
-              <td className="text-right font-semibold tabular">{w.cpi == null && l.cpi == null ? "—" : cpi((w.cpi ?? 0) + (l.pending ? 0 : l.cpi ?? 0))}</td>
+              <td className="text-right tabular">{inr(l.amt || null)}{l.pending && <span title={`${inr(l.pendingAmt)} not yet mapped to a channel — awaiting the split tab`} className="ml-1 cursor-help text-[11px] text-ink-4 underline decoration-dotted">part pending</span>}</td>
+              <td className="text-right tabular text-ink-3">{l.units ? new Intl.NumberFormat("en-IN").format(Math.round(l.units)) : "—"}</td><td className="text-right tabular">{cpi(l.cpi)}</td>
+              <td className="text-right font-semibold tabular">{w.units ? cpi((w.amt + l.mapped) / w.units) : "—"}</td>
             </tr>
           );
         })}</tbody>

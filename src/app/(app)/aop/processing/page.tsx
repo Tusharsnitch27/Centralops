@@ -42,6 +42,9 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
     logisticsAttribution([month]),
   ]);
   const open = assigns.filter((a) => a.unassigned > 0.05);
+  // like-for-like: CPI gap × output, so a month-to-date or part-captured month never reads as a saving against the full-month plan
+  const impactRows = pm.flatMap((m) => m.streams.flatMap((s) => s.rows)).filter((r) => r.costImpact != null);
+  const impact = impactRows.reduce((a, r) => a + r.costImpact!, 0), impactN = impactRows.length;
   const tot = pm.reduce((a, m) => ({ planned: a.planned + m.totals.plannedExp, actual: a.actual + (m.totals.actualExp ?? 0), pmp: a.pmp + m.totals.plannedMp, amp: a.amp + (m.totals.actualMp ?? 0) }), { planned: 0, actual: 0, pmp: 0, amp: 0 });
 
   return (
@@ -52,7 +55,7 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
         <Tile label="Planned manpower cost" value={inr(tot.planned)} sub={`${n1(tot.pmp)} planned heads`} />
         <Tile label="Actual manpower cost" value={inr(tot.actual || null)} sub={`${n1(tot.amp)} actual heads`} />
-        <Tile label="Cost vs plan" value={inr(tot.planned - tot.actual, { sign: true })} tone={impactTone(tot.actual ? tot.planned - tot.actual : null)} sub="+ = under plan" />
+        <Tile label="Cost vs plan" value={inr(impact, { sign: true })} tone={impactTone(impactN ? impact : null)} sub="(planned − actual CPI) × output · + = under plan" />
         <Tile label="Open for assignment" value={String(open.length)} tone={open.length ? "text-warn" : "text-ok"} sub={open.length ? "departments with unassigned heads" : "all heads assigned"} />
       </div>
 
@@ -149,20 +152,30 @@ function ChannelTable({ rows }: { rows: AttributionRow[] }) {
   if (!rows.length) return <EmptyState compact title="No cost attributed for this month yet" />;
   const by = (ch: string, fam: AttributionRow["family"]) => rows.filter((r) => r.channel === ch && r.family === fam);
   // units repeat per process row of a channel; take the largest, not the sum. ponytail: assumes one unit basis per channel × family
-  const units = (rs: AttributionRow[]) => rs.reduce((a, r) => Math.max(a, r.units ?? 0), 0) || null;
+  // …within a warehouse; South + North are then added
+  const units = (rs: AttributionRow[]) => {
+    const per = new Map<string, number>();
+    for (const r of rs) per.set(r.warehouse, Math.max(per.get(r.warehouse) ?? 0, r.units ?? 0));
+    return [...per.values()].reduce((a, n) => a + n, 0) || null;
+  };
+  // logistics rows are per vendor (disjoint AWBs) → sum
+  const sumUnits = (rs: AttributionRow[]) => rs.reduce((a, r) => a + (r.units ?? 0), 0) || null;
   const channels = [...CHANNELS.filter((c) => rows.some((r) => r.channel === c)), ...[...new Set(rows.map((r) => r.channel))].filter((c) => !(CHANNELS as readonly string[]).includes(c))];
   const data = channels.map((ch) => {
     const w = by(ch, "warehouse"), l = by(ch, "logistics");
     const wAmt = w.reduce((a, r) => a + r.amount, 0), lAmt = l.reduce((a, r) => a + r.amount, 0);
-    const wU = units(w), lU = units(l);
+    const wU = units(w), lU = sumUnits(l);
     const basis = l.some((r) => r.basis === "pending") ? "pending" : l.some((r) => r.basis === "allocated") ? "allocated" : l.length ? "direct" : null;
     return { ch, w, wAmt, wU, lAmt, lU, basis, keys: [...new Set(l.map((r) => r.key))].join(" · "), procs: w.filter((r) => r.process).map((r) => ({ label: r.process, value: r.amount })) };
   });
+  // Shared (storage & handling) is carried by every item processed, not by the inventory-capacity line
+  const items = data.filter((d) => d.ch !== "Shared").reduce((a, d) => a + (d.wU ?? 0), 0) || null;
+  for (const d of data) if (d.ch === "Shared") d.wU = items;
   const totW = data.reduce((a, d) => a + d.wAmt, 0), totL = data.reduce((a, d) => a + d.lAmt, 0);
   return (
     <div className="overflow-x-auto">
       <table className="table-base min-w-[1040px]">
-        <thead><tr><th>Channel</th><th>Warehouse ₹ (by process)</th><th className="text-right">Units</th><th className="text-right">WH CPI</th><th className="text-right">Logistics ₹</th><th className="text-right">Shipments</th><th className="text-right">Log CPI</th><th className="text-right">Total CPI</th></tr></thead>
+        <thead><tr><th>Channel</th><th>Warehouse ₹ (by process)</th><th className="text-right">Units</th><th className="text-right">WH CPI</th><th className="text-right">Logistics ₹</th><th className="text-right">Shipments</th><th className="text-right">₹ / shipment</th><th className="text-right" title="(warehouse ₹ + logistics ₹) ÷ items">Total ₹ / item</th></tr></thead>
         <tbody>
           {data.map((d) => {
             const wc = d.wU ? d.wAmt / d.wU : null, lc = d.lU ? d.lAmt / d.lU : null;
@@ -177,7 +190,7 @@ function ChannelTable({ rows }: { rows: AttributionRow[] }) {
                 </td>
                 <td className="text-right tabular text-ink-3">{n0(d.lU)}</td>
                 <td className="text-right tabular">{d.basis === "pending" ? "—" : cpi(lc)}</td>
-                <td className="text-right font-semibold tabular">{wc == null && lc == null ? "—" : cpi((wc ?? 0) + (d.basis === "pending" ? 0 : lc ?? 0))}</td>
+                <td className="text-right font-semibold tabular">{d.wU ? cpi((d.wAmt + (d.basis === "pending" ? 0 : d.lAmt)) / d.wU) : d.basis === "pending" ? "—" : cpi(lc)}</td>
               </tr>
             );
           })}

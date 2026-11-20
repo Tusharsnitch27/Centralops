@@ -145,18 +145,30 @@ export async function logisticsAttribution(months: string[]): Promise<Attributio
   ]);
   const out: AttributionRow[] = [];
   const cpi = (amount: number, units: number | null) => (units ? amount / units : null);
+  // running month: shipments are month-to-date, so a budget / provision (full-month) figure is scaled to the days elapsed
+  const ist = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const mtdShare = (p: string) => {
+    if (p !== `${ist.slice(0, 7)}-01`) return 1;
+    const dim = new Date(Date.UTC(+p.slice(0, 4), +p.slice(5, 7), 0)).getUTCDate();
+    return Math.max(Number(ist.slice(8, 10)) - 1, 1) / dim; // data runs through yesterday
+  };
   for (const p of months) {
     const direct = alloc.filter((a) => a.period === p);
     if (direct.length) {
+      const seen = new Set<string>();
       for (const a of direct) {
-        const units = chVols.find((x) => x.period === p && x.channel === a.channel)?.n ?? null;
+        // the split tab may have several rows per channel: carry the channel's shipments once so totals add up
+        const units = seen.has(a.channel) ? null : chVols.find((x) => x.period === p && x.channel === a.channel)?.n ?? null;
+        seen.add(a.channel);
         out.push({ period: p, warehouse: a.warehouse as AttributionRow["warehouse"], family: "logistics", channel: a.channel, process: a.process || a.vendor,
           amount: a.amount, basis: "direct", key: "Cost Master channel split", units, cpi: cpi(a.amount, units) });
       }
       continue;
     }
     for (const l of lines.filter((x) => x.period === p)) {
-      const [amount, which] = l.actual != null ? [l.actual, "actual"] : l.forecast != null ? [l.forecast, "provision"] : [l.plan ?? 0, "budget"];
+      const [full, which] = l.actual != null ? [l.actual, "actual"] : l.forecast != null ? [l.forecast, "provision"] : [l.plan ?? 0, "budget"];
+      const share = which === "actual" ? 1 : mtdShare(p);
+      const amount = full * share;
       if (!amount) continue;
       const allowed = isB2B(l.bucket) ? B2B_CH : B2C_CH;
       const vv = vols.filter((x) => x.period === p && allowed.includes(x.channel) && norm(x.vendor) === norm(volumeVendor(l.item)));
@@ -164,15 +176,15 @@ export async function logisticsAttribution(months: string[]): Promise<Attributio
       const named = namedChannel(l.item);
       if (named) {
         const units = vv.filter((x) => x.channel === named).reduce((a, x) => a + x.n, 0) || null;
-        out.push({ ...base, channel: named, amount, basis: "direct", key: `line names the channel (${which})`, units, cpi: cpi(amount, units) });
+        out.push({ ...base, channel: named, amount, basis: "direct", key: `line names the channel (${which}${share < 1 ? ` · scaled to month-to-date ${Math.round(share * 100)}%` : ""})`, units, cpi: cpi(amount, units) });
         continue;
       }
       const total = vv.reduce((a, x) => a + x.n, 0);
       if (!total) {
-        out.push({ ...base, channel: l.bucket, amount, basis: "pending", key: `no ${l.item} AWBs found — waiting for the channel split (${which})`, units: null, cpi: null });
+        out.push({ ...base, channel: l.bucket, amount, basis: "pending", key: `no ${l.item} AWBs found — waiting for the channel split (${which}${share < 1 ? ` · scaled to month-to-date ${Math.round(share * 100)}%` : ""})`, units: null, cpi: null });
         continue;
       }
-      const key = `${l.item} AWBs: ${vv.map((x) => `${x.channel.replace(/^B2[BC] /, "")} ${Math.round((x.n / total) * 100)}%`).join(" · ")} (${which})`;
+      const key = `${l.item} AWBs: ${vv.map((x) => `${x.channel.replace(/^B2[BC] /, "")} ${Math.round((x.n / total) * 100)}%`).join(" · ")} (${which}${share < 1 ? ` · scaled to month-to-date ${Math.round(share * 100)}%` : ""})`;
       for (const x of vv) {
         const share = amount * (x.n / total);
         // ponytail: forward and reverse AWBs weigh the same; weight by rate card once vendor RVP rates are in the sheet

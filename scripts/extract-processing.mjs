@@ -61,3 +61,37 @@ for (const [tab, warehouse] of Object.entries(TABS)) {
 writeFileSync("src/db/seed/aop-processing-fy27.json", JSON.stringify({ source: "Central Operations Cost Master Sheet FY 26-27 › YLK_ / TAURU_Processing Costs", norms, monthly }, null, 1));
 const count = (a) => Object.entries(a.reduce((m, x) => ((m[`${x.warehouse} · ${x.stream}`] = (m[`${x.warehouse} · ${x.stream}`] ?? 0) + 1), m), {})).map(([k, n]) => `${k}: ${n}`).join("\n  ");
 console.log(`norms ${norms.length}\n  ${count(norms)}\nmonthly ${monthly.length}\n  ${count(monthly)}\nskipped: ${skipped.join("; ") || "none"}`);
+
+/* ---------- Logistics tab → src/db/seed/aop-logistics-fy27.json ----------
+ * Layout (Nov 2026): col B = bucket (B2C / Q-Com / Heavy Trolley / B2B / B2B - Market Place / …), col C = vendor,
+ * then 4 columns per month from col D: Budget · Provision · Actuals/Invoices · CN Received. Month = row-1 header of the block
+ * (date serial, or a month name for the latest block). The older 3-column parse in extract-seed.mjs no longer matches. */
+{
+  const ws = wb.Sheets["Logistics"];
+  const cell = (r, c) => ws[XLSX.utils.encode_cell({ r, c })]?.v ?? null;
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  const MON = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const blocks = [];
+  for (let c = 3; c <= range.e.c; c += 4) {
+    const h = cell(0, c);
+    let p = null;
+    if (typeof h === "number") { const d = XLSX.SSF.parse_date_code(h); p = `${d.y}-${String(d.m).padStart(2, "0")}-01`; }
+    else if (h) { const i = MON.indexOf(clean(h).slice(0, 3).toLowerCase()); if (i >= 0) p = `${i < 3 ? 2027 : 2026}-${String(i + 1).padStart(2, "0")}-01`; }
+    if (p) blocks.push({ c, p });
+  }
+  const BUCKET = { "b2c": "B2C", "q-com": "B2C", "heavy trolley": "B2C", "b2b": "B2B", "b2b - market place": "B2B", "factory inward": "Inbound", "miscellaneous - porter": "B2B" };
+  const rows = [];
+  let bucket = null;
+  for (let r = 4; r <= range.e.r; r++) {
+    const b = clean(cell(r, 1)), v = clean(cell(r, 2));
+    if (b) bucket = BUCKET[b.toLowerCase()] ?? null;
+    if (!bucket || !v || /add additional/i.test(v) || v === "-") continue;
+    for (const { c, p } of blocks) {
+      const plan = num(cell(r, c)), forecast = num(cell(r, c + 1)), actual = num(cell(r, c + 2)), cn = num(cell(r, c + 3));
+      if (plan == null && forecast == null && actual == null) continue;
+      rows.push({ section: bucket, name: v, period: p, plan, forecast, actual, cn });
+    }
+  }
+  writeFileSync("src/db/seed/aop-logistics-fy27.json", JSON.stringify({ source: "Central Operations Cost Master Sheet FY 26-27 › Logistics", blocks: blocks.map((b) => b.p), rows }, null, 1));
+  console.log(`logistics: ${rows.length} vendor-month rows, months ${blocks.map((b) => b.p).join(", ")}`);
+}

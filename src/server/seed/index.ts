@@ -208,6 +208,16 @@ export async function bootstrap(rawQ: RunQ) {
     } catch (e) { await rawQ("rollback"); throw e; }
     console.log("[seed] AOP processing norms + monthly history loaded from the Cost Master processing tabs");
   }
+  if ((await setting("seed.aop_logistics")) !== "v1") {
+    const { seedAopLogistics } = await import("./aopLogistics");
+    await rawQ("begin");
+    try {
+      const r = await seedAopLogistics(rawQ);
+      await setSetting("seed.aop_logistics", "v1");
+      await rawQ("commit");
+      console.log(`[seed] AOP Logistics re-read from the Cost Master (Apr–Nov, 4-column layout): ${r.updated} cells set, ${r.kept} owner-edited cells kept`);
+    } catch (e) { await rawQ("rollback"); throw e; }
+  }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
     await setSetting("seed.handbook", "v1");

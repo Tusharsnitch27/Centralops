@@ -1,0 +1,1923 @@
+{
+ "source": "Central Operations Cost Master Sheet FY 26-27 › Logistics",
+ "blocks": [
+  "2026-04-01",
+  "2026-05-01",
+  "2026-06-01",
+  "2026-07-01",
+  "2026-08-01",
+  "2026-09-01",
+  "2026-10-01",
+  "2026-11-01"
+ ],
+ "rows": [
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 7201998,
+   "cn": 504778.38
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-05-01",
+   "plan": 7774747.07,
+   "forecast": 7923955,
+   "actual": 6969605.32,
+   "cn": 493389.68
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-06-01",
+   "plan": 7523948.78,
+   "forecast": 10601280,
+   "actual": 11007176,
+   "cn": 1561930.77
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-07-01",
+   "plan": 18082384,
+   "forecast": 16293141.515151516,
+   "actual": 16492629.7000343,
+   "cn": 1256434.03
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-08-01",
+   "plan": 6750994,
+   "forecast": 5992544,
+   "actual": 7606414.67,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-09-01",
+   "plan": 7468008,
+   "forecast": 5180340,
+   "actual": 5153172.74,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-10-01",
+   "plan": 5927944,
+   "forecast": 4848248,
+   "actual": 5038830.83,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart",
+   "period": "2026-11-01",
+   "plan": 14704864,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 2167439.11,
+   "cn": 40613.9
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-05-01",
+   "plan": 2619904.74,
+   "forecast": 1914241,
+   "actual": 1774709,
+   "cn": 25000
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-06-01",
+   "plan": 2535391.69,
+   "forecast": 2340420,
+   "actual": 1723175.35,
+   "cn": 24946.45
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-07-01",
+   "plan": 4866086,
+   "forecast": 4120720,
+   "actual": 4454783.54,
+   "cn": 30000
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-08-01",
+   "plan": 2302518.8,
+   "forecast": 1548120,
+   "actual": 1749028.74,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-09-01",
+   "plan": 1746518,
+   "forecast": 2238960,
+   "actual": 1721696.19,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-10-01",
+   "plan": 2768064,
+   "forecast": 2376853,
+   "actual": 2187818.96,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Delhivery",
+   "period": "2026-11-01",
+   "plan": 6441629,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 2654736,
+   "cn": 379880.85
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-05-01",
+   "plan": 3514857.5,
+   "forecast": 2734400,
+   "actual": 2915814.44,
+   "cn": 492644.75
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-06-01",
+   "plan": 3401475,
+   "forecast": 2936000,
+   "actual": 3002674.68,
+   "cn": 568362
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-07-01",
+   "plan": 4925469,
+   "forecast": 4708800,
+   "actual": 8181573.31,
+   "cn": 1077364
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-08-01",
+   "plan": 1901961.6,
+   "forecast": 1726400,
+   "actual": 2547331.11,
+   "cn": 446283
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-09-01",
+   "plan": 1972080,
+   "forecast": 1438560,
+   "actual": 1795281.76,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-10-01",
+   "plan": 1660013,
+   "forecast": 1216000,
+   "actual": 1553709.44,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigshort Pvt Ltd (Blitz)",
+   "period": "2026-11-01",
+   "plan": 3887706,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 1636662,
+   "cn": 642448
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-05-01",
+   "plan": 1325859.15,
+   "forecast": 868071,
+   "actual": 650257,
+   "cn": 2057.08
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-06-01",
+   "plan": 1283089,
+   "forecast": 1326132,
+   "actual": 728059.57,
+   "cn": 0
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-07-01",
+   "plan": 3158155,
+   "forecast": 2684130,
+   "actual": 2351180.13,
+   "cn": 0
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-08-01",
+   "plan": 1087594.08,
+   "forecast": 500994,
+   "actual": 250831.55,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-09-01",
+   "plan": 614021,
+   "forecast": 638268,
+   "actual": 711183.26,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-10-01",
+   "plan": 1365173,
+   "forecast": 983520,
+   "actual": 1078915.98,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Instakart Pvt Ltd (eKart)",
+   "period": "2026-11-01",
+   "plan": 1496776,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 1594599,
+   "cn": 34891
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-05-01",
+   "plan": 1296961.53,
+   "forecast": 1713972,
+   "actual": 1682340,
+   "cn": 19715
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-06-01",
+   "plan": 1255124.06,
+   "forecast": 2439650,
+   "actual": 2124623,
+   "cn": 18367
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-07-01",
+   "plan": 5060388,
+   "forecast": 4245200,
+   "actual": 4582020,
+   "cn": 16042
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-08-01",
+   "plan": 2815001.5,
+   "forecast": 2229200,
+   "actual": 2726108,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-09-01",
+   "plan": 3226253,
+   "forecast": 2391050,
+   "actual": 2179722,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-10-01",
+   "plan": 2347940,
+   "forecast": 1548630,
+   "actual": 1815989,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Prozo",
+   "period": "2026-11-01",
+   "plan": 3956760,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 2166827.14,
+   "cn": 8258
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-05-01",
+   "plan": 3926018.25,
+   "forecast": 2909998,
+   "actual": 2447988.94,
+   "cn": 29506
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-06-01",
+   "plan": 3799372.5,
+   "forecast": 3522000,
+   "actual": 2525792.56,
+   "cn": 65254
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-07-01",
+   "plan": 6462148,
+   "forecast": 5872843.137254902,
+   "actual": 7381755.06,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-08-01",
+   "plan": 2305187.9,
+   "forecast": 2309700,
+   "actual": 2706355.84,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-09-01",
+   "plan": 2509219,
+   "forecast": 2104200,
+   "actual": 1950333.94,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-10-01",
+   "plan": 2317188,
+   "forecast": 1840400,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Shadowfax",
+   "period": "2026-11-01",
+   "plan": 4564477,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 352313.81,
+   "cn": 3535.95
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-05-01",
+   "plan": 696570,
+   "forecast": 602566,
+   "actual": 425833,
+   "cn": 8439.19
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-06-01",
+   "plan": 674100,
+   "forecast": 632550,
+   "actual": 437530.86,
+   "cn": 3364.58
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-07-01",
+   "plan": 1567072,
+   "forecast": 1244138.4615384615,
+   "actual": 617126.32,
+   "cn": 8299.51
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-08-01",
+   "plan": 764134.5,
+   "forecast": 510010,
+   "actual": 821891.04,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-09-01",
+   "plan": 818835,
+   "forecast": 555800,
+   "actual": 457526.84,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-10-01",
+   "plan": 503952,
+   "forecast": 354030,
+   "actual": 445057.05,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bigfoot (Shiprocket)",
+   "period": "2026-11-01",
+   "plan": 680100,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-05-01",
+   "plan": 200000,
+   "forecast": 57075,
+   "actual": 29820,
+   "cn": 25271.79
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-06-01",
+   "plan": 400000,
+   "forecast": 1104900,
+   "actual": 1824308.33,
+   "cn": 728287.76
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-07-01",
+   "plan": 2177062,
+   "forecast": 2158026.3157894737,
+   "actual": 4400309.74,
+   "cn": 2097721
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-08-01",
+   "plan": 1000000,
+   "forecast": 556650,
+   "actual": 586671.3,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-09-01",
+   "plan": 245520,
+   "forecast": 105450,
+   "actual": 108873.9,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-10-01",
+   "plan": 0,
+   "forecast": 0,
+   "actual": 0,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Urbonebolt",
+   "period": "2026-11-01",
+   "plan": 0,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-05-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 387583.87,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-06-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 470980.09,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-07-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 1331876.8,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-08-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 143961.47,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-09-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 219213.55,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-10-01",
+   "plan": 530100,
+   "forecast": 459648,
+   "actual": 136413.85,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Bluedart RVP",
+   "period": "2026-11-01",
+   "plan": 600000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 1279221,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-05-01",
+   "plan": 800000,
+   "forecast": 874000,
+   "actual": 1074526,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-06-01",
+   "plan": 800000,
+   "forecast": 1644500,
+   "actual": 1689108,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-07-01",
+   "plan": 1598500,
+   "forecast": 1552500,
+   "actual": 1993147,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-08-01",
+   "plan": 178250,
+   "forecast": 463450,
+   "actual": 547858,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-09-01",
+   "plan": 1125000,
+   "forecast": 1781000,
+   "actual": 1427966.95,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-10-01",
+   "plan": 1023000,
+   "forecast": 1235000,
+   "actual": 1196296,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SR Quick",
+   "period": "2026-11-01",
+   "plan": 2184000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 250312,
+   "cn": 2945
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-05-01",
+   "plan": 200000,
+   "forecast": 89700,
+   "actual": 92886,
+   "cn": 10739
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-06-01",
+   "plan": 100000,
+   "forecast": 23115,
+   "actual": 25058,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-07-01",
+   "plan": 1610,
+   "forecast": 0,
+   "actual": 0,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-08-01",
+   "plan": 0,
+   "forecast": 0,
+   "actual": 0,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-09-01",
+   "plan": 0,
+   "forecast": 650,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-10-01",
+   "plan": 18600,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Pidge Quick",
+   "period": "2026-11-01",
+   "plan": 130000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SFX HLD",
+   "period": "2026-06-01",
+   "plan": 75000,
+   "forecast": 65000,
+   "actual": 56250,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SFX HLD",
+   "period": "2026-07-01",
+   "plan": 79400,
+   "forecast": 60000,
+   "actual": 136290,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SFX HLD",
+   "period": "2026-08-01",
+   "plan": 0,
+   "forecast": 1700,
+   "actual": 2860.2,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SFX HLD",
+   "period": "2026-09-01",
+   "plan": 25000,
+   "forecast": 10500,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SFX HLD",
+   "period": "2026-10-01",
+   "plan": 18600,
+   "forecast": 1500,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "SFX HLD",
+   "period": "2026-11-01",
+   "plan": 45000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-05-01",
+   "plan": 800000,
+   "forecast": 586568,
+   "actual": 586651,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-06-01",
+   "plan": 1000000,
+   "forecast": 800000,
+   "actual": 754166,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-07-01",
+   "plan": 400000,
+   "forecast": 345900,
+   "actual": 356011,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-08-01",
+   "plan": 50000,
+   "forecast": 75000,
+   "actual": 124366,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-09-01",
+   "plan": 700000,
+   "forecast": 416000,
+   "actual": 378658,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-10-01",
+   "plan": 443300,
+   "forecast": 351000,
+   "actual": 334771,
+   "cn": null
+  },
+  {
+   "section": "B2C",
+   "name": "Porter - QCom",
+   "period": "2026-11-01",
+   "plan": 550000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-04-01",
+   "plan": 4000000,
+   "forecast": 1926132.97,
+   "actual": 1926132.97,
+   "cn": 77021.19
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-05-01",
+   "plan": 4000000,
+   "forecast": 2800000,
+   "actual": 1808010.15,
+   "cn": 76755.45
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-06-01",
+   "plan": 4000000,
+   "forecast": 2500000,
+   "actual": 2092003.56,
+   "cn": 45122.03
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-07-01",
+   "plan": 1750000,
+   "forecast": 1120000,
+   "actual": 1393390.22,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-08-01",
+   "plan": 2500000,
+   "forecast": 1670942.5,
+   "actual": 1042781.05,
+   "cn": 2502.54
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-09-01",
+   "plan": 2000000,
+   "forecast": 2210748.52,
+   "actual": 2210748.52,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-10-01",
+   "plan": 2200000,
+   "forecast": 3676443.34,
+   "actual": 3676443.34,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Bluedart",
+   "period": "2026-11-01",
+   "plan": 2500000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-04-01",
+   "plan": 500000,
+   "forecast": 343142.15,
+   "actual": 343142.15,
+   "cn": 23284.06
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-05-01",
+   "plan": 500000,
+   "forecast": 900000,
+   "actual": 551837.99,
+   "cn": 28070.11
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-06-01",
+   "plan": 500000,
+   "forecast": 1500000,
+   "actual": 1542734.9,
+   "cn": 10380.7
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-07-01",
+   "plan": 1500000,
+   "forecast": 1000000,
+   "actual": 1120180.83,
+   "cn": 211.12
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-08-01",
+   "plan": 1200000,
+   "forecast": 1100000,
+   "actual": 1130662.2,
+   "cn": 29599
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-09-01",
+   "plan": 1600000,
+   "forecast": 1968120,
+   "actual": 2172289,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-10-01",
+   "plan": 2500000,
+   "forecast": 3129550.94,
+   "actual": 3129550.94,
+   "cn": 38383.61
+  },
+  {
+   "section": "B2B",
+   "name": "Mudita Cargo",
+   "period": "2026-11-01",
+   "plan": 2500000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-04-01",
+   "plan": 300000,
+   "forecast": 157574,
+   "actual": 157574,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-05-01",
+   "plan": 300000,
+   "forecast": 200000,
+   "actual": 95275,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-06-01",
+   "plan": 300000,
+   "forecast": 150000,
+   "actual": 168946,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-07-01",
+   "plan": 200000,
+   "forecast": 175000,
+   "actual": 227179.01,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-08-01",
+   "plan": 200000,
+   "forecast": 249200.32,
+   "actual": 264300.24,
+   "cn": 4796
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-09-01",
+   "plan": 200000,
+   "forecast": 176400,
+   "actual": 368001.4,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-10-01",
+   "plan": 600000,
+   "forecast": 500000,
+   "actual": 891737.37,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - NSO",
+   "period": "2026-11-01",
+   "plan": 1000000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Stock Transfer",
+   "period": "2026-04-01",
+   "plan": null,
+   "forecast": 113500,
+   "actual": 113500,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Stock Transfer",
+   "period": "2026-06-01",
+   "plan": 0,
+   "forecast": 200000,
+   "actual": 294000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Stock Transfer",
+   "period": "2026-07-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 89000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Stock Transfer",
+   "period": "2026-08-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Stock Transfer",
+   "period": "2026-09-01",
+   "plan": 100000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Stock Transfer",
+   "period": "2026-10-01",
+   "plan": 50000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-04-01",
+   "plan": 200000,
+   "forecast": 565472.69,
+   "actual": 565472.69,
+   "cn": 733
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-05-01",
+   "plan": 100000,
+   "forecast": 120000,
+   "actual": 559820,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-06-01",
+   "plan": 700000,
+   "forecast": 900000,
+   "actual": 904945,
+   "cn": 3930
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-07-01",
+   "plan": 1000000,
+   "forecast": 638750,
+   "actual": 954396.21,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-08-01",
+   "plan": 1000000,
+   "forecast": 721000,
+   "actual": 1338707.96,
+   "cn": 9449
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-09-01",
+   "plan": 1000000,
+   "forecast": 892360,
+   "actual": 1408764,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-10-01",
+   "plan": 1500000,
+   "forecast": 200000,
+   "actual": 1922726.35,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Logistics",
+   "period": "2026-11-01",
+   "plan": 1500000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-04-01",
+   "plan": 100000,
+   "forecast": 84495,
+   "actual": 84495,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-05-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 84985,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-06-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 85950,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-07-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 80035,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-09-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 72025,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-10-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 85450,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate - Milkrun Delhi",
+   "period": "2026-11-01",
+   "plan": 100000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-04-01",
+   "plan": 35000,
+   "forecast": 28000,
+   "actual": 28000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-05-01",
+   "plan": 35000,
+   "forecast": 25000,
+   "actual": 24000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-06-01",
+   "plan": 35000,
+   "forecast": 30000,
+   "actual": 24000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-07-01",
+   "plan": 35000,
+   "forecast": 40000,
+   "actual": 41241,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-08-01",
+   "plan": 40000,
+   "forecast": 40000,
+   "actual": 38000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-09-01",
+   "plan": 40000,
+   "forecast": 36000,
+   "actual": 36000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-10-01",
+   "plan": 40000,
+   "forecast": 44000,
+   "actual": 44000,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Own vehicles",
+   "period": "2026-11-01",
+   "plan": 40000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Stock Area",
+   "period": "2026-04-01",
+   "plan": 1000000,
+   "forecast": 1207464,
+   "actual": 1207464,
+   "cn": 458.1
+  },
+  {
+   "section": "B2B",
+   "name": "Stock Area",
+   "period": "2026-05-01",
+   "plan": 1000000,
+   "forecast": 700000,
+   "actual": 673439,
+   "cn": 107310.5
+  },
+  {
+   "section": "B2B",
+   "name": "Stock Area",
+   "period": "2026-06-01",
+   "plan": 700000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Sri Maruti Courier",
+   "period": "2026-04-01",
+   "plan": 200000,
+   "forecast": 270435,
+   "actual": 270435,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Sri Maruti Courier",
+   "period": "2026-05-01",
+   "plan": 200000,
+   "forecast": 350000,
+   "actual": 276573.8,
+   "cn": 23904.4
+  },
+  {
+   "section": "B2B",
+   "name": "Sri Maruti Courier",
+   "period": "2026-06-01",
+   "plan": 200000,
+   "forecast": 150000,
+   "actual": 168282,
+   "cn": 23814
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart B2B",
+   "period": "2026-04-01",
+   "plan": 10000,
+   "forecast": 3277.9,
+   "actual": 3277.9,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart B2B",
+   "period": "2026-05-01",
+   "plan": 300000,
+   "forecast": 400000,
+   "actual": 226521.15,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart B2B",
+   "period": "2026-06-01",
+   "plan": 700000,
+   "forecast": 600000,
+   "actual": 527830.05,
+   "cn": 10904
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart B2B",
+   "period": "2026-07-01",
+   "plan": 100000,
+   "forecast": 100000,
+   "actual": 217429.45,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart B2B",
+   "period": "2026-08-01",
+   "plan": 100000,
+   "forecast": 375620.1,
+   "actual": 247989.3,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart B2B",
+   "period": "2026-09-01",
+   "plan": 100000,
+   "forecast": 48440,
+   "actual": 127586.55,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "XP India",
+   "period": "2026-05-01",
+   "plan": null,
+   "forecast": null,
+   "actual": 505,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "XP India",
+   "period": "2026-07-01",
+   "plan": 100000,
+   "forecast": 98000,
+   "actual": 132759,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "XP India",
+   "period": "2026-08-01",
+   "plan": 200000,
+   "forecast": 255000,
+   "actual": 261357.72,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "XP India",
+   "period": "2026-09-01",
+   "plan": 50000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-05-01",
+   "plan": 30000,
+   "forecast": 13403,
+   "actual": 14673,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-06-01",
+   "plan": 30000,
+   "forecast": 30000,
+   "actual": 41561,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-07-01",
+   "plan": 40000,
+   "forecast": 25121,
+   "actual": 28796,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-08-01",
+   "plan": 10000,
+   "forecast": 10000,
+   "actual": 27189,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-09-01",
+   "plan": 20000,
+   "forecast": 7000,
+   "actual": 5436,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-10-01",
+   "plan": 100000,
+   "forecast": 45000,
+   "actual": 29951,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Logistic B2B",
+   "period": "2026-11-01",
+   "plan": 30000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart MP",
+   "period": "2026-07-01",
+   "plan": 500000,
+   "forecast": 300000,
+   "actual": 146579.7,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Ekart MP",
+   "period": "2026-08-01",
+   "plan": 300000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-04-01",
+   "plan": 200000,
+   "forecast": 1310164.71,
+   "actual": 1310164.71,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-05-01",
+   "plan": 200000,
+   "forecast": 1200000,
+   "actual": 1180476.85,
+   "cn": 144266
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-06-01",
+   "plan": 200000,
+   "forecast": 1000000,
+   "actual": 798402,
+   "cn": 54670
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-07-01",
+   "plan": 100000,
+   "forecast": 225000,
+   "actual": 244388.74,
+   "cn": 3200
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-08-01",
+   "plan": 100000,
+   "forecast": 254000,
+   "actual": 1263527.52,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-09-01",
+   "plan": 100000,
+   "forecast": 1500000,
+   "actual": 2298711.56,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-10-01",
+   "plan": 1000000,
+   "forecast": 750000,
+   "actual": 475318,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Movemate- Marketplace",
+   "period": "2026-11-01",
+   "plan": 600000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-05-01",
+   "plan": 15000,
+   "forecast": 12398,
+   "actual": 12398,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-06-01",
+   "plan": 15000,
+   "forecast": 10000,
+   "actual": 10859,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-07-01",
+   "plan": 15000,
+   "forecast": 0,
+   "actual": 0,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-08-01",
+   "plan": 15000,
+   "forecast": 10000,
+   "actual": 670,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-09-01",
+   "plan": 10000,
+   "forecast": 1000,
+   "actual": 801,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-10-01",
+   "plan": 5000,
+   "forecast": 5000,
+   "actual": 1540,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Market Place",
+   "period": "2026-11-01",
+   "plan": 5000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "Inbound",
+   "name": "Movemate Factory - Inward",
+   "period": "2026-05-01",
+   "plan": 2500000,
+   "forecast": 2500000,
+   "actual": 2834371,
+   "cn": null
+  },
+  {
+   "section": "Inbound",
+   "name": "Movemate Factory - Inward",
+   "period": "2026-06-01",
+   "plan": 2000000,
+   "forecast": 3000000,
+   "actual": 3292610.04,
+   "cn": null
+  },
+  {
+   "section": "Inbound",
+   "name": "Movemate Factory - Inward",
+   "period": "2026-07-01",
+   "plan": 3000000,
+   "forecast": 3000000,
+   "actual": 2790628,
+   "cn": null
+  },
+  {
+   "section": "Inbound",
+   "name": "Movemate Factory - Inward",
+   "period": "2026-08-01",
+   "plan": 3000000,
+   "forecast": 3000000,
+   "actual": 2459341,
+   "cn": null
+  },
+  {
+   "section": "Inbound",
+   "name": "Movemate Factory - Inward",
+   "period": "2026-09-01",
+   "plan": 3000000,
+   "forecast": 3000000,
+   "actual": 3762199,
+   "cn": null
+  },
+  {
+   "section": "Inbound",
+   "name": "Movemate Factory - Inward",
+   "period": "2026-10-01",
+   "plan": 3000000,
+   "forecast": 350000,
+   "actual": 3935888.69,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-05-01",
+   "plan": 5000,
+   "forecast": 3104,
+   "actual": 3076,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-06-01",
+   "plan": 5000,
+   "forecast": 7500,
+   "actual": 14629,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-07-01",
+   "plan": 15000,
+   "forecast": 8012,
+   "actual": 7867,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-08-01",
+   "plan": 10000,
+   "forecast": 10000,
+   "actual": 4498,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-09-01",
+   "plan": 15000,
+   "forecast": 15000,
+   "actual": 16094,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-10-01",
+   "plan": 10000,
+   "forecast": 10000,
+   "actual": 10357,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ via Logistic",
+   "period": "2026-11-01",
+   "plan": 10000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-05-01",
+   "plan": 20000,
+   "forecast": 7350,
+   "actual": 6450,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-06-01",
+   "plan": 20000,
+   "forecast": 15000,
+   "actual": 16333,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-07-01",
+   "plan": 20000,
+   "forecast": 18990,
+   "actual": 20210,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-08-01",
+   "plan": 20000,
+   "forecast": 15000,
+   "actual": 7527,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-09-01",
+   "plan": 15000,
+   "forecast": 15000,
+   "actual": 12213,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-10-01",
+   "plan": 20000,
+   "forecast": 15000,
+   "actual": 10375,
+   "cn": null
+  },
+  {
+   "section": "B2B",
+   "name": "Porter - Snitch HQ",
+   "period": "2026-11-01",
+   "plan": 15000,
+   "forecast": null,
+   "actual": null,
+   "cn": null
+  }
+ ]
+}

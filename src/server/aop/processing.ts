@@ -22,7 +22,9 @@ const key = (s: string, p: string) => `${s}|${p}`;
 
 async function norms(period: string, wh: Wh) {
   return q<NormRow>(`select distinct on (stream, process) stream, process, department, target_per_day::float8 as target_per_day, working_days::float8 as working_days,
-       avg_salary::float8 as avg_salary, sort from aop_proc_norms where warehouse = $1 and effective_from <= $2 order by stream, process, effective_from desc`, [wh, period]);
+       avg_salary::float8 as avg_salary, sort from aop_proc_norms where warehouse = $1
+       and effective_from <= greatest($2::date, (select min(effective_from) from aop_proc_norms where warehouse = $1)) -- earliest norm also covers sheet history before it
+     order by stream, process, effective_from desc`, [wh, period]);
 }
 
 /** Sheet rows for the month, plus the latest earlier sheet row per line (salary + Inventory carry-forward). */
@@ -95,12 +97,17 @@ function propose(lines: { stream: StreamKey; process: string; department: string
   return out;
 }
 
+/** A closed month with only a few captured days (Oct 2026: attendance starts 29 Oct) would read as a big saving — attendance is
+ *  used only for the running month (MTD) or when it covers ≥ 90% of the month. */
+const usesAttendance = (period: string, dataDays: number) =>
+  dataDays > 0 && (period >= `${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()).slice(0, 7)}-01` || dataDays / daysIn(period) >= 0.9);
+
 export async function processingMonth(period: string, warehouse: Wh): Promise<ProcessingMonth> {
   const [ns, sh, vol, att, stored] = await Promise.all([norms(period, warehouse), sheet(period, warehouse), sopVolumes(period, warehouse), attendance(period, warehouse), storedAssign(period, warehouse)]);
   const wd = ns[0]?.working_days ?? 23;
-  const useAttendance = att.dataDays > 0;
-  const deptHeads = new Map([...att.byDept].map(([d, md]) => [d, headsOf(md, att.dataDays, period, wd)]));
   const share = att.dataDays / daysIn(period);
+  const useAttendance = usesAttendance(period, att.dataDays);
+  const deptHeads = new Map([...att.byDept].map(([d, md]) => [d, headsOf(md, att.dataDays, period, wd)]));
 
   // pass 1: plan per line
   const base = ns.map((n) => {
@@ -155,6 +162,7 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
 export async function mpAssignments(period: string, warehouse: Wh): Promise<MpAssignment[]> {
   const [att, pm, stored, ns] = await Promise.all([attendance(period, warehouse), processingMonth(period, warehouse), storedAssign(period, warehouse), norms(period, warehouse)]);
   const wd = ns[0]?.working_days ?? 23;
+  if (!usesAttendance(period, att.dataDays)) return []; // e.g. Oct 2026: 3 captured days — the month stays on the sheet
   const depts = [...new Set(STREAMS.map((s) => s.dept))].filter((d) => att.byDept.has(d));
   return depts.map((department) => {
     const manDays = att.byDept.get(department) ?? 0, avgHeads = headsOf(manDays, att.dataDays, period, wd);
