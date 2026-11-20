@@ -2,7 +2,20 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "../auth";
 import { fail, ok, type ActionResult } from "../core/result";
-import { ALL_FEEDS, runSync, type FeedKey } from "./sync";
+import { ALL_FEEDS, OUTWARD_FEEDS, SOP_CUTOVER, runSync, type FeedKey } from "./sync";
+
+/** Admin: re-pull B2C / B2B MP / retail outward from Unicommerce from a day on (default the cut-over), closed months included. */
+export async function backfillOutward(from: string = SOP_CUTOVER): Promise<ActionResult<{ results: Awaited<ReturnType<typeof runSync>> }>> {
+  try {
+    const u = await requireUser();
+    if (u.role !== "admin") throw new Error("Admins only");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("Pick a valid date");
+    const results = await runSync([...OUTWARD_FEEDS], "manual", u.id, { from });
+    revalidatePath("/sop", "layout");
+    const bad = results.filter((r) => r.status === "failed");
+    return bad.length ? fail(`${bad.length} outward feed${bad.length > 1 ? "s" : ""} failed — ${bad[0].error}`) as ActionResult<{ results: typeof results }> : ok({ results }, `Outward re-pulled from ${from}`);
+  } catch (e) { return fail(e) as ActionResult<{ results: Awaited<ReturnType<typeof runSync>> }>; }
+}
 
 /** Admin: refresh one feed (or all) from Snowflake now. */
 export async function refreshFromSnowflake(feed?: FeedKey): Promise<ActionResult<{ results: Awaited<ReturnType<typeof runSync>> }>> {

@@ -38,7 +38,16 @@ async function closeFinishedMonths() {
 /** First stock day read for the area split (day before FY start = April opening). */
 const INVENTORY_HISTORY_FROM = "2026-03-31";
 const INV_TABLE = () => process.env.SNOWFLAKE_INVENTORY_TABLE ?? "snitch_db.maplemonk.snitch_final_inventory_wh2";
-const SLA_TABLE = "maplemonk.warehouse_sla_performance";
+/** Outward source (Nov 2026): Unicommerce items keep full history; warehouse_sla_performance only holds ~60 days. */
+const OUT_TABLE = "snitch_db.maplemonk.unicommerce_fact_items_intermediate";
+/** UC splits channels the SLA table had merged — normalised back to the SLA names (reconciled 1 Oct–18 Nov 2026: b2c ±0.03%, b2b MP / retail exact). */
+const OUT_SRC = `(SELECT t.* EXCLUDE (marketplace_mapped),
+    CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' THEN 'FLIPKART_SOR'
+         WHEN marketplace_mapped IN ('FRANCHISE_STORE_B2B','OWN_STORE_B2B','Own Store','Franchise Store') THEN 'STORE'
+         WHEN marketplace_mapped LIKE 'M-NOW%' THEN 'M-NOW'
+         WHEN marketplace_mapped = 'NYKAA_SAPL_TAURU' THEN 'NYKAA.COM'
+         ELSE UPPER(marketplace_mapped) END AS marketplace_mapped
+  FROM ${OUT_TABLE} t)`;
 const PUT_TABLE = "snitch_db.maplemonk.putaway_tracking";
 
 /* ------------------------------------------------------------------ */
@@ -73,22 +82,23 @@ const mult = (sku: string | null) => (sku ? `CASE WHEN ${sku} LIKE 'PP%' THEN CO
 /* Feed definitions                                                    */
 /* ------------------------------------------------------------------ */
 const SLA_REGION = `CASE WHEN warehouse_name IN ('SAPL-WH2','SAPL-WH1') THEN 'south' WHEN warehouse_name IN ('SAPL-NORTH-TAURU') THEN 'north' ELSE 'other' END`;
-const SLA_BASE = `warehouse_name IN ('SAPL-WH2','SAPL-WH1','SAPL-NORTH-TAURU') AND packed_time IS NOT NULL AND sla_status NOT IN ('CANCELLED')`;
+// no item-status filter: the SLA feed it replaces counted every packed item, and UC matches it only that way
+const SLA_BASE = `warehouse_name IN ('SAPL-WH2','SAPL-WH1','SAPL-NORTH-TAURU') AND packed_timestamp IS NOT NULL`;
 const PUT_REGION = `CASE WHEN "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2') THEN 'south' WHEN "Warehouse Name" IN ('SAPL-NORTH-TAURU') THEN 'north' ELSE 'other' END`;
 const PUT_SKU = `"Item Type skuCode"`;
 const B2B_MP_EXCLUDE = `'COCOBLU','AMAZON','AJIO','FLIPKART','MYNTRA','SHOPIFY','NYKAA.COM','NYKAA_FASHION','CUSTOM','OWN_STORE_B2B','B2B CORPORATE CHANNEL','STORE','SNITCH HQ','SAPL_WH_TRANSFERS','B2B_SNITCH','RK_WORLD'`;
 
 /** Outward (dispatch) feeds share one shape: distinct sale-order items per day, with pre-pack units. */
-const outwardSql = (marketplace: string, where: string, sku: string | null) => `WITH x AS (
+const outwardSql = (marketplace: string, where: string, sku: string | null, from = FROM()) => `WITH x AS (
   SELECT DISTINCT saleorderitemcode, order_name,
-    TO_VARCHAR(packed_time::date, 'YYYY-MM-DD') AS day,
+    TO_VARCHAR(packed_timestamp, 'YYYY-MM-DD') AS day,
     ${marketplace} AS label,
     ${SLA_REGION} AS region,
     ${mult(sku)} AS mult
-  FROM ${SLA_TABLE}
+  FROM ${OUT_SRC}
   WHERE ${where}
     AND ${SLA_BASE}
-    AND packed_time >= '${FROM()}'
+    AND packed_timestamp >= '${from}'
 )
 SELECT day, label, region, COUNT(*) AS qty, SUM(mult) AS units, COUNT(DISTINCT order_name) AS orders
 FROM x GROUP BY 1, 2, 3`;
@@ -115,30 +125,31 @@ const CATEGORY_BUCKET = `CASE TRIM(LOWER(category))
 
 export interface FeedDef {
   title: string; source: string; grain: string; conditions: string[]; transforms: string[]; fills: string[];
-  sql: (ctx: { slaSku: string | null; putDate: string }) => string;
+  sql: (ctx: { slaSku: string | null; putDate: string; from?: string }) => string;
 }
+const UC_NORM = "UC channels normalised to the old SLA names: FLIPKART B2B CUSTOM → FLIPKART_SOR, Own / Franchise store (+ _B2B) → STORE, M-NOW ‹city› → M-NOW, NYKAA_SAPL_TAURU → NYKAA.COM";
 export const FEEDS: Record<string, FeedDef> = {
   b2c: {
-    title: "B2C outward", source: SLA_TABLE, grain: "day × marketplace × region",
-    conditions: ["MARKETPLACE_MAPPED in AJIO, AMAZON, FLIPKART, MYNTRA, SHOPIFY, NYKAA.COM, NYKAA_FASHION, COCOBLU", "warehouse SAPL-WH1/WH2 (South), SAPL-NORTH-TAURU (North)", "packed_time not null, sla_status ≠ CANCELLED", "day = packed_time date"],
-    transforms: ["NYKAA.COM + NYKAA_FASHION → Nykaa", "AMAZON + COCOBLU → Amazon", "items = distinct saleorderitemcode; orders = distinct order_name", "pre-pack SKUs expanded to units (when the table has a SKU column)"],
+    title: "B2C outward", source: OUT_TABLE, grain: "day × marketplace × region",
+    conditions: ["MARKETPLACE_MAPPED in AJIO, AMAZON, FLIPKART, MYNTRA, SHOPIFY, NYKAA.COM, NYKAA_FASHION, COCOBLU", "warehouse SAPL-WH1/WH2 (South), SAPL-NORTH-TAURU (North)", "packed_timestamp not null (every packed item, as the SLA feed counted)", "day = packed_timestamp"],
+    transforms: [UC_NORM, "NYKAA.COM + NYKAA_FASHION → Nykaa", "AMAZON + COCOBLU → Amazon", "items = distinct saleorderitemcode; orders = distinct order_name", "pre-pack SKUs expanded to units (when the table has a SKU column)"],
     fills: ["Monthly review › B2C channels (items, South/North)", "Projection lines ‹channel› · items / · orders (actuals)", "Returns rate denominator (B2C forward)", "Inventory flow outward"],
-    sql: ({ slaSku }) => outwardSql(`CASE WHEN MARKETPLACE_MAPPED IN ('NYKAA_FASHION','NYKAA.COM') THEN 'NYKAA' WHEN MARKETPLACE_MAPPED IN ('AMAZON','COCOBLU') THEN 'AMAZON' ELSE MARKETPLACE_MAPPED END`,
-      `MARKETPLACE_MAPPED IN ('AJIO','AMAZON','FLIPKART','MYNTRA','SHOPIFY','NYKAA.COM','NYKAA_FASHION','COCOBLU')`, slaSku),
+    sql: ({ slaSku, from }) => outwardSql(`CASE WHEN MARKETPLACE_MAPPED IN ('NYKAA_FASHION','NYKAA.COM') THEN 'NYKAA' WHEN MARKETPLACE_MAPPED IN ('AMAZON','COCOBLU') THEN 'AMAZON' ELSE MARKETPLACE_MAPPED END`,
+      `MARKETPLACE_MAPPED IN ('AJIO','AMAZON','FLIPKART','MYNTRA','SHOPIFY','NYKAA.COM','NYKAA_FASHION','COCOBLU')`, slaSku, from),
   },
   b2b_mp: {
-    title: "B2B marketplace outward", source: SLA_TABLE, grain: "day × marketplace × region",
-    conditions: [`MARKETPLACE_MAPPED not in ${B2B_MP_EXCLUDE.replace(/'/g, "")}`, "same warehouse / packed / cancelled rules as B2C"],
-    transforms: ["M_NOW_WESTBENGAL + M-NOW → M-Now", "AMAZON excluded here (it is B2C)", "marketplace names matched to the workbook's B2B rows", "pre-pack units as above"],
+    title: "B2B marketplace outward", source: OUT_TABLE, grain: "day × marketplace × region",
+    conditions: [`MARKETPLACE_MAPPED not in ${B2B_MP_EXCLUDE.replace(/'/g, "")}`, "same warehouse / packed rules as B2C"],
+    transforms: [UC_NORM, "M_NOW_WESTBENGAL + M-NOW → M-Now", "AMAZON excluded here (it is B2C)", "marketplace names matched to the workbook's B2B rows", "pre-pack units as above"],
     fills: ["Monthly review › B2B-MP channels", "Inventory flow outward"],
-    sql: ({ slaSku }) => outwardSql(`CASE WHEN MARKETPLACE_MAPPED IN ('M_NOW_WESTBENGAL','M-NOW') THEN 'M-NOW' ELSE MARKETPLACE_MAPPED END`, `MARKETPLACE_MAPPED NOT IN (${B2B_MP_EXCLUDE})`, slaSku),
+    sql: ({ slaSku, from }) => outwardSql(`CASE WHEN MARKETPLACE_MAPPED IN ('M_NOW_WESTBENGAL','M-NOW') THEN 'M-NOW' ELSE MARKETPLACE_MAPPED END`, `MARKETPLACE_MAPPED NOT IN (${B2B_MP_EXCLUDE})`, slaSku, from),
   },
   retail: {
-    title: "B2B retail (store) outward", source: SLA_TABLE, grain: "day × region",
-    conditions: ["MARKETPLACE_MAPPED = STORE", "same warehouse / packed / cancelled rules"],
-    transforms: ["days grouped into the workbook's weeks (Monday-start, cut at month end)", "pre-pack units as above"],
+    title: "B2B retail (store) outward", source: OUT_TABLE, grain: "day × region",
+    conditions: ["MARKETPLACE_MAPPED = STORE (UC own + franchise store channels)", "same warehouse / packed rules"],
+    transforms: [UC_NORM, "days grouped into the workbook's weeks (Monday-start, cut at month end)", "pre-pack units as above"],
     fills: ["Monthly review › Retail forward (weekly)", "Store-returns rate denominator", "Inventory flow outward"],
-    sql: ({ slaSku }) => outwardSql(`'STORE'`, `MARKETPLACE_MAPPED IN ('STORE')`, slaSku),
+    sql: ({ slaSku, from }) => outwardSql(`'STORE'`, `MARKETPLACE_MAPPED IN ('STORE')`, slaSku, from),
   },
   category_inward: {
     title: "Category inward (new inward putaway)", source: PUT_TABLE, grain: "day × region",
@@ -197,12 +208,12 @@ export const ALL_FEEDS = [...Object.keys(FEEDS), "inventory", "packaging"] as Fe
 type DailyRow = { day: string; label: string | null; region: string | null; qty: number; units: number; orders?: number | null };
 const reg = (r: string | null) => { const x = (r ?? "").toLowerCase(); return x === "south" || x === "north" ? x : "other"; };
 
-async function saveDaily(feed: string, rows: DailyRow[]) {
-  await q(`delete from sop_actuals_daily where feed = $1 and day >= $2`, [feed, FROM()]);
+async function saveDaily(feed: string, rows: DailyRow[], from = FROM()) {
+  await q(`delete from sop_actuals_daily where feed = $1 and day >= $2`, [feed, from]);
   // aggregate first so (day, label, region) is unique
   const m = new Map<string, { day: string; label: string; region: string; qty: number; units: number; orders: number | null }>();
   for (const r of rows) {
-    if (!r.day || r.day < FROM()) continue;
+    if (!r.day || r.day < from) continue;
     const k = `${r.day}|${r.label ?? ""}|${reg(r.region)}`;
     const cur = m.get(k) ?? { day: r.day, label: r.label ?? "", region: reg(r.region), qty: 0, units: 0, orders: r.orders == null ? null : 0 };
     cur.qty += Number(r.qty) || 0; cur.units += Number(r.units ?? r.qty) || 0;
@@ -231,9 +242,9 @@ async function putawayDateColumn(): Promise<string> {
 }
 
 async function slaSkuColumn(): Promise<string | null> {
-  const cols = await describe(SLA_TABLE);
+  const cols = await describe(OUT_TABLE);
   const sku = pick(cols, ["SKU", "SKU_CODE", "SKUCODE", "ITEM_SKU_CODE", "ITEM_SKU", "SELLER_SKU_CODE", "CHANNEL_SKU_CODE"], /sku/i);
-  await saveSchema("sla", { table: SLA_TABLE, columns: cols.map((c) => c.name), picked: { sku }, checkedAt: new Date().toISOString() });
+  await saveSchema("sla", { table: OUT_TABLE, columns: cols.map((c) => c.name), picked: { sku }, checkedAt: new Date().toISOString() });
   return sku ? quote(sku) : null;
 }
 
@@ -355,8 +366,8 @@ async function writeActual(view: string, period: string, label: string, group: s
 type Agg = { south: number; north: number };
 const add = (m: Map<string, Agg>, k: string, region: string, v: number) => { const a = m.get(k) ?? { south: 0, north: 0 }; if (region === "south") a.south += v; else if (region === "north") a.north += v; m.set(k, a); };
 
-export async function rebuild() {
-  const from = FROM();
+/** from: rebuild months on or after this day (default the first open month; an outward back-fill passes an earlier one). */
+export async function rebuild(from = FROM()) {
   // Amazon and Cocoblu are one B2C channel: "Amazon"
   await q(`update sop_review_rows r set row_label = 'Amazon' where view_key = 'b2c' and row_label = 'Cocoblu'
            and not exists (select 1 from sop_review_rows x where x.view_key = 'b2c' and x.period = r.period and x.row_label = 'Amazon')`);
@@ -497,13 +508,20 @@ export async function rebuild() {
 /* ------------------------------------------------------------------ */
 /* Run                                                                 */
 /* ------------------------------------------------------------------ */
-export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | "schedule" | "cron" = "manual", actorId: string | null = null) {
+/** Outward feeds that may be back-filled into closed months (Unicommerce keeps history). Months before the cut-over stay the workbook's. */
+export const OUTWARD_FEEDS = ["b2c", "b2b_mp", "retail"] as const;
+
+export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | "schedule" | "cron" = "manual", actorId: string | null = null, opts: { from?: string } = {}) {
   const out: { feed: FeedKey; status: "ok" | "failed"; read?: number; written?: number; error?: string }[] = [];
   let slaSku: string | null | undefined;
   let putDate: string | undefined;
   await refreshFrom();
+  // back-fill: outward feeds only, never before the cut-over (Apr–Aug are the workbook's)
+  if (opts.from && (opts.from < SOP_CUTOVER || feeds.some((f) => !(OUTWARD_FEEDS as readonly string[]).includes(f))))
+    throw new Error(`Back-fill is for the outward feeds only, from ${SOP_CUTOVER} on`);
+  const from = opts.from ?? FROM();
   for (const feed of feeds) {
-    const [run] = await q<{ id: string }>(`insert into sop_sync_runs (feed, trigger, from_date, actor_id) values ($1,$2,$3,$4) returning id`, [feed, trigger, FROM(), actorId]);
+    const [run] = await q<{ id: string }>(`insert into sop_sync_runs (feed, trigger, from_date, actor_id) values ($1,$2,$3,$4) returning id`, [feed, trigger, from, actorId]);
     try {
       if (!sfConfigured()) throw new Error("Snowflake isn't configured (SNOWFLAKE_ACCOUNT / SNOWFLAKE_USERNAME / SNOWFLAKE_PAT)");
       let read = 0, written = 0, note: string | null = null;
@@ -512,9 +530,9 @@ export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | 
       else {
         if (["b2c", "b2b_mp", "retail"].includes(feed) && slaSku === undefined) slaSku = await slaSkuColumn().catch(() => null);
         if (["category_inward", "prepack", "category_view", "returns"].includes(feed) && putDate === undefined) putDate = await putawayDateColumn();
-        const rows = await sfQuery<DailyRow>(FEEDS[feed].sql({ slaSku: slaSku ?? null, putDate: putDate ?? "" }));
+        const rows = await sfQuery<DailyRow>(FEEDS[feed].sql({ slaSku: slaSku ?? null, putDate: putDate ?? "", from }));
         read = rows.length;
-        written = await saveDaily(feed, rows);
+        written = await saveDaily(feed, rows, from);
         if (feed === "returns") note = `Return types: ${[...new Set(rows.map((x) => `${x.label} → ${isB2BReturn(x.label ?? "") ? "B2B" : "B2C"}`))].join("; ")}`;
         if (putDate && ["category_inward", "prepack", "category_view"].includes(feed)) note = `dated by ${putDate}`;
         if (["b2c", "b2b_mp", "retail"].includes(feed)) note = slaSku ? `pre-packs expanded via ${slaSku}` : "no SKU column found in the dispatch table — pre-packs counted as 1 unit";
@@ -528,7 +546,7 @@ export async function runSync(feeds: FeedKey[] = ALL_FEEDS, trigger: "manual" | 
       out.push({ feed, status: "failed", error: msg });
     }
   }
-  if (out.some((o) => o.status === "ok")) await rebuild().catch((e) => console.error("[sop-sync] rebuild failed", e));
+  if (out.some((o) => o.status === "ok")) await rebuild(from).catch((e) => console.error("[sop-sync] rebuild failed", e));
   // a full, clean refresh freezes the months that have ended; the next pull starts at the first open month
   if (feeds.length === ALL_FEEDS.length && out.every((o) => o.status === "ok")) {
     const closed = await closeFinishedMonths();
