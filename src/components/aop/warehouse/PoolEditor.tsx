@@ -12,8 +12,8 @@ type Row = { target: string; de: string; reason: string };
 const r2 = (x: number) => Math.round(x * 100) / 100;
 
 /** One pool (site × day × home function): the lead confirms where its present day-equivalents went. Server re-validates everything. */
-export function PoolEditor({ day, site, homeFn, available, revision, lines, options, proposal, canEdit, updated }: {
-  day: string; site: string; homeFn: string; available: number; revision: number; lines: { target: string; de: number; reason: string | null }[];
+export function PoolEditor({ day, site, homeFn, shift, available, revision, lines, options, proposal, canEdit, updated }: {
+  day: string; site: string; homeFn: string; shift: string; available: number; revision: number; lines: { target: string; de: number; reason: string | null }[];
   options: Opt[]; proposal: DeployLine[]; canEdit: boolean; updated: string | null;
 }) {
   const init = lines.map((l) => ({ target: l.target, de: String(l.de), reason: l.reason ?? "" }));
@@ -25,7 +25,7 @@ export function PoolEditor({ day, site, homeFn, available, revision, lines, opti
   const set = (i: number, p: Partial<Row>) => setRows(rows.map((r, k) => (k === i ? { ...r, ...p } : r)));
   const isTransfer = (t: string) => { const o = options.find((x) => x.target === t); return !!o && !!o.homeFn && o.homeFn !== homeFn; };
   const save = () => start(async () => {
-    const r = await saveDeployment(day, site, homeFn, rows.filter((x) => x.target && Number(x.de) > 0).map((x) => ({ target: x.target, de: Number(x.de), reason: x.reason || null })), revision);
+    const r = await saveDeployment(day, site, homeFn, shift, rows.filter((x) => x.target && Number(x.de) > 0).map((x) => ({ target: x.target, de: Number(x.de), reason: x.reason || null })), revision);
     if (!r.ok) return toast(r.error, "error");
     toast(r.message ?? "Saved", "success"); router.refresh();
   });
@@ -33,7 +33,7 @@ export function PoolEditor({ day, site, homeFn, available, revision, lines, opti
   return (
     <div className="rounded-lg border border-line p-3">
       <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="text-[13px] font-semibold">{homeFn}</span>
+        <span className="text-[13px] font-semibold">{homeFn}{shift !== "All" && <span className="ml-1 font-normal text-ink-3">· {shift} shift</span>}</span>
         <span className="text-[12px] text-ink-3 tabular">{r2(available)} DE present (attendance)</span>
         <span className={cn("ml-auto text-[12px] font-medium tabular", left < 0 ? "text-bad" : left > 0.005 ? "text-warn" : "text-ok")}>
           {left < 0 ? `over by ${-left} DE` : left > 0.005 ? `${left} DE unassigned` : "fully accounted"}</span>

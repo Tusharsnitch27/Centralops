@@ -17,6 +17,7 @@ const KEYS = {
   heads: ["present_day_equivalent", "present_headcount", "headcount", "head_count", "heads", "manpower", "present", "present_count", "count", "hc", "total", "man_days", "mandays", "total_manpower"],
   person: ["employee_id", "emp_id", "emp_code", "employee_code", "employee_no", "staff_id", "user_id"],
   status: ["status", "attendance_status", "attendance", "present_status"],
+  shift: ["shift", "shift_name"],
 };
 const ABSENT = /^(a|ab|absent|leave|l|wo|week ?off|off|holiday|h|lwp|cl|sl|el|na)$/i;
 
@@ -62,17 +63,18 @@ function toDay(v: unknown): string | null {
 
 export interface MpRow { day: string; site: string; func: string; heads: number }
 
-export function parseManpower(body: unknown): { rows: MpRow[]; shape: string; skipped: number } {
+export function parseManpower(body: unknown): { rows: MpRow[]; shiftRows: (MpRow & { shift: string })[]; shape: string; skipped: number } {
   const arr = Array.isArray(body) ? body
     : body && typeof body === "object" ? (["data", "rows", "items", "records", "results", "manpower"].map((k) => (body as Record<string, unknown>)[k]).find(Array.isArray) as unknown[] | undefined) : undefined;
   if (!arr) throw new Error("The manpower API didn't return a list of rows (expected an array, or { data: [...] })");
-  if (!arr.length) return { rows: [], shape: "empty", skipped: 0 };
+  if (!arr.length) return { rows: [], shiftRows: [], shape: "empty", skipped: 0 };
   const sample = lower(arr[0] as Record<string, unknown>);
   const has = (names: string[]) => names.some((n) => n in sample);
   if (!has(KEYS.day)) throw new Error(`No date field in the manpower rows (fields: ${Object.keys(sample).join(", ")})`);
   if (!has(KEYS.func)) throw new Error(`No function / department field in the manpower rows (fields: ${Object.keys(sample).join(", ")})`);
   const aggregated = has(KEYS.heads);
   const agg = new Map<string, { row: MpRow; people: Set<string> }>();
+  const bySh = new Map<string, { row: MpRow & { shift: string }; people: Set<string> }>(); // same figures split by shift (Day / Night)
   let skipped = 0, i = 0;
   for (const raw of arr) {
     i++;
@@ -86,15 +88,19 @@ export function parseManpower(body: unknown): { rows: MpRow[]; shape: string; sk
     if (st != null && ABSENT.test(String(st).trim())) { skipped++; continue; }
     const k = `${day}|${site}|${func}`;
     const cur = agg.get(k) ?? { row: { day, site, func, heads: 0 }, people: new Set<string>() };
+    const shift = String(pick(r, KEYS.shift) ?? "").trim() || "Unspecified";
+    const ks = `${k}|${shift}`;
+    const cs = bySh.get(ks) ?? { row: { day, site, func, shift, heads: 0 }, people: new Set<string>() };
     if (aggregated) {
       const n = Number(String(pick(r, KEYS.heads) ?? "0").replace(/,/g, ""));
       if (!Number.isFinite(n)) { skipped++; continue; }
-      cur.row.heads += n;
-    } else cur.people.add(String(pick(r, KEYS.person) ?? `row${i}`));
-    agg.set(k, cur);
+      cur.row.heads += n; cs.row.heads += n;
+    } else { const p = String(pick(r, KEYS.person) ?? `row${i}`); cur.people.add(p); cs.people.add(p); }
+    agg.set(k, cur); bySh.set(ks, cs);
   }
   const rows = [...agg.values()].map((x) => ({ ...x.row, heads: aggregated ? x.row.heads : x.people.size }));
-  return { rows, shape: aggregated ? "headcount rows" : "per-person rows (counted)", skipped };
+  const shiftRows = [...bySh.values()].map((x) => ({ ...x.row, heads: aggregated ? x.row.heads : x.people.size }));
+  return { rows, shiftRows, shape: aggregated ? "headcount rows" : "per-person rows (counted)", skipped };
 }
 
 function withRange(url: string, from: string, to: string) {
@@ -151,6 +157,11 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
       shape = r.shape; skipped += r.skipped;
       const rows = r.rows.filter((x) => x.day === day);
       await q(`delete from mp_daily where day = $1`, [day]);
+      await q(`delete from mp_daily_shift where day = $1`, [day]);
+      const sr = r.shiftRows.filter((x) => x.day === day);
+      if (sr.length)
+        await q(`insert into mp_daily_shift (day, site, func, shift, heads) select * from unnest($1::date[], $2::text[], $3::text[], $4::text[], $5::numeric[])`,
+          [sr.map((x) => x.day), sr.map((x) => x.site), sr.map((x) => x.func), sr.map((x) => x.shift), sr.map((x) => x.heads)]);
       if (rows.length) {
         await q(`insert into mp_daily (day, site, func, heads) select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[])
                  on conflict (day, site, func) do update set heads = excluded.heads, fetched_at = now()`,

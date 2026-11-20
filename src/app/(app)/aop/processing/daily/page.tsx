@@ -25,7 +25,7 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
   const u = await requireUser();
   const [cycles, cycle, days] = await Promise.all([listCycles(), resolveCycle(sp.cycle), deployDays()]);
   const header = <AopHeader active="processing" cycleId={cycle?.id ?? null} cycles={cycles} title="Daily planner"
-    subtitle="Present labour → confirmed deployment → stage output vs capacity. Site × day × home function; attendance day-equivalents (half day = 0.5)."
+    subtitle="Present labour → confirmed deployment → stage output vs capacity. Site × day × home function × shift (Day / Night from attendance); day-equivalents (half day = 0.5)."
     actions={<Link href="/aop/processing" className="text-[12.5px] text-ink-3 hover:text-ink">← Monthly processing</Link>} />;
   if (!days.length) return <div className="animate-fade-in">{header}<div className="card"><EmptyState title="No attendance yet" body="Daily manpower arrives from the attendance app each morning (from 29 Oct 2026)." /></div></div>;
   const site: OpsSite = sp.site === "North" ? "North" : "South";
@@ -37,7 +37,7 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
   const short = v.stages.filter((s) => s.required != null && s.required - s.de > 0.25).sort((a, b) => (b.required! - b.de) - (a.required! - a.de));
   const spare = v.pools.map((p) => {
     const conf = p.lines.reduce((a, l) => a + l.de, 0), noDemand = p.lines.filter((l) => l.target === "idle:No demand").reduce((a, l) => a + l.de, 0);
-    return { fn: p.homeFn, unassigned: Math.max(p.available - conf, 0), noDemand };
+    return { fn: p.shift === "All" ? p.homeFn : `${p.homeFn} · ${p.shift}`, unassigned: Math.max(p.available - conf, 0), noDemand };
   }).filter((x) => x.unassigned > 0.25 || x.noDemand > 0.25);
 
   return (
@@ -59,8 +59,11 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
       <div className="space-y-3">
         <Section open title="Deployment by home function" sub="Full replacement per pool, checked on save: no duplicate target, nothing above what was present, a reason for every transfer">
           <div className="grid gap-3 xl:grid-cols-2">{v.pools.map((p) => {
-            const own = v.stages.filter((s) => s.homeFn === p.homeFn).map((s) => ({ target: s.target, required: s.required }));
-            return <PoolEditor key={p.homeFn} day={day} site={site} homeFn={p.homeFn} available={p.available} revision={p.revision} lines={p.lines} options={options}
+            // workload is per day: each shift pool proposes its share of the day's need, by present DE (Day + Night never double-cover it)
+            const fnTotal = v.pools.filter((x) => x.homeFn === p.homeFn).reduce((a, x) => a + x.available, 0);
+            const share = fnTotal ? p.available / fnTotal : 0;
+            const own = v.stages.filter((s) => s.homeFn === p.homeFn).map((s) => ({ target: s.target, required: s.required == null ? null : s.required * share }));
+            return <PoolEditor key={`${p.homeFn}|${p.shift}`} day={day} site={site} homeFn={p.homeFn} shift={p.shift} available={p.available} revision={p.revision} lines={p.lines} options={options}
               proposal={proposeSplit(p.available, own)} canEdit={canEdit} updated={p.updatedAt ? `${p.updatedAt.slice(0, 16)} by ${p.updatedBy ?? "—"}` : null} />;
           })}</div>
         </Section>
@@ -97,7 +100,7 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
                 : <tr><td colSpan={3} className="text-ink-3">No spare time confirmed.</td></tr>}</tbody></table>
           </div>
           {canEdit && <div className="mt-3"><FollowUp site={site} day={day} suggestion={short[0] ? `Cover ${short[0].stream} · ${short[0].stage} shortfall (${n2(short[0].required! - short[0].de)} DE)` : ""} /></div>}
-          <p className="mt-2 text-[12px] text-ink-4">Required DE uses the day's measured output ÷ IPP; stages without a feed can't show a shortfall. Shift-level detail isn't in the attendance feed yet.</p>
+          <p className="mt-2 text-[12px] text-ink-4">Required DE uses the day's measured output ÷ IPP; stages without a feed can't show a shortfall. Workload is per day: a shift pool's proposal splits that shift's present DE by the whole day's stage mix.</p>
         </Section>
       </div>
     </div>

@@ -12,11 +12,13 @@ export async function currentSnapshot() {
 }
 
 export const wcmMonths = async (snapshotId: string) =>
-  (await q<{ p: string }>(`select distinct period::text as p from wcm_source_line where snapshot_id = $1 and amount is not null order by 1`, [snapshotId])).map((r) => r.p);
+  (await q<{ p: string }>(`select distinct period::text as p from wcm_source_line where snapshot_id = $1 and amount is not null and family = any($2::text[]) order by 1`, [snapshotId, WH_FAMILIES])).map((r) => r.p);
 
+/** Families the warehouse views read; logistics / SaaS lines (allowed by migration 077) never enter warehouse totals. */
+const WH_FAMILIES = ["warehousing", "manpower", "ot", "packaging"];
 const LINE_COLS = `id, period::text as period, basis, site, family, head, channel, amount::float8 as amount, cell`;
 async function sourceLines(snapshotId: string, period: string, basis: Basis) {
-  return q<SourceLine>(`select ${LINE_COLS} from wcm_source_line where snapshot_id = $1 and period = $2 and basis = $3 order by family, site, head`, [snapshotId, period, basis]);
+  return q<SourceLine>(`select ${LINE_COLS} from wcm_source_line where snapshot_id = $1 and period = $2 and basis = $3 and family = any($4::text[]) order by family, site, head`, [snapshotId, period, basis, WH_FAMILIES]);
 }
 
 export type RuleRow = Rule & { driver: string | null; reason: string; evidence: string | null; createdBy: string | null; createdAt: string; decidedBy: string | null; decidedAt: string | null; decisionNote: string | null; replaces: string | null };
