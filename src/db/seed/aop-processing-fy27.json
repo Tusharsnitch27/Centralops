@@ -1,0 +1,4409 @@
+{
+ "source": "Central Operations Cost Master Sheet FY 26-27 › YLK_ / TAURU_Processing Costs",
+ "norms": [
+  {
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "target_per_day": 800,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "target_per_day": 950,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "target_per_day": 3500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "target_per_day": 800,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "target_per_day": 800,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "target_per_day": 3300,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "target_per_day": 850,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "target_per_day": 1000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "target_per_day": 850,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "target_per_day": 900,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Returns Shopify",
+   "process": "Receiving",
+   "target_per_day": 2700,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Returns Shopify",
+   "process": "Processing",
+   "target_per_day": 300,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Returns Shopify",
+   "process": "SPF",
+   "target_per_day": 80,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Returns Marketplace",
+   "process": "Receiving",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Returns Marketplace",
+   "process": "Processing",
+   "target_per_day": 260,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2C Returns Marketplace",
+   "process": "SPF",
+   "target_per_day": 60,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Retail",
+   "process": "Receiving",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Retail",
+   "process": "Processing",
+   "target_per_day": 1500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Retail",
+   "process": "QC+Repack",
+   "target_per_day": 500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Retail",
+   "process": "WPR",
+   "target_per_day": 100,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 3
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Marketplace",
+   "process": "Receiving",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Marketplace",
+   "process": "Processing",
+   "target_per_day": 1500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Marketplace",
+   "process": "QC+Repack",
+   "target_per_day": 500,
+   "working_days": 23,
+   "avg_salary": null,
+   "ideal_output": null,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "B2B Returns Marketplace",
+   "process": "WPR",
+   "target_per_day": 100,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 3
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Ratio",
+   "target_per_day": 3000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 600000,
+   "sort": 0
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Putaway",
+   "target_per_day": 2500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 600000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Unloader",
+   "target_per_day": 6000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 600000,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "target_per_day": null,
+   "working_days": 23,
+   "avg_salary": 1340000,
+   "ideal_output": 1,
+   "sort": 0,
+   "note": "fixed monthly ₹ line: planned MP = 1, avg_salary = the lump amount"
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "CC",
+   "target_per_day": 2500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 1600000,
+   "sort": 1
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Audit",
+   "target_per_day": 2500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 1600000,
+   "sort": 2
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "target_per_day": 200,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 32000,
+   "sort": 3
+  },
+  {
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "target_per_day": 1000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 640,
+   "sort": 4
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "target_per_day": 600,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "target_per_day": 650,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "target_per_day": 3000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "target_per_day": 600,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "target_per_day": 550,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "target_per_day": 3000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 313820,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "target_per_day": 850,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "target_per_day": 1000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "target_per_day": 850,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "target_per_day": 900,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 364000,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Returns Shopify",
+   "process": "Receiving",
+   "target_per_day": 2700,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Returns Shopify",
+   "process": "Processing",
+   "target_per_day": 300,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Returns Shopify",
+   "process": "SPF",
+   "target_per_day": 100,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Returns Marketplace",
+   "process": "Receiving",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Returns Marketplace",
+   "process": "Processing",
+   "target_per_day": 260,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2C Returns Marketplace",
+   "process": "SPF",
+   "target_per_day": 100,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Retail",
+   "process": "Receiving",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Retail",
+   "process": "Processing",
+   "target_per_day": 1500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Retail",
+   "process": "QC+Repack",
+   "target_per_day": 500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Retail",
+   "process": "WPR",
+   "target_per_day": 100,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 3
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Marketplace",
+   "process": "Receiving",
+   "target_per_day": 2400,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Marketplace",
+   "process": "Processing",
+   "target_per_day": 1500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 90000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Marketplace",
+   "process": "QC+Repack",
+   "target_per_day": 500,
+   "working_days": 23,
+   "avg_salary": null,
+   "ideal_output": null,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "B2B Returns Marketplace",
+   "process": "WPR",
+   "target_per_day": 100,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 6300,
+   "sort": 3
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Ratio",
+   "target_per_day": 3000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 600000,
+   "sort": 0
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Putaway",
+   "target_per_day": 2500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 600000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Unloader",
+   "target_per_day": 6000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 600000,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "target_per_day": null,
+   "working_days": 23,
+   "avg_salary": 1400000,
+   "ideal_output": 1,
+   "sort": 0,
+   "note": "fixed monthly ₹ line: planned MP = 1, avg_salary = the lump amount"
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "CC",
+   "target_per_day": 2500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 1600000,
+   "sort": 1
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Audit",
+   "target_per_day": 2500,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 1600000,
+   "sort": 2
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "target_per_day": 200,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 32000,
+   "sort": 3
+  },
+  {
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "target_per_day": 1000,
+   "working_days": 23,
+   "avg_salary": 21983,
+   "ideal_output": 640,
+   "sort": 4
+  }
+ ],
+ "monthly": [
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 202362,
+   "planned_mp": 25.5,
+   "final_output": 192709,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 409339,
+   "planned_mp": 29,
+   "final_output": 316000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 173596,
+   "planned_mp": 22,
+   "final_output": 201682,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 146488,
+   "planned_mp": 21,
+   "final_output": 121709,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 96851,
+   "planned_mp": 20,
+   "final_output": 100652,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 145702,
+   "planned_mp": 17,
+   "final_output": 120879,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 124984,
+   "planned_mp": 15,
+   "final_output": 110283,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 138010,
+   "planned_mp": 14,
+   "final_output": 127550,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 183499,
+   "planned_mp": 22,
+   "final_output": 183533,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 248553,
+   "planned_mp": 30,
+   "final_output": 343876,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 85468,
+   "planned_mp": 22,
+   "final_output": 111931,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 115717,
+   "planned_mp": 20,
+   "final_output": 96531,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 116504,
+   "planned_mp": 20,
+   "final_output": 77202,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 202362,
+   "planned_mp": 22,
+   "final_output": 192709,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 409339,
+   "planned_mp": 26,
+   "final_output": 316000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 173596,
+   "planned_mp": 21,
+   "final_output": 201682,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 146488,
+   "planned_mp": 20,
+   "final_output": 121709,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 96851,
+   "planned_mp": 19,
+   "final_output": 100652,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 145702,
+   "planned_mp": 18,
+   "final_output": 120879,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 124984,
+   "planned_mp": 15,
+   "final_output": 110283,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 138010,
+   "planned_mp": 13,
+   "final_output": 127550,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 183499,
+   "planned_mp": 22,
+   "final_output": 183533,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 248553,
+   "planned_mp": 29,
+   "final_output": 343876,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 85468,
+   "planned_mp": 21,
+   "final_output": 111931,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 115717,
+   "planned_mp": 19,
+   "final_output": 96531,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 116504,
+   "planned_mp": 19,
+   "final_output": 77202,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 202362,
+   "planned_mp": 6,
+   "final_output": 192709,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 409339,
+   "planned_mp": 6,
+   "final_output": 316000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 173596,
+   "planned_mp": 3,
+   "final_output": 201682,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 146488,
+   "planned_mp": 3,
+   "final_output": 121709,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 96851,
+   "planned_mp": 3,
+   "final_output": 100652,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 145702,
+   "planned_mp": 3,
+   "final_output": 120879,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 124984,
+   "planned_mp": 3,
+   "final_output": 110283,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 138010,
+   "planned_mp": 3,
+   "final_output": 127550,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 183499,
+   "planned_mp": 5,
+   "final_output": 183533,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 248553,
+   "planned_mp": 5,
+   "final_output": 343876,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 85468,
+   "planned_mp": 5,
+   "final_output": 111931,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 115717,
+   "planned_mp": 4,
+   "final_output": 96531,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 116504,
+   "planned_mp": 4,
+   "final_output": 77202,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 138552,
+   "planned_mp": 15.5,
+   "final_output": 183000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 156813,
+   "planned_mp": 12,
+   "final_output": 121000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 201244,
+   "planned_mp": 24,
+   "final_output": 245321,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 131305,
+   "planned_mp": 22,
+   "final_output": 173995,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 126461,
+   "planned_mp": 22,
+   "final_output": 109348,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 190954,
+   "planned_mp": 18,
+   "final_output": 190583,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 153988,
+   "planned_mp": 16,
+   "final_output": 144027,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 177665,
+   "planned_mp": 16,
+   "final_output": 158968,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 144633,
+   "planned_mp": 16,
+   "final_output": 165935,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 104545,
+   "planned_mp": 10,
+   "final_output": 82939,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 87442,
+   "planned_mp": 10,
+   "final_output": 110452,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 102044,
+   "planned_mp": 12,
+   "final_output": 101571,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 158054,
+   "planned_mp": 18,
+   "final_output": 171483,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 138552,
+   "planned_mp": 16,
+   "final_output": 183000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 156813,
+   "planned_mp": 13,
+   "final_output": 121000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 201244,
+   "planned_mp": 24,
+   "final_output": 245321,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 131305,
+   "planned_mp": 22,
+   "final_output": 173995,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 126461,
+   "planned_mp": 22,
+   "final_output": 109348,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 190954,
+   "planned_mp": 18,
+   "final_output": 190583,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 153988,
+   "planned_mp": 17,
+   "final_output": 144027,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 177665,
+   "planned_mp": 16,
+   "final_output": 158968,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 144633,
+   "planned_mp": 16,
+   "final_output": 165935,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 104545,
+   "planned_mp": 10,
+   "final_output": 82939,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 87442,
+   "planned_mp": 10,
+   "final_output": 110452,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 102044,
+   "planned_mp": 12,
+   "final_output": 101571,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 158054,
+   "planned_mp": 18,
+   "final_output": 171483,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 138552,
+   "planned_mp": 4,
+   "final_output": 183000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 156813,
+   "planned_mp": 3,
+   "final_output": 121000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 201244,
+   "planned_mp": 5,
+   "final_output": 245321,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 131305,
+   "planned_mp": 3,
+   "final_output": 173995,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 126461,
+   "planned_mp": 3,
+   "final_output": 109348,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 190954,
+   "planned_mp": 3,
+   "final_output": 190583,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 153988,
+   "planned_mp": 3,
+   "final_output": 144027,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 177665,
+   "planned_mp": 3,
+   "final_output": 158968,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 144633,
+   "planned_mp": 3,
+   "final_output": 165935,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 104545,
+   "planned_mp": 3,
+   "final_output": 82939,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 87442,
+   "planned_mp": 3,
+   "final_output": 110452,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 102044,
+   "planned_mp": 4,
+   "final_output": 101571,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 158054,
+   "planned_mp": 4,
+   "final_output": 171483,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 262000,
+   "planned_mp": 25.5,
+   "final_output": 442810,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 365002,
+   "planned_mp": 28,
+   "final_output": 322371,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 365002,
+   "planned_mp": 30,
+   "final_output": 465158,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 365002,
+   "planned_mp": 30,
+   "final_output": 503421,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 365002,
+   "planned_mp": 30,
+   "final_output": 387065,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 280200,
+   "planned_mp": 27,
+   "final_output": 355042,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 278918,
+   "planned_mp": 18,
+   "final_output": 329066,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 239884,
+   "planned_mp": 18,
+   "final_output": 288528,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 202896,
+   "planned_mp": 18,
+   "final_output": 317675,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 254808,
+   "planned_mp": 23,
+   "final_output": 303067,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 257875,
+   "planned_mp": 22,
+   "final_output": 335306,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 302110,
+   "planned_mp": 24,
+   "final_output": 366028,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 308532,
+   "planned_mp": 33,
+   "final_output": 541296,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 262000,
+   "planned_mp": 22,
+   "final_output": 442810,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 365002,
+   "planned_mp": 24,
+   "final_output": 322371,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 365002,
+   "planned_mp": 25,
+   "final_output": 465158,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 365002,
+   "planned_mp": 26,
+   "final_output": 503421,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 365002,
+   "planned_mp": 26,
+   "final_output": 387065,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 280200,
+   "planned_mp": 21,
+   "final_output": 355042,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 278918,
+   "planned_mp": 17,
+   "final_output": 329066,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 239884,
+   "planned_mp": 17,
+   "final_output": 288528,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 202896,
+   "planned_mp": 17,
+   "final_output": 317675,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 254808,
+   "planned_mp": 22,
+   "final_output": 303067,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 257875,
+   "planned_mp": 22,
+   "final_output": 335306,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 302110,
+   "planned_mp": 24,
+   "final_output": 366028,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 308532,
+   "planned_mp": 32,
+   "final_output": 541296,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 262000,
+   "planned_mp": 6,
+   "final_output": 442810,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 365002,
+   "planned_mp": 10,
+   "final_output": 322371,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 365002,
+   "planned_mp": 10,
+   "final_output": 465158,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 365002,
+   "planned_mp": 10,
+   "final_output": 503421,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 365002,
+   "planned_mp": 10,
+   "final_output": 387065,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 280200,
+   "planned_mp": 10,
+   "final_output": 355042,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 278918,
+   "planned_mp": 10,
+   "final_output": 329066,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 239884,
+   "planned_mp": 10,
+   "final_output": 288528,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 202896,
+   "planned_mp": 10,
+   "final_output": 317675,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 254808,
+   "planned_mp": 10,
+   "final_output": 303067,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 257875,
+   "planned_mp": 10,
+   "final_output": 335306,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 302110,
+   "planned_mp": 10,
+   "final_output": 366028,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 308532,
+   "planned_mp": 10,
+   "final_output": 541296,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 131000,
+   "planned_mp": 15.5,
+   "final_output": 8900,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 80000,
+   "planned_mp": 10,
+   "final_output": 38800,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 49680,
+   "planned_mp": 9,
+   "final_output": 65863,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 39026,
+   "planned_mp": 5,
+   "final_output": 29312,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 3650,
+   "planned_mp": 1,
+   "final_output": 1922,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 7000,
+   "planned_mp": 1,
+   "final_output": 5663,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 104000,
+   "planned_mp": 5,
+   "final_output": 86551,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 73301,
+   "planned_mp": 5,
+   "final_output": 65720,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 28000,
+   "planned_mp": 3,
+   "final_output": 15360,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 39000,
+   "planned_mp": 3,
+   "final_output": 37945,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 84750,
+   "planned_mp": 4,
+   "final_output": 92684,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 171000,
+   "planned_mp": 10,
+   "final_output": 172880,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 48000,
+   "planned_mp": 6,
+   "final_output": 42086,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 131000,
+   "planned_mp": 16,
+   "final_output": 8900,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 80000,
+   "planned_mp": 9,
+   "final_output": 38800,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 49680,
+   "planned_mp": 8,
+   "final_output": 65863,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 39026,
+   "planned_mp": 3,
+   "final_output": 29312,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 3650,
+   "planned_mp": 1,
+   "final_output": 1922,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 7000,
+   "planned_mp": 1,
+   "final_output": 5663,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 104000,
+   "planned_mp": 5,
+   "final_output": 86551,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 73301,
+   "planned_mp": 5,
+   "final_output": 65720,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 28000,
+   "planned_mp": 3,
+   "final_output": 15360,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 39000,
+   "planned_mp": 3,
+   "final_output": 37945,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 84750,
+   "planned_mp": 4,
+   "final_output": 92684,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 171000,
+   "planned_mp": 10,
+   "final_output": 172880,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 48000,
+   "planned_mp": 6,
+   "final_output": 42086,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 131000,
+   "planned_mp": 4,
+   "final_output": 8900,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 80000,
+   "planned_mp": 4,
+   "final_output": 38800,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 49680,
+   "planned_mp": 3,
+   "final_output": 65863,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 39026,
+   "planned_mp": 2,
+   "final_output": 29312,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 3650,
+   "planned_mp": 1,
+   "final_output": 1922,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 7000,
+   "planned_mp": 1,
+   "final_output": 5663,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 104000,
+   "planned_mp": 2,
+   "final_output": 86551,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 73301,
+   "planned_mp": 3,
+   "final_output": 65720,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 28000,
+   "planned_mp": 3,
+   "final_output": 15360,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 39000,
+   "planned_mp": 3,
+   "final_output": 37945,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 84750,
+   "planned_mp": 3,
+   "final_output": 92684,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 171000,
+   "planned_mp": 4,
+   "final_output": 172880,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "South",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 48000,
+   "planned_mp": 3,
+   "final_output": 42086,
+   "avg_salary": 23637
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Returns Shopify",
+   "process": "Receiving",
+   "sop_proj": 88000,
+   "planned_mp": 2,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Returns Shopify",
+   "process": "Processing",
+   "sop_proj": 88000,
+   "planned_mp": 15,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Returns Shopify",
+   "process": "SPF",
+   "sop_proj": 6160,
+   "planned_mp": 3,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Returns Marketplace",
+   "process": "Receiving",
+   "sop_proj": 88000,
+   "planned_mp": 2,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Returns Marketplace",
+   "process": "Processing",
+   "sop_proj": 88000,
+   "planned_mp": 16,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "B2C Returns Marketplace",
+   "process": "SPF",
+   "sop_proj": 6160,
+   "planned_mp": 3,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Ratio",
+   "sop_proj": null,
+   "planned_mp": null,
+   "final_output": 561849,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Ratio",
+   "sop_proj": 635821,
+   "planned_mp": 8,
+   "final_output": 605331,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Ratio",
+   "sop_proj": 637442,
+   "planned_mp": 9,
+   "final_output": 679685,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Putaway",
+   "sop_proj": null,
+   "planned_mp": null,
+   "final_output": 561849,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Putaway",
+   "sop_proj": 635821,
+   "planned_mp": 10,
+   "final_output": 605331,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Putaway",
+   "sop_proj": 637442,
+   "planned_mp": 10,
+   "final_output": 679685,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Unloader",
+   "sop_proj": null,
+   "planned_mp": null,
+   "final_output": 561849,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Unloader",
+   "sop_proj": 635821,
+   "planned_mp": 4,
+   "final_output": 605331,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inward",
+   "process": "Unloader",
+   "sop_proj": 637442,
+   "planned_mp": 4,
+   "final_output": 679685,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "sop_proj": 1000000,
+   "planned_mp": 1,
+   "final_output": 1000000,
+   "avg_salary": 1340000
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "sop_proj": 1000000,
+   "planned_mp": 1,
+   "final_output": 1000000,
+   "avg_salary": 1340000
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "sop_proj": 1000000,
+   "planned_mp": 1,
+   "final_output": 1000000,
+   "avg_salary": 1340000
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "CC",
+   "sop_proj": 1000000,
+   "planned_mp": 16,
+   "final_output": 1000000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "CC",
+   "sop_proj": 1000000,
+   "planned_mp": 20,
+   "final_output": 1000000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "CC",
+   "sop_proj": 1000000,
+   "planned_mp": 20,
+   "final_output": 1000000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Audit",
+   "sop_proj": 1000000,
+   "planned_mp": 16,
+   "final_output": 1000000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Audit",
+   "sop_proj": 1000000,
+   "planned_mp": 20,
+   "final_output": 1000000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Audit",
+   "sop_proj": 1000000,
+   "planned_mp": 20,
+   "final_output": 1000000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "sop_proj": 20000,
+   "planned_mp": 4,
+   "final_output": 20000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "sop_proj": 20000,
+   "planned_mp": 6,
+   "final_output": 20000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "sop_proj": 20000,
+   "planned_mp": 6,
+   "final_output": 20000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "sop_proj": 40000,
+   "planned_mp": 2,
+   "final_output": 40000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "sop_proj": 40000,
+   "planned_mp": 2,
+   "final_output": 40000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "South",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "sop_proj": 40000,
+   "planned_mp": 2,
+   "final_output": 40000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 27737,
+   "planned_mp": 6,
+   "final_output": 29732,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 63434,
+   "planned_mp": 7,
+   "final_output": 68009,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 47007,
+   "planned_mp": 10,
+   "final_output": 52310,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 46258,
+   "planned_mp": 9,
+   "final_output": 53422,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 50216,
+   "planned_mp": 8,
+   "final_output": 67082,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 97137,
+   "planned_mp": 12,
+   "final_output": 91157,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 102260,
+   "planned_mp": 14,
+   "final_output": 89592,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 104359,
+   "planned_mp": 17,
+   "final_output": 82354,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 150135,
+   "planned_mp": 22,
+   "final_output": 134374,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 203361,
+   "planned_mp": 25,
+   "final_output": 211221,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 68377,
+   "planned_mp": 16,
+   "final_output": 89553,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 92795,
+   "planned_mp": 16,
+   "final_output": 78807,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Picker",
+   "sop_proj": 95320,
+   "planned_mp": 16,
+   "final_output": 75006,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 27737,
+   "planned_mp": 6,
+   "final_output": 29732,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 63434,
+   "planned_mp": 6,
+   "final_output": 68009,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 47007,
+   "planned_mp": 8,
+   "final_output": 52310,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 46258,
+   "planned_mp": 8,
+   "final_output": 53422,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 50216,
+   "planned_mp": 7,
+   "final_output": 67082,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 97137,
+   "planned_mp": 12,
+   "final_output": 91157,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 102260,
+   "planned_mp": 15,
+   "final_output": 89592,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 104359,
+   "planned_mp": 17,
+   "final_output": 82354,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 150135,
+   "planned_mp": 21,
+   "final_output": 134374,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 203361,
+   "planned_mp": 22,
+   "final_output": 211221,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 68377,
+   "planned_mp": 15,
+   "final_output": 89553,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 92795,
+   "planned_mp": 15,
+   "final_output": 78807,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Packer",
+   "sop_proj": 95320,
+   "planned_mp": 15,
+   "final_output": 75006,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 27737,
+   "planned_mp": 4,
+   "final_output": 29732,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 63434,
+   "planned_mp": 3,
+   "final_output": 68009,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 47007,
+   "planned_mp": 3,
+   "final_output": 52310,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 46258,
+   "planned_mp": 3,
+   "final_output": 53422,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 50216,
+   "planned_mp": 3,
+   "final_output": 67082,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 97137,
+   "planned_mp": 3,
+   "final_output": 91157,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 102260,
+   "planned_mp": 3,
+   "final_output": 89592,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 104359,
+   "planned_mp": 4,
+   "final_output": 82354,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 150135,
+   "planned_mp": 4,
+   "final_output": 134374,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 203361,
+   "planned_mp": 9,
+   "final_output": 211221,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 68377,
+   "planned_mp": 4,
+   "final_output": 89553,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 92795,
+   "planned_mp": 4,
+   "final_output": 78807,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2C Shopify",
+   "process": "Manifest",
+   "sop_proj": 95320,
+   "planned_mp": 4,
+   "final_output": 75006,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 34644,
+   "planned_mp": 6,
+   "final_output": 33300,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 39203,
+   "planned_mp": 6,
+   "final_output": 30500,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 38889,
+   "planned_mp": 6,
+   "final_output": 48900,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 25686,
+   "planned_mp": 6,
+   "final_output": 43041,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 31628,
+   "planned_mp": 5,
+   "final_output": 39831,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 64999,
+   "planned_mp": 6,
+   "final_output": 66034,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 68456,
+   "planned_mp": 4,
+   "final_output": 78692,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 93072,
+   "planned_mp": 8,
+   "final_output": 92258,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 118340,
+   "planned_mp": 20,
+   "final_output": 100063,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 85529,
+   "planned_mp": 16,
+   "final_output": 58340,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 69949,
+   "planned_mp": 9,
+   "final_output": 71924,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 92775,
+   "planned_mp": 11,
+   "final_output": 70408,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Picker",
+   "sop_proj": 129318,
+   "planned_mp": 17,
+   "final_output": 119298,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 34644,
+   "planned_mp": 7,
+   "final_output": 33300,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 39203,
+   "planned_mp": 6,
+   "final_output": 30500,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 38889,
+   "planned_mp": 6,
+   "final_output": 48900,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 25686,
+   "planned_mp": 5,
+   "final_output": 43041,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 31628,
+   "planned_mp": 5,
+   "final_output": 39831,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 64999,
+   "planned_mp": 6,
+   "final_output": 66034,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 68456,
+   "planned_mp": 4,
+   "final_output": 78692,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 93072,
+   "planned_mp": 8,
+   "final_output": 92258,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 118340,
+   "planned_mp": 21,
+   "final_output": 100063,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 85529,
+   "planned_mp": 17,
+   "final_output": 58340,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 69949,
+   "planned_mp": 10,
+   "final_output": 71924,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 92775,
+   "planned_mp": 13,
+   "final_output": 70408,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Packer",
+   "sop_proj": 129318,
+   "planned_mp": 16,
+   "final_output": 119298,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 34644,
+   "planned_mp": 4,
+   "final_output": 33300,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 39203,
+   "planned_mp": 3,
+   "final_output": 30500,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 38889,
+   "planned_mp": 3,
+   "final_output": 48900,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 25686,
+   "planned_mp": 3,
+   "final_output": 43041,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 31628,
+   "planned_mp": 3,
+   "final_output": 39831,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 64999,
+   "planned_mp": 3,
+   "final_output": 66034,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 68456,
+   "planned_mp": 3,
+   "final_output": 78692,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 93072,
+   "planned_mp": 3,
+   "final_output": 92258,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 118340,
+   "planned_mp": 3,
+   "final_output": 100063,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 85529,
+   "planned_mp": 2,
+   "final_output": 58340,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 69949,
+   "planned_mp": 2,
+   "final_output": 71924,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 92775,
+   "planned_mp": 2,
+   "final_output": 70408,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2C Marketplace",
+   "process": "Manifest",
+   "sop_proj": 129318,
+   "planned_mp": 2,
+   "final_output": 119298,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 219887,
+   "planned_mp": 22,
+   "final_output": 171398,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 121667,
+   "planned_mp": 20,
+   "final_output": 119153,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 121667,
+   "planned_mp": 21,
+   "final_output": 114435,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 121667,
+   "planned_mp": 20,
+   "final_output": 172383,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 121667,
+   "planned_mp": 15,
+   "final_output": 116171,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 186800,
+   "planned_mp": 16,
+   "final_output": 222338,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 267256,
+   "planned_mp": 15,
+   "final_output": 273588,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 275668,
+   "planned_mp": 15,
+   "final_output": 212945,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 186501,
+   "planned_mp": 26,
+   "final_output": 312545,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 235207,
+   "planned_mp": 15,
+   "final_output": 254452,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 238036,
+   "planned_mp": 17,
+   "final_output": 221823,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 278870,
+   "planned_mp": 17,
+   "final_output": 288084,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Picker",
+   "sop_proj": 308531,
+   "planned_mp": 27,
+   "final_output": 434957,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 219887,
+   "planned_mp": 19,
+   "final_output": 171398,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 121667,
+   "planned_mp": 18,
+   "final_output": 119153,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 121667,
+   "planned_mp": 20,
+   "final_output": 114435,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 121667,
+   "planned_mp": 18,
+   "final_output": 172383,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 121667,
+   "planned_mp": 12,
+   "final_output": 116171,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 186800,
+   "planned_mp": 14,
+   "final_output": 222338,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 267256,
+   "planned_mp": 14,
+   "final_output": 273588,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 275668,
+   "planned_mp": 15,
+   "final_output": 212945,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 186501,
+   "planned_mp": 26,
+   "final_output": 312545,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 235207,
+   "planned_mp": 15,
+   "final_output": 254452,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 238036,
+   "planned_mp": 17,
+   "final_output": 221823,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 278870,
+   "planned_mp": 17,
+   "final_output": 288084,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Packer",
+   "sop_proj": 308531,
+   "planned_mp": 28,
+   "final_output": 434957,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 219887,
+   "planned_mp": 9,
+   "final_output": 171398,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 121667,
+   "planned_mp": 6,
+   "final_output": 119153,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 121667,
+   "planned_mp": 6,
+   "final_output": 114435,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 121667,
+   "planned_mp": 6,
+   "final_output": 172383,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 121667,
+   "planned_mp": 6,
+   "final_output": 116171,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 186800,
+   "planned_mp": 6,
+   "final_output": 222338,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 267256,
+   "planned_mp": 6,
+   "final_output": 273588,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 275668,
+   "planned_mp": 5,
+   "final_output": 212945,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 186501,
+   "planned_mp": 10,
+   "final_output": 312545,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 235207,
+   "planned_mp": 10,
+   "final_output": 254452,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 238036,
+   "planned_mp": 10,
+   "final_output": 221823,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 278870,
+   "planned_mp": 10,
+   "final_output": 288084,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2B Retail",
+   "process": "Loader",
+   "sop_proj": 308531,
+   "planned_mp": 10,
+   "final_output": 434957,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 0,
+   "planned_mp": null,
+   "final_output": 13000,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 12000,
+   "planned_mp": 2,
+   "final_output": 2500,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 7030,
+   "planned_mp": 1,
+   "final_output": 6502,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 4010,
+   "planned_mp": 1,
+   "final_output": 6232,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 3650,
+   "planned_mp": 1,
+   "final_output": 3645,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 3000,
+   "planned_mp": 1,
+   "final_output": 3494,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 104000,
+   "planned_mp": 5,
+   "final_output": 47146,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 73301,
+   "planned_mp": 5,
+   "final_output": 70278,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 27000,
+   "planned_mp": 2,
+   "final_output": 17584,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 39000,
+   "planned_mp": 2,
+   "final_output": 32873,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 42375,
+   "planned_mp": 2,
+   "final_output": 44698,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 171000,
+   "planned_mp": 8,
+   "final_output": 90869,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Picker",
+   "sop_proj": 48000,
+   "planned_mp": 6,
+   "final_output": 9540,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 0,
+   "planned_mp": null,
+   "final_output": 13000,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 12000,
+   "planned_mp": 2,
+   "final_output": 2500,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 7030,
+   "planned_mp": 1,
+   "final_output": 6502,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 4010,
+   "planned_mp": 1,
+   "final_output": 6232,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 3650,
+   "planned_mp": 1,
+   "final_output": 3645,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 3000,
+   "planned_mp": 1,
+   "final_output": 3494,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 104000,
+   "planned_mp": 5,
+   "final_output": 47146,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 73301,
+   "planned_mp": 5,
+   "final_output": 70278,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 27000,
+   "planned_mp": 2,
+   "final_output": 17584,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 39000,
+   "planned_mp": 2,
+   "final_output": 32873,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 42375,
+   "planned_mp": 2,
+   "final_output": 44698,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 171000,
+   "planned_mp": 8,
+   "final_output": 90869,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Packer",
+   "sop_proj": 48000,
+   "planned_mp": 6,
+   "final_output": 9540,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 0,
+   "planned_mp": null,
+   "final_output": 13000,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 12000,
+   "planned_mp": 1,
+   "final_output": 2500,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 7030,
+   "planned_mp": 1,
+   "final_output": 6502,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-01-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 4010,
+   "planned_mp": 1,
+   "final_output": 6232,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-02-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 3650,
+   "planned_mp": 1,
+   "final_output": 3645,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-03-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 3000,
+   "planned_mp": 1,
+   "final_output": 3494,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-04-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 104000,
+   "planned_mp": 2,
+   "final_output": 47146,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2026-05-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 73301,
+   "planned_mp": 2,
+   "final_output": 70278,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-06-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 27000,
+   "planned_mp": 2,
+   "final_output": 17584,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-07-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 39000,
+   "planned_mp": 2,
+   "final_output": 32873,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-08-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 42375,
+   "planned_mp": 2,
+   "final_output": 44698,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-09-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 171000,
+   "planned_mp": 4,
+   "final_output": 90869,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2026-10-01",
+   "warehouse": "North",
+   "stream": "B2B Marketplace",
+   "process": "Loader",
+   "sop_proj": 48000,
+   "planned_mp": 3,
+   "final_output": 9540,
+   "avg_salary": 22073
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Returns Shopify",
+   "process": "Receiving",
+   "sop_proj": 88000,
+   "planned_mp": 2,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Returns Shopify",
+   "process": "Processing",
+   "sop_proj": 88000,
+   "planned_mp": 15,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Returns Shopify",
+   "process": "SPF",
+   "sop_proj": 6160,
+   "planned_mp": 3,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Returns Marketplace",
+   "process": "Receiving",
+   "sop_proj": 88000,
+   "planned_mp": 2,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Returns Marketplace",
+   "process": "Processing",
+   "sop_proj": 88000,
+   "planned_mp": 16,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "B2C Returns Marketplace",
+   "process": "SPF",
+   "sop_proj": 6160,
+   "planned_mp": 3,
+   "final_output": 88000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Ratio",
+   "sop_proj": null,
+   "planned_mp": null,
+   "final_output": 232855,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Ratio",
+   "sop_proj": 225093,
+   "planned_mp": 10,
+   "final_output": 232716,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Ratio",
+   "sop_proj": 309957,
+   "planned_mp": 9,
+   "final_output": 309206,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Putaway",
+   "sop_proj": null,
+   "planned_mp": null,
+   "final_output": 232855,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Putaway",
+   "sop_proj": 225093,
+   "planned_mp": 14,
+   "final_output": 232716,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Putaway",
+   "sop_proj": 309957,
+   "planned_mp": 11,
+   "final_output": 309206,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Unloader",
+   "sop_proj": null,
+   "planned_mp": null,
+   "final_output": 232855,
+   "avg_salary": null
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Unloader",
+   "sop_proj": 225093,
+   "planned_mp": 3,
+   "final_output": 232716,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inward",
+   "process": "Unloader",
+   "sop_proj": 309957,
+   "planned_mp": 4,
+   "final_output": 309206,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "sop_proj": 500000,
+   "planned_mp": 1,
+   "final_output": 500000,
+   "avg_salary": 1400000
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "sop_proj": 500000,
+   "planned_mp": 1,
+   "final_output": 500000,
+   "avg_salary": 1400000
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Capacity",
+   "sop_proj": 550000,
+   "planned_mp": 1,
+   "final_output": 530000,
+   "avg_salary": 1400000
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "CC",
+   "sop_proj": 500000,
+   "planned_mp": 12,
+   "final_output": 500000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "CC",
+   "sop_proj": 500000,
+   "planned_mp": 10,
+   "final_output": 500000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "CC",
+   "sop_proj": 550000,
+   "planned_mp": 13,
+   "final_output": 530000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Audit",
+   "sop_proj": 500000,
+   "planned_mp": 12,
+   "final_output": 500000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Audit",
+   "sop_proj": 500000,
+   "planned_mp": 10,
+   "final_output": 500000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Audit",
+   "sop_proj": 550000,
+   "planned_mp": 13,
+   "final_output": 530000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "sop_proj": 10000,
+   "planned_mp": 4,
+   "final_output": 10000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "sop_proj": 10000,
+   "planned_mp": 3,
+   "final_output": 10000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Mismatch/NF",
+   "sop_proj": 11000,
+   "planned_mp": 5,
+   "final_output": 10600,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-10-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "sop_proj": 10000,
+   "planned_mp": 1,
+   "final_output": 10000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-11-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "sop_proj": 10000,
+   "planned_mp": 1,
+   "final_output": 10000,
+   "avg_salary": 21983
+  },
+  {
+   "period": "2025-12-01",
+   "warehouse": "North",
+   "stream": "Inventory",
+   "process": "Consolidation",
+   "sop_proj": 11000,
+   "planned_mp": 1,
+   "final_output": 10600,
+   "avg_salary": 21983
+  }
+ ]
+}

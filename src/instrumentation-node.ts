@@ -57,6 +57,9 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       if (r.every((x) => x.status === "ok"))
         await q(`insert into app_settings (key, value) values ('sop.sync_day', to_jsonb($1::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`, [day]);
       console.log(`[sop-sync] ${day}: ${r.map((x) => `${x.feed} ${x.status}`).join(", ")}`);
+      // AOP logistics shipments per channel (cp_1 + eShipz) — own try so it never blocks the S&OP day
+      try { const { pullLogisticsVolumes } = await import("./server/aop/logistics"); const l = await pullLogisticsVolumes(); console.log(`[aop-logistics] ${l.written} rows from ${l.from}`); }
+      catch (e) { console.error("[aop-logistics] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

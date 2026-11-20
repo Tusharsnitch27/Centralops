@@ -198,6 +198,16 @@ export async function bootstrap(rawQ: RunQ) {
     await setSetting("seed.packaging", "v1");
     console.log("[seed] packaging history Nov 2025 – Aug 2026 + rate list loaded");
   }
+  if ((await setting("seed.aop_processing")) !== "v1") {
+    const { seedAopProcessing } = await import("./aopProcessing");
+    await rawQ("begin");
+    try {
+      await seedAopProcessing(rawQ);
+      await setSetting("seed.aop_processing", "v1");
+      await rawQ("commit");
+    } catch (e) { await rawQ("rollback"); throw e; }
+    console.log("[seed] AOP processing norms + monthly history loaded from the Cost Master processing tabs");
+  }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
     await setSetting("seed.handbook", "v1");
