@@ -22,3 +22,23 @@ export async function seedWcmSnapshot(S: RunQ) {
   }
   return { snapshot: s.id, lines: L.length };
 }
+
+/**
+ * IPP master: the revised targets become the active version from 29 Oct 2026 (first day of attendance capture; effective date still
+ * to be confirmed with Ops); the Cost Master processing norms are kept as the legacy version for history. Default site leads.
+ */
+export async function seedWcmOps(S: RunQ) {
+  const { REVISED_IPP, REVISED_VERSION } = await import("../wcm/ops");
+  let i = 0;
+  for (const r of REVISED_IPP) for (const site of ["South", "North"] as const)
+    await S(`insert into wcm_ipp (site, stream, stage, home_fn, unit, ipp, feed, version, status, effective_from, verified, note, sort)
+             values ($1,$2,$3,$4,$5,$6,$7,$8,'active','2026-10-29',false,'IPP - Targets sheet; unit / shift / calendar to confirm with Ops',$9)
+             on conflict (site, stream, stage, version) do nothing`,
+      [site, r.stream, r.stage, r.home, r.unit, site === "South" ? r.south : r.north, r.feed, REVISED_VERSION, i++]);
+  await S(`insert into wcm_ipp (site, stream, stage, home_fn, unit, ipp, feed, version, status, effective_from, verified, note, sort)
+           select warehouse, stream, process, department, 'item', target_per_day, null, 'legacy-costmaster', 'legacy', effective_from, false,
+                  'Cost Master processing tabs (history only)', sort
+           from aop_proc_norms on conflict (site, stream, stage, version) do nothing`);
+  await S(`insert into wcm_site_lead (user_id, site) select id, s from users u join (values ('tariq','North'), ('sudarshan','South')) v(un, s) on u.username = v.un
+           on conflict do nothing`);
+}

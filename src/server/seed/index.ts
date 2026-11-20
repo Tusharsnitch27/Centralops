@@ -229,6 +229,12 @@ export async function bootstrap(rawQ: RunQ) {
       console.log(`[seed] Warehouse Cost Master snapshot ${r.snapshot}: ${r.lines} source lines`);
     } catch (e) { await rawQ("rollback"); throw e; }
   }
+  if ((await setting("seed.wcm_ops")) !== "v1") {
+    const { seedWcmOps } = await import("./wcm");
+    await rawQ("begin");
+    try { await seedWcmOps(rawQ); await setSetting("seed.wcm_ops", "v1"); await rawQ("commit"); console.log("[seed] Warehouse IPP master (revised + legacy) and site leads loaded"); }
+    catch (e) { await rawQ("rollback"); throw e; }
+  }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
     await setSetting("seed.handbook", "v1");

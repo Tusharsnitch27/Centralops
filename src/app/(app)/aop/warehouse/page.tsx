@@ -5,7 +5,7 @@ import { monLabel, Section } from "@/components/aop/processing/bits";
 import { MapDrawer, RuleDecision } from "@/components/aop/warehouse/MapDrawer";
 import { requireUser } from "@/server/auth";
 import { listCycles, resolveCycle } from "@/server/aop/model";
-import { currentSnapshot, listRules, wcmMonth, wcmMonths, wcmRights } from "@/server/wcm/queries";
+import { channelView, currentSnapshot, legacyDualRead, listRules, packagingBridge, wcmMonth, wcmMonths, wcmRights } from "@/server/wcm/queries";
 import { BASES, BASIS_LABEL, FAMILY_LABEL, SITES, type Basis, type Family, type Site, type Totals } from "@/server/wcm/math";
 import { inrFull } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -35,6 +35,7 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
   const href = (o: Partial<SP>) => `/aop/warehouse?${new URLSearchParams(Object.entries({ cycle: cycles.length > 1 ? cycle?.id : undefined, month, site, basis, ...o }).filter(([, v]) => v) as [string, string][])}`;
   const [m, rules, rights] = await Promise.all([wcmMonth(snap.id, month, site, basis), listRules(), wcmRights(u)]);
 
+  const [ch, pkg, dual] = await Promise.all([channelView(m), packagingBridge(month), legacyDualRead(m)]);
   const fam = (f: Family) => m.byFamily[f];
   const before: Totals = (["warehousing", "manpower", "ot"] as Family[]).reduce((a, f) => ({
     source: a.source + fam(f).source, assigned: a.assigned + fam(f).assigned, shared: a.shared + fam(f).shared, unallocated: a.unallocated + fam(f).unallocated,
@@ -88,6 +89,27 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
               </tbody></table>
               <p className="mt-1 text-ink-4">The workbook's 25 % storage / 75 % handling split of whole manpower and OT lines and its fixed percentages are not used. Lines post only through approved rules below.</p>
             </div>)}
+          <div className="mt-3 grid gap-3 md:grid-cols-2 text-[12.5px]">
+            <div className="rounded-lg border border-line p-3">
+              <div className="mb-1 font-medium">Packaging bridge</div>
+              <table className="table-base"><tbody>
+                <tr><td>Booked packaging (invoice line — the control)</td><td className="text-right tabular">{rs(m.byFamily.packaging.source)}</td></tr>
+                <tr><td>Usage estimate (packages × rate) — driver only</td><td className="text-right tabular">{pkg.estimate == null ? "—" : inrFull(pkg.estimate)}</td></tr>
+                <tr><td className="text-ink-4">Difference</td><td className="text-right tabular text-ink-4">{pkg.estimate == null ? "month not closed in Packaging" : rs(m.byFamily.packaging.source - Math.round(pkg.estimate * 100))}</td></tr>
+              </tbody></table>
+              {site !== "Both" && <p className="mt-1 text-ink-4">Packaging has no site split — it shows under Both only until site shares are approved.</p>}
+            </div>
+            <div className="rounded-lg border border-line p-3">
+              <div className="mb-1 font-medium">Dual-read · legacy Processing vs booked labour</div>
+              <table className="table-base"><tbody>
+                <tr><td>Legacy “actual manpower cost” (heads × ₹21,983 model)</td><td className="text-right tabular">{dual.legacyActual == null ? "—" : inrFull(dual.legacyActual)}</td></tr>
+                <tr><td>Legacy planned manpower cost</td><td className="text-right tabular">{inrFull(dual.legacyPlanned)}</td></tr>
+                <tr><td>Booked manpower + OT (Cost Master)</td><td className="text-right tabular">{dual.bookedMissing ? <span className="text-bad">missing ({dual.bookedMissing} lines)</span> : inrFull(dual.booked)}</td></tr>
+                <tr><td className="text-ink-4">Booked − legacy actual</td><td className="text-right tabular text-ink-4">{dual.bookedMissing || dual.legacyActual == null ? "not comparable" : inrFull(dual.booked - dual.legacyActual)}</td></tr>
+              </tbody></table>
+              <p className="mt-1 text-ink-4">The legacy figure is a staffing model, not booked cost: it multiplies planned or attendance heads by one flat salary and carries old sheet rows forward (including rent entered as “Capacity”). Booked lines here are the cost; the model only explains it.</p>
+            </div>
+          </div>
         </Section>
 
         <Section open title="Unallocated queue" sub="Known amounts with an open mapping — map, split or set a recurring rule; it posts once approved"
@@ -110,13 +132,26 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
             <table className="table-base"><thead><tr><th>Function</th><th className="text-right">₹</th></tr></thead>
               <tbody>{m.byFunction.map((f) => <tr key={f.fn}><td>{f.fn}</td><td className="text-right tabular">{rs(f.paise)}</td></tr>)}
                 <tr className="font-semibold"><td>Total</td><td className="text-right tabular">{rs(m.byFunction.reduce((a, f) => a + f.paise, 0))}</td></tr></tbody></table>
-            <table className="table-base"><thead><tr><th>Channel</th><th className="text-right">₹</th></tr></thead>
+            <table className="table-base"><thead><tr><th>Channel (assigned)</th><th className="text-right">₹</th></tr></thead>
               <tbody>{m.byChannel.map((c) => <tr key={c.channel}><td>{c.channel}</td><td className="text-right tabular">{rs(c.paise)}</td></tr>)}
                 <tr><td>Shared (approved, pooled)</td><td className="text-right tabular">{rs(m.shared)}</td></tr>
                 <tr><td className="text-warn">Unallocated</td><td className="text-right tabular text-warn">{rs(m.unallocated)}</td></tr>
                 <tr className="font-semibold"><td>Total</td><td className="text-right tabular">{rs(m.byChannel.reduce((a, c) => a + c.paise, 0) + m.shared + m.unallocated)}</td></tr></tbody></table>
           </div>
-          <p className="mt-2 text-[12px] text-ink-4">No per-item rate is shown yet: rates need matching stage output (next batch). Cost stays visible without one.</p>
+          <div className="mt-3 overflow-x-auto"><table className="table-base min-w-[880px]">
+            <thead><tr><th>Channel</th><th className="text-right">Forward</th><th className="text-right">Returns</th><th className="text-right">Other functions</th><th className="text-right">Packaging</th>
+              <th className="text-right">Assigned total</th><th className="text-right">Dispatched items</th><th className="text-right">₹ / dispatched item*</th><th className="text-right">Returns put away</th></tr></thead>
+            <tbody>{ch.rows.map((r) => (
+              <tr key={r.channel}><td className="font-medium">{r.channel}</td><td className="text-right tabular">{rs(r.forward)}</td><td className="text-right tabular">{rs(r.returns)}</td>
+                <td className="text-right tabular">{rs(r.other)}</td><td className="text-right tabular">{rs(r.packaging)}</td><td className="text-right tabular font-medium">{rs(r.total)}</td>
+                <td className="text-right tabular">{r.dispatched == null ? "—" : new Intl.NumberFormat("en-IN").format(r.dispatched)}</td>
+                <td className="text-right tabular">{r.rate.value == null ? <span className="text-[11.5px] text-ink-4">{r.rate.reason}</span> : `₹${r.rate.value.toFixed(2)}`}</td>
+                <td className="text-right tabular">{r.returnsIn == null ? "—" : new Intl.NumberFormat("en-IN").format(r.returnsIn)}</td></tr>))}
+              <tr><td>Shared (approved, pooled — not in any rate)</td><td colSpan={4} /><td className="text-right tabular">{rs(m.shared)}</td><td colSpan={3} /></tr>
+              <tr><td className="text-warn">Unallocated (not in any rate)</td><td colSpan={4} /><td className="text-right tabular text-warn">{rs(m.unallocated)}</td><td colSpan={3} /></tr>
+              <tr className="font-semibold"><td>Warehouse total</td><td colSpan={4} /><td className="text-right tabular">{rs(ch.rows.reduce((a, r) => a + r.total, 0) + m.shared + m.unallocated)}</td><td colSpan={3} /></tr>
+            </tbody></table></div>
+          <p className="mt-2 text-[12px] text-ink-4">* Channel-assigned cost ÷ dispatched items (one count per item, same site and month) — a partial burden, not a fully loaded cost; unavailable when the dispatch feed (from 21 Sep 2026) doesn't cover the whole month.{ch.b2cReturns != null && ` B2C returns put away: ${new Intl.NumberFormat("en-IN").format(ch.b2cReturns)} items, channel open (Shopify vs marketplace not in the source).`}</p>
         </Section>
 
         <Section title="Coverage gaps" sub="Expected lines with no booked amount — a missing input, never a ₹0" summary={<span className="tabular text-white/80">{m.missing.length}</span>}>

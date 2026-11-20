@@ -116,3 +116,57 @@ export async function previewRule(snapshotId: string, draft: Rule) {
 export async function wcmHeads(snapshotId: string) {
   return q<{ family: Family; head: string }>(`select distinct family, head from wcm_source_line where snapshot_id = $1 order by 1, 2`, [snapshotId]);
 }
+
+/* ---------------- channel view, packaging bridge, legacy dual-read ---------------- */
+
+const monthEnd = (p: string) => { const d = new Date(`${p}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
+
+export interface ChannelRow { channel: string; forward: number; returns: number; packaging: number; other: number; total: number;
+  dispatched: number | null; returnsIn: number | null; rate: { value: number | null; reason: string | null } }
+/**
+ * Channel-assigned cost by function + the channel's terminal output (dispatched items, one count per item) for the same site filter
+ * and month. Rate = channel-assigned ₹ ÷ dispatched items, only when the output feed covers the whole month; shared and unallocated
+ * money is not loaded into it (it is a partial, clearly named burden, not a fully loaded cost).
+ */
+export async function channelView(m: WcmMonth) {
+  const sites = m.site === "Both" ? ["South", "North"] : [m.site];
+  const end = monthEnd(m.period);
+  const out = await q<{ stream: string; event: string; qty: number; first: string; last: string }>(
+    `select stream, event, sum(qty)::float8 as qty, min(day)::text as first, max(day)::text as last from wcm_stage_output
+     where site = any($1::text[]) and day between $2 and $3 and event in ('dispatched','putaway') group by 1, 2`, [sites, m.period, end]);
+  const RET: Record<string, string> = { "B2B Retail": "B2B Returns Retail", "B2B Marketplace": "B2B Returns Marketplace" };
+  const rows: ChannelRow[] = ["B2C Shopify", "B2C Marketplace", "B2B Retail", "B2B Marketplace", "Q-Com"].map((channel) => {
+    const ss = m.lines.flatMap((l) => l.slices).filter((s) => s.kind === "assigned" && s.channel === channel);
+    const by = (f: (fn: string | null) => boolean) => ss.filter((s) => f(s.fn)).reduce((a, s) => a + s.paise, 0);
+    const forward = by((f) => f === "Forward processing"), returns = by((f) => f === "Returns"), packaging = by((f) => f === "Packaging");
+    const total = ss.reduce((a, s) => a + s.paise, 0);
+    const d = out.find((o) => o.stream === channel && o.event === "dispatched");
+    const r = RET[channel] ? out.find((o) => o.stream === RET[channel] && o.event === "putaway") : undefined;
+    const full = !!d && d.first === m.period && d.last >= end;
+    const rate = !d ? { value: null, reason: "no dispatch feed for this month" }
+      : !full ? { value: null, reason: `dispatch feed covers ${d.first.slice(5)} → ${d.last.slice(5)} only` }
+      : !d.qty ? { value: null, reason: "no dispatched items" }
+      : { value: total / 100 / d.qty, reason: null };
+    return { channel, forward, returns, packaging, other: total - forward - returns - packaging, total, dispatched: d?.qty ?? null, returnsIn: r?.qty ?? null, rate };
+  });
+  const b2cReturns = out.find((o) => o.stream === "B2C Returns (channel open)")?.qty ?? null;
+  return { rows, b2cReturns };
+}
+
+/** Packaging: the booked invoice line (control) vs the usage estimate (packages × rate, a driver only). */
+export async function packagingBridge(period: string) {
+  const r = await one<{ amount: number | null; qty: number | null }>(`select sum(amount)::float8 as amount, sum(qty)::float8 as qty from pkg_monthly where period = $1`, [period]);
+  return { estimate: r?.amount ?? null, packages: r?.qty ?? null };
+}
+
+/** Legacy AOP › Processing "manpower cost" (heads × salary model) beside booked manpower + OT, so the two can be dual-read. */
+export async function legacyDualRead(m: WcmMonth) {
+  const { processingMonth } = await import("../aop/processing");
+  const whs = m.site === "Both" ? (["South", "North"] as const) : m.site === "South" || m.site === "North" ? [m.site] : [];
+  const pms = await Promise.all(whs.map((w) => processingMonth(m.period, w)));
+  const legacyActual = pms.some((p) => p.totals.actualExp != null) ? pms.reduce((a, p) => a + (p.totals.actualExp ?? 0), 0) : null;
+  const legacyPlanned = pms.reduce((a, p) => a + p.totals.plannedExp, 0);
+  const booked = m.byFamily.manpower.source + m.byFamily.ot.source;
+  const bookedMissing = m.byFamily.manpower.missing + m.byFamily.ot.missing;
+  return { legacyActual, legacyPlanned, booked: booked / 100, bookedMissing };
+}

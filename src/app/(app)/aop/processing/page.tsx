@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Link from "next/link";
 import { Badge, EmptyState } from "@/components/ui";
 import { AopHeader } from "@/components/aop/AopNav";
 import { AdhChip, cpi, impactTone, n0, n1, Pickers, Section, SplitBar } from "@/components/aop/processing/bits";
@@ -32,7 +33,8 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
     `/aop/processing?${new URLSearchParams(Object.entries({ cycle: cycles.length > 1 ? cycle?.id : undefined, month, wh, ...o }).filter(([, v]) => v) as [string, string][])}`;
 
   const header = <AopHeader active="processing" cycleId={cycle?.id ?? null} cycles={cycles} title="Processing cost & manpower"
-    subtitle="S&OP projection → planned manpower → actual manpower & adherence → cost per item, by channel and process." />;
+    subtitle="S&OP projection → planned manpower → actual manpower & adherence → cost per item, by channel and process."
+    actions={<Link href="/aop/processing/daily" className="rounded-md px-2 py-1 text-[12.5px] font-medium ring-1 ring-inset ring-line hover:bg-subtle">Daily planner →</Link>} />;
   if (!month) return <div className="animate-fade-in">{header}<div className="card"><EmptyState title="No processing data yet" body="Processing history loads from the Cost Master sheet (YLK / TAURU Processing Costs) at the next deploy." /></div></div>;
 
   const [pm, assigns, whAttr, logAttr] = await Promise.all([

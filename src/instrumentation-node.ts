@@ -60,6 +60,9 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       // AOP logistics shipments per channel (cp_1 + eShipz) — own try so it never blocks the S&OP day
       try { const { pullLogisticsVolumes } = await import("./server/aop/logistics"); const l = await pullLogisticsVolumes(); console.log(`[aop-logistics] ${l.written} rows from ${l.from}`); }
       catch (e) { console.error("[aop-logistics] pull failed", e instanceof Error ? e.message : e); }
+      // warehouse stage output (picked / packed / manifested / dispatched / putaway) for the daily planner — own try, never blocks the day
+      try { const { pullStageOutput } = await import("./server/wcm/feed"); const w = await pullStageOutput(); console.log(`[wcm-stage] ${w.read} rows from ${w.from}`); }
+      catch (e) { console.error("[wcm-stage] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

@@ -56,4 +56,19 @@ const pk = lines.filter((l) => l.period === "2026-07-01" && l.basis === "actual"
 const pt = run(pk, []);
 assert.equal(pt.source, toPaise(3031245.38)); assert.equal(pt.assigned, pt.source); // channel named on the line ⇒ direct
 
+// Daily deployment: 10 DE → 6 forward, 2 returns, 1 confirmed idle, 1 unassigned; an 11th DE or a duplicate target is rejected
+const { checkPool, stageKpi, proposeSplit, stageKey, idleKey } = await import("../src/server/wcm/ops.ts");
+const pool = [{ target: stageKey("B2C Shopify", "Picker"), de: 6 }, { target: stageKey("B2C Returns Shopify", "Receiving"), de: 2 }, { target: idleKey("No demand"), de: 1 }];
+assert.deepEqual(checkPool(10, pool), { assigned: 8, idle: 1, unassigned: 1, error: null });
+assert.match(checkPool(10, [...pool, { target: stageKey("B2C Shopify", "Packer"), de: 2 }]).error, /only 10 DE/);
+assert.match(checkPool(10, [pool[0], pool[0]]).error, /twice/);
+// target 700 × 6 DE = 4,200 capacity; 3,500 output ⇒ 83.33 %, 700 unused (not all of it idle); unknown output ⇒ unavailable, not 0
+const k = stageKpi(6, 700, 3500);
+assert.equal(k.capacity, 4200); assert.equal(k.unused, 700); assert.equal(Math.round(k.utilisation * 10000) / 100, 83.33);
+const u = stageKpi(6, 700, null);
+assert.equal(u.utilisation, null); assert.equal(u.why, "no output feed for this stage");
+// proposal never exceeds what is present
+const p = proposeSplit(5, [{ target: "stage:a|x", required: 4 }, { target: "stage:a|y", required: 4 }]);
+assert.ok(p.reduce((a, l) => a + l.de, 0) <= 5);
+
 console.log("wcm OK", { octBoth: oct.Both.source / 100, julKnown: jul.source / 100, julMissingLabourLines: 4, julPackaging: pt.source / 100 });

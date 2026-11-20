@@ -39,6 +39,7 @@ import { sql as manpowerScope } from "./072_manpower_scope";
 import { sql as whAreaCapacity } from "./073_wh_area_capacity";
 import { sql as aopProcessing } from "./074_aop_processing";
 import { sql as wcm } from "./075_wcm";
+import { sql as wcmOps } from "./076_wcm_ops";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -79,4 +80,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 73, name: "wh_area_capacity", sql: whAreaCapacity },
   { version: 74, name: "aop_processing", sql: aopProcessing },
   { version: 75, name: "wcm", sql: wcm },
+  { version: 76, name: "wcm_ops", sql: wcmOps },
 ];
