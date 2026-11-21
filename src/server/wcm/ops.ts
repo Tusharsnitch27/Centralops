@@ -99,3 +99,46 @@ export function proposeSplit(available: number, stages: { target: string; requir
   const scale = Math.min(1, available / total); // never propose more than is present; any surplus stays unassigned for the lead
   return need.map((s) => ({ target: s.target, de: Math.floor(s.required! * scale * 100) / 100 })).filter((l) => l.de > 0); // floor: Σ never exceeds available
 }
+
+/**
+ * Attendance role (sub_department) → the stage names it works. Matched only against the pool's own function's stages, so a
+ * Dispatch person in B2C Forward lands on Manifest and in B2B Forward on Loader. Roles not listed (DEO, Security, Housekeeping,
+ * Not captured) are support / overhead and are never auto-assigned.
+ * ponytail: constant, not an editable table — move to a dated table when Ops starts changing it.
+ */
+export const ROLE_STAGES: Record<string, string[]> = {
+  Picker: ["Picker"], Packer: ["Packer"], Manifest: ["Manifest"], Dispatch: ["Manifest", "Loader"],
+  QC: ["Processing & QC", "QC+Repack"], Checking: ["Processing", "Processing & QC"], "Return Processing": ["Processing", "Processing & QC"],
+  Putaway: ["Putaway"], "Loading/Unloading": ["Unloader", "Loader"], Auditor: ["Audit", "CC"],
+};
+/** People whose attendance title is an HR grade, not a role: placed by workload instead (decision 21 Nov 2026). */
+export const WORKLOAD_ROLE = "Unclassified";
+
+/**
+ * Auto split for one pool from attendance roles. stages = the pool's own stages, required DE already scaled to the pool's share.
+ *  - a role with one matching stage → all of its DE there;
+ *  - several matching stages (channels) → split by required DE; none measured ⇒ left unassigned (channel unknown, never guessed);
+ *  - Unclassified → the remaining workload gap after role DE, by required DE (proposeSplit);
+ *  - anything else → unassigned. Σ lines ≤ available (scaled down and floored to 0.01 if attendance moved between reads).
+ */
+export function autoSplit(available: number, roles: { role: string; de: number }[], stages: { target: string; stage: string; required: number | null }[]) {
+  const put = new Map<string, number>();
+  const add = (t: string, de: number) => put.set(t, (put.get(t) ?? 0) + de);
+  let byRole = 0;
+  for (const r of roles) {
+    if (r.role === WORKLOAD_ROLE || !(r.de > 0)) continue;
+    const c = stages.filter((s) => ROLE_STAGES[r.role]?.includes(s.stage));
+    const measured = c.filter((s) => s.required && s.required > 0), tot = measured.reduce((a, s) => a + s.required!, 0);
+    if (c.length === 1) add(c[0]!.target, r.de);
+    else if (tot) for (const s of measured) add(s.target, (r.de * s.required!) / tot);
+    else continue;
+    byRole += r.de;
+  }
+  const unclassified = roles.filter((r) => r.role === WORKLOAD_ROLE).reduce((a, r) => a + r.de, 0);
+  const gap = stages.map((s) => ({ target: s.target, required: s.required == null ? null : Math.max(s.required - (put.get(s.target) ?? 0), 0) }));
+  const work = proposeSplit(unclassified, gap);
+  for (const l of work) add(l.target, l.de);
+  const total = [...put.values()].reduce((a, x) => a + x, 0), scale = total > available ? available / total : 1;
+  const lines: DeployLine[] = [...put].map(([target, de]) => ({ target, de: Math.floor(de * scale * 100) / 100, reason: null })).filter((l) => l.de > 0);
+  return { lines, byRole, byWorkload: work.reduce((a, l) => a + l.de, 0) };
+}

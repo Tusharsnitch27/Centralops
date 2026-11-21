@@ -2,6 +2,7 @@ import "server-only";
 import { one, q } from "../db";
 import { SOP_CUTOVER } from "../sop/sync";
 import { guessFunc } from "./model";
+import { autoDeployDays } from "../wcm/daily";
 
 /**
  * Pulls daily manpower from the warehouse manpower tool's read-only API and keeps only heads per day × site × function.
@@ -114,7 +115,7 @@ function withRange(url: string, from: string, to: string) {
 const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 const minus = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) - n * 864e5).toISOString().slice(0, 10);
 
-async function fetchDay(url: string, day: string) {
+async function fetchJson(url: string, day: string) {
   const key = apiKey();
   const res = await fetch(withRange(url, day, day), {
     headers: { accept: "application/json", ...(key ? { authorization: `Bearer ${key}` } : {}) },
@@ -128,7 +129,26 @@ async function fetchDay(url: string, day: string) {
   const text = await res.text();
   let body: unknown;
   try { body = JSON.parse(text); } catch { throw new Error(`Manpower API didn't return JSON (starts with: ${text.slice(0, 80)})`); }
-  return { missing: false as const, ...parseManpower(body) };
+  return { missing: false as const, body };
+}
+async function fetchDay(url: string, day: string) {
+  const r = await fetchJson(url, day);
+  return r.missing ? r : { missing: false as const, ...parseManpower(r.body) };
+}
+
+/** Attendance roles: availability rows (date × facility × post-transfer department × sub_department × designation × shift) summed to role × shift. */
+export function parseRoles(body: unknown, day: string) {
+  const rows = (body as { rows?: unknown })?.rows;
+  if (!Array.isArray(rows)) throw new Error("The availability API didn't return { rows: [...] }");
+  const agg = new Map<string, { site: string; func: string; role: string; shift: string; de: number }>();
+  for (const r of rows as Record<string, unknown>[]) {
+    if (r.date !== day) continue;
+    const x = { site: String(r.facility ?? ""), func: String(r.department ?? ""), role: String(r.sub_department ?? "") || "Not captured", shift: String(r.shift ?? "") || "Unspecified", de: Number(r.present_day_equivalent) || 0 };
+    if (!x.site || !x.func) continue;
+    const k = [x.site, x.func, x.role, x.shift].join("|"), cur = agg.get(k);
+    if (cur) cur.de += x.de; else agg.set(k, x);
+  }
+  return [...agg.values()];
 }
 
 /**
@@ -150,7 +170,8 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
     for (let d = from; d <= to; d = minus(d, -1)) days.push(d);
     if (days.length > 400) throw new Error("Pick a back-fill date within 400 days");
     const missing: string[] = [];
-    let written = 0, skipped = 0, shape = "";
+    let written = 0, skipped = 0, shape = "", roleErr = "";
+    const roleDays: string[] = [];
     for (const day of days) {
       const r = await fetchDay(url, day);
       if (r.missing) { missing.push(day); continue; }
@@ -173,9 +194,26 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
         await q(`insert into mp_func_map (func, department) select * from unnest($1::text[], $2::text[]) on conflict (func) do nothing`, [fs, fs.map(guessFunc)]);
       }
       written += rows.length;
+      // roles for the auto deployment split: own failure never blocks the manpower day
+      try {
+        const a = await fetchJson(new URL("/api/v1/integrations/availability", url).toString(), day);
+        if (!a.missing) {
+          const rr = parseRoles(a.body, day);
+          await q(`delete from mp_role_daily where day = $1`, [day]);
+          if (rr.length) await q(`insert into mp_role_daily (day, site, func, role, shift, de) select $1::date, * from unnest($2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[])`,
+            [day, rr.map((x) => x.site), rr.map((x) => x.func), rr.map((x) => x.role), rr.map((x) => x.shift), rr.map((x) => x.de)]);
+          roleDays.push(day);
+        }
+      } catch (e) { roleErr = e instanceof Error ? e.message : String(e); }
     }
+    let autoNote = "";
+    if (roleDays.length) {
+      try { autoNote = ` · ${await autoDeployDays(roleDays)} pools auto-split from roles`; }
+      catch (e) { autoNote = ` · auto-split failed: ${e instanceof Error ? e.message : e}`; }
+    }
+    if (roleErr) autoNote += ` · roles not read: ${roleErr.slice(0, 160)}`;
     if (missing.length === days.length) throw new Error(`Manpower capture unavailable for ${missing.length === 1 ? missing[0] : `all ${missing.length} days`} (503) — will retry`);
-    const note = `${days.length - missing.length} days · ${written} day × facility × department rows${shape ? ` · ${shape}` : ""}${skipped ? ` · ${skipped} skipped` : ""}${missing.length ? ` · not captured yet: ${missing.join(", ")}` : ""}`;
+    const note = `${days.length - missing.length} days · ${written} day × facility × department rows${shape ? ` · ${shape}` : ""}${skipped ? ` · ${skipped} skipped` : ""}${missing.length ? ` · not captured yet: ${missing.join(", ")}` : ""}${autoNote}`;
     await q(`update mp_sync_runs set status = 'ok', rows_read = $2, rows_written = $3, message = $4, finished_at = now() where id = $1`, [run!.id, written + skipped, written, note]);
     return { ok: true as const, read: written, written, note, from, to };
   } catch (e) {

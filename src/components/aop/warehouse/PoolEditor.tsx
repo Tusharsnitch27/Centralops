@@ -12,9 +12,9 @@ type Row = { target: string; de: string; reason: string };
 const r2 = (x: number) => Math.round(x * 100) / 100;
 
 /** One pool (site × day × home function): the lead confirms where its present day-equivalents went. Server re-validates everything. */
-export function PoolEditor({ day, site, homeFn, shift, available, revision, lines, options, proposal, canEdit, updated }: {
+export function PoolEditor({ day, site, homeFn, shift, available, revision, lines, options, proposal, canEdit, updated, source, roles }: {
   day: string; site: string; homeFn: string; shift: string; available: number; revision: number; lines: { target: string; de: number; reason: string | null }[];
-  options: Opt[]; proposal: DeployLine[]; canEdit: boolean; updated: string | null;
+  options: Opt[]; proposal: DeployLine[]; canEdit: boolean; updated: string | null; source: "auto" | "lead" | null; roles: { role: string; de: number }[];
 }) {
   const init = lines.map((l) => ({ target: l.target, de: String(l.de), reason: l.reason ?? "" }));
   const [rows, setRows] = useState<Row[]>(init);
@@ -38,6 +38,12 @@ export function PoolEditor({ day, site, homeFn, shift, available, revision, line
         <span className={cn("ml-auto text-[12px] font-medium tabular", left < 0 ? "text-bad" : left > 0.005 ? "text-warn" : "text-ok")}>
           {left < 0 ? `over by ${-left} DE` : left > 0.005 ? `${left} DE unassigned` : "fully accounted"}</span>
       </div>
+      {(source || roles.length > 0) && (
+        <div className="mb-2 text-[11.5px] text-ink-4">
+          {source === "auto" && <span className="mr-2 rounded bg-info-soft px-1.5 py-0.5 font-medium text-info">auto from attendance roles</span>}
+          {source === "lead" && <span className="mr-2 rounded bg-ok-soft px-1.5 py-0.5 font-medium text-ok">confirmed by lead</span>}
+          {roles.length > 0 && <>Roles: {roles.map((r) => `${r.role} ${r2(r.de)}`).join(" · ")}</>}
+        </div>)}
       {rows.length > 0 && (
         <table className="table-base mb-2">
           <thead><tr><th className="w-[45%]">Where the time went</th><th className="w-24 min-w-[88px] text-right">DE</th><th>Reason (transfer / other idle)</th><th /></tr></thead>

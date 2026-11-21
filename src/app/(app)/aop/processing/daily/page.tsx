@@ -57,14 +57,15 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="space-y-3">
-        <Section open title="Deployment by home function" sub="Full replacement per pool, checked on save: no duplicate target, nothing above what was present, a reason for every transfer">
+        <Section open title="Deployment by home function" sub="Auto from attendance roles each morning (role → its stage; several channels → by workload; Unclassified grades → remaining workload gap; DEO / security / housekeeping left unassigned). A lead's save overrides the pool and is kept.">
           <div className="grid gap-3 xl:grid-cols-2">{v.pools.map((p) => {
             // workload is per day: each shift pool proposes its share of the day's need, by present DE (Day + Night never double-cover it)
             const fnTotal = v.pools.filter((x) => x.homeFn === p.homeFn).reduce((a, x) => a + x.available, 0);
             const share = fnTotal ? p.available / fnTotal : 0;
             const own = v.stages.filter((s) => s.homeFn === p.homeFn).map((s) => ({ target: s.target, required: s.required == null ? null : s.required * share }));
             return <PoolEditor key={`${p.homeFn}|${p.shift}`} day={day} site={site} homeFn={p.homeFn} shift={p.shift} available={p.available} revision={p.revision} lines={p.lines} options={options}
-              proposal={proposeSplit(p.available, own)} canEdit={canEdit} updated={p.updatedAt ? `${p.updatedAt.slice(0, 16)} by ${p.updatedBy ?? "—"}` : null} />;
+              proposal={proposeSplit(p.available, own)} canEdit={canEdit} source={p.source} roles={p.roles}
+              updated={p.updatedAt ? `${p.updatedAt.slice(0, 16)} by ${p.updatedBy ?? (p.source === "auto" ? "attendance auto-split" : "—")}` : null} />;
           })}</div>
         </Section>
 
@@ -85,7 +86,7 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
                 <td className="text-[11.5px] text-ink-4">{s.why ?? ""}{s.stage === "Picker" && s.output != null ? (s.why ? " · " : "") + "pick scans partly captured upstream" : ""}</td>
               </tr>))}</tbody>
           </table></div>
-          <p className="mt-2 text-[12px] text-ink-4">A split taken straight from “Propose from workload” reads ≈100 % by construction (labour derived from output) — utilisation means something only once the lead confirms where people actually worked.</p>
+          <p className="mt-2 text-[12px] text-ink-4">A split taken straight from “Propose from workload”, and the auto split's Unclassified share, read ≈100 % by construction (labour derived from output). Utilisation is meaningful for role-tagged people and for pools a lead has confirmed. South titles are mostly HR grades (Unclassified), so South auto pools are largely workload-derived.</p>
           {v.unmatched.length > 0 && <p className="mt-2 text-[12px] text-ink-4">Workload with no IPP stage (shown, not scored): {v.unmatched.map((o) => `${o.stream} ${o.event} ${n0(o.qty)}`).join(" · ")}</p>}
           <div className="mt-2 flex items-center gap-2 text-[12px] text-ink-4">Stage output last read {v.fetched?.slice(0, 16) ?? "never"}{canManage(u) && <RefreshFeed />}</div>
         </Section>

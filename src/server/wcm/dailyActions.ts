@@ -5,7 +5,7 @@ import { canManage, requireUser } from "../auth";
 import { logActivity } from "../core/activity";
 import { createTask } from "../tasks/core";
 import { fail, ok, type ActionResult } from "../core/result";
-import { activeIpps, availableDe, canPlanSite, poolKey } from "./daily";
+import { activeIpps, autoDeployDays, availableDe, canPlanSite, deployDays, poolKey } from "./daily";
 import { checkPool, HOME_FNS, parseTarget, stageKey, type DeployLine, type OpsSite } from "./ops";
 import { pullStageOutput } from "./feed";
 
@@ -44,9 +44,9 @@ export async function saveDeployment(day: string, site: string, homeFn: string, 
       const before = await t.q(`select target, de::float8 as de, reason from wcm_deploy where day = $1 and site = $2 and home_fn = $3 and shift = $4`, [day, site, homeFn, shift]);
       const rev = expectedRevision + 1;
       // first save: plain insert, so two first saves racing fail on the key instead of one silently overwriting the other
-      if (cur) await t.q(`update wcm_deploy_day set available_de = $5, revision = $6, updated_by = $7, updated_at = now() where day = $1 and site = $2 and home_fn = $3 and shift = $4`,
+      if (cur) await t.q(`update wcm_deploy_day set available_de = $5, revision = $6, updated_by = $7, source = 'lead', updated_at = now() where day = $1 and site = $2 and home_fn = $3 and shift = $4`,
         [day, site, homeFn, shift, available, rev, u.id]);
-      else await t.q(`insert into wcm_deploy_day (day, site, home_fn, shift, available_de, revision, updated_by) values ($1,$2,$3,$4,$5,$6,$7)`, [day, site, homeFn, shift, available, rev, u.id]);
+      else await t.q(`insert into wcm_deploy_day (day, site, home_fn, shift, available_de, revision, updated_by, source) values ($1,$2,$3,$4,$5,$6,$7,'lead')`, [day, site, homeFn, shift, available, rev, u.id]);
       await t.q(`delete from wcm_deploy where day = $1 and site = $2 and home_fn = $3 and shift = $4`, [day, site, homeFn, shift]);
       for (const l of clean)
         await t.q(`insert into wcm_deploy (day, site, home_fn, shift, target, de, reason) values ($1,$2,$3,$4,$5,$6,$7)`, [day, site, homeFn, shift, l.target, l.de, l.reason]);
@@ -78,7 +78,8 @@ export async function refreshStageOutput(): Promise<ActionResult> {
     const u = await requireUser();
     if (!canManage(u)) throw new Error("Only admins and program managers can refresh feeds");
     const r = await pullStageOutput();
+    const pools = await autoDeployDays((await deployDays()).slice(0, 10)); // output shares moved: re-split the auto pools of the last 10 days
     revalidatePath("/aop/processing/daily");
-    return ok(undefined, `${r.read} day × stream × stage rows from ${r.from}`);
+    return ok(undefined, `${r.read} day × stream × stage rows from ${r.from} · ${pools} auto pools re-split`);
   } catch (e) { return fail(e); }
 }

@@ -71,4 +71,24 @@ assert.equal(u.utilisation, null); assert.equal(u.why, "no output feed for this 
 const p = proposeSplit(5, [{ target: "stage:a|x", required: 4 }, { target: "stage:a|y", required: 4 }]);
 assert.ok(p.reduce((a, l) => a + l.de, 0) <= 5);
 
+// Auto split from attendance roles (pool B2C Forward · Day, 30 DE present)
+const { autoSplit } = await import("../src/server/wcm/ops.ts");
+const st = [
+  { target: stageKey("B2C Shopify", "Picker"), stage: "Picker", required: 9 }, { target: stageKey("B2C Marketplace", "Picker"), stage: "Picker", required: 3 },
+  { target: stageKey("B2C Shopify", "Packer"), stage: "Packer", required: 6 }, { target: stageKey("B2C Shopify", "Manifest"), stage: "Manifest", required: 2 },
+];
+const de = (r, t) => r.lines.find((l) => l.target === t)?.de ?? 0;
+// 8 pickers split 3:1 by required DE across channels; 4 manifest → the single Manifest stage; 2 DEO never assigned;
+// 10 Unclassified fill the gap: pickers need 12 − 8 = 4, packer 6, manifest 0 ⇒ 4 + 6 = 10 placed
+let a = autoSplit(30, [{ role: "Picker", de: 8 }, { role: "Manifest", de: 4 }, { role: "DEO", de: 2 }, { role: "Unclassified", de: 10 }], st);
+assert.equal(de(a, st[0].target), 9); assert.equal(de(a, st[1].target), 3); assert.equal(de(a, st[2].target), 6); assert.equal(de(a, st[3].target), 4);
+assert.equal(a.byRole, 12); assert.equal(a.byWorkload, 10);
+assert.equal(checkPool(30, a.lines).unassigned, 8); // 2 DEO + 6 present with no role row stay visible as unassigned
+// several channels with no measured output ⇒ channel unknown ⇒ unassigned (never guessed)
+a = autoSplit(10, [{ role: "Return Processing", de: 10 }], [{ target: "stage:B2C Returns Shopify|Processing & QC", stage: "Processing & QC", required: null }, { target: "stage:B2C Returns Marketplace|Processing", stage: "Processing", required: null }]);
+assert.equal(a.lines.length, 0);
+// attendance moved between reads: never more than present
+a = autoSplit(5, [{ role: "Picker", de: 8 }], st);
+assert.ok(a.lines.reduce((x, l) => x + l.de, 0) <= 5);
+
 console.log("wcm OK", { octBoth: oct.Both.source / 100, julKnown: jul.source / 100, julMissingLabourLines: 4, julPackaging: pt.source / 100 });

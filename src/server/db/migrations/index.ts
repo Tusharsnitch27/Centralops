@@ -41,6 +41,7 @@ import { sql as aopProcessing } from "./074_aop_processing";
 import { sql as wcm } from "./075_wcm";
 import { sql as wcmOps } from "./076_wcm_ops";
 import { sql as wcmShift } from "./077_wcm_shift";
+import { sql as wcmAuto } from "./078_wcm_auto";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -83,4 +84,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 75, name: "wcm", sql: wcm },
   { version: 76, name: "wcm_ops", sql: wcmOps },
   { version: 77, name: "wcm_shift", sql: wcmShift },
+  { version: 78, name: "wcm_auto", sql: wcmAuto },
 ];
