@@ -76,37 +76,98 @@ export async function pullStageOutput(from = STAGE_FROM) {
 }
 
 /**
- * Per-cohort SLA from warehouse_sla_performance → wcm_sla_daily. Cohort = created day (IST wall clock, as above).
- * SLA deadline = TAT (1899 sentinel / blank ⇒ no deadline, counted apart). On time = DISPATCHED_TIMESTAMP1 ≤ TAT.
- * ON_HOLD is 'false' on every row (checked 21 Nov 2026), so no hold exclusion is possible; cancelled lines are excluded.
- * The &-columns (created&dispatch …) are same-day flags, not durations, so TAT hours are computed from the timestamps.
+ * Service-level cells → wcm_sla_cell (migration 085), on the upstream SLA definitions — nothing is recomputed here.
+ *  B2C: warehouse_sla_performance.SLA_STATUS (deadline = TAT, done = coalesced DISPATCHED_TIMESTAMP, both as built upstream);
+ *       delay_flag lines (exchange / warehouse switch / error order) are counted apart and excluded from every other count.
+ *       Latest row per order line. The source keeps ~60 days, so the first EDGE_SLA_DAYS deadline days of its window are
+ *       written only if never stored (items created earlier have aged out of the source).
+ *  B2B Retail: retail_journey_spine.HANDOVER_SLA vs HANDOVER_DEADLINE_TS, in units (quantity) and orders. NSO / QCOM have no SLA.
+ *  B2B Marketplace: the Marketplace<>Warehouse tracker (gs_marketplace_wh_tracker, Airbyte copy of the sheet) — the channel has no
+ *       UC TAT; the warehouse works to the tracker's Dispatch_date (taken as 18:00, day-shift end), done = RTS_DATE.
+ *       A DISPATCHED row with no RTS date can't be judged (no_sla).
+ * Timestamps are IST wall clock, as the S&OP outwards feed reads them.
  */
-export const SLA_SQL = `WITH s AS (
-  SELECT saleorderitemcode AS id, ${SITE("warehouse_name")} AS site, ${STREAM} AS stream, created_timestamp AS c,
-    "DISPATCHED_TIMESTAMP1" AS d, cancelled_timestamp AS x, IFF(tat > '2000-01-01', tat, NULL) AS t
-  FROM ${SLA} WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND created_timestamp >= TO_DATE('{from}')
-  QUALIFY ROW_NUMBER() OVER (PARTITION BY saleorderitemcode ORDER BY last_updated DESC NULLS LAST) = 1),
-e AS (SELECT *, x IS NULL AND t IS NOT NULL AS ok FROM s)
-SELECT TO_VARCHAR(c::date, 'YYYY-MM-DD') AS day, site, stream, COUNT(*) AS lines, COUNT_IF(x IS NOT NULL) AS cancelled,
-  COUNT_IF(x IS NULL AND t IS NULL) AS no_sla, COUNT_IF(ok) AS eligible, COUNT_IF(ok AND d IS NOT NULL) AS dispatched,
-  COUNT_IF(ok AND d <= t) AS on_time, COUNT_IF(ok AND d IS NULL) AS open,
-  COUNT_IF(ok AND d IS NULL AND t < CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::timestamp_ntz) AS overdue,
-  MEDIAN(IFF(ok AND d IS NOT NULL, DATEDIFF('minute', c, d) / 60, NULL)) AS p50_h,
-  APPROX_PERCENTILE(IFF(ok AND d IS NOT NULL, DATEDIFF('minute', c, d) / 60, NULL), 0.9) AS p90_h
-FROM e WHERE site IS NOT NULL GROUP BY 1, 2, 3`;
+const EDGE_SLA_DAYS = 2;
+export const SLA_B2C_SQL = `WITH s AS (
+  SELECT warehouse_name AS wh, CASE WHEN marketplace_mapped = 'SHOPIFY' THEN 'B2C Shopify' ELSE 'B2C Marketplace' END AS stream,
+    uc_created AS c, tat AS t, COALESCE(tat_type, 'Unknown') AS wave, sla_status AS st, COALESCE(delay_flag, 0) = 1 AS dl, dispatched_timestamp AS d
+  FROM ${SLA}
+  WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND tat >= TO_DATE('{from}')
+    AND marketplace_mapped IN ('SHOPIFY','AJIO','AMAZON','COCOBLU','FLIPKART','MYNTRA','NYKAA.COM','NYKAA_FASHION')
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY saleorderitemcode ORDER BY last_updated DESC NULLS LAST) = 1)
+SELECT TO_VARCHAR(t, 'YYYY-MM-DD HH24:MI') AS deadline, TO_VARCHAR(DATE_TRUNC('hour', c), 'YYYY-MM-DD HH24:MI') AS created_hr,
+  CASE wh WHEN 'SAPL-WH1' THEN 'WH1' WHEN 'SAPL-WH2' THEN 'WH2' ELSE 'NORTH' END AS wh, stream, wave, 'warehouse_sla_performance' AS source,
+  COUNT(*) AS units, COUNT_IF(NOT dl AND st = 'WITHIN SLA') AS within, COUNT_IF(NOT dl AND st = 'FUTURE DATE-COMPLETED') AS fut_done,
+  COUNT_IF(NOT dl AND st = 'BREACHED') AS breached, COUNT_IF(NOT dl AND st = 'BREACHED - PENDING FOR PROCESS') AS pend_breach,
+  COUNT_IF(NOT dl AND st = 'FUTURE DATE-PENDING') AS fut_open, COUNT_IF(NOT dl AND st = 'CANCELLED') AS cancelled,
+  COUNT_IF(NOT dl AND st = 'UNFULFILLABLE') AS unfulfillable,
+  COUNT_IF(NOT dl AND COALESCE(st, '') NOT IN ('WITHIN SLA','FUTURE DATE-COMPLETED','BREACHED','BREACHED - PENDING FOR PROCESS','FUTURE DATE-PENDING','CANCELLED','UNFULFILLABLE')) AS no_sla,
+  COUNT_IF(dl) AS delay_flagged, NULL AS orders, NULL AS orders_late,
+  COALESCE(SUM(IFF(NOT dl AND st IN ('WITHIN SLA','FUTURE DATE-COMPLETED','BREACHED') AND d IS NOT NULL, DATEDIFF('minute', c, d) / 60, NULL)), 0) AS o2m_h,
+  COUNT_IF(NOT dl AND st IN ('WITHIN SLA','FUTURE DATE-COMPLETED','BREACHED') AND d IS NOT NULL) AS o2m_n
+FROM s GROUP BY 1, 2, 3, 4, 5`;
+export const SLA_SPINE_SQL = `WITH s AS (
+  SELECT CASE warehouse_name WHEN 'SAPL-WH1' THEN 'WH1' WHEN 'SAPL-WH2' THEN 'WH2' ELSE 'NORTH' END AS wh, order_timestamp AS c, handover_deadline_ts AS t,
+    handover_sla AS st, COALESCE(quantity, 0) AS q
+  FROM snitch_db.maplemonk.retail_journey_spine
+  WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND order_timestamp IS NOT NULL AND COALESCE(handover_deadline_ts, order_timestamp) >= TO_DATE('{from}'))
+SELECT TO_VARCHAR(IFF(st IS NULL OR t IS NULL, DATE_TRUNC('hour', c), t), 'YYYY-MM-DD HH24:MI') AS deadline, TO_VARCHAR(DATE_TRUNC('hour', c), 'YYYY-MM-DD HH24:MI') AS created_hr,
+  wh, 'B2B Retail' AS stream, IFF(st IS NULL OR t IS NULL, 'No SLA', 'Handover ' || TO_VARCHAR(t, 'HH24:MI')) AS wave, 'retail_journey_spine' AS source,
+  SUM(q) AS units, SUM(IFF(t IS NOT NULL AND st = 'WITHIN_SLA', q, 0)) AS within, 0 AS fut_done, SUM(IFF(t IS NOT NULL AND st = 'BREACHED', q, 0)) AS breached,
+  SUM(IFF(t IS NOT NULL AND st = 'BREACHED-PENDING FOR PROCESS', q, 0)) AS pend_breach, SUM(IFF(t IS NOT NULL AND st = 'FUTURE SLA', q, 0)) AS fut_open,
+  0 AS cancelled, 0 AS unfulfillable,
+  SUM(IFF(t IS NULL OR COALESCE(st, '') NOT IN ('WITHIN_SLA','BREACHED','BREACHED-PENDING FOR PROCESS','FUTURE SLA'), q, 0)) AS no_sla, 0 AS delay_flagged,
+  COUNT(*) AS orders, COUNT_IF(t IS NOT NULL AND st IN ('BREACHED','BREACHED-PENDING FOR PROCESS')) AS orders_late, 0 AS o2m_h, 0 AS o2m_n
+FROM s GROUP BY 1, 2, 3, 4, 5`;
+export const SLA_TRACKER_SQL = `WITH s AS (
+  SELECT CASE facility WHEN 'SAPL-WH1' THEN 'WH1' WHEN 'SAPL-WH2' THEN 'WH2' ELSE 'NORTH' END AS wh, UPPER(TRIM(status)) AS st, COALESCE(TRY_TO_NUMBER(qty), 0) AS q,
+    TRY_TO_DATE(dispatch_date, 'YYYY-MM-DD') AS dd, TRY_TO_DATE(rts_date, 'YYYY-MM-DD') AS rts, TRY_TO_DATE("DATE", 'DD/MM/YYYY') AS od
+  FROM snitch_db.maplemonk.gs_marketplace_wh_tracker WHERE facility IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')),
+c AS (SELECT *, COALESCE(od, dd) AS cd, CURRENT_DATE() AS today FROM s WHERE COALESCE(dd, od) >= TO_DATE('{from}'))
+SELECT TO_VARCHAR(IFF(dd IS NULL, cd::timestamp_ntz + INTERVAL '9 hour', dd::timestamp_ntz + INTERVAL '18 hour'), 'YYYY-MM-DD HH24:MI') AS deadline,
+  TO_VARCHAR(cd::timestamp_ntz + INTERVAL '9 hour', 'YYYY-MM-DD HH24:MI') AS created_hr, wh, 'B2B Marketplace' AS stream, IFF(dd IS NULL, 'No SLA', 'Tracker dispatch date') AS wave,
+  'gs_marketplace_wh_tracker' AS source, SUM(q) AS units,
+  SUM(IFF(st NOT IN ('CANCELLED','UNFULFILLABLE') AND dd IS NOT NULL AND rts <= dd, q, 0)) AS within, 0 AS fut_done,
+  SUM(IFF(st NOT IN ('CANCELLED','UNFULFILLABLE') AND dd IS NOT NULL AND rts > dd, q, 0)) AS breached,
+  SUM(IFF(st NOT IN ('CANCELLED','UNFULFILLABLE','DISPATCHED') AND dd IS NOT NULL AND rts IS NULL AND dd < today, q, 0)) AS pend_breach,
+  SUM(IFF(st NOT IN ('CANCELLED','UNFULFILLABLE','DISPATCHED') AND dd IS NOT NULL AND rts IS NULL AND dd >= today, q, 0)) AS fut_open,
+  SUM(IFF(st = 'CANCELLED', q, 0)) AS cancelled, SUM(IFF(st = 'UNFULFILLABLE', q, 0)) AS unfulfillable,
+  SUM(IFF(st NOT IN ('CANCELLED','UNFULFILLABLE') AND (dd IS NULL OR (rts IS NULL AND st = 'DISPATCHED')), q, 0)) AS no_sla, 0 AS delay_flagged,
+  COUNT(*) AS orders, COUNT_IF(st NOT IN ('CANCELLED','UNFULFILLABLE') AND dd IS NOT NULL AND (rts > dd OR (rts IS NULL AND st <> 'DISPATCHED' AND dd < today))) AS orders_late, 0 AS o2m_h, 0 AS o2m_n
+FROM c GROUP BY 1, 2, 3, 4, 5`;
 
-type SlaRow = { day: string; site: string; stream: string; lines: number; cancelled: number; no_sla: number; eligible: number; dispatched: number; on_time: number; open: number; overdue: number; p50_h: number | null; p90_h: number | null };
+const CELL_COLS = ["deadline", "created_hr", "wh", "stream", "wave", "source", "units", "within", "fut_done", "breached", "pend_breach", "fut_open",
+  "cancelled", "unfulfillable", "no_sla", "delay_flagged", "orders", "orders_late", "o2m_h", "o2m_n"] as const;
+type Cell = Record<(typeof CELL_COLS)[number], string | number | null>;
+const CELL_TYPES = ["timestamp", "timestamp", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric",
+  "numeric", "numeric", "numeric", "numeric", "int", "int", "numeric", "int"];
+const TEXT_COLS = 6; // the first six columns are keys / labels, the rest numbers
+
+/** Replace one source's cells for the deadline days it returned (except `keep` days, already stored). */
+async function writeCells(source: string, rows: Cell[], keep: Set<string>) {
+  const day = (r: Cell) => String(r.deadline).slice(0, 10);
+  rows = rows.filter((r) => !keep.has(day(r)));
+  const days = [...new Set(rows.map(day))];
+  if (days.length) await q(`delete from wcm_sla_cell where source = $1 and deadline::date = any($2::date[])`, [source, days]);
+  for (let i = 0; i < rows.length; i += 2000) {
+    const c = rows.slice(i, i + 2000);
+    await q(`insert into wcm_sla_cell (${CELL_COLS.join(", ")})
+             select * from unnest(${CELL_COLS.map((_, j) => `$${j + 1}::${CELL_TYPES[j]}[]`).join(", ")})
+             on conflict (deadline, created_hr, wh, stream, wave) do update set ${CELL_COLS.slice(5).map((k) => `${k} = excluded.${k}`).join(", ")}, fetched_at = now()`,
+      CELL_COLS.map((k, j) => c.map((r) => (r[k] == null ? null : j < TEXT_COLS ? String(r[k]) : Number(r[k])))));
+  }
+  return rows.length;
+}
+
+/** Pull all three SLA sources into wcm_sla_cell (07:00 job and the planner's Refresh). Name kept for the existing callers. */
 export async function pullSla(from = STAGE_FROM) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
-  const rows = (await sfQuery<SlaRow>(SLA_SQL.replaceAll("{from}", from))).filter((r) => r.day && r.site);
-  const days = [...new Set(rows.map((r) => r.day))];
-  if (days.length) await q(`delete from wcm_sla_daily where day = any($1::date[])`, [days]);
-  const col = (k: keyof SlaRow) => rows.map((r) => (r[k] == null ? null : k === "day" || k === "site" || k === "stream" ? r[k] : Number(r[k])));
-  if (rows.length)
-    await q(`insert into wcm_sla_daily (day, site, stream, lines, cancelled, no_sla, eligible, dispatched, on_time, open, overdue, p50_h, p90_h)
-             select * from unnest($1::date[], $2::text[], $3::text[], $4::int[], $5::int[], $6::int[], $7::int[], $8::int[], $9::int[], $10::int[], $11::int[], $12::numeric[], $13::numeric[])`,
-      (["day", "site", "stream", "lines", "cancelled", "no_sla", "eligible", "dispatched", "on_time", "open", "overdue", "p50_h", "p90_h"] as const).map(col));
-  return { read: rows.length, from };
+  const [b2c, spine, trk] = await Promise.all([SLA_B2C_SQL, SLA_SPINE_SQL, SLA_TRACKER_SQL].map((s) => sfQuery<Cell>(s.replaceAll("{from}", from))));
+  const first = b2c.map((r) => String(r.deadline).slice(0, 10)).sort()[0];
+  const edge = first ? new Date(Date.parse(`${first}T00:00:00Z`) + EDGE_SLA_DAYS * 864e5).toISOString().slice(0, 10) : null;
+  const stored = new Set(edge ? (await q<{ d: string }>(`select distinct deadline::date::text as d from wcm_sla_cell where source = 'warehouse_sla_performance' and deadline < $1::date`, [edge])).map((r) => r.d) : []);
+  const n = (await writeCells("warehouse_sla_performance", b2c, stored)) + (await writeCells("retail_journey_spine", spine, new Set())) + (await writeCells("gs_marketplace_wh_tracker", trk, new Set()));
+  return { read: n, from };
 }
 
 /**

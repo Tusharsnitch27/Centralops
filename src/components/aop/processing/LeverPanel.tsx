@@ -4,6 +4,8 @@ import { BASE_LEVERS, type Levers, type StreamBlock } from "@/server/aop/process
 import { inr } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { model } from "./levers";
+import { SlaPanel } from "./SlaPanel";
+import type { SlaModel } from "./slaSim";
 
 const PCT_LEVERS: { k: Exclude<keyof Levers, "headcountDelta">; label: string; hint: string }[] = [
   { k: "volume", label: "Projected volume", hint: "S&OP projection" },
@@ -15,7 +17,7 @@ const cpi = (v: number | null) => (v == null ? "—" : `₹${v.toFixed(2)}`);
 const n = (v: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(v);
 
 /** What-if on warehouse processing cost. Nothing is saved. */
-export function LeverPanel({ sites, label }: { sites: StreamBlock[][]; label: string }) {
+export function LeverPanel({ sites, label, sla }: { sites: StreamBlock[][]; label: string; sla: SlaModel | null }) {
   const [l, setL] = useState<Levers>(BASE_LEVERS);
   const base = useMemo(() => model(sites, BASE_LEVERS), [sites]);
   const scen = useMemo(() => model(sites, l), [sites, l]);
@@ -62,6 +64,8 @@ export function LeverPanel({ sites, label }: { sites: StreamBlock[][]; label: st
           })}</tbody>
         </table>
       </div>
+      {sla?.cells.length ? <SlaPanel model={sla} volume={l.volume} productivity={l.productivity} />
+        : <p className="border-t border-line px-4 py-3 text-[12px] text-ink-4">SLA headroom: no SLA snapshot yet — run Refresh on AOP › Processing › Daily planner (or wait for the 07:00 job).</p>}
     </div>
   );
 }

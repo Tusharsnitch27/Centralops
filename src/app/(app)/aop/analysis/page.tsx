@@ -9,6 +9,7 @@ import { listCycles, loadModel, resolveCycle, type SectionNode } from "@/server/
 import { STATUS_META } from "@/server/aop/calc";
 import { processingMonth, warehouseAttribution } from "@/server/aop/processing";
 import { logisticsAttribution } from "@/server/aop/logistics";
+import { slaModel } from "@/server/wcm/sla";
 import type { AttributionRow, StreamBlock, Wh } from "@/server/aop/processingTypes";
 import { inr, pct } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -31,11 +32,12 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
     `/aop/analysis?${new URLSearchParams(Object.entries({ cycle: cycles.length > 1 ? cycle.id : undefined, month, wh, ...o }).filter(([, v]) => v) as [string, string][])}`;
   const econMonths = [...months].slice(0, 12).reverse();
 
-  const [m, pm, whAttr, logAttr] = await Promise.all([
+  const [m, pm, whAttr, logAttr, sla] = await Promise.all([
     loadModel(cycle.id),
     month ? Promise.all(whs.map((w) => processingMonth(month, w))) : Promise.resolve([]),
     econMonths.length ? warehouseAttribution(econMonths) : Promise.resolve([] as AttributionRow[]),
     econMonths.length ? logisticsAttribution(econMonths) : Promise.resolve([] as AttributionRow[]),
+    slaModel(),
   ]);
   const L = cycle.labels;
   // streams summed across the selected warehouses (lever + drivers work on the combined picture)
@@ -77,8 +79,8 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
           {wh !== "Both" && <p className="border-t border-line px-4 py-2 text-[11.5px] text-ink-4">Logistics is all-India (no site split): shown under Both only, never divided by one site&apos;s items.</p>}
         </Section>
 
-        <Section open title="Levers · what-if" sub="Move volume, productivity, adherence, salary or headcount and see manpower, cost and CPI change. Not saved.">
-          {streams.length ? <LeverPanel sites={pm.map((x) => x.streams)} label={`${month ? monLabel(month) : ""} · ${wh}`} /> : <EmptyState compact title="No processing data for this month" />}
+        <Section open title="Levers · what-if" sub="Move volume, productivity, adherence, salary or headcount and see manpower, cost and CPI change — and whether B2C / B2B SLA capacity holds. Not saved.">
+          {streams.length ? <LeverPanel sites={pm.map((x) => x.streams)} sla={sla} label={`${month ? monLabel(month) : ""} · ${wh}`} /> : <EmptyState compact title="No processing data for this month" />}
         </Section>
       </div>
     </div>
