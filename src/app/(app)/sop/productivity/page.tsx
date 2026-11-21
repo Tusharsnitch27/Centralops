@@ -8,6 +8,8 @@ import { q } from "@/server/db";
 import { departments, FUNC_NAMES, listRates, mappingState, productivity, SUPPORT, WHS, type MpLine } from "@/server/manpower/model";
 import { lastManpowerRuns, manpowerConfigured, manpowerUrl } from "@/server/manpower/feed";
 import { ProductivityTable } from "@/components/sop/ProductivityTable";
+import { ProcessProductivity } from "@/components/sop/ProcessProductivity";
+import { processProductivity } from "@/server/wcm/productivity";
 import { ManpowerFeed, ManpowerMapping, ManpowerStandards } from "@/components/sop/ManpowerSetup";
 import { Collapsible } from "@/components/ui/Collapsible";
 import { addMonths, fmtMonth, today } from "@/lib/dates";
@@ -16,7 +18,7 @@ import { cn } from "@/lib/cn";
 export const metadata = { title: "S&OP · Productivity" };
 const n = (v: number | null | undefined) => (v == null ? "—" : new Intl.NumberFormat("en-IN").format(Math.round(v)));
 const pc = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
-const TABS = [{ key: "overview", label: "Overview" }, { key: "standards", label: "Standards" }, { key: "feed", label: "Feed & mapping" }] as const;
+const TABS = [{ key: "overview", label: "Overview" }, { key: "process", label: "By process" }, { key: "standards", label: "Standards" }, { key: "feed", label: "Feed & mapping" }] as const;
 
 /** Manpower (from the manpower tool) → actual capacity per department → achieved % from S&OP actuals. */
 export default async function Productivity({ searchParams }: { searchParams: Promise<{ tab?: string; month?: string }> }) {
@@ -44,6 +46,7 @@ export default async function Productivity({ searchParams }: { searchParams: Pro
         )}
       </div>
       {tab === "overview" && <Overview month={month} unmapped={unmapped} configured={manpowerConfigured()} />}
+      {tab === "process" && <ProcessProductivity data={await processProductivity()} />}
       {tab === "standards" && <ManpowerStandards rates={await listRates()} departments={depts} canEdit={edit} refs={await standardRefs(cur)} />}
       {tab === "feed" && (
         <div className="space-y-4">
