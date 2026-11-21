@@ -104,3 +104,29 @@ export async function pullSla(from = STAGE_FROM) {
       (["day", "site", "stream", "lines", "cancelled", "no_sla", "eligible", "dispatched", "on_time", "open", "overdue", "p50_h", "p90_h"] as const).map(col));
   return { read: rows.length, from };
 }
+
+/**
+ * Retail store dispatch volume per month × warehouse × store × store zone × order type → lg_retail_month (logistics correlation).
+ * Source: retail_journey_spine (one row per store order; zone = the store's zone). FRESH-<category> order types roll up to FRESH.
+ * distribution_rulebook's ZONE column is broken upstream (#REF! for most stores, checked 21 Nov 2026), so the spine's zone is used.
+ */
+const SPINE_SQL = `SELECT TO_VARCHAR(DATE_TRUNC('month', order_date), 'YYYY-MM-DD') AS month, ${SITE("warehouse_name")} AS site, store,
+  COALESCE(NULLIF(UPPER(zone), ''), 'UNMAPPED') AS zone, IFF(UPPER(order_type) LIKE 'FRESH%', 'FRESH', COALESCE(NULLIF(UPPER(order_type), ''), 'UNTYPED')) AS order_type,
+  COUNT(DISTINCT order_name) AS orders, COUNT(DISTINCT tracking_number) AS awbs, SUM(package_count) AS boxes, SUM(quantity) AS qty
+FROM snitch_db.maplemonk.retail_journey_spine
+WHERE order_date >= TO_DATE('{from}') AND warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND store IS NOT NULL
+GROUP BY 1, 2, 3, 4, 5`;
+export async function pullRetailSpine(from = "2026-04-01") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
+  const rows = await sfQuery<{ month: string; site: string; store: string; zone: string; order_type: string; orders: number; awbs: number; boxes: number | null; qty: number | null }>(SPINE_SQL.replaceAll("{from}", from));
+  const months = [...new Set(rows.map((r) => r.month))];
+  if (months.length) await q(`delete from lg_retail_month where month = any($1::date[])`, [months]);
+  for (let i = 0; i < rows.length; i += 2000) {
+    const c = rows.slice(i, i + 2000);
+    await q(`insert into lg_retail_month (month, site, store, zone, order_type, orders, awbs, boxes, qty)
+             select * from unnest($1::date[], $2::text[], $3::text[], $4::text[], $5::text[], $6::int[], $7::int[], $8::numeric[], $9::numeric[])
+             on conflict (month, site, store, zone, order_type) do update set orders = excluded.orders, awbs = excluded.awbs, boxes = excluded.boxes, qty = excluded.qty, fetched_at = now()`,
+      [c.map((r) => r.month), c.map((r) => r.site), c.map((r) => r.store), c.map((r) => r.zone), c.map((r) => r.order_type), c.map((r) => Number(r.orders)), c.map((r) => Number(r.awbs)), c.map((r) => r.boxes == null ? null : Number(r.boxes)), c.map((r) => r.qty == null ? null : Number(r.qty))]);
+  }
+  return { read: rows.length, from };
+}
