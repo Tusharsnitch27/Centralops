@@ -193,6 +193,8 @@ export async function proposeAssignments(period: string, warehouse: Wh) {
  * overhead departments' heads (Ops, Logistics, Admin) → "Shared · Storage & handling"; channel manpower → its channel by process
  * (Inward / Inventory streams → Shared with their own process).
  */
+/** AOP lines the Cost Master sync adds for booked manpower (costMasterSync.ts). */
+const MP_LINES = ["Monthly Manpower Cost", "Monthly OT"];
 export async function warehouseAttribution(months: string[]): Promise<AttributionRow[]> {
   const lines = await q<{ item: string; section: string; period: string; plan: number | null; forecast: number | null; actual: number | null }>(
     `select i.name as item, s.name as section, v.period::text as period, v.plan::float8 as plan, v.forecast::float8 as forecast, v.actual::float8 as actual
@@ -203,13 +205,17 @@ export async function warehouseAttribution(months: string[]): Promise<Attributio
   const whOf = (section: string): Wh => (/north/i.test(section) ? "North" : "South");
   const out: AttributionRow[] = [];
   for (const period of months) for (const wh of ["South", "North"] as const) {
-    // fixed warehouse lines
-    for (const l of lines.filter((x) => x.period === period && whOf(x.section) === wh)) {
-      const amount = l.actual ?? l.forecast ?? l.plan;
-      if (!amount) continue;
-      out.push({ period, warehouse: wh, family: "warehouse", channel: "Shared", process: "Storage & handling", amount, basis: "direct",
-        key: `${l.item} · ${l.actual != null ? "actual" : l.forecast != null ? "provision" : "budget"}`, units: null, cpi: null });
+    const mine = lines.filter((x) => x.period === period && whOf(x.section) === wh);
+    // fixed warehouse lines: booked (actual) only — a plan or provision is not a cost (audit #2); no actual = missing, not ₹0
+    for (const l of mine.filter((x) => !MP_LINES.includes(x.item))) {
+      if (!l.actual) continue;
+      out.push({ period, warehouse: wh, family: "warehouse", channel: "Shared", process: "Storage & handling", amount: l.actual, basis: "direct",
+        key: `${l.item} · booked`, units: null, cpi: null });
     }
+    // booked manpower + OT (Cost Master → AOP lines); when present, heads × salary below only splits it
+    const bookedRows = mine.filter((x) => MP_LINES.includes(x.item) && x.actual != null);
+    const booked = bookedRows.length ? bookedRows.reduce((a, x) => a + x.actual!, 0) : null;
+    const mp: AttributionRow[] = [];
     const pm = await processingMonth(period, wh);
     // overhead departments from attendance
     const att = await attendance(period, wh);
@@ -217,7 +223,7 @@ export async function warehouseAttribution(months: string[]): Promise<Attributio
     const wd = pm.streams[0]?.rows[0]?.workingDays ?? 23;
     for (const [dept, manDays] of att.byDept) {
       if (!(OVERHEAD_DEPTS as readonly string[]).includes(dept) || salary == null) continue;
-      out.push({ period, warehouse: wh, family: "warehouse", channel: "Shared", process: "Storage & handling", amount: (manDays * salary) / wd, basis: "direct",
+      mp.push({ period, warehouse: wh, family: "warehouse", channel: "Shared", process: "Storage & handling", amount: (manDays * salary) / wd, basis: "direct",
         key: `${dept} heads · ${Math.round(manDays)} man-days × ₹${Math.round(salary)} ÷ ${wd}`, units: null, cpi: null });
     }
     // channel manpower
@@ -228,8 +234,16 @@ export async function warehouseAttribution(months: string[]): Promise<Attributio
       const basis = actual && r.actualMpSource !== "proposed" ? "direct" : "allocated";
       const why = !actual ? "planned MP (no actual yet)" : r.actualMpSource === "sheet" ? "sheet deployed MP" : r.actualMpSource === "attendance" ? "attendance, assigned" : "attendance, proposed split by planned MP — awaiting assignment";
       const units = actual ? r.finalOutput : r.sopProj;
-      out.push({ period, warehouse: wh, family: "warehouse", channel: s.channel, process: r.process, amount, basis, key: `${s.stream} · ${why}`, units, cpi: units ? amount / units : null });
+      mp.push({ period, warehouse: wh, family: "warehouse", channel: s.channel, process: r.process, amount, basis, key: `${s.stream} · ${why}`, units, cpi: units ? amount / units : null });
     }
+    const est = mp.reduce((a, r) => a + r.amount, 0);
+    if (booked != null && est > 0) {
+      // one rupee, one place: booked manpower + OT split by each row's heads × salary share
+      for (const r of mp) {
+        const amount = (booked * r.amount) / est;
+        out.push({ ...r, amount, basis: "allocated", key: `${r.key} · share of booked manpower + OT ₹${Math.round(booked).toLocaleString("en-IN")}`, cpi: r.units ? amount / r.units : null });
+      }
+    } else out.push(...mp.map((r) => ({ ...r, key: `${r.key} · estimate (no booked manpower for the month)` })));
   }
   return out;
 }

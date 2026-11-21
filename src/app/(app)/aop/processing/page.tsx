@@ -138,7 +138,7 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
           ))}
         </Section>
 
-        <Section title="④ Cost per item by channel" sub="Warehouse: channel manpower direct; rent, utilities, security and overhead departments sit in Shared (storage & handling) · Logistics: per channel"
+        <Section title="④ Cost per item by channel" sub="Warehouse: booked Cost Master figures — manpower + OT split to channels by heads × salary share; rent, utilities, security and overhead departments sit in Shared (storage & handling) · Logistics: per channel"
           summary={<span className="tabular text-white/80">{inr([...whAttr, ...logAttr].filter((r) => r.period === month && (r.warehouse === "All" ? wh === "Both" : whs.includes(r.warehouse as Wh))).reduce((a, r) => a + r.amount, 0))}</span>}>
           <ChannelTable rows={[...whAttr, ...logAttr].filter((r) => r.period === month && (r.warehouse === "All" ? wh === "Both" : whs.includes(r.warehouse as Wh)))} />
           {wh !== "Both" && <p className="border-t border-line px-4 py-2 text-[11.5px] text-ink-4">Logistics cost is booked all-India (no site split), so it shows under Both only — a site view is warehouse cost alone.</p>}

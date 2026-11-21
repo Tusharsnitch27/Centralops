@@ -6,6 +6,7 @@ import { VarianceGrid } from "@/components/aop/VarianceGrid";
 import { requireUser } from "@/server/auth";
 import { listCycles, loadModel, resolveCycle } from "@/server/aop/model";
 import { summaryTree } from "@/server/aop/summaryData";
+import { costMasterDiffs } from "@/server/aop/costMasterSync";
 import { monLabel } from "@/server/aop/calc";
 import { inr } from "@/lib/format";
 
@@ -17,7 +18,7 @@ export default async function AopSummary({ searchParams }: { searchParams: Promi
   const [cycles, cycle] = await Promise.all([listCycles(), resolveCycle(sp.cycle)]);
   if (!cycle) return <NoCycle />;
   const m = (await loadModel(cycle.id))!;
-  const tree = await summaryTree(m);
+  const [tree, diffs] = await Promise.all([summaryTree(m), costMasterDiffs()]);
   const T = m.totals;
   return (
     <div className="animate-fade-in">
@@ -25,6 +26,22 @@ export default async function AopSummary({ searchParams }: { searchParams: Promi
         subtitle={<>Opex · {m.functions.length} functions · FY {cycle.labels.plan.toLowerCase()} {inr(T.fyPlan)}{m.lastClosed ? <> · closed through {monLabel(m.lastClosed)}</> : null}</>} />
       <MonthSummary tree={tree} reviewHref={`/aop/review${cycleQs(cycle.id, cycles)}`} />
       <div className="mt-5"><VarianceGrid tree={tree} /></div>
+      {diffs.length > 0 && (
+        <div className="card mt-5 overflow-x-auto">
+          <div className="px-3 pt-3 text-[13px] font-semibold">{diffs.length} owner figure{diffs.length === 1 ? "" : "s"} differ from the Cost Master</div>
+          <p className="px-3 text-[11.5px] text-ink-4">Warehousing, manpower / OT and packaging read from the Warehouse Cost Master; a figure an owner entered in the app is kept. Review these with the owner.</p>
+          <table className="table-base mt-2 min-w-[720px]">
+            <thead><tr><th>Line</th><th>Month</th><th>Field</th><th className="text-right">Owner entered</th><th className="text-right">Cost Master</th><th className="text-right">Difference</th></tr></thead>
+            <tbody>{diffs.map((d) => (
+              <tr key={`${d.section}|${d.item}|${d.period}|${d.field}`}>
+                <td><span className="font-medium">{d.item}</span> <span className="text-ink-4">· {d.section}</span></td><td className="tabular">{monLabel(d.period)}</td>
+                <td>{d.field === "plan" ? cycle.labels.plan : cycle.labels.actual}</td>
+                <td className="text-right tabular">{inr(d.owner)}</td><td className="text-right tabular">{inr(d.costMaster)}</td>
+                <td className="text-right tabular">{d.owner == null ? "—" : inr(d.owner - d.costMaster, { sign: true })}</td>
+              </tr>))}</tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
