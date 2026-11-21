@@ -97,8 +97,9 @@ export async function dayCost(from: string, to: string, site: DaySite) {
       const sh = ships.filter((r) => r.day === day);
       let lg = 0, priced = 0, unpriced = 0;
       for (const r of sh) { const c = courierOf(r.vendor), cps = c ? latestBefore(b2cCps.filter((x) => x.courier === c), day, "month") : null; if (cps) { lg += r.n * cps.cps; priced += r.n; } else unpriced += r.n; }
-      lines.push({ key: "lg:b2c", label: "Logistics · B2C couriers", amount: sh.length ? lg : null, basis: sh.length ? "run-rate" : "missing",
-        note: sh.length ? `${Math.round(priced)} shipments × each courier's latest all-in CPS (forward + RTO + DTO billed ÷ forward AWBs)${unpriced ? ` · ${Math.round(unpriced)} with no CPS (HLD / self / quick) not priced` : ""}` : "no shipment feed that day", side: "B2C" });
+      // nothing priced (no courier working file loaded) is missing, never ₹0
+      lines.push({ key: "lg:b2c", label: "Logistics · B2C couriers", amount: priced ? lg : null, basis: priced ? "run-rate" : "missing",
+        note: !sh.length ? "no shipment feed that day" : !priced ? `no courier CPS yet — upload the B2C working file on AOP › Logistics (${Math.round(unpriced)} shipments unpriced)` : `${Math.round(priced)} shipments × each courier's latest all-in CPS (forward + RTO + DTO billed ÷ forward AWBs)${unpriced ? ` · ${Math.round(unpriced)} with no CPS (HLD / self / quick) not priced` : ""}`, side: "B2C" });
       const bm = latestBefore(b2bMonth, day, "month");
       lines.push({ key: "lg:b2b", label: "Logistics · B2B freight", amount: bm ? bm.freight / daysIn(bm.month) : null, basis: bm ? "run-rate" : "missing", note: bm ? `${bm.month.slice(0, 7)} LR freight ÷ ${daysIn(bm.month)} d` : "no B2B working file", side: "B2B" });
     }

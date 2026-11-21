@@ -31,7 +31,7 @@ export default async function Productivity({ searchParams }: { searchParams: Pro
   const month = sp.month && months.includes(sp.month) ? sp.month : cur;
   const edit = canManage(u);
   const [depts, map] = await Promise.all([departments(), mappingState()]);
-  const unmapped = map.funcs.filter((f) => !f.department).length;
+  const unmapped = map.funcs.filter((f) => !f.department && f.func.trim().toLowerCase() !== "admin").length; // Admin is uncounted by design (guessFunc)
 
   return (
     <div className="space-y-5">
