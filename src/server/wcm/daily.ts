@@ -67,7 +67,7 @@ export async function dailyView(day: string, site: OpsSite) {
     return { stream: p.stream, stage: p.stage, homeFn: p.home_fn, unit: p.unit, ipp: p.ipp, verified: p.verified, version: p.version, feed: p.feed, output, de, target, ...stageKpi(de, p.ipp, output) };
   });
   // feeds with no IPP stage (returns putaway, audit moves, "Other" channel): shown as workload, no KPI
-  const unmatched = out.filter((o) => !ipps.some((p) => p.stream === o.stream && p.feed === o.event));
+  const unmatched = out.filter((o) => o.event !== "shipments" && !ipps.some((p) => p.stream === o.stream && p.feed === o.event)); // shipments = CPS denominator, not workload
   const totals = pools.reduce((a, p) => {
     const conf = p.lines.reduce((s, l) => s + l.de, 0), idle = p.lines.filter((l) => parseTarget(l.target)?.kind === "idle").reduce((s, l) => s + l.de, 0);
     return { available: a.available + p.available, assigned: a.assigned + conf - idle, idle: a.idle + idle, unassigned: a.unassigned + Math.max(p.available - conf, 0) };

@@ -4,7 +4,7 @@ import { PageHeader, Tabs } from "@/components/ui";
 import type { CycleLite } from "@/server/aop/model";
 import { CycleSwitcher } from "./CycleSwitcher";
 
-export type AopTab = "overview" | "plan" | "inputs" | "review" | "packaging" | "processing" | "warehouse" | "logistics" | "analysis" | "insights" | "savings" | "import" | "setup";
+export type AopTab = "overview" | "plan" | "inputs" | "review" | "packaging" | "processing" | "warehouse" | "logistics" | "cost" | "analysis" | "insights" | "savings" | "import" | "setup";
 // Three working tabs; Import / Setup sit at the right as admin utilities.
 const TABS: { key: AopTab; label: string; path: string }[] = [
   { key: "overview", label: "Summary", path: "/aop" },
@@ -13,6 +13,7 @@ const TABS: { key: AopTab; label: string; path: string }[] = [
   { key: "packaging", label: "Packaging", path: "/aop/packaging" },
   { key: "warehouse", label: "Warehouse", path: "/aop/warehouse" },
   { key: "logistics", label: "Logistics", path: "/aop/logistics" },
+  { key: "cost", label: "Cost per day", path: "/aop/cost" },
   { key: "processing", label: "Processing", path: "/aop/processing" },
   { key: "analysis", label: "Analysis", path: "/aop/analysis" },
 ];

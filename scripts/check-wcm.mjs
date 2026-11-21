@@ -104,4 +104,13 @@ assert.equal(s.lines.find((l) => l.stage === "storage_unit_days").amount, 3300);
 assert.equal(priceMonth("Emiza", "South", { inward: null }, 30).lines[0].flag, "volume missing");
 assert.deepEqual([priceMonth("Shiprocket", "South", { b2c_orders: 10 }, 30).lines[0].amount, priceMonth("Shiprocket", "South", { b2c_orders: 10 }, 30).complete], [0, true]); // no stationery line ≠ missing rate
 
+// Cost per day: direct lines to their side, shared by dispatched items, missing listed (never ₹0), totals tie
+const { splitDay } = await import("../src/server/wcm/dayMath.ts");
+const DL = (key, amount, side) => ({ key, label: key, amount, basis: amount == null ? "missing" : "measured", note: "", side });
+const sd = splitDay([DL("mpB2C", 600, "B2C"), DL("mpB2B", 200, "B2B"), DL("wh", 1000, "shared"), DL("ot", null, "shared")], { b2c: 3000, b2b: 1000 }, { b2c: 100, b2b: 10 });
+assert.deepEqual([sd.total, sd.shared, sd.b2c, sd.b2b], [1800, 1000, 1350, 450]);
+assert.equal(sd.b2c + sd.b2b, sd.total); assert.deepEqual(sd.missing, ["ot"]);
+assert.equal(sd.cpsB2c, 13.5); assert.equal(sd.cpuB2b, 0.45);
+assert.equal(splitDay([DL("wh", 100, "shared")], { b2c: 0, b2b: 0 }, { b2c: 0 }).b2c, null); // no dispatch ⇒ no split, no CPS
+
 console.log("wcm OK", { octBoth: oct.Both.source / 100, julKnown: jul.source / 100, julMissingLabourLines: 4, julPackaging: pt.source / 100 });

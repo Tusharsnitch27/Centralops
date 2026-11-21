@@ -5,6 +5,7 @@ import { sfQuery } from "../snowflake";
 /**
  * Daily stage completions → wcm_stage_output. Read-only Snowflake; each event counted independently, deduplicated.
  *  Forward (warehouse_sla_performance, ~60-day window, from 21 Sep 2026): distinct saleorderitemcode per event day
+ *    shipments = distinct SHIPPINGPACKAGECODE dispatched that day (the CPS denominator).
  *    picked = PICKED_TIMESTAMP (partly filled upstream — 48–82 % of packed items — so pick output is understated),
  *    packed = PACKED_TIMESTAMP, manifested = MANIFESTED_TIMESTAMP, dispatched = DISPATCHED_TIMESTAMP1.
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
@@ -29,9 +30,12 @@ const ev = (event: string, col: string) => `SELECT TO_VARCHAR(${col}::date, 'YYY
   FROM s WHERE ${col} >= TO_DATE('{from}') GROUP BY 1, 2, 3`;
 export const STAGE_SQL = `WITH s AS (
   SELECT saleorderitemcode, ${SITE("warehouse_name")} AS site, ${STREAM} AS stream,
-    picked_timestamp, packed_timestamp, manifested_timestamp, "DISPATCHED_TIMESTAMP1" AS dispatched_ts
+    picked_timestamp, packed_timestamp, manifested_timestamp, "DISPATCHED_TIMESTAMP1" AS dispatched_ts, shippingpackagecode
   FROM ${SLA} WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU'))
 ${ev("picked", "picked_timestamp")} UNION ALL ${ev("packed", "packed_timestamp")} UNION ALL ${ev("manifested", "manifested_timestamp")} UNION ALL ${ev("dispatched", "dispatched_ts")}
+UNION ALL
+SELECT TO_VARCHAR(dispatched_ts::date, 'YYYY-MM-DD'), site, stream, 'shipments', 'shipment', COUNT(DISTINCT shippingpackagecode)
+  FROM s WHERE dispatched_ts >= TO_DATE('{from}') GROUP BY 1, 2, 3
 UNION ALL
 SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')},
   CASE final_type WHEN 'New Inward' THEN 'Inward' WHEN 'B2C Return Inward' THEN 'B2C Returns (channel open)' WHEN 'Store Return Inward' THEN 'B2B Returns Retail'
@@ -49,7 +53,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const raw = (await sfQuery<Row>(STAGE_SQL.replaceAll("{from}", from))).filter((r) => r.day && r.site && r.stream);
   // The SLA source keeps ~60 days by order creation, so event days in its first week are partial (items created earlier have
   // aged out). Those edge days are written only if never stored, so a moving window can't overwrite a complete count.
-  const slaEvs = ["picked", "packed", "manifested", "dispatched"];
+  const slaEvs = ["picked", "packed", "manifested", "dispatched", "shipments"];
   const first = raw.filter((r) => slaEvs.includes(r.event)).map((r) => r.day!).sort()[0];
   const edge = first ? new Date(Date.parse(`${first}T00:00:00Z`) + EDGE_DAYS * 864e5).toISOString().slice(0, 10) : null;
   const stored = new Set(edge ? (await q<{ d: string }>(`select distinct day::text as d from wcm_stage_output where event = any($1::text[]) and day < $2`, [slaEvs, edge])).map((r) => r.d) : []);
