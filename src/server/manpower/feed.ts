@@ -115,9 +115,9 @@ function withRange(url: string, from: string, to: string) {
 const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 const minus = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) - n * 864e5).toISOString().slice(0, 10);
 
-async function fetchJson(url: string, day: string) {
+async function fetchJson(url: string, day: string, to = day) {
   const key = apiKey();
-  const res = await fetch(withRange(url, day, day), {
+  const res = await fetch(withRange(url, day, to), {
     headers: { accept: "application/json", ...(key ? { authorization: `Bearer ${key}` } : {}) },
     signal: AbortSignal.timeout(60_000), cache: "no-store",
   });
@@ -212,6 +212,12 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
       catch (e) { autoNote = ` · auto-split failed: ${e instanceof Error ? e.message : e}`; }
     }
     if (roleErr) autoNote += ` · roles not read: ${roleErr.slice(0, 160)}`;
+    // OT hours for the same range (own failure never blocks the manpower pull; 404 until the attendance app ships /ot)
+    // ponytail: one request for the range — the OT API allows 92 days, so a longer back-fill notes "OT not read"; chunk it if that is ever needed
+    try {
+      const o = await fetchJson(new URL("/api/v1/integrations/ot", url).toString(), from, to);
+      if (!o.missing) { const n = await saveOt(o.body, from, to); autoNote += ` · ${n} OT rows`; }
+    } catch (e) { autoNote += ` · OT not read: ${(e instanceof Error ? e.message : String(e)).slice(0, 160)}`; }
     if (missing.length === days.length) throw new Error(`Manpower capture unavailable for ${missing.length === 1 ? missing[0] : `all ${missing.length} days`} (503) — will retry`);
     const note = `${days.length - missing.length} days · ${written} day × facility × department rows${shape ? ` · ${shape}` : ""}${skipped ? ` · ${skipped} skipped` : ""}${missing.length ? ` · not captured yet: ${missing.join(", ")}` : ""}${autoNote}`;
     await q(`update mp_sync_runs set status = 'ok', rows_read = $2, rows_written = $3, message = $4, finished_at = now() where id = $1`, [run!.id, written + skipped, written, note]);
@@ -225,3 +231,27 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
 
 export const lastManpowerRuns = () => q<{ id: string; trigger: string; status: string; from_date: string | null; to_date: string | null; rows_written: number | null; message: string | null; started_at: string }>(
   `select id, trigger, status, from_date::text, to_date::text, rows_written, message, started_at::text from mp_sync_runs order by started_at desc limit 8`);
+
+/** OT rows (date × facility × department × role × shift) → mp_ot_daily; the whole requested range is replaced (approvals move hours). */
+export function parseOt(body: unknown) {
+  const rows = (body as { rows?: unknown })?.rows;
+  if (!Array.isArray(rows)) throw new Error("The OT API didn't return { rows: [...] }");
+  const agg = new Map<string, { day: string; site: string; func: string; role: string; shift: string; approved: number; pending: number }>();
+  for (const r of rows as Record<string, unknown>[]) {
+    const x = { day: toDay(r.date) ?? "", site: String(r.facility ?? ""), func: String(r.department ?? ""), role: String(r.sub_department ?? "") || "Not captured",
+      shift: String(r.shift ?? "") || "Unspecified", approved: Number(r.approved_hours) || 0, pending: Number(r.pending_hours) || 0 };
+    if (!x.day || !x.site || !x.func) continue;
+    const k = [x.day, x.site, x.func, x.role, x.shift].join("|"), cur = agg.get(k);
+    if (cur) { cur.approved += x.approved; cur.pending += x.pending; } else agg.set(k, x);
+  }
+  return [...agg.values()];
+}
+async function saveOt(body: unknown, from: string, to: string) {
+  const rows = parseOt(body).filter((x) => x.day >= from && x.day <= to);
+  await q(`delete from mp_ot_daily where day between $1 and $2`, [from, to]);
+  if (rows.length)
+    await q(`insert into mp_ot_daily (day, site, func, role, shift, approved_hours, pending_hours)
+             select * from unnest($1::date[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::numeric[])`,
+      [rows.map((x) => x.day), rows.map((x) => x.site), rows.map((x) => x.func), rows.map((x) => x.role), rows.map((x) => x.shift), rows.map((x) => x.approved), rows.map((x) => x.pending)]);
+  return rows.length;
+}
