@@ -26,8 +26,10 @@ export async function availableDe(day: string, site: OpsSite) {
 
 export interface IppRow { stream: string; stage: string; home_fn: string | null; unit: string; ipp: number | null; feed: string | null; version: string; verified: boolean; sort: number }
 export async function activeIpps(day: string, site: OpsSite) {
-  return q<IppRow>(`select distinct on (stream, stage) stream, stage, home_fn, unit, ipp::float8 as ipp, feed, version, verified, sort
-    from wcm_ipp where site = $1 and status = 'active' and effective_from <= $2 order by stream, stage, effective_from desc`, [site, day]);
+  // the latest active version in effect that day, and only its stages (a stage a newer version dropped is not carried forward)
+  return q<IppRow>(`with v as (select version from wcm_ipp where site = $1 and status = 'active' and effective_from <= $2 order by effective_from desc, version desc limit 1)
+    select stream, stage, home_fn, unit, ipp::float8 as ipp, feed, version, verified, sort from wcm_ipp
+    where site = $1 and status = 'active' and version = (select version from v) order by sort`, [site, day]);
 }
 
 export interface PoolView { homeFn: string; shift: string; available: number; revision: number; lines: { target: string; de: number; reason: string | null }[]; updatedBy: string | null; updatedAt: string | null;

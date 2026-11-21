@@ -107,9 +107,9 @@ export function proposeSplit(available: number, stages: { target: string; requir
  * ponytail: constant, not an editable table — move to a dated table when Ops starts changing it.
  */
 export const ROLE_STAGES: Record<string, string[]> = {
-  Picker: ["Picker"], Packer: ["Packer"], Manifest: ["Manifest"], Dispatch: ["Manifest", "Loader"],
+  Picker: ["Picker"], Packer: ["Packer"], Manifest: ["Manifest"], Dispatch: ["Manifest", "Loader", "Dispatch"],
   QC: ["Processing & QC", "QC+Repack"], Checking: ["Processing", "Processing & QC"], "Return Processing": ["Processing", "Processing & QC"],
-  Putaway: ["Putaway"], "Loading/Unloading": ["Unloader", "Loader"], Auditor: ["Audit", "CC"],
+  Putaway: ["Putaway"], "Loading/Unloading": ["Unloader", "Loader"], Auditor: ["Audit", "CC", "CC/Audit"],
 };
 /** People whose attendance title is an HR grade, not a role: placed by workload instead (decision 21 Nov 2026). */
 export const WORKLOAD_ROLE = "Unclassified";
@@ -142,3 +142,40 @@ export function autoSplit(available: number, roles: { role: string; de: number }
   const lines: DeployLine[] = [...put].map(([target, de]) => ({ target, de: Math.floor(de * scale * 100) / 100, reason: null })).filter((l) => l.de > 0);
   return { lines, byRole, byWorkload: work.reduce((a, l) => a + l.de, 0) };
 }
+
+/**
+ * Updated IPP (answer sheets "South / North WH AD Hoc Task and Deployment Update" › Updated IPP, 21 Nov 2026), units per
+ * day-equivalent, per site — each site's own stage list. 0 / blank in the sheet ⇒ no IPP (null). North's Putaway is done by its
+ * Inventory department, so it sits there (still measured by the Inward putaway feed).
+ */
+type U = [stream: string, stage: string, home: string | null, ipp: number | null, feed?: string];
+const fwd = (stream: string, home: string, rows: [string, number][]): U[] => rows.map(([s, v]) => [stream, s, home, v, ({ Picker: "picked", Packer: "packed", Manifest: "manifested" } as Record<string, string>)[s]]);
+export const UPDATED_IPP_VERSION = "ipp-updated-2026-11-21";
+export const UPDATED_IPP: Record<OpsSite, U[]> = {
+  South: [
+    ...fwd("B2C Shopify", "B2C Forward", [["Picker", 750], ["Packer", 1000], ["Manifest", 2500]]),
+    ...fwd("B2C Marketplace", "B2C Forward", [["Picker", 750], ["Packer", 700], ["Manifest", 2500], ["Tagloop", 1200]]),
+    ...fwd("B2B Retail", "B2B Forward", [["Picker", 1000], ["Packer", 1600], ["Bagging", 100], ["Encoding/Stickering", 300], ["Dispatch", 80]]),
+    ...fwd("B2B Marketplace", "B2B Forward", [["Picker", 1000], ["Packer", 1600], ["Bagging", 100]]),
+    ["B2C Returns Shopify", "Receiving", "B2C Return", 2000], ["B2C Returns Shopify", "Processing & QC", "B2C Return", 250], ["B2C Returns Shopify", "SPF", "B2C Return", 40], ["B2C Returns Shopify", "WFR/CS escalation", "B2C Return", 55],
+    ["B2C Returns Marketplace", "Receiving", "B2C Return", 1000], ["B2C Returns Marketplace", "Processing", "B2C Return", 250], ["B2C Returns Marketplace", "SPF", "B2C Return", 40],
+    ["B2B Returns Retail", "Receiving", "B2B Return", 10000], ["B2B Returns Retail", "Processing", "B2B Return", 4000], ["B2B Returns Retail", "QC+Repack", "B2B Return", 550], ["B2B Returns Retail", "WPR", "B2B Return", 150],
+    ["B2B Returns Marketplace", "Receiving", "B2B Return", 4000], ["B2B Returns Marketplace", "Processing", "B2B Return", 600], ["B2B Returns Marketplace", "QC+Repack", "B2B Return", 600], ["B2B Returns Marketplace", "WPR", "B2B Return", null],
+    ["Inward", "Receiving", "Inward", 30000], ["Inward", "Ratio", "Inward", 10000], ["Inward", "QC", "Inward", 5000], ["Inward", "Putaway", "Inward", 2700, "putaway"], ["Inward", "Unloader", "Inward", 200],
+    ["Inventory", "Capacity", "Inventory", null], ["Inventory", "CC", "Inventory", 4000], ["Inventory", "Audit", "Inventory", 4000], ["Inventory", "Mismatch/NF", "Inventory", 200], ["Inventory", "Consolidation", "Inventory", 1500],
+    ["Ad-hoc", "Re-stickering & re-tagging", null, 400], ["Ad-hoc", "Category-wise segregation", null, 1500], ["Ad-hoc", "Liquidation", null, 300],
+  ],
+  North: [
+    ...fwd("B2C Shopify", "B2C Forward", [["Picker", 650], ["Packer", 750], ["Manifest", 1500]]),
+    ...fwd("B2C Marketplace", "B2C Forward", [["Picker", 650], ["Packer", 600], ["Manifest", 1500]]),
+    ...fwd("B2B Retail", "B2B Forward", [["Picker", 650], ["Packer", 2000], ["Bagging", 150]]),
+    ...fwd("B2B Marketplace", "B2B Forward", [["Picker", 650], ["Packer", 2000], ["Bagging", 150]]),
+    ["B2C Returns Shopify", "Receiving", "B2C Return", 1200], ["B2C Returns Shopify", "Processing & QC", "B2C Return", 200], ["B2C Returns Shopify", "SPF", "B2C Return", 50],
+    ["B2C Returns Marketplace", "Receiving", "B2C Return", 800], ["B2C Returns Marketplace", "Processing", "B2C Return", 200], ["B2C Returns Marketplace", "SPF", "B2C Return", 50],
+    ["B2B Returns Retail", "Processing", "B2B Return", 1500], ["B2B Returns Retail", "QC+Repack", "B2B Return", 500], ["B2B Returns Retail", "WPR", "B2B Return", null],
+    ["B2B Returns Marketplace", "Processing", "B2B Return", 1500], ["B2B Returns Marketplace", "QC+Repack", "B2B Return", 500],
+    ["Inward", "Ratio", "Inward", 2500], ["Inward", "Unloader", "Inward", 100], ["Inward", "Putaway", "Inventory", 2600, "putaway"],
+    ["Inventory", "CC/Audit", "Inventory", 1650], ["Inventory", "Mismatch/NF (IRT)", "Inventory", 200], ["Inventory", "Consolidation", "Inventory", 2000],
+    ["Ad-hoc", "Re-stickering & re-tagging", null, 1000], ["Ad-hoc", "Category-wise segregation", null, 2500], ["Ad-hoc", "Liquidation", null, 50000],
+  ],
+};

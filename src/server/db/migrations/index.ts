@@ -46,6 +46,7 @@ import { sql as mpOt } from "./079_mp_ot";
 import { sql as slaDaily } from "./080_sla_daily";
 import { sql as ippUnits } from "./081_ipp_units";
 import { sql as logistics } from "./082_logistics";
+import { sql as ippUpdated } from "./083_ipp_updated";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -93,4 +94,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 80, name: "sla_daily", sql: slaDaily },
   { version: 81, name: "ipp_units", sql: ippUnits },
   { version: 82, name: "logistics", sql: logistics },
+  { version: 83, name: "ipp_updated", sql: ippUpdated },
 ];
