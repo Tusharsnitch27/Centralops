@@ -8,7 +8,8 @@ import { sfQuery } from "../snowflake";
  *    picked = PICKED_TIMESTAMP (partly filled upstream — 48–82 % of packed items — so pick output is understated),
  *    packed = PACKED_TIMESTAMP, manifested = MANIFESTED_TIMESTAMP, dispatched = DISPATCHED_TIMESTAMP1.
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
- *  Inward / returns / audit (putaway_tracking, day = putaway updated): units = putaway_completed_quantity, by final type.
+ *  Inward / returns / audit (putaway_tracking, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
+ *    feeds): units = putaway_completed_quantity, by final type. Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
  * The SLA source keeps ~60 days: only days it returns are replaced, so older days are kept (same rule as packaging).
  */
 const SLA = "snitch_db.maplemonk.warehouse_sla_performance";
@@ -36,7 +37,7 @@ SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"
   IFF(final_type = 'Audit Activity', 'audit_move', 'putaway'), 'item', SUM(putaway_completed_quantity)
 FROM ${PUT}
 WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
-  AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity')
+  AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE
 GROUP BY 1, 2, 3, 4`;
 
 type Row = { day: string | null; site: string | null; stream: string; event: string; unit: string; qty: number };
