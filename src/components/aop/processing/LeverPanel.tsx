@@ -15,10 +15,10 @@ const cpi = (v: number | null) => (v == null ? "—" : `₹${v.toFixed(2)}`);
 const n = (v: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(v);
 
 /** What-if on warehouse processing cost. Nothing is saved. */
-export function LeverPanel({ streams, label }: { streams: StreamBlock[]; label: string }) {
+export function LeverPanel({ sites, label }: { sites: StreamBlock[][]; label: string }) {
   const [l, setL] = useState<Levers>(BASE_LEVERS);
-  const base = useMemo(() => model(streams, BASE_LEVERS), [streams]);
-  const scen = useMemo(() => model(streams, l), [streams, l]);
+  const base = useMemo(() => model(sites, BASE_LEVERS), [sites]);
+  const scen = useMemo(() => model(sites, l), [sites, l]);
   const rows = [...base.rows.map((b, i) => ({ b, s: scen.rows[i]! })), { b: base.total, s: scen.total }];
 
   return (
@@ -38,7 +38,7 @@ export function LeverPanel({ streams, label }: { streams: StreamBlock[]; label: 
         </label>
       </div>
       <div className="flex items-center justify-between px-4 py-2 text-[11.5px] text-ink-4">
-        <span>{label} · baseline = current norms (MP = ⌈projection ÷ output/head⌉), scenario = levers applied</span>
+        <span>{label} · baseline = Processing’s planned MP and expense per site; scenario = planned MP + the change in ⌈projection ÷ output/head⌉ the levers cause</span>
         <button type="button" className="rounded-md px-2 py-1 text-ink-3 hover:bg-subtle hover:text-ink" onClick={() => setL(BASE_LEVERS)}>Reset</button>
       </div>
       <div className="overflow-x-auto">

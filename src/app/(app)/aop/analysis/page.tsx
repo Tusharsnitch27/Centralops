@@ -78,7 +78,7 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
         </Section>
 
         <Section open title="Levers · what-if" sub="Move volume, productivity, adherence, salary or headcount and see manpower, cost and CPI change. Not saved.">
-          {streams.length ? <LeverPanel streams={streams} label={`${month ? monLabel(month) : ""} · ${wh}`} /> : <EmptyState compact title="No processing data for this month" />}
+          {streams.length ? <LeverPanel sites={pm.map((x) => x.streams)} label={`${month ? monLabel(month) : ""} · ${wh}`} /> : <EmptyState compact title="No processing data for this month" />}
         </Section>
       </div>
     </div>
