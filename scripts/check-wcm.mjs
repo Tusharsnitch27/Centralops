@@ -91,4 +91,17 @@ assert.equal(a.lines.length, 0);
 a = autoSplit(5, [{ role: "Picker", de: 8 }], st);
 assert.ok(a.lines.reduce((x, l) => x + l.de, 0) <= 5);
 
+// 3PL pricing: native units, region columns, unit-month storage, unpriced stages flagged (never ₹0)
+const { priceMonth } = await import("../src/server/wcm/tpl.ts");
+const vol = { inward: 1000, b2c_out: 2000, b2b_out: 500, storage_unit_days: 30000 };
+let e = priceMonth("Emiza", "North", vol, 30);
+assert.equal(e.lines.find((l) => l.stage === "inward").amount, 4000);           // Gurgaon ₹4.0
+assert.equal(e.lines.find((l) => l.stage === "b2c_out").amount, 18000);         // Gurgaon ₹9
+assert.equal(e.lines.find((l) => l.stage === "storage_unit_days").amount, 3000); // ₹0.10 per unit-day
+assert.equal(e.lines.find((l) => l.stage === "b2b_out").amount, null); assert.equal(e.complete, false); assert.equal(e.priced, 25000);
+const s = priceMonth("Shiprocket", "South", vol, 30);
+assert.equal(s.lines.find((l) => l.stage === "storage_unit_days").amount, 3300); // 1,000 avg units × ₹3.30 / month
+assert.equal(priceMonth("Emiza", "South", { inward: null }, 30).lines[0].flag, "volume missing");
+assert.deepEqual([priceMonth("Shiprocket", "South", { b2c_orders: 10 }, 30).lines[0].amount, priceMonth("Shiprocket", "South", { b2c_orders: 10 }, 30).complete], [0, true]); // no stationery line ≠ missing rate
+
 console.log("wcm OK", { octBoth: oct.Both.source / 100, julKnown: jul.source / 100, julMissingLabourLines: 4, julPackaging: pt.source / 100 });

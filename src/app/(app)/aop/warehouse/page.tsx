@@ -25,7 +25,8 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
   const u = await requireUser();
   const [cycles, cycle, snap] = await Promise.all([listCycles(), resolveCycle(sp.cycle), currentSnapshot()]);
   const header = <AopHeader active="warehouse" cycleId={cycle?.id ?? null} cycles={cycles} title="Warehouse cost master"
-    subtitle="Booked warehouse spend by site, function and channel — every rupee once, traced to its source cell; unmapped money stays Unallocated." />;
+    subtitle="Booked warehouse spend by site, function and channel — every rupee once, traced to its source cell; unmapped money stays Unallocated."
+    actions={<Link href="/aop/warehouse/3pl" className="text-[12.5px] text-ink-3 hover:text-ink">3PL comparison →</Link>} />;
   if (!snap) return <div className="animate-fade-in">{header}<div className="card"><EmptyState title="No Cost Master snapshot loaded" body="The 20 Nov 2026 Cost Master snapshot loads at the next boot." /></div></div>;
 
   const months = await wcmMonths(snap.id);
