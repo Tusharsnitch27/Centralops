@@ -95,10 +95,14 @@ export async function writeAopActuals(run: RunQ, period: string, actorId: string
                                  where lower(s.name) = 'packaging' and $1::date >= c.fy_start and $1::date < (c.fy_start + make_interval(months => c.months))
                                union all select s.id from aop_sections s join pk on s.parent_id = pk.id)
      select i.id, i.name from aop_items i where i.section_id in (select id from pk)`, [period]);
+  // the Warehouse Cost Master's packaging invoice is the control (11.4): a month it already books is never overwritten by this driver
+  const booked = new Set((await run<{ head: string }>(
+    `select lower(head) as head from wcm_source_line where snapshot_id = (select value #>> '{}' from app_settings where key = 'wcm.snapshot')
+       and family = 'packaging' and basis = 'actual' and period = $1 and amount is not null`, [period])).map((r) => r.head));
   let n = 0;
   for (const line of AOP_LINES) {
     const it = items.find((i) => i.name.trim().toLowerCase() === line.toLowerCase());
-    if (!it) continue;
+    if (!it || booked.has(line.toLowerCase())) continue;
     const v = Math.round((totals.find((t) => t.aop_line === line)?.amount ?? 0) * 100) / 100;
     const old = (await run<{ actual: number | null }>(`select actual::float8 as actual from aop_period_values where item_id = $1 and period = $2`, [it.id, period]))[0]?.actual ?? null;
     if (old != null && Math.abs(old - v) < 0.005) continue;

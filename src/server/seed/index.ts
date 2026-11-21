@@ -242,12 +242,13 @@ export async function bootstrap(rawQ: RunQ) {
   }
   // Cost Master → AOP Warehousing / Manpower / Packaging lines, once per snapshot (owner-edited cells kept; see costMasterSync.ts)
   const wcmSnap = await setting("wcm.snapshot");
-  if (typeof wcmSnap === "string" && (await setting("seed.aop_cm_sync")) !== wcmSnap) {
+  const { CM_SYNC_VERSION } = await import("../aop/costMasterSync");
+  if (typeof wcmSnap === "string" && (await setting("seed.aop_cm_sync")) !== `${wcmSnap}|${CM_SYNC_VERSION}`) {
     const { seedAopCostMaster } = await import("../aop/costMasterSync");
     await rawQ("begin");
     try {
       const r = await seedAopCostMaster(rawQ, wcmSnap);
-      await setSetting("seed.aop_cm_sync", wcmSnap);
+      await setSetting("seed.aop_cm_sync", `${wcmSnap}|${CM_SYNC_VERSION}`);
       await rawQ("commit");
       console.log(`[seed] AOP lines from Cost Master ${wcmSnap}: ${r.updated} cells set, ${r.added} lines added (manpower / OT / unplanned heads), ${r.kept} owner-edited cells kept`);
     } catch (e) { await rawQ("rollback"); throw e; }

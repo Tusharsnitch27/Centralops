@@ -8,9 +8,10 @@ import { q } from "../db";
  *    e.g. South Petty Cash, so every booked rupee shows)
  *  - Warehousing & Fulfilment › <site section> › Monthly Manpower Cost / Monthly OT (added): plan = CM budget, actual = CM actual
  *  - Packaging › Channel level › Shopify / Marketplace / Store / B2B MP: actual
- * A cell an owner edited in the app (any aop_updates row for item × period × field) is kept and its difference listed on the
- * Summary; imported or empty cells take the Cost Master figure. A blank Cost Master cell is missing: nothing is written or cleared.
- * Runs once per snapshot from the seed (seed.aop_cm_sync = snapshot id).
+ * A cell an owner edited in the app is kept and its difference listed on the Summary; imported or empty cells take the Cost Master
+ * figure. A blank Cost Master cell is missing: nothing is written or cleared. Owner-edited = the cell's latest aop_updates row,
+ * unless it is the packaging engine's own write (value = its packages × rate month total): that figure is a driver, the Cost
+ * Master invoice is the control (11.4). Runs once per snapshot from the seed (seed.aop_cm_sync = `${snapshot}|v2`).
  */
 const SITE_SECTION: Record<string, string> = { South: "YLK 1 & 2 (South)", North: "North Warehouse" };
 const TARGETS = [
@@ -20,6 +21,19 @@ const TARGETS = [
   { family: "packaging", fn: "Packaging", fields: { actual: "actual" } },
 ] as const;
 type Field = "plan" | "actual";
+export const CM_SYNC_VERSION = "v2";
+
+/** Cells an owner edited: item|period|field of the latest aop_updates row, minus the packaging engine's own writes. */
+async function ownerEdits(S: RunQ) {
+  const rows = await S<{ k: string }>(
+    `with last as (select distinct on (item_id, period, field) item_id, period, field, new_value from aop_updates order by item_id, period, field, created_at desc),
+          eng as (select period, lower(aop_line) as line, round(sum(amount), 2) as amt from pkg_monthly group by 1, 2)
+     select l.item_id || '|' || l.period::text || '|' || l.field as k from last l join aop_items i on i.id = l.item_id
+     left join eng e on e.period = l.period and e.line = lower(trim(i.name))
+     where l.period is not null and not (l.field = 'actual' and e.amt is not null
+       and case when l.new_value ~ '^-?[0-9]+([.][0-9]+)?$' then abs(l.new_value::numeric - e.amt) < 0.01 else false end)`);
+  return new Set(rows.map((r) => r.k));
+}
 
 /** One target cell per AOP item × month × field, with the Cost Master figure. */
 async function targets(S: RunQ, snapshot: string) {
@@ -37,7 +51,7 @@ export async function seedAopCostMaster(S: RunQ, snapshot: string) {
   const t = await targets(S, snapshot);
   if (!t) return { updated: 0, kept: 0, added: 0 };
   const { cyc, lines } = t;
-  const edited = new Set((await S<{ k: string }>(`select distinct item_id || '|' || period::text || '|' || field as k from aop_updates`)).map((r) => r.k));
+  const edited = await ownerEdits(S);
   const sectionId = new Map<string, string | null>(), itemId = new Map<string, string>();
   let updated = 0, kept = 0, added = 0;
   const section = async (fn: string, name: string) => {
@@ -82,8 +96,10 @@ export async function costMasterDiffs(): Promise<CmDiff[]> {
      from aop_updates u join aop_items i on i.id = u.item_id join aop_sections s on s.id = i.section_id join aop_sections f on f.id = s.parent_id
      left join aop_period_values v on v.item_id = u.item_id and v.period = u.period
      where i.cycle_id = $1 and u.field in ('plan','actual')`, [t.cyc.id]);
+  const edited = await ownerEdits(q);
   const out: CmDiff[] = [];
   for (const r of rows) {
+    if (!edited.has(`${r.item_id}|${r.period}|${r.field}`)) continue;
     const tg = TARGETS.find((x) => x.fn === r.fn && (r.fn === "Packaging" ? r.section === "Channel level" : Object.values(SITE_SECTION).includes(r.section)));
     if (!tg) continue;
     const site = r.fn === "Packaging" ? "Both" : Object.entries(SITE_SECTION).find(([, n]) => n === r.section)![0];
