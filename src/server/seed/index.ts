@@ -229,6 +229,17 @@ export async function bootstrap(rawQ: RunQ) {
       console.log(`[seed] Warehouse Cost Master snapshot ${r.snapshot}: ${r.lines} source lines`);
     } catch (e) { await rawQ("rollback"); throw e; }
   }
+  // Cost Master Storage & Handling tab → approved rules: every warehousing head to shared Storage & handling (manpower / OT stay open)
+  if ((await setting("seed.wcm_sh_rules")) !== "v1" && typeof (await setting("wcm.snapshot")) === "string") {
+    const { seedStorageHandlingRules } = await import("../wcm/shRules");
+    await rawQ("begin");
+    try {
+      const r = await seedStorageHandlingRules(rawQ, (await setting("wcm.snapshot")) as string);
+      await setSetting("seed.wcm_sh_rules", "v1");
+      await rawQ("commit");
+      console.log(`[seed] Storage & Handling rules: ${r.added} of ${r.heads} warehousing heads mapped (heads with an approved rule kept)`);
+    } catch (e) { await rawQ("rollback"); throw e; }
+  }
   // Cost Master → AOP Warehousing / Manpower / Packaging lines, once per snapshot (owner-edited cells kept; see costMasterSync.ts)
   const wcmSnap = await setting("wcm.snapshot");
   if (typeof wcmSnap === "string" && (await setting("seed.aop_cm_sync")) !== wcmSnap) {

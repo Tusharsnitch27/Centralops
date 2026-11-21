@@ -49,6 +49,16 @@ for (const site of ["South", "North", "Both"]) {
   assert.equal(wb(site, "storage") + wb(site, "handling") + wb(site, "unallocated") - wb(site, "total"), wb(site, "unallocated"));
 }
 assert.equal(oct.Both.source, toPaise(14112611));
+// Storage & Handling tab rule (21 Nov 2026): every warehousing head → shared Storage & handling; manpower / OT stay open.
+// Shared ₹ must equal the tab's "warehousing" row per site, and the open ₹ the booked manpower + OT.
+const shRules = [...new Set(lines.filter((l) => l.family === "warehousing").map((l) => l.head))]
+  .map((h, i) => R(`sh${i}`, "warehousing", h, [{ fn: "Storage & handling", channel: null, shared: true, share: 1 }], { from: "2025-01-01" }));
+for (const site of ["South", "North", "Both"]) {
+  const sh = run(book("2026-10-01", site), shRules);
+  assert.equal(sh.shared, wb(site, "warehousing"), `Oct ${site} Storage & handling = tab warehousing row`);
+  assert.equal(sh.unallocated, sh.source - sh.shared, `Oct ${site} only manpower / OT left open`);
+  assert.equal(sh.unallocated, book("2026-10-01", site).filter((l) => l.family !== "warehousing").reduce((x, l) => x + toPaise(l.amount ?? 0), 0));
+}
 const jul = run(book("2026-07-01", "Both"), []);
 assert.equal(jul.source, toPaise(4591195)); // known Warehousing actuals
 assert.equal(book("2026-07-01", "Both").filter((l) => l.family !== "warehousing" && l.amount == null).length, 4); // MP + OT × 2 sites missing

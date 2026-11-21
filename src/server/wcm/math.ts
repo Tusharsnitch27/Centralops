@@ -14,9 +14,9 @@ export const FAMILIES = ["warehousing", "manpower", "ot", "packaging"] as const;
 export type Family = (typeof FAMILIES)[number];
 export const FAMILY_LABEL: Record<Family, string> = { warehousing: "Warehousing", manpower: "Manpower", ot: "Overtime", packaging: "Packaging" };
 
-/** Warehouse function buckets (space / overhead kept apart from operational handling). */
+/** Warehouse function buckets. "Storage & handling" = the Cost Master's WH-Storage & Handling Cost tab bucket (all warehousing heads). */
 export const FUNCTIONS = [
-  "Storage & space", "Residual overhead", "Inward", "Forward processing", "Returns", "Inventory control", "Ad-hoc handling",
+  "Storage & handling", "Storage & space", "Residual overhead", "Inward", "Forward processing", "Returns", "Inventory control", "Ad-hoc handling",
   "VAS (ironing, washing, relabelling)", "Packaging",
 ] as const;
 /** Warehouse / customer channels. "Q-Com" only where evidence supports it. */
