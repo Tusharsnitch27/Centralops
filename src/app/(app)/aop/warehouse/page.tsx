@@ -14,6 +14,8 @@ export const metadata = { title: "AOP · Warehouse cost master" };
 type SP = { month?: string; site?: string; basis?: string; cycle?: string };
 
 const rs = (paise: number | null | undefined) => (paise == null ? "—" : inrFull(paise / 100));
+/** A total with missing lines is never shown as a plain figure: all missing ⇒ "missing", some ⇒ "₹x known". */
+const rsT = (t: Pick<Totals, "source" | "missing" | "lines">) => (t.lines && t.missing === t.lines ? "missing" : t.missing ? `${rs(t.source)} known` : rs(t.source));
 const STATUS_TONE: Record<string, "green" | "amber" | "red" | "neutral"> = { approved: "green", draft: "amber", rejected: "red", reversed: "red", superseded: "neutral" };
 
 /**
@@ -43,7 +45,7 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
     missing: a.missing + fam(f).missing, lines: a.lines + fam(f).lines }), { source: 0, assigned: 0, shared: 0, unallocated: 0, missing: 0, lines: 0 });
   const row = (label: string, t: Totals, strong = false) => (
     <tr className={strong ? "font-semibold" : undefined}>
-      <td>{label}</td><td className="text-right tabular">{rs(t.source)}</td><td className="text-right tabular">{rs(t.assigned)}</td><td className="text-right tabular">{rs(t.shared)}</td>
+      <td>{label}</td><td className="text-right tabular">{rsT(t)}</td><td className="text-right tabular">{rs(t.assigned)}</td><td className="text-right tabular">{rs(t.shared)}</td>
       <td className={cn("text-right tabular", t.unallocated && "text-warn")}>{rs(t.unallocated)}</td>
       <td className={cn("text-right tabular", t.missing && "text-bad")}>{t.missing ? `${t.missing} missing` : "—"}</td>
       <td className="text-right">{t.source === t.assigned + t.shared + t.unallocated ? <span className="text-ok">ties</span> : <span className="text-bad">off</span>}</td>
@@ -62,8 +64,8 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
-        <Tile label={`Warehouse spend · ${BASIS_LABEL[basis]}`} value={rs(m.total.source)} sub={`${monLabel(month)} · ${site}`} />
-        <Tile label="Before packaging" value={rs(before.source)} sub="warehousing + manpower + OT" />
+        <Tile label={`Warehouse spend · ${BASIS_LABEL[basis]}`} value={rsT(m.total)} sub={`${monLabel(month)} · ${site}${m.total.missing ? ` · ${m.total.missing} lines missing` : ""}`} />
+        <Tile label="Before packaging" value={rsT(before)} sub="warehousing + manpower + OT" />
         <Tile label="Channel-assigned" value={rs(m.total.assigned)} sub={`shared ${rs(m.total.shared)}`} />
         <Tile label="Unallocated" value={rs(m.total.unallocated)} tone={m.total.unallocated ? "text-warn" : "text-ok"} sub={`${m.queue.length} lines to map${drafts ? ` · ${drafts} drafts await approval` : ""}`} />
         <Tile label="Missing inputs" value={String(m.total.missing)} tone={m.total.missing ? "text-bad" : "text-ok"} sub={m.total.missing ? "expected lines with no booked amount" : "every expected line booked"} />
@@ -85,21 +87,20 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
               <table className="table-base"><tbody>
                 <tr><td>Recorded total before packaging</td><td className="text-right tabular">{inrFull(wb("total")?.amount)}</td><td className="text-ink-4">{wb("total")?.cell}</td>
                   <td className={cn("text-right", wb("total") && Math.round(wb("total")!.amount * 100) === before.source ? "text-ok" : "text-warn")}>{wb("total") ? (Math.round(wb("total")!.amount * 100) === before.source ? "ties to source" : `differs by ${rs(before.source - Math.round(wb("total")!.amount * 100))}`) : ""}</td></tr>
-                {wb("storage") && <tr><td>Workbook storage + handling + awaiting allocation</td><td className="text-right tabular">{inrFull(wb("storage")!.amount + wb("handling")!.amount + wb("unallocated")!.amount)}</td><td className="text-ink-4">overlap {inrFull(wb("storage")!.amount + wb("handling")!.amount + wb("unallocated")!.amount - wb("total")!.amount)}</td>
+                {wb("storage") && wb("storage")!.amount + wb("handling")!.amount + wb("unallocated")!.amount - wb("total")!.amount !== 0 && <tr><td>Workbook storage + handling + awaiting allocation</td><td className="text-right tabular">{inrFull(wb("storage")!.amount + wb("handling")!.amount + wb("unallocated")!.amount)}</td><td className="text-ink-4">overlap {inrFull(wb("storage")!.amount + wb("handling")!.amount + wb("unallocated")!.amount - wb("total")!.amount)}</td>
                   <td className="text-right text-warn">counted twice in the workbook — here each line sits in one bucket</td></tr>}
               </tbody></table>
               <p className="mt-1 text-ink-4">The workbook's 25 % storage / 75 % handling split of whole manpower and OT lines and its fixed percentages are not used. Lines post only through approved rules below.</p>
             </div>)}
           <div className="mt-3 grid gap-3 md:grid-cols-2 text-[12.5px]">
-            <div className="rounded-lg border border-line p-3">
+            {site === "Both" ? <div className="rounded-lg border border-line p-3">
               <div className="mb-1 font-medium">Packaging bridge</div>
               <table className="table-base"><tbody>
                 <tr><td>Booked packaging (invoice line — the control)</td><td className="text-right tabular">{rs(m.byFamily.packaging.source)}</td></tr>
                 <tr><td>Usage estimate (packages × rate) — driver only</td><td className="text-right tabular">{pkg.estimate == null ? "—" : inrFull(pkg.estimate)}</td></tr>
                 <tr><td className="text-ink-4">Difference</td><td className="text-right tabular text-ink-4">{pkg.estimate == null ? "month not closed in Packaging" : rs(m.byFamily.packaging.source - Math.round(pkg.estimate * 100))}</td></tr>
               </tbody></table>
-              {site !== "Both" && <p className="mt-1 text-ink-4">Packaging has no site split — it shows under Both only until site shares are approved.</p>}
-            </div>
+            </div> : <div className="rounded-lg border border-line p-3 text-ink-4">Packaging bridge: packaging is booked for both sites together (no site split), so it shows under Both only.</div>}
             <div className="rounded-lg border border-line p-3">
               <div className="mb-1 font-medium">Dual-read · legacy Processing vs booked labour</div>
               <table className="table-base"><tbody>
@@ -146,7 +147,7 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
               <tr key={r.channel}><td className="font-medium">{r.channel}</td><td className="text-right tabular">{rs(r.forward)}</td><td className="text-right tabular">{rs(r.returns)}</td>
                 <td className="text-right tabular">{rs(r.other)}</td><td className="text-right tabular">{rs(r.packaging)}</td><td className="text-right tabular font-medium">{rs(r.total)}</td>
                 <td className="text-right tabular">{r.dispatched == null ? "—" : new Intl.NumberFormat("en-IN").format(r.dispatched)}</td>
-                <td className="text-right tabular">{r.rate.value == null ? <span className="text-[11.5px] text-ink-4">{r.rate.reason}</span> : `₹${r.rate.value.toFixed(2)}`}</td>
+                <td className="text-right tabular">{r.rate.value == null ? <span className="text-[11.5px] text-ink-4">{r.rate.reason}</span> : r.total === 0 ? <span className="text-[11.5px] text-ink-4">nothing assigned yet</span> : `₹${r.rate.value.toFixed(2)}`}</td>
                 <td className="text-right tabular">{r.returnsIn == null ? "—" : new Intl.NumberFormat("en-IN").format(r.returnsIn)}</td></tr>))}
               <tr><td>Shared (approved, pooled — not in any rate)</td><td colSpan={4} /><td className="text-right tabular">{rs(m.shared)}</td><td colSpan={3} /></tr>
               <tr><td className="text-warn">Unallocated (not in any rate)</td><td colSpan={4} /><td className="text-right tabular text-warn">{rs(m.unallocated)}</td><td colSpan={3} /></tr>

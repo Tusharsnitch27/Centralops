@@ -70,7 +70,7 @@ export default async function DailyPage({ searchParams }: { searchParams: Promis
         </Section>
 
         <Section open title="Stage output vs capacity" sub="capacity = confirmed DE × IPP · utilisation = output ÷ capacity · unused capacity is not idle time · no feed = unavailable, never 0"
-          summary={<span className="text-white/80">IPPs provisional — units / shift not yet confirmed with Ops</span>}>
+          summary={<span className="text-white/80">IPP targets in units per day-equivalent (IPP - Targets sheet, 29 Oct 2026)</span>}>
           <div className="overflow-x-auto"><table className="table-base min-w-[980px]">
             <thead><tr><th>Stream · stage</th><th className="text-right">IPP</th><th>Unit</th><th className="text-right">Output</th><th className="text-right">DE</th><th className="text-right">Capacity</th>
               <th className="text-right">Utilisation</th><th className="text-right">Unused</th><th className="text-right">Above norm</th><th className="text-right">Required DE</th><th>Note</th></tr></thead>

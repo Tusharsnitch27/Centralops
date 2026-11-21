@@ -165,6 +165,14 @@ export async function logisticsAttribution(months: string[]): Promise<Attributio
       }
       continue;
     }
+    // several AOP lines share one vendor's AWBs (Movemate NSO / Milkrun / Stock Transfer / Marketplace / Logistics): each
+    // vendor × channel's shipments are carried once per month, so unit counts and ₹ / shipment add up
+    const carried = new Set<string>();
+    const once = (vendor: string, channel: string, n: number | null) => {
+      const k = `${norm(vendor)}|${channel}`;
+      if (n == null || carried.has(k)) return null;
+      carried.add(k); return n;
+    };
     for (const l of lines.filter((x) => x.period === p)) {
       const [full, which] = l.actual != null ? [l.actual, "actual"] : l.forecast != null ? [l.forecast, "provision"] : [l.plan ?? 0, "budget"];
       const share = which === "actual" ? 1 : mtdShare(p);
@@ -175,7 +183,7 @@ export async function logisticsAttribution(months: string[]): Promise<Attributio
       const base = { period: p, warehouse: "All" as const, family: "logistics" as const, process: l.item };
       const named = namedChannel(l.item);
       if (named) {
-        const units = vv.filter((x) => x.channel === named).reduce((a, x) => a + x.n, 0) || null;
+        const units = once(volumeVendor(l.item), named, vv.filter((x) => x.channel === named).reduce((a, x) => a + x.n, 0) || null);
         out.push({ ...base, channel: named, amount, basis: "direct", key: `line names the channel (${which}${share < 1 ? ` · scaled to month-to-date ${Math.round(share * 100)}%` : ""})`, units, cpi: cpi(amount, units) });
         continue;
       }
@@ -188,7 +196,8 @@ export async function logisticsAttribution(months: string[]): Promise<Attributio
       for (const x of vv) {
         const share = amount * (x.n / total);
         // ponytail: forward and reverse AWBs weigh the same; weight by rate card once vendor RVP rates are in the sheet
-        out.push({ ...base, channel: x.channel, amount: share, basis: "allocated", key, units: x.n, cpi: cpi(share, x.n) });
+        const units = once(volumeVendor(l.item), x.channel, x.n);
+        out.push({ ...base, channel: x.channel, amount: share, basis: "allocated", key, units, cpi: cpi(share, units) });
       }
     }
   }

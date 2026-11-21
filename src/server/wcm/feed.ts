@@ -15,6 +15,8 @@ import { sfQuery } from "../snowflake";
 const SLA = "snitch_db.maplemonk.warehouse_sla_performance";
 const PUT = "snitch_db.maplemonk.putaway_tracking";
 export const STAGE_FROM = "2026-09-21";
+/** Days at the start of the SLA source's window treated as partial (see pullStageOutput). */
+const EDGE_DAYS = 7;
 const SITE = (col: string) => `CASE WHEN ${col} IN ('SAPL-WH1','SAPL-WH2') THEN 'South' WHEN ${col} = 'SAPL-NORTH-TAURU' THEN 'North' END`;
 /** marketplace_mapped → warehouse stream. Anything unlisted is kept as "Other" (visible, never folded into a channel). */
 const STREAM = `CASE
@@ -44,9 +46,16 @@ type Row = { day: string | null; site: string | null; stream: string; event: str
 
 export async function pullStageOutput(from = STAGE_FROM) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
-  const rows = (await sfQuery<Row>(STAGE_SQL.replaceAll("{from}", from))).filter((r) => r.day && r.site && r.stream);
+  const raw = (await sfQuery<Row>(STAGE_SQL.replaceAll("{from}", from))).filter((r) => r.day && r.site && r.stream);
+  // The SLA source keeps ~60 days by order creation, so event days in its first week are partial (items created earlier have
+  // aged out). Those edge days are written only if never stored, so a moving window can't overwrite a complete count.
+  const slaEvs = ["picked", "packed", "manifested", "dispatched"];
+  const first = raw.filter((r) => slaEvs.includes(r.event)).map((r) => r.day!).sort()[0];
+  const edge = first ? new Date(Date.parse(`${first}T00:00:00Z`) + EDGE_DAYS * 864e5).toISOString().slice(0, 10) : null;
+  const stored = new Set(edge ? (await q<{ d: string }>(`select distinct day::text as d from wcm_stage_output where event = any($1::text[]) and day < $2`, [slaEvs, edge])).map((r) => r.d) : []);
+  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && edge && r.day! < edge && stored.has(r.day!)));
   // replace per source (event family) only the days that source returned
-  const families = [["picked", "packed", "manifested", "dispatched"], ["putaway", "audit_move"]];
+  const families = [slaEvs, ["putaway", "audit_move"]];
   for (const evs of families) {
     const days = [...new Set(rows.filter((r) => evs.includes(r.event)).map((r) => r.day!))];
     if (days.length) await q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[])`, [evs, days]);
@@ -59,7 +68,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
       [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
         c.map((r) => (r.event === "putaway" || r.event === "audit_move" ? "putaway_tracking" : "warehouse_sla_performance"))]);
   }
-  return { read: rows.length, from };
+  return { read: rows.length, from, keptEdgeDays: [...stored].length };
 }
 
 /**

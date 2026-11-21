@@ -32,7 +32,7 @@ export async function seedWcmOps(S: RunQ) {
   let i = 0;
   for (const r of REVISED_IPP) for (const site of ["South", "North"] as const)
     await S(`insert into wcm_ipp (site, stream, stage, home_fn, unit, ipp, feed, version, status, effective_from, verified, note, sort)
-             values ($1,$2,$3,$4,$5,$6,$7,$8,'active','2026-10-29',false,'IPP - Targets sheet; unit / shift / calendar to confirm with Ops',$9)
+             values ($1,$2,$3,$4,$5,$6,$7,$8,'active','2026-10-29',true,'IPP - Targets sheet; units per day-equivalent (confirmed 21 Nov 2026)',$9)
              on conflict (site, stream, stage, version) do nothing`,
       [site, r.stream, r.stage, r.home, r.unit, site === "South" ? r.south : r.north, r.feed, REVISED_VERSION, i++]);
   await S(`insert into wcm_ipp (site, stream, stage, home_fn, unit, ipp, feed, version, status, effective_from, verified, note, sort)

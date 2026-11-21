@@ -73,7 +73,8 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
         </Section>
 
         <Section title="Unit economics" sub="₹ per item by month · warehouse = all warehouse cost ÷ units processed · logistics = logistics cost ÷ shipments">
-          <Economics months={econMonths} rows={[...whAttr, ...logAttr].filter((r) => r.warehouse === "All" || whs.includes(r.warehouse as Wh))} />
+          <Economics months={econMonths} rows={[...whAttr, ...logAttr].filter((r) => (r.warehouse === "All" ? wh === "Both" : whs.includes(r.warehouse as Wh)))} />
+          {wh !== "Both" && <p className="border-t border-line px-4 py-2 text-[11.5px] text-ink-4">Logistics is all-India (no site split): shown under Both only, never divided by one site&apos;s items.</p>}
         </Section>
 
         <Section open title="Levers · what-if" sub="Move volume, productivity, adherence, salary or headcount and see manpower, cost and CPI change. Not saved.">
@@ -111,7 +112,9 @@ function Drivers({ streams }: { streams: StreamBlock[] }) {
     const total = aExp == null ? null : aExp - pExp;
     return { s, pExp, aExp, volume, rate, total, residual: total == null ? null : total - (volume ?? 0) - (rate ?? 0) };
   });
-  const sum = (k: "pExp" | "aExp" | "volume" | "rate" | "total" | "residual") => rows.reduce((a, r) => a + (r[k] ?? 0), 0);
+  // total row covers only streams with an actual, so Δ = volume + rate + residual holds; the rest are listed, not summed
+  const judged = rows.filter((r) => r.total != null), skipped = rows.length - judged.length;
+  const sum = (k: "pExp" | "aExp" | "volume" | "rate" | "total" | "residual") => judged.reduce((a, r) => a + (r[k] ?? 0), 0);
   // cost drivers: + ₹ = more spend (adverse). Coloured as spend, so adverse = red.
   const tone = (v: number | null) => impactTone(v == null ? null : -v);
   return (
@@ -130,7 +133,7 @@ function Drivers({ streams }: { streams: StreamBlock[] }) {
               <td className="text-right tabular">{cpi(r.s.plannedCpi)} → {cpi(r.s.actualCpi)}</td>
             </tr>
           ))}
-          <tr className="bg-subtle/70 font-semibold"><td>Total</td><td className="text-right tabular">{inr(sum("pExp"))}</td><td className="text-right tabular">{inr(sum("aExp"))}</td>
+          <tr className="bg-subtle/70 font-semibold"><td>Total · {judged.length} streams with actuals{skipped ? <div className="text-[11px] font-normal text-ink-4">{skipped} without actuals not summed</div> : null}</td><td className="text-right tabular">{inr(sum("pExp"))}</td><td className="text-right tabular">{inr(sum("aExp"))}</td>
             <td className={cn("text-right tabular", tone(sum("total")))}>{inr(sum("total"), { sign: true })}</td><td className={cn("text-right tabular", tone(sum("volume")))}>{inr(sum("volume"), { sign: true })}</td>
             <td className={cn("text-right tabular", tone(sum("rate")))}>{inr(sum("rate"), { sign: true })}</td><td className="text-right tabular">{inr(sum("residual"), { sign: true })}</td><td /></tr>
         </tbody>
