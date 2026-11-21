@@ -63,6 +63,8 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       // warehouse stage output (picked / packed / manifested / dispatched / putaway) for the daily planner — own try, never blocks the day
       try { const { pullStageOutput } = await import("./server/wcm/feed"); const w = await pullStageOutput(); console.log(`[wcm-stage] ${w.read} rows from ${w.from}`); }
       catch (e) { console.error("[wcm-stage] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullSla } = await import("./server/wcm/feed"); const w = await pullSla(); console.log(`[wcm-sla] ${w.read} cohort rows from ${w.from}`); }
+      catch (e) { console.error("[wcm-sla] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

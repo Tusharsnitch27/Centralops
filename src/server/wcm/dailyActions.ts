@@ -7,7 +7,7 @@ import { createTask } from "../tasks/core";
 import { fail, ok, type ActionResult } from "../core/result";
 import { activeIpps, autoDeployDays, availableDe, canPlanSite, deployDays, poolKey } from "./daily";
 import { checkPool, HOME_FNS, parseTarget, stageKey, type DeployLine, type OpsSite } from "./ops";
-import { pullStageOutput } from "./feed";
+import { pullSla, pullStageOutput } from "./feed";
 
 const COVERAGE_START = "2026-10-29"; // attendance capture starts here
 const istToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
@@ -77,7 +77,7 @@ export async function refreshStageOutput(): Promise<ActionResult> {
   try {
     const u = await requireUser();
     if (!canManage(u)) throw new Error("Only admins and program managers can refresh feeds");
-    const r = await pullStageOutput();
+    const [r] = await Promise.all([pullStageOutput(), pullSla()]);
     const pools = await autoDeployDays((await deployDays()).slice(0, 10)); // output shares moved: re-split the auto pools of the last 10 days
     revalidatePath("/aop/processing/daily");
     return ok(undefined, `${r.read} day × stream × stage rows from ${r.from} · ${pools} auto pools re-split`);

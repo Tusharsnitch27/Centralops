@@ -33,6 +33,7 @@ const MAIN = [
   { key: "review", href: "/sop/review", label: "Review meeting" },
   { key: "cost", href: "/sop/cost", label: "Processing cost" },
   { key: "productivity", href: "/sop/productivity", label: "Productivity" },
+  { key: "sla", href: "/sop/sla", label: "Service levels" },
   { key: "controls", href: "/sop/controls", label: "Controls" },
 ];
 const INPUT_TABS = [

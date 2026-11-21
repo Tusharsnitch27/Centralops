@@ -61,3 +61,37 @@ export async function pullStageOutput(from = STAGE_FROM) {
   }
   return { read: rows.length, from };
 }
+
+/**
+ * Per-cohort SLA from warehouse_sla_performance → wcm_sla_daily. Cohort = created day (IST wall clock, as above).
+ * SLA deadline = TAT (1899 sentinel / blank ⇒ no deadline, counted apart). On time = DISPATCHED_TIMESTAMP1 ≤ TAT.
+ * ON_HOLD is 'false' on every row (checked 21 Nov 2026), so no hold exclusion is possible; cancelled lines are excluded.
+ * The &-columns (created&dispatch …) are same-day flags, not durations, so TAT hours are computed from the timestamps.
+ */
+export const SLA_SQL = `WITH s AS (
+  SELECT saleorderitemcode AS id, ${SITE("warehouse_name")} AS site, ${STREAM} AS stream, created_timestamp AS c,
+    "DISPATCHED_TIMESTAMP1" AS d, cancelled_timestamp AS x, IFF(tat > '2000-01-01', tat, NULL) AS t
+  FROM ${SLA} WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND created_timestamp >= TO_DATE('{from}')
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY saleorderitemcode ORDER BY last_updated DESC NULLS LAST) = 1),
+e AS (SELECT *, x IS NULL AND t IS NOT NULL AS ok FROM s)
+SELECT TO_VARCHAR(c::date, 'YYYY-MM-DD') AS day, site, stream, COUNT(*) AS lines, COUNT_IF(x IS NOT NULL) AS cancelled,
+  COUNT_IF(x IS NULL AND t IS NULL) AS no_sla, COUNT_IF(ok) AS eligible, COUNT_IF(ok AND d IS NOT NULL) AS dispatched,
+  COUNT_IF(ok AND d <= t) AS on_time, COUNT_IF(ok AND d IS NULL) AS open,
+  COUNT_IF(ok AND d IS NULL AND t < CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::timestamp_ntz) AS overdue,
+  MEDIAN(IFF(ok AND d IS NOT NULL, DATEDIFF('minute', c, d) / 60, NULL)) AS p50_h,
+  APPROX_PERCENTILE(IFF(ok AND d IS NOT NULL, DATEDIFF('minute', c, d) / 60, NULL), 0.9) AS p90_h
+FROM e WHERE site IS NOT NULL GROUP BY 1, 2, 3`;
+
+type SlaRow = { day: string; site: string; stream: string; lines: number; cancelled: number; no_sla: number; eligible: number; dispatched: number; on_time: number; open: number; overdue: number; p50_h: number | null; p90_h: number | null };
+export async function pullSla(from = STAGE_FROM) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
+  const rows = (await sfQuery<SlaRow>(SLA_SQL.replaceAll("{from}", from))).filter((r) => r.day && r.site);
+  const days = [...new Set(rows.map((r) => r.day))];
+  if (days.length) await q(`delete from wcm_sla_daily where day = any($1::date[])`, [days]);
+  const col = (k: keyof SlaRow) => rows.map((r) => (r[k] == null ? null : k === "day" || k === "site" || k === "stream" ? r[k] : Number(r[k])));
+  if (rows.length)
+    await q(`insert into wcm_sla_daily (day, site, stream, lines, cancelled, no_sla, eligible, dispatched, on_time, open, overdue, p50_h, p90_h)
+             select * from unnest($1::date[], $2::text[], $3::text[], $4::int[], $5::int[], $6::int[], $7::int[], $8::int[], $9::int[], $10::int[], $11::int[], $12::numeric[], $13::numeric[])`,
+      (["day", "site", "stream", "lines", "cancelled", "no_sla", "eligible", "dispatched", "on_time", "open", "overdue", "p50_h", "p90_h"] as const).map(col));
+  return { read: rows.length, from };
+}

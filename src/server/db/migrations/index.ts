@@ -43,6 +43,7 @@ import { sql as wcmOps } from "./076_wcm_ops";
 import { sql as wcmShift } from "./077_wcm_shift";
 import { sql as wcmAuto } from "./078_wcm_auto";
 import { sql as mpOt } from "./079_mp_ot";
+import { sql as slaDaily } from "./080_sla_daily";
 
 export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 1, name: "core", sql: core },
@@ -87,4 +88,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 77, name: "wcm_shift", sql: wcmShift },
   { version: 78, name: "wcm_auto", sql: wcmAuto },
   { version: 79, name: "mp_ot", sql: mpOt },
+  { version: 80, name: "sla_daily", sql: slaDaily },
 ];
