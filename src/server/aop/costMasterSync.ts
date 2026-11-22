@@ -21,7 +21,7 @@ const TARGETS = [
   { family: "packaging", fn: "Packaging", fields: { actual: "actual" } },
 ] as const;
 type Field = "plan" | "actual";
-export const CM_SYNC_VERSION = "v2";
+export const CM_SYNC_VERSION = "v3"; // v3: re-sync after the provisional South Oct manpower (seed.wcm_prov_2611)
 
 /** Cells an owner edited: item|period|field of the latest aop_updates row, minus the packaging engine's own writes. */
 async function ownerEdits(S: RunQ) {

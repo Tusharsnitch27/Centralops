@@ -1,6 +1,6 @@
 import "server-only";
 import { q } from "../db";
-import { computeRow, rollupStream } from "./processingMath";
+import { computeRow, rollupStream, ruleSplit } from "./processingMath";
 import { MP_HEADCOUNT } from "../wcm/math";
 import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type ProcessingMonth, type ProcRow, type StreamKey, type Wh } from "./processingTypes";
 
@@ -87,17 +87,6 @@ async function storedAssign(period: string, wh: Wh) {
     `select department, stream, process, heads::float8 as heads, status from aop_mp_assign where period = $1 and warehouse = $2`, [period, wh]);
 }
 
-/** Split each department's heads across its lines by planned MP (stored rows win). */
-function propose(lines: { stream: StreamKey; process: string; department: string; plannedMp: number | null }[], heads: Map<string, number>) {
-  const out = new Map<string, number>();
-  for (const [dept, h] of heads) {
-    const ls = lines.filter((l) => l.department === dept);
-    const tot = ls.reduce((a, l) => a + (l.plannedMp ?? 0), 0);
-    if (tot) for (const l of ls) out.set(key(l.stream, l.process), (h * (l.plannedMp ?? 0)) / tot);
-  }
-  return out;
-}
-
 /** A closed month with only a few captured days (Oct 2026: attendance starts 29 Oct) would read as a big saving — attendance is
  *  used only for the running month (MTD) or when it covers ≥ 90% of the month. */
 const usesAttendance = (period: string, dataDays: number) =>
@@ -121,7 +110,7 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
     const plan = computeRow({ targetPerDay: n.target_per_day, workingDays: n.working_days, avgSalary: n.avg_salary }, { sopProj, plannedMp, finalOutput: null, salary, actualMp: null });
     return { n, stream, s, carry, sopProj, salary, plannedMp: plan.plannedMp };
   });
-  const proposed = propose(base.map((b) => ({ stream: b.stream, process: b.n.process, department: b.n.department ?? "", plannedMp: b.plannedMp })), deptHeads);
+  const proposed = ruleSplit(warehouse, base.map((b) => ({ stream: b.stream, process: b.n.process, department: b.n.department ?? "", target: b.n.target_per_day, volume: b.s?.final_output ?? vol.actual[b.stream] ?? b.sopProj })), deptHeads);
 
   // pass 2: actuals
   const rows: ProcRow[] = base.map((b) => {
@@ -132,7 +121,7 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
     else if (useAttendance && b.n.department && deptHeads.has(b.n.department)) {
       const st = stored.find((x) => x.stream === b.stream && x.process === b.n.process && x.department === b.n.department);
       actualMp = st?.heads ?? proposed.get(k) ?? null;
-      src = st?.status === "assigned" ? "attendance" : actualMp == null ? null : "proposed";
+      src = actualMp == null ? null : st?.status === "proposed" ? "proposed" : "attendance"; // the 22 Nov rule split counts as assigned
       actualShare = share;
     }
     const c = computeRow({ targetPerDay: b.n.target_per_day, workingDays: b.n.working_days, avgSalary: b.n.avg_salary },
@@ -169,7 +158,7 @@ export async function mpAssignments(period: string, warehouse: Wh): Promise<MpAs
     const manDays = att.byDept.get(department) ?? 0, avgHeads = headsOf(manDays, att.dataDays, period, wd);
     const lines = pm.streams.flatMap((s) => s.rows).filter((r) => r.department === department).map((r) => {
       const st = stored.find((x) => x.department === department && x.stream === r.stream && x.process === r.process);
-      return { stream: r.stream, process: r.process, heads: st?.heads ?? r.actualMp ?? 0, status: st?.status ?? ("proposed" as const) };
+      return { stream: r.stream, process: r.process, heads: st?.heads ?? r.actualMp ?? 0, status: st?.status ?? ("assigned" as const) }; // rule split (22 Nov) = assigned
     });
     const assigned = lines.filter((l) => l.status === "assigned").reduce((a, l) => a + l.heads, 0);
     return { period, warehouse, department, presentManDays: manDays, workingDays: wd, avgHeads, lines, unassigned: Math.max(0, avgHeads - assigned) };

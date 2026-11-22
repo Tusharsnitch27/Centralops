@@ -240,6 +240,16 @@ export async function bootstrap(rawQ: RunQ) {
       console.log(`[seed] Storage & Handling rules: ${r.added} of ${r.heads} warehousing heads mapped (heads with an approved rule kept)`);
     } catch (e) { await rawQ("rollback"); throw e; }
   }
+  // 22 Nov 2026 (Malhar M): South Oct manpower is part-booked in the Cost Master (₹14,73,989 vs ~₹50 L Aug / Sep) — provisional
+  // 288 active heads × ₹21,983 legacy salary until Manish confirms; only while the cell still holds the Cost Master figure.
+  // Processing: the department → stream × process rule replaces the old planned-MP proposals.
+  if ((await setting("seed.wcm_prov_2611")) !== "v1" && typeof (await setting("wcm.snapshot")) === "string") {
+    await rawQ(`update wcm_source_line set amount = 6331104, cell = cell || ' · provisional: 288 heads × ₹21,983 (Cost Master ₹14,73,989; to confirm with Manish)'
+      where snapshot_id = $1 and period = '2026-10-01' and site = 'South' and family = 'manpower' and basis = 'actual' and amount = 1473989`, [(await setting("wcm.snapshot")) as string]);
+    await rawQ(`delete from aop_mp_assign where status = 'proposed'`);
+    await setSetting("seed.wcm_prov_2611", "v1");
+    console.log("[seed] South Oct manpower provisional (288 × ₹21,983); proposed processing splits cleared for the 22 Nov rule");
+  }
   // Monthly Manpower Cost / OT → functions by attendance headcount (Inward, Inventory, Housekeeping = Storage & handling)
   if ((await setting("seed.wcm_mp_rules")) !== "v1" && typeof (await setting("wcm.snapshot")) === "string") {
     const { seedManpowerRules } = await import("../wcm/shRules");
