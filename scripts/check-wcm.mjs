@@ -2,7 +2,7 @@
 // node --experimental-strip-types scripts/check-wcm.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { rate, rollup, sliceLine, splitPaise, checkSlices, toPaise } from "../src/server/wcm/math.ts";
+import { rate, rollup, sliceLine, splitPaise, checkSlices, toPaise, manpowerSlices, MP_HEADCOUNT } from "../src/server/wcm/math.ts";
 
 const L = (id, family, amount, extra = {}) => ({ id, period: "2026-10-01", basis: "actual", site: "South", family, head: family === "ot" ? "Monthly OT" : "Monthly Manpower Cost", channel: null, amount, cell: id, ...extra });
 const R = (id, family, head, slices, extra = {}) => ({ id, family, head, site: "*", from: "2026-04-01", to: null, slices, status: "approved", ...extra });
@@ -58,6 +58,18 @@ for (const site of ["South", "North", "Both"]) {
   assert.equal(sh.shared, wb(site, "warehousing"), `Oct ${site} Storage & handling = tab warehousing row`);
   assert.equal(sh.unallocated, sh.source - sh.shared, `Oct ${site} only manpower / OT left open`);
   assert.equal(sh.unallocated, book("2026-10-01", site).filter((l) => l.family !== "warehousing").reduce((x, l) => x + toPaise(l.amount ?? 0), 0));
+}
+// Manpower / OT by department headcount (22 Nov 2026): with them nothing is left open; Storage & handling gets the warehousing row
+// plus the Inward + Inventory + Housekeeping share of booked manpower + OT, and every slice set adds up to 100 %.
+for (const site of ["South", "North"]) assert.ok(Math.abs(manpowerSlices(site).reduce((a, s) => a + s.share, 0) - 1) < 1e-12, `${site} manpower shares sum to 100 %`);
+const mpRules = ["South", "North"].flatMap((site) => [["manpower", "Monthly Manpower Cost"], ["ot", "Monthly OT"]].map(([f, h]) => R(`mp${site}${f}`, f, h, manpowerSlices(site), { site })));
+for (const site of ["South", "North"]) {
+  const ls = book("2026-10-01", site), all = run(ls, [...shRules, ...mpRules]);
+  assert.equal(all.unallocated, 0, `Oct ${site}: nothing left open`);
+  const hc = MP_HEADCOUNT[site], shShare = (hc.Inward + hc.Inventory + (hc["Ops · Housekeeping"] ?? 0)) / Object.values(hc).reduce((a, n) => a + n, 0);
+  const mp = ls.filter((l) => l.family !== "warehousing").reduce((x, l) => x + toPaise(l.amount ?? 0), 0);
+  const sh = ls.flatMap((l) => sliceLine(l, [...shRules, ...mpRules])).filter((x) => x.fn === "Storage & handling").reduce((a, x) => a + x.paise, 0);
+  assert.ok(Math.abs(sh - wb(site, "warehousing") - mp * shShare) <= 2, `Oct ${site} S&H = warehousing + ${(shShare * 100).toFixed(1)} % of manpower`);
 }
 const jul = run(book("2026-07-01", "Both"), []);
 assert.equal(jul.source, toPaise(4591195)); // known Warehousing actuals

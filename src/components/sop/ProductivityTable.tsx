@@ -28,9 +28,9 @@ export function ProductivityTable({ wh, lines }: { wh: string; lines: MpLine[] }
           <tr>
             <th>{wh} · function</th>
             <th className="text-right">Heads / day</th>
-            <th className="text-right" title="Standard units per head per day (Standards tab)">Std / head</th>
+            <th className="text-right" title="Units per head per day: the Standards tab when set, else the IPP master (1 ÷ Σ 1/IPP over the department’s stages)">Std / head</th>
             <th className="text-right">Actual capacity / day</th>
-            <th className="text-right" title="Required per day in Capacity planning">Plan required</th>
+            <th className="text-right" title="Required per day: Capacity planning when entered, else the S&OP projection for the month ÷ days">Plan required</th>
             <th className="text-right" title="Actual capacity ÷ plan required">Cover</th>
             <th className="text-right">Output / day</th>
             <th className="text-right" title="Output ÷ actual capacity, on days with both">Achieved</th>
@@ -49,9 +49,9 @@ export function ProductivityTable({ wh, lines }: { wh: string; lines: MpLine[] }
                     <div className="pl-5 text-[11px] text-ink-4">{l.source ?? "no output feed — heads & capacity only"}{l.covers.length > 1 && <> · plan = {l.covers.join(" + ")}</>}</div>
                   </td>
                   <td className="text-right tabular">{n(l.headsAvg)}</td>
-                  <td className={cn("text-right tabular", l.rateNow == null && l.department !== "Ops & Logistics" && "text-warn")}>{l.department === "Ops & Logistics" ? "—" : l.rateNow == null ? "set" : n(l.rateNow)}</td>
+                  <td className={cn("text-right tabular", l.rateNow == null && l.department !== "Ops & Logistics" && "text-warn")}>{l.department === "Ops & Logistics" ? "—" : l.rateNow == null ? "no IPP" : <>{n(l.rateNow)}{l.rateFromIpp && <div className="text-[10.5px] text-ink-4">IPP</div>}</>}</td>
                   <td className="text-right tabular font-medium">{n(l.capDay)}</td>
-                  <td className="text-right tabular text-ink-3">{n(l.required)}</td>
+                  <td className="text-right tabular text-ink-3">{l.required == null && l.department !== "Ops & Logistics" ? <span className="text-[11px] text-ink-4">no projection</span> : n(l.required)}{l.projected && <div className="text-[10.5px] text-ink-4">S&amp;OP projection</div>}</td>
                   <td className={cn("text-right tabular", coverTone(l.cover))}>{pc(l.cover)}</td>
                   <td className="text-right tabular">{n(l.outDay)}</td>
                   <td className={cn("text-right tabular", achTone(l.ach))}>{pc(l.ach)}</td>

@@ -240,6 +240,17 @@ export async function bootstrap(rawQ: RunQ) {
       console.log(`[seed] Storage & Handling rules: ${r.added} of ${r.heads} warehousing heads mapped (heads with an approved rule kept)`);
     } catch (e) { await rawQ("rollback"); throw e; }
   }
+  // Monthly Manpower Cost / OT → functions by attendance headcount (Inward, Inventory, Housekeeping = Storage & handling)
+  if ((await setting("seed.wcm_mp_rules")) !== "v1" && typeof (await setting("wcm.snapshot")) === "string") {
+    const { seedManpowerRules } = await import("../wcm/shRules");
+    await rawQ("begin");
+    try {
+      const r = await seedManpowerRules(rawQ, (await setting("wcm.snapshot")) as string);
+      await setSetting("seed.wcm_mp_rules", "v1");
+      await rawQ("commit");
+      console.log(`[seed] Manpower / OT rules: ${r.added} of ${r.heads} site heads split by department headcount`);
+    } catch (e) { await rawQ("rollback"); throw e; }
+  }
   // Cost Master → AOP Warehousing / Manpower / Packaging lines, once per snapshot (owner-edited cells kept; see costMasterSync.ts)
   const wcmSnap = await setting("wcm.snapshot");
   const { CM_SYNC_VERSION } = await import("../aop/costMasterSync");

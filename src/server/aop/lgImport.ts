@@ -1,6 +1,6 @@
 import "server-only";
 import * as XLSX from "xlsx";
-import { tx } from "../db";
+import { tx, type Tx } from "../db";
 import { logActivity } from "../core/activity";
 
 /**
@@ -65,6 +65,7 @@ export async function loadLogistics(actorId: string, kind: "b2c" | "b2b", fileNa
   const source = `${fileName} · ${new Date().toISOString().slice(0, 10)}`;
   if (kind === "b2c") {
     const b = parseB2c(buf);
+    let filled = 0;
     if (!b.length) throw new Error("No courier rows found in RAW");
     await tx(async (t) => {
       await t.q(`delete from lg_b2c_month`);
@@ -72,8 +73,9 @@ export async function loadLogistics(actorId: string, kind: "b2c" | "b2b", fileNa
                  select $1, m::date, c, ty, a, co, q, ce from unnest($2::text[], $3::text[], $4::text[], $5::numeric[], $6::numeric[], $7::numeric[], $8::text[]) as x(m, c, ty, a, co, q, ce)`,
         [source, b.map((r) => r.month), b.map((r) => r.courier), b.map((r) => r.type), b.map((r) => r.awbs), b.map((r) => r.cost), b.map((r) => r.qty), b.map((r) => r.cell)]);
       await logActivity({ actorId, entityType: "aop_section", entityId: null, action: "logistics_b2c_loaded", from: null, to: { source, rows: b.length }, summary: `Logistics B2C working file loaded: ${b.length} courier-month rows (${fileName})` }, t);
+      filled = await fillB2cActuals(t, actorId, source);
     });
-    return { rows: b.length, amount: b.reduce((a, r) => a + (r.cost ?? 0), 0) };
+    return { rows: b.length, amount: b.reduce((a, r) => a + (r.cost ?? 0), 0), filled };
   }
   const L = parseB2b(buf);
   if (!L.length) throw new Error("No LR rows found in DATA");
@@ -89,4 +91,39 @@ export async function loadLogistics(actorId: string, kind: "b2c" | "b2b", fileNa
     await logActivity({ actorId, entityType: "aop_section", entityId: null, action: "logistics_b2b_loaded", from: null, to: { source, rows: L.length }, summary: `Logistics B2B working file loaded: ${L.length} LRs (${fileName})` }, t);
   });
   return { rows: L.length, amount: L.reduce((a, r) => a + (r.freight ?? 0), 0) };
+}
+
+/**
+ * AOP › Logistics › B2C actuals the file can fill: an EMPTY actual cell only (a booked or owner figure is never overwritten).
+ * Line → courier and shipment types, each checked against months where both the AOP actual and the file exist (Aug–Oct 2026,
+ * to the rupee): e.g. Shadowfax = FWD + RTO (its DTO is booked separately), Bluedart RVP = Bluedart DTO.
+ */
+const B2C_LINES: { line: string; courier: string; types: string[] | null }[] = [
+  { line: "Shadowfax", courier: "Shadowfax", types: ["FWD", "RTO"] },
+  { line: "Bluedart", courier: "Bluedart", types: ["FWD", "RTO"] },
+  { line: "Bluedart RVP", courier: "Bluedart", types: ["DTO"] },
+  { line: "Delhivery", courier: "Delhivery", types: null },
+  { line: "Instakart Pvt Ltd (eKart)", courier: "Ekart", types: null },
+  { line: "Prozo", courier: "Prozo", types: null },
+  { line: "Bigfoot (Shiprocket)", courier: "Shiprocket", types: null },
+];
+async function fillB2cActuals(t: Tx, actorId: string, source: string) {
+  let n = 0; const Q = t.q;
+  for (const m of B2C_LINES) {
+    const cells = await Q<{ item_id: string; period: string; cost: number }>(
+      `select i.id as item_id, x.month::text as period, x.cost::float8 as cost
+         from aop_items i join aop_sections s on s.id = i.section_id and s.name = 'B2C' join aop_sections f on f.id = s.parent_id and f.name = 'Logistics'
+         join aop_cycles c on c.id = i.cycle_id and c.status = 'active'
+         join (select month, sum(cost) as cost from lg_b2c_month where courier = $2 and ($3::text[] is null or type = any($3::text[])) and cost is not null group by 1) x
+           on x.month >= c.fy_start and x.month < c.fy_start + make_interval(months => c.months)
+         left join aop_period_values v on v.item_id = i.id and v.period = x.month
+        where i.name = $1 and v.actual is null`, [m.line, m.courier, m.types]);
+    for (const c of cells) {
+      await Q(`insert into aop_period_values (item_id, period, actual) values ($1, $2, $3) on conflict (item_id, period) do update set actual = excluded.actual where aop_period_values.actual is null`, [c.item_id, c.period, c.cost]);
+      await logActivity({ actorId, entityType: "aop_item", entityId: c.item_id, action: "actual_from_logistics_file", from: null, to: { period: c.period, actual: c.cost },
+        summary: `${m.line} ${c.period.slice(0, 7)} actual from the B2C partner file (${m.courier}${m.types ? ` ${m.types.join(" + ")}` : ""}, ${source})` }, t);
+      n++;
+    }
+  }
+  return n;
 }

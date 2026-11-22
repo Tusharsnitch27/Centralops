@@ -18,9 +18,32 @@ export const FAMILY_LABEL: Record<Family, string> = { warehousing: "Warehousing"
 export const FUNCTIONS = [
   "Storage & handling", "Storage & space", "Residual overhead", "Inward", "Forward processing", "Returns", "Inventory control", "Ad-hoc handling",
   "VAS (ironing, washing, relabelling)", "Packaging",
+  "B2C forward", "B2B forward", "B2C returns", "B2B returns", "Dispatch & loading", "Site overhead (admin, security, ops)", // manpower by department (shRules.ts)
 ] as const;
 /** Warehouse / customer channels. "Q-Com" only where evidence supports it. */
 export const CHANNELS = ["B2C Shopify", "B2C Marketplace", "B2B Retail", "B2B Marketplace", "Q-Com"] as const;
+
+/**
+ * Monthly Manpower Cost / Monthly OT → functions by attendance headcount (Malhar M, 22 Nov 2026): Inward, Inventory and
+ * Housekeeping are Storage & handling; every other department carries its own share. Basis = active employees by department in
+ * the attendance app's employee master export of 22 Nov 2026 (designation used where it is specific — Housekeeping / Security in
+ * Ops — else the department). South = WH1 + WH2. Counts only; no employee data is stored.
+ */
+export const MP_HEADCOUNT: Record<"South" | "North", Record<string, number>> = {
+  North: { Inward: 28, Inventory: 50, "Ops · Housekeeping": 13, "B2C Forward": 74, "B2B Forward": 63, "B2C Return": 43, "B2B Return": 20, Logistics: 14, Admin: 5, "Ops · Security": 12, Ops: 1 },
+  South: { Inward: 28, Inventory: 16, "B2C Forward": 71, "B2B Forward": 87, "B2C Return": 24, "B2B Return": 30, Ops: 32 },
+};
+export const DEPT_FN: Record<string, string> = {
+  Inward: "Storage & handling", Inventory: "Storage & handling", "Ops · Housekeeping": "Storage & handling",
+  "B2C Forward": "B2C forward", "B2B Forward": "B2B forward", "B2C Return": "B2C returns", "B2B Return": "B2B returns",
+  Logistics: "Dispatch & loading", Admin: "Site overhead (admin, security, ops)", "Ops · Security": "Site overhead (admin, security, ops)", Ops: "Site overhead (admin, security, ops)",
+};
+export function manpowerSlices(site: "South" | "North") {
+  const hc = MP_HEADCOUNT[site], total = Object.values(hc).reduce((a, n) => a + n, 0), by = new Map<string, number>();
+  for (const [d, n] of Object.entries(hc)) by.set(DEPT_FN[d]!, (by.get(DEPT_FN[d]!) ?? 0) + n);
+  return [...by].map(([fn, n]) => ({ fn, channel: null, shared: true, share: n / total }));
+}
+
 
 export interface SourceLine {
   id: string; period: string; basis: Basis; site: Site; family: Family; head: string;

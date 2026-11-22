@@ -1,6 +1,7 @@
 import "server-only";
 import { q } from "../db";
 import { computeRow, rollupStream } from "./processingMath";
+import { MP_HEADCOUNT } from "../wcm/math";
 import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type ProcessingMonth, type ProcRow, type StreamKey, type Wh } from "./processingTypes";
 
 /**
@@ -190,8 +191,8 @@ export async function proposeAssignments(period: string, warehouse: Wh) {
 
 /**
  * Warehouse cost by channel: every AOP Warehousing & Fulfilment line (rent, utilities, security, repairs, ironing, …) and the
- * overhead departments' heads (Ops, Logistics, Admin) → "Shared · Storage & handling"; channel manpower → its channel by process
- * (Inward / Inventory streams → Shared with their own process).
+ * Inward / Inventory manpower and housekeeping → "Shared · Storage & handling"; Logistics → "Shared · Dispatch & loading"; Admin and the
+ * rest of Ops → "Shared · Site overhead"; channel manpower → its channel by process.
  */
 /** AOP lines the Cost Master sync adds for booked manpower (costMasterSync.ts). */
 const MP_LINES = ["Monthly Manpower Cost", "Monthly OT"];
@@ -221,10 +222,16 @@ export async function warehouseAttribution(months: string[]): Promise<Attributio
     const att = await attendance(period, wh);
     const salary = pm.streams.flatMap((s) => s.rows).find((r) => r.avgSalary != null && r.process !== "Capacity")?.avgSalary ?? null;
     const wd = pm.streams[0]?.rows[0]?.workingDays ?? 23;
+    // Housekeeping is Storage & handling; Logistics, Admin and the rest of Ops carry their own (Malhar M, 22 Nov 2026). The attendance
+    // feed has Ops as one department, so its housekeeping part is the employee master's housekeeping share of Ops.
+    const hc = MP_HEADCOUNT[wh], opsAll = (hc.Ops ?? 0) + (hc["Ops · Housekeeping"] ?? 0) + (hc["Ops · Security"] ?? 0), hk = opsAll ? (hc["Ops · Housekeeping"] ?? 0) / opsAll : 0;
     for (const [dept, manDays] of att.byDept) {
       if (!(OVERHEAD_DEPTS as readonly string[]).includes(dept) || salary == null) continue;
-      mp.push({ period, warehouse: wh, family: "warehouse", channel: "Shared", process: "Storage & handling", amount: (manDays * salary) / wd, basis: "direct",
-        key: `${dept} heads · ${Math.round(manDays)} man-days × ₹${Math.round(salary)} ÷ ${wd}`, units: null, cpi: null });
+      const amt = (manDays * salary) / wd, key = `${dept} heads · ${Math.round(manDays)} man-days × ₹${Math.round(salary)} ÷ ${wd}`;
+      const parts: [string, number][] = dept === "Logistics" ? [["Dispatch & loading", 1]] : dept === "Admin" ? [["Site overhead", 1]]
+        : hk ? [["Storage & handling", hk], ["Site overhead", 1 - hk]] : [["Site overhead", 1]];
+      for (const [process, f] of parts) mp.push({ period, warehouse: wh, family: "warehouse", channel: "Shared", process, amount: amt * f, basis: "direct",
+        key: f < 1 ? `${key} · ${Math.round(f * 100)} % ${process === "Storage & handling" ? "housekeeping" : "security / ops"} (employee master)` : key, units: null, cpi: null });
     }
     // channel manpower
     for (const s of pm.streams) for (const r of s.rows) {
@@ -234,7 +241,8 @@ export async function warehouseAttribution(months: string[]): Promise<Attributio
       const basis = actual && r.actualMpSource !== "proposed" ? "direct" : "allocated";
       const why = !actual ? "planned MP (no actual yet)" : r.actualMpSource === "sheet" ? "sheet deployed MP" : r.actualMpSource === "attendance" ? "attendance, assigned" : "attendance, proposed split by planned MP — awaiting assignment";
       const units = actual ? r.finalOutput : r.sopProj;
-      mp.push({ period, warehouse: wh, family: "warehouse", channel: s.channel, process: r.process, amount, basis, key: `${s.stream} · ${why}`, units, cpi: units ? amount / units : null });
+      // Inward and Inventory manpower is Storage & handling (22 Nov 2026)
+      mp.push({ period, warehouse: wh, family: "warehouse", channel: s.channel, process: s.channel === "Shared" ? "Storage & handling" : r.process, amount, basis, key: `${s.stream} · ${r.process} · ${why}`, units, cpi: units ? amount / units : null });
     }
     const est = mp.reduce((a, r) => a + r.amount, 0);
     if (booked != null && est > 0) {

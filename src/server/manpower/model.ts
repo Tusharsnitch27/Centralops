@@ -16,16 +16,16 @@ export const ACH_BAND = 0.2;
  *  - Inventory = shelf transfer, CC, audit, return putaway… — only return putaway has a feed, so that is its measured output.
  *  - Ops (loading, unloading, housekeeping) and Logistics are overhead: heads only, not in achieved %. Admin isn't counted.
  */
-export interface Func { name: string; output: string | null; match: ((feed: string, label: string) => boolean) | null; covers: (capDept: string) => boolean }
+export interface Func { name: string; output: string | null; match: ((feed: string, label: string) => boolean) | null; covers: (capDept: string) => boolean; projects: string[] } // projects = S&OP stream codes
 export const SUPPORT = "Ops & Logistics";
 export const FUNCS: Func[] = [
-  { name: "Inward", output: "Putaway (category inward)", match: (f) => f === "category_inward", covers: (d) => /inward|put.?away/i.test(d) },
-  { name: "B2C Forward", output: "B2C dispatch (Shopify + marketplaces)", match: (f) => f === "b2c", covers: (d) => /forward/i.test(d) && !/b2b/i.test(d) },
-  { name: "B2B Forward", output: "B2B marketplace + retail dispatch", match: (f) => f === "b2b_mp" || f === "retail", covers: (d) => /forward/i.test(d) && /b2b/i.test(d) },
-  { name: "B2C Return", output: "B2C returns", match: (f, l) => f === "returns" && !isB2BReturn(l), covers: (d) => /return/i.test(d) && !/b2b|store/i.test(d) },
-  { name: "B2B Return", output: "B2B / store returns", match: (f, l) => f === "returns" && isB2BReturn(l), covers: (d) => /return/i.test(d) && /b2b|store/i.test(d) },
-  { name: "Inventory", output: "Return putaway (shelf transfer / CC / audit have no feed)", match: (f) => f === "returns", covers: (d) => /inventory|audit|\bcc\b/i.test(d) },
-  { name: SUPPORT, output: null, match: null, covers: () => false },
+  { name: "Inward", output: "Putaway (category inward)", match: (f) => f === "category_inward", covers: (d) => /inward|put.?away/i.test(d), projects: ["inbound-category-wise"] },
+  { name: "B2C Forward", output: "B2C dispatch (Shopify + marketplaces)", match: (f) => f === "b2c", covers: (d) => /forward/i.test(d) && !/b2b/i.test(d), projects: ["b2c-sf", "b2c-mp"] },
+  { name: "B2B Forward", output: "B2B marketplace + retail dispatch", match: (f) => f === "b2b_mp" || f === "retail", covers: (d) => /forward/i.test(d) && /b2b/i.test(d), projects: ["b2b-mp", "retail-forward"] },
+  { name: "B2C Return", output: "B2C returns", match: (f, l) => f === "returns" && !isB2BReturn(l), covers: (d) => /return/i.test(d) && !/b2b|store/i.test(d), projects: [] },
+  { name: "B2B Return", output: "B2B / store returns", match: (f, l) => f === "returns" && isB2BReturn(l), covers: (d) => /return/i.test(d) && /b2b|store/i.test(d), projects: ["retail-return"] },
+  { name: "Inventory", output: "Return putaway (shelf transfer / CC / audit have no feed)", match: (f) => f === "returns", covers: (d) => /inventory|audit|\bcc\b/i.test(d), projects: [] },
+  { name: SUPPORT, output: null, match: null, covers: () => false, projects: [] },
 ];
 export const FUNC_NAMES = FUNCS.map((f) => f.name);
 /** A new name from the attendance app → our function, when it is obvious. */
@@ -41,7 +41,7 @@ export interface MpDay { day: string; heads: number; rate: number | null; cap: n
 export interface MpLine {
   department: string; warehouse: Wh; source: string | null; covers: string[];
   headsAvg: number | null; rateNow: number | null; capDay: number | null; outDay: number | null; ach: number | null; uph: number | null;
-  required: number | null; available: number | null; cover: number | null;
+  required: number | null; available: number | null; cover: number | null; projected: boolean; rateFromIpp: boolean;
   under: number; over: number; judged: number; days: MpDay[];
 }
 export interface RateRow { department: string; warehouse: Wh; effective_from: string; units_per_head: number; note: string | null; by: string | null }
@@ -76,6 +76,27 @@ export async function productivity(period: string) {
       `select department, warehouse, required::float8, available::float8 from sop_capacity where period = $1`, [period]),
     listRates(),
   ]);
+  const [ipps, proj] = await Promise.all([
+    q<{ site: Wh; version: string; eff: string; home_fn: string | null; stream: string; ipp: number }>(
+      `select site, version, effective_from::text as eff, home_fn, stream, ipp::float8 as ipp from wcm_ipp where status = 'active' and unit = 'unit' and ipp > 0`),
+    q<{ code: string; wh: Wh; v: number }>(
+      `select s.code, v.dimension as wh, sum(coalesce(v.revised_projection, v.projection))::float8 as v from sop_values v join sop_lines l on l.id = v.line_id
+        join sop_streams s on s.id = l.stream_id where v.period = $1 and v.dimension in ('South','North') and l.metric <> 'orders' group by 1, 2`, [period]),
+  ]);
+  const nDays = Number(monthEnd(period).slice(8, 10));
+  // Standard = the IPP master when no manual standard is set (Malhar, 22 Nov): per stream, one unit passes every stage of the
+  // department, so units / head / day = 1 ÷ Σ(1 ÷ IPP); the department's figure is the mean over its streams. Months before the
+  // first IPP version use the earliest one.
+  const ippStd = (dept: string, wh: Wh, day: string) => {
+    const vs = ipps.filter((r) => r.site === wh).sort((a, b) => a.eff.localeCompare(b.eff) || a.version.localeCompare(b.version));
+    const v = (vs.filter((r) => r.eff <= day).at(-1) ?? vs[0])?.version;
+    const per = new Map<string, number>();
+    for (const r of vs) if (r.version === v && r.home_fn === dept) per.set(r.stream, (per.get(r.stream) ?? 0) + 1 / r.ipp);
+    return per.size ? [...per.values()].reduce((a, x) => a + 1 / x, 0) / per.size : null;
+  };
+  const stdOn = (dept: string, wh: Wh, day: string) => rateOn(rates, dept, wh, day) ?? ippStd(dept, wh, day);
+  // Plan required = Capacity planning when the warehouse entered it, else the S&OP projection for the month ÷ days
+  const projDay = (codes: string[], wh: Wh) => { const xs = proj.filter((p) => p.wh === wh && codes.includes(p.code)); return xs.length ? xs.reduce((a, p) => a + p.v, 0) / nDays : null; };
   const days: string[] = [];
   for (let t = Date.parse(`${period}T00:00:00Z`); t <= Date.parse(`${to}T00:00:00Z`); t += 864e5) days.push(new Date(t).toISOString().slice(0, 10));
   const hasOut = new Set(out.map((o) => o.day));
@@ -87,10 +108,12 @@ export async function productivity(period: string) {
     // plan required / available = the capacity departments this function covers
     const ps = plan.filter((x) => x.warehouse === wh && fn.covers(x.department));
     const covered = ps.map((x) => x.department);
-    const p = ps.length ? { required: ps.some((x) => x.required != null) ? ps.reduce((a, x) => a + (x.required ?? 0), 0) : null, available: ps.some((x) => x.available != null) ? ps.reduce((a, x) => a + (x.available ?? 0), 0) : null } : null;
+    const pr = fn.projects.length ? projDay(fn.projects, wh) : null;
+    const p = ps.length ? { required: ps.some((x) => x.required != null) ? ps.reduce((a, x) => a + (x.required ?? 0), 0) : null, available: ps.some((x) => x.available != null) ? ps.reduce((a, x) => a + (x.available ?? 0), 0) : null, projected: false }
+      : pr != null ? { required: pr, available: null, projected: true } : null;
     const dl: MpDay[] = days.map((day) => {
       const h = heads.filter((x) => x.day === day && x.department === department && x.warehouse === wh).reduce((a, x) => a + x.heads, 0);
-      const rate = rateOn(rates, department, wh, day);
+      const rate = stdOn(department, wh, day);
       const o = rule && hasOut.has(day) ? out.filter((x) => x.day === day && x.region === wh.toLowerCase() && rule.match(x.feed, x.label)).reduce((a, x) => a + x.units, 0) : null;
       const cap = h > 0 && rate != null ? h * rate : null;
       return { day, heads: h, rate, cap, out: o, ach: cap && o != null ? o / cap : null };
@@ -105,12 +128,12 @@ export async function productivity(period: string) {
     lines.push({
       department, warehouse: wh, source: rule?.text ?? (department === SUPPORT ? "loading / unloading / housekeeping + logistics — overhead, not in achieved %" : null), covers: covered,
       headsAvg: worked.length ? worked.reduce((a, d) => a + d.heads, 0) / worked.length : null,
-      rateNow: rateOn(rates, department, wh, to),
+      rateNow: stdOn(department, wh, to), rateFromIpp: rateOn(rates, department, wh, to) == null && stdOn(department, wh, to) != null,
       capDay,
       outDay: outDays.length ? outDays.reduce((a, d) => a + d.out!, 0) / outDays.length : null,
       ach: sCap > 0 ? sOut / sCap : null,
       uph: outDays.length ? outDays.reduce((a, d) => a + d.out!, 0) / outDays.reduce((a, d) => a + d.heads, 0) : null,
-      required: p?.required ?? null, available: p?.available ?? null,
+      required: p?.required ?? null, available: p?.available ?? null, projected: p?.projected ?? false,
       cover: capDay != null && p?.required ? capDay / p.required : null,
       under: judgedDays.filter((d) => d.ach! < 1 - ACH_BAND).length, over: judgedDays.filter((d) => d.ach! > 1 + ACH_BAND).length, judged: judgedDays.length,
       days: dl,
