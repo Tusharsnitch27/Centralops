@@ -60,8 +60,37 @@ export function parseB2b(buf: ArrayBuffer): LrRow[] {
   return [...sheet(wb, "DATA").map((r, i) => lr("DATA", r, i)), ...own].filter((r) => r.partner);
 }
 
+export interface RvpRow { month: string; partner: string; flow: string; lrs: number | null; boxes: number | null; qty: number | null; amount: number | null; logistic: number | null; adhoc: number | null; kg: number | null; cell: string }
+/**
+ * "B2B & MP _ rvp costing": the Summary tab's partner blocks — a header row (partner name, then LR count, box, qty, pre-GST ₹,
+ * logistic bill, ad-hoc bill, weight) followed by one row per month until "Grand Total". The MP block = marketplace shipments,
+ * the rest = store returns (RVP). The raw tabs behind it are not re-added: the Summary is the file's own control.
+ */
+export function parseRvp(buf: ArrayBuffer): RvpRow[] {
+  const wb = XLSX.read(new Uint8Array(buf), { type: "array" });
+  const ws = wb.Sheets.Summary;
+  if (!ws) throw new Error(`Sheet "Summary" not found (sheets: ${wb.SheetNames.join(", ")})`);
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: "" });
+  const out: RvpRow[] = [];
+  let partner: string | null = null;
+  rows.forEach((r, i) => {
+    const a = String(r[0] ?? "").trim(), b = String(r[1] ?? "").trim();
+    if (a && /lr/i.test(b)) { partner = a; return; }
+    if (!partner) return;
+    if (!a || /grand total/i.test(a)) { if (/grand total/i.test(a)) partner = null; return; }
+    let m: string;
+    try { m = month(a); } catch { return; }
+    const mp = /^mp[^a-z]/i.test(partner);
+    out.push({ month: m, partner: mp ? "Movemate / Ekart (MP)" : partner[0] + partner.slice(1).toLowerCase(), flow: mp ? "Marketplace shipments" : "Store returns (RVP)",
+      lrs: num(r[1]), boxes: num(r[2]), qty: num(r[3]), amount: num(r[4]), logistic: num(r[5]), adhoc: num(r[6]), kg: num(r[7]), cell: `Summary!A${i + 1}` });
+  });
+  const seen = new Set<string>();
+  for (const r of out) { const k = `${r.month}|${r.partner}`; if (seen.has(k)) throw new Error(`Duplicate ${r.partner} for ${r.month} (${r.cell})`); seen.add(k); }
+  return out;
+}
+
 /** Replace one dataset in a single transaction; returns what was loaded (rows, ₹) so the upload can be checked against the file. */
-export async function loadLogistics(actorId: string, kind: "b2c" | "b2b", fileName: string, buf: ArrayBuffer) {
+export async function loadLogistics(actorId: string, kind: "b2c" | "b2b" | "rvp", fileName: string, buf: ArrayBuffer) {
   const source = `${fileName} · ${new Date().toISOString().slice(0, 10)}`;
   if (kind === "b2c") {
     const b = parseB2c(buf);
@@ -76,6 +105,19 @@ export async function loadLogistics(actorId: string, kind: "b2c" | "b2b", fileNa
       filled = await fillB2cActuals(t, actorId, source);
     });
     return { rows: b.length, amount: b.reduce((a, r) => a + (r.cost ?? 0), 0), filled };
+  }
+  if (kind === "rvp") {
+    const v = parseRvp(buf);
+    if (!v.length) throw new Error("No partner-month rows found in Summary");
+    await tx(async (t) => {
+      await t.q(`delete from lg_rvp_month`);
+      await t.q(`insert into lg_rvp_month (source, month, partner, flow, lrs, boxes, qty, amount, logistic, adhoc, kg, cell)
+                 select $1, m::date, p, f, l, b, q, a, lo, ad, k, c from unnest($2::text[], $3::text[], $4::text[], $5::numeric[], $6::numeric[], $7::numeric[], $8::numeric[], $9::numeric[], $10::numeric[], $11::numeric[], $12::text[])
+                   as x(m, p, f, l, b, q, a, lo, ad, k, c)`,
+        [source, v.map((r) => r.month), v.map((r) => r.partner), v.map((r) => r.flow), v.map((r) => r.lrs), v.map((r) => r.boxes), v.map((r) => r.qty), v.map((r) => r.amount), v.map((r) => r.logistic), v.map((r) => r.adhoc), v.map((r) => r.kg), v.map((r) => r.cell)]);
+      await logActivity({ actorId, entityType: "aop_section", entityId: null, action: "logistics_rvp_loaded", from: null, to: { source, rows: v.length }, summary: `Logistics B2B RVP & MP file loaded: ${v.length} partner-month rows (${fileName})` }, t);
+    });
+    return { rows: v.length, amount: v.reduce((a, r) => a + (r.amount ?? 0), 0) };
   }
   const L = parseB2b(buf);
   if (!L.length) throw new Error("No LR rows found in DATA");

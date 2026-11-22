@@ -27,16 +27,20 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const u = await requireUser();
   const [cycles, cycle, all, cats, src] = await Promise.all([listCycles(), resolveCycle(sp.cycle), lgMonths(), b2bCategories(),
-    q<{ k: string; s: string | null }>(`select 'b2c' as k, max(source) as s from lg_b2c_month union all select 'b2b', max(source) from lg_b2b_lr`)]);
-  const upload = canManage(u) ? <LogisticsUpload loaded={{ b2c: src.find((x) => x.k === "b2c")?.s ?? null, b2b: src.find((x) => x.k === "b2b")?.s ?? null }} /> : null;
+    q<{ k: string; s: string | null }>(`select 'b2c' as k, max(source) as s from lg_b2c_month union all select 'b2b', max(source) from lg_b2b_lr union all select 'rvp', max(source) from lg_rvp_month`)]);
+  const upload = canManage(u) ? <LogisticsUpload loaded={{ b2c: src.find((x) => x.k === "b2c")?.s ?? null, b2b: src.find((x) => x.k === "b2b")?.s ?? null, rvp: src.find((x) => x.k === "rvp")?.s ?? null }} /> : null;
   const header = <AopHeader active="logistics" cycleId={cycle?.id ?? null} cycles={cycles} title="Logistics"
     subtitle="Courier and B2B freight from the working files (Apr–Oct 2026, billed before credit notes), against dispatch volume. Every ratio is Σ₹ ÷ Σunits." />;
-  if (!all.length) return <div className="animate-fade-in">{header}<div className="card"><EmptyState title="No logistics working files loaded" body="An admin or PM loads the B2C partner file and the B2B LR file here." /></div>{upload}</div>;
+  if (!all.length) return <div className="animate-fade-in">{header}<div className="card"><EmptyState title="No logistics working files loaded" body="An admin or PM loads the B2C partner file, the B2B LR file and the B2B RVP & MP file here." /></div>{upload}</div>;
   const site: LgSite = sp.site === "South" || sp.site === "North" ? sp.site : "Both";
   const cat = sp.cat && cats.includes(sp.cat) ? sp.cat : null;
   const months = sp.month && all.includes(sp.month) ? [sp.month] : all;
   const href = (o: Partial<SP>) => `/aop/logistics?${new URLSearchParams(Object.entries({ cycle: sp.cycle, site, cat: cat ?? undefined, month: sp.month, ...o }).filter(([, v]) => v) as [string, string][])}`;
 
+  const rvp = await q<{ month: string; partner: string; flow: string; lrs: number | null; boxes: number | null; qty: number | null; amount: number | null; adhoc: number | null; kg: number | null }>(
+    `select month::text as month, partner, flow, lrs::float8 as lrs, boxes::float8 as boxes, qty::float8 as qty, amount::float8 as amount, adhoc::float8 as adhoc, kg::float8 as kg
+     from lg_rvp_month where month = any($1::date[]) order by flow, partner, month`, [all]);
+  const rvpPartners = [...new Set(rvp.map((r) => `${r.flow}|${r.partner}`))];
   const [b2c, byMonth, byCat, byType, byPartner, floor, lanes, corr, stores] = await Promise.all([
     b2cRows(months), b2bBy("month", months, site, cat), b2bBy("category", months, site, null), b2bBy("type", months, site, cat),
     b2bBy("partner", months, site, cat), minCharge(months, site, cat), zoneLanes(months, site, cat), retailCorrelation(months, site), storeTop(months, site),
@@ -114,6 +118,19 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
           <p className="mt-2 text-[11.5px] text-ink-4">Volumetric vs actual weight can&apos;t be separated: the file has charged weight only. Schedule, demurrage and marketplace ad-hoc charges aren&apos;t itemised in it either — they need the invoice lines (reco tool).</p>
         </Section>
 
+        <Section open title="B2B · store returns (RVP) and marketplace shipments" sub="The B2B & MP RVP costing file's Summary · ₹ pre-GST = logistic bill + ad-hoc bill · ₹ / unit = ₹ ÷ quantity · both sites (the summary has no site split)">
+          {rvp.length ? <div className="overflow-x-auto"><table className="table-base min-w-[900px]">
+            <thead><tr><th>Flow · partner</th>{all.map((m) => <th key={m} className="text-right">{mon(m)}</th>)}<th className="text-right">Total ₹</th><th className="text-right">LRs</th><th className="text-right">Qty</th><th className="text-right">₹ / unit</th><th className="text-right">Ad-hoc share</th></tr></thead>
+            <tbody>{rvpPartners.map((k) => { const [flow, partner] = k.split("|"); const rs = rvp.filter((r) => r.flow === flow && r.partner === partner);
+              const t = rs.reduce((a, r) => ({ amt: a.amt + (r.amount ?? 0), lrs: a.lrs + (r.lrs ?? 0), qty: a.qty + (r.qty ?? 0), adhoc: a.adhoc + (r.adhoc ?? 0) }), { amt: 0, lrs: 0, qty: 0, adhoc: 0 });
+              return <tr key={k}><td className="font-medium">{partner}<div className="text-[11px] text-ink-4">{flow}</div></td>
+                {all.map((m) => { const r = rs.find((x) => x.month === m); return <td key={m} className="text-right tabular">{r?.amount == null ? <span className="text-ink-4">—</span> : inrFull(r.amount)}</td>; })}
+                <td className="text-right tabular font-medium">{inrFull(t.amt)}</td><td className="text-right tabular">{n0(t.lrs)}</td><td className="text-right tabular">{n0(t.qty)}</td>
+                <td className="text-right tabular">{r2(div(t.amt, t.qty))}</td><td className="text-right tabular">{pc(div(t.adhoc, t.amt))}</td></tr>; })}</tbody></table></div>
+            : <p className="text-[13px] text-ink-3">Load the B2B RVP &amp; MP file above to see store-return and marketplace freight.</p>}
+          <p className="mt-2 text-[11.5px] text-ink-4">A dash = the partner billed nothing that month in the file. Which AOP Logistics lines these book to (e.g. Movemate RVP vs “Movemate – Stock Transfer”) is with Iqbal.</p>
+        </Section>
+
         <Section open title="B2B · zone lanes (dispatching site → store zone)" sub="Store zone from the retail journey spine (distribution_rulebook's ZONE column is #REF! upstream). Cross-zone = store outside the dispatching site's zone.">
           <div className="overflow-x-auto"><table className="table-base min-w-[860px]">
             <thead><tr><th>Site → store zone</th><th className="text-right">LRs</th><th className="text-right">Boxes</th><th className="text-right">Qty</th><th className="text-right">Freight</th><th className="text-right">Share of ₹</th><th className="text-right">₹ / unit</th><th className="text-right">₹ / box</th></tr></thead>
@@ -131,7 +148,7 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
             <thead><tr><th>Top stores by freight</th><th>Zone</th><th className="text-right">Freight</th><th className="text-right">LRs</th><th className="text-right">1-box LRs</th><th className="text-right">LR qty</th><th className="text-right">Spine units</th><th className="text-right">₹ / unit</th></tr></thead>
             <tbody>{stores.map((s) => <tr key={s.store + s.site}><td className="font-medium">{s.store}<div className="text-[11px] text-ink-4">{s.site}</div></td><td className="text-[12px]">{s.zone ?? <span className="text-ink-4">not in spine</span>}</td><td className="text-right tabular">{inrFull(s.freight)}</td>
               <td className="text-right tabular">{n0(s.lrs)}</td><td className="text-right tabular">{n0(s.one_box)}</td><td className="text-right tabular">{n0(s.lr_qty)}</td><td className="text-right tabular">{n0(s.spine_qty)}</td><td className="text-right tabular">{r2(div(s.freight, s.lr_qty))}</td></tr>)}</tbody></table></div>
-          <p className="mt-2 text-[11.5px] text-ink-4">B2B returns aren&apos;t in this LR file, and marketplace shipments aren&apos;t tagged separately (it covers retail, dedicated lanes, NSO, Q-com, non-trading and ad-hoc). They follow with the reco tool working file and CN data.</p>
+          <p className="mt-2 text-[11.5px] text-ink-4">B2B returns and marketplace shipments aren&apos;t in this LR file (it covers retail, dedicated lanes, NSO, Q-com, non-trading and ad-hoc); they are in the RVP &amp; MP section above.</p>
         </Section>
       </div>
     </div>

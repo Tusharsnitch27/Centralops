@@ -46,6 +46,7 @@ import { sql as mpOt } from "./079_mp_ot";
 import { sql as slaDaily } from "./080_sla_daily";
 import { sql as slaCell } from "./085_sla_cell";
 import { sql as invCat } from "./086_inventory_cat";
+import { sql as lgRvp } from "./087_lg_rvp";
 import { sql as ippUnits } from "./081_ipp_units";
 import { sql as logistics } from "./082_logistics";
 import { sql as ippUpdated } from "./083_ipp_updated";
@@ -101,4 +102,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 84, name: "day_cost", sql: dayCost },
   { version: 85, name: "sla_cell", sql: slaCell },
   { version: 86, name: "inventory_cat", sql: invCat },
+  { version: 87, name: "lg_rvp", sql: lgRvp },
 ];
