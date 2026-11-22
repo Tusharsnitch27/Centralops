@@ -195,3 +195,37 @@ export async function pullRetailSpine(from = "2026-04-01") {
   }
   return { read: rows.length, from };
 }
+
+/** Category names as the item master spells them, folded to one name per category (singular / plural variants). */
+const CAT = (col: string) => `CASE UPPER(TRIM(${col})) WHEN 'SHIRT' THEN 'SHIRTS' WHEN 'SWEATER' THEN 'SWEATERS' WHEN 'TROUSER' THEN 'TROUSERS'
+  WHEN 'JACKET' THEN 'JACKETS' WHEN 'JOGGERS' THEN 'JOGGERS & TRACKPANTS' WHEN 'TRACKPANTS' THEN 'JOGGERS & TRACKPANTS' WHEN 'FOOTWEAR' THEN 'SHOES'
+  WHEN 'PYJAMAS' THEN 'NIGHT SUIT & PYJAMAS' ELSE COALESCE(NULLIF(UPPER(TRIM(${col})), ''), '(NO CATEGORY)') END`;
+const INV = "snitch_db.maplemonk.snitch_final_inventory_wh2";
+export const INV_CAT_SQL = `SELECT TO_VARCHAR(DATE_TRUNC('month', date), 'YYYY-MM-DD') AS month, ${SITE("facility")} AS site, ${CAT('"Category Name"')} AS category,
+  SUM(TRY_TO_NUMBER(inventory::string)) / COUNT(DISTINCT date) AS avg_units, COUNT(DISTINCT date) AS days
+FROM ${INV} WHERE date >= TO_DATE('{from}') AND facility IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') GROUP BY 1, 2, 3`;
+export const BIN_CAT_SQL = `WITH inv AS (SELECT facility, "Item SkuCode" AS sku, MAX("Category Name") AS cat FROM ${INV}
+    WHERE date >= DATEADD(day, -3, CURRENT_DATE) AND facility IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') GROUP BY 1, 2),
+  sh AS (SELECT facility, shelf, "Item Type SKU Code" AS sku, TRY_TO_NUMBER(quantity) AS q, _airbyte_emitted_at AS at FROM snitch_db.maplemonk.uc_new_get_shelfwise_inventory
+    WHERE "Inventory Type" = 'GOOD_INVENTORY' AND shelf <> 'NON_TRADING' AND TRY_TO_NUMBER(quantity) > 0 AND facility IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')),
+  t AS (SELECT facility, shelf, SUM(q) AS tq FROM sh GROUP BY 1, 2)
+SELECT ${SITE("sh.facility")} AS site, ${CAT("inv.cat")} AS category, SUM(sh.q) AS units, SUM(sh.q / t.tq) AS bins, TO_VARCHAR(MAX(sh.at)) AS taken_at
+FROM sh JOIN t ON t.facility = sh.facility AND t.shelf = sh.shelf LEFT JOIN inv ON inv.facility = sh.facility AND inv.sku = sh.sku GROUP BY 1, 2`;
+/** Monthly average inventory by category (from April) + today's bins by category. Months the source returns are replaced. */
+export async function pullInventory(from = "2026-04-01") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
+  const [inv, bins] = await Promise.all([
+    sfQuery<{ month: string; site: string; category: string; avg_units: number; days: number }>(INV_CAT_SQL.replaceAll("{from}", from)),
+    sfQuery<{ site: string; category: string; units: number; bins: number; taken_at: string }>(BIN_CAT_SQL),
+  ]);
+  const months = [...new Set(inv.map((r) => r.month))];
+  if (months.length) await q(`delete from wcm_inv_cat where month = any($1::date[])`, [months]);
+  if (inv.length) await q(`insert into wcm_inv_cat (month, site, category, avg_units, days) select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[], $5::int[])`,
+    [inv.map((r) => r.month), inv.map((r) => r.site), inv.map((r) => r.category), inv.map((r) => Number(r.avg_units)), inv.map((r) => Number(r.days))]);
+  if (bins.length) {
+    await q(`delete from wcm_bin_cat`);
+    await q(`insert into wcm_bin_cat (site, category, units, bins, taken_at) select * from unnest($1::text[], $2::text[], $3::numeric[], $4::numeric[], $5::timestamptz[])`,
+      [bins.map((r) => r.site), bins.map((r) => r.category), bins.map((r) => Number(r.units)), bins.map((r) => Number(r.bins)), bins.map((r) => r.taken_at)]);
+  }
+  return { read: inv.length + bins.length, from };
+}

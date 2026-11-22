@@ -2,20 +2,21 @@
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { ChevronRight, MessageSquareText, ArrowUpRight } from "lucide-react";
-import { Avatar, Badge } from "@/components/ui";
+import { Avatar } from "@/components/ui";
+import { Collapsible } from "@/components/ui/Collapsible";
 import { cn } from "@/lib/cn";
 import { inr, pct } from "@/lib/format";
 import { ago } from "@/lib/dates";
 import { impactOf, monLabel, monShort, type Direction } from "@/server/aop/calc";
 import type { LineNode, SummaryTree } from "@/server/aop/summaryData";
-import { FunctionBars, MonthlySpendChart } from "./SummaryCharts";
+import { MonthlySpendChart } from "./SummaryCharts";
 import { activeMonths, aggLines, averageInsights, customSpan, deviationsFor, momLike, fnLines, hasReason, prevSpan, priorWindow, spansFor, type Agg, type Deviation, type Grain, type Span } from "./summaryMath";
 import { AverageInsights } from "./AverageInsights";
 
 const KIND_LABEL = { commentary: "Remark", variance_reason: "Reason", corrective_action: "Action" } as const;
 
 /** Month filter + function → line summary (Budget / Provision / Actuals / gaps / MoM) + key items to review. */
-export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHref: string }) {
+export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: SummaryTree; reviewHref: string; unitCosts?: React.ReactNode; more?: React.ReactNode }) {
   const months = useMemo(() => activeMonths(tree), [tree]);
   const [grain, setGrain] = useState<Grain>("month");
   const closedActive = months.filter((p) => tree.lastClosed && p <= tree.lastClosed);
@@ -42,12 +43,18 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
   const momTotal = grain !== "year" && prev ? momLike(all, span.periods, prev.periods) : null;
   const period = span.periods[span.periods.length - 1];
 
+  const fnRows = tree.functions.map((f) => ({ f, a: aggLines(fnLines(f), span.periods), mm: grain !== "year" && prev ? momLike(fnLines(f), span.periods, prev.periods) : null }))
+    .sort((x, y) => (y.a.hasActual ? y.a.actual : y.a.plan) - (x.a.hasActual ? x.a.actual : x.a.plan));
+  const maxFn = Math.max(1, ...fnRows.map((r) => Math.max(r.a.plan, r.a.hasActual ? r.a.actual : 0)));
+  const gap = total.actual - total.planReported, over = gap > 0;
+  const missingFns = fnRows.filter((r) => r.a.missing > 0).map((r) => `${r.f.name} (${r.a.missing})`);
+  const nLines = all.length;
+
   return (
-    <div>
-      {/* Period filter: month · quarter · year */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+    <div className="space-y-6">
+      {/* Period */}
+      <div className="flex flex-wrap items-center gap-2">
         <div className="seg">
-          <span className="seg-label">View</span>
           {(["month", "quarter", "year", "custom"] as Grain[]).map((g) => (
             <button key={g} data-on={grain === g} onClick={() => { setGrain(g); setSpanKey(defaultKey(g)); }} className="seg-item capitalize">{g}</button>
           ))}
@@ -55,153 +62,160 @@ export function MonthSummary({ tree, reviewHref }: { tree: SummaryTree; reviewHr
         {grain === "custom" ? (
           <div className="seg">
             <span className="seg-label">From</span>
-            <select value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 rounded-full border border-line bg-subtle px-3 text-[13px] font-semibold text-ink outline-none">
+            <select aria-label="From month" value={from} onChange={(e) => setFrom(e.target.value)} className="h-7 rounded-[7px] bg-surface px-2 text-[12.5px] font-medium text-ink outline-none">
               {months.map((p) => <option key={p} value={p}>{monLabel(p)}</option>)}
             </select>
             <span className="seg-label">To</span>
-            <select value={to} onChange={(e) => setTo(e.target.value)} className="h-8 rounded-full border border-line bg-subtle px-3 text-[13px] font-semibold text-ink outline-none">
+            <select aria-label="To month" value={to} onChange={(e) => setTo(e.target.value)} className="h-7 rounded-[7px] bg-surface px-2 text-[12.5px] font-medium text-ink outline-none">
               {months.map((p) => <option key={p} value={p}>{monLabel(p)}</option>)}
             </select>
-            <span className="px-2 text-[12.5px] font-medium text-ink-3">{span.periods.length} month{span.periods.length === 1 ? "" : "s"}</span>
           </div>
         ) : (
-        <div className="seg max-w-full overflow-x-auto [scrollbar-width:none]">
-          <span className="seg-label">Period</span>
-          {spans.map((x) => (
-            <button key={x.key} data-on={x.key === span.key} onClick={() => setSpanKey(x.key)} title={x.label} className={cn("seg-item shrink-0 tabular", !x.closed && x.key !== span.key && "text-ink-4")}>
-              {grain === "month" ? monShort(x.key) : x.short}
-            </button>
-          ))}
-        </div>
+          <div className="seg max-w-full">
+            {spans.map((x) => (
+              <button key={x.key} data-on={x.key === span.key} onClick={() => setSpanKey(x.key)} title={x.label} className={cn("seg-item tabular", !x.closed && x.key !== span.key && "text-ink-4")}>
+                {grain === "month" ? monShort(x.key) : x.short}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Headline tile */}
-      <div className="hero mb-6 grid gap-6 p-6 md:p-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <div className="flex flex-col justify-between gap-6">
-          <div>
-            <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-white/50">Opex · {span.label}</div>
-            <div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1">
-              <span className="text-[32px] font-semibold leading-none tracking-[-0.02em] tabular text-white">{total.hasActual ? inr(total.actual) : "—"}</span>
-              {total.hasActual && total.planReported > 0 && (
-                <span className={cn("mb-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold", total.actual > total.planReported ? "bg-[#ff6b6b]/20 text-[#ffb3b3]" : "text-white")}
-                  style={total.actual <= total.planReported ? { background: "color-mix(in srgb, var(--color-accent) 45%, transparent)" } : undefined}>
-                  {pct((total.actual - total.planReported) / total.planReported, 1, true)} vs {L.plan.toLowerCase()}
-                </span>
-              )}
-            </div>
-            <div className="mt-1.5 text-[13px] font-medium text-white/60">{L.actual} · {L.plan} {inr(total.plan)}</div>
-            <p className="mt-4 max-w-[560px] text-[13px] leading-relaxed text-white/80">
-              {total.hasActual ? <>Reported lines are <b className="font-semibold text-white">{inr(Math.abs(total.actual - total.planReported))} {total.actual > total.planReported ? `over ${L.plan.toLowerCase()}` : `under ${L.plan.toLowerCase()}`}</b>. </> : null}
-              {total.missing ? <><b className="font-semibold text-white">{total.missing} line{total.missing === 1 ? "" : "s"}</b> still to report {L.actual.toLowerCase()}. </> : closed ? "Every line has reported. " : null}
-              {devs.length ? <><b className="font-semibold text-white">{devs.length} item{devs.length === 1 ? "" : "s"}</b> flagged for review.</> : null}
+      {/* The answer, in one sentence */}
+      <section className="card p-6 md:p-7" aria-label="Headline">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
+          <div className="min-w-0">
+            <div className="eyebrow">{span.label} · {closed ? "closed" : "in progress"}</div>
+            <h2 className="mt-2 font-serif text-[32px] leading-[1.1] tracking-[-0.01em] text-ink md:text-[40px]">
+              {total.hasActual ? <><span className="tabular">{inr(total.actual)}</span> spent{total.planReported > 0 && <> — <span className={cn("tabular", over ? "text-bad" : "text-ok")}>{inr(Math.abs(gap))} {over ? "over" : "under"}</span> {L.plan.toLowerCase()}</>}.</>
+                : <>No {L.actual.toLowerCase()} yet for {span.label}.</>}
+            </h2>
+            <p className="mt-3 max-w-[640px] text-[13.5px] leading-relaxed text-ink-3">
+              {L.plan} {inr(total.plan)}{total.hasActual && total.plan ? <> · {pct(total.actual / total.plan, 0)} used</> : null}
+              {" · "}{nLines - total.missing} of {nLines} lines reported{missingFns.length ? <> — still to report: <span className="text-ink-2">{missingFns.join(", ")}</span></> : null}.
             </p>
-          </div>
-          <div>
-            <div className="mb-2 flex justify-between text-[12px] font-medium text-white/60"><span>{L.actual} vs {L.plan}</span><span className="font-semibold text-white">{total.plan ? pct(total.actual / total.plan, 0) : "—"}</span></div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full" style={{ width: `${Math.min(100, total.plan ? (total.actual / total.plan) * 100 : 0)}%`, background: "linear-gradient(90deg, var(--color-accent), var(--color-accent-2))" }} />
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <HeroTile label={L.plan} value={inr(total.plan)} hint={grain === "month" ? "This month" : span.short} />
-          <HeroTile label={L.forecast} value={total.hasForecast ? inr(total.forecast) : "—"} hint={total.hasForecast && total.plan ? `${pct(total.forecast / total.plan, 0)} of ${L.plan.toLowerCase()}` : undefined} />
-          <HeroTile label={`Gap vs ${L.plan}`} value={total.hasActual ? inr(total.actual - total.planReported, { sign: true }) : "—"} hint="Reported lines only"
-            tone={total.hasActual ? (total.actual > total.planReported ? "bad" : "ok") : undefined} />
-          <HeroTile label={grain === "quarter" ? "Quarter-on-quarter" : grain === "year" ? "Run-rate / month" : grain === "custom" ? "vs prior period" : "Month-on-month"}
-            value={grain === "year" ? (total.hasActual ? inr(total.actual / Math.max(1, span.periods.filter((p) => tree.lastClosed && p <= tree.lastClosed).length)) : "—") : momTotal ? pct((momTotal.cur - momTotal.prev) / momTotal.prev, 0, true) : "—"}
-            hint={grain === "year" ? `Avg ${L.actual.toLowerCase()} per closed month` : prev && momTotal ? `vs ${prev.short} · ${momTotal.lines} like-for-like lines` : undefined}
-            tone={momTotal && grain !== "year" ? (momTotal.cur > momTotal.prev ? "bad" : "ok") : undefined} />
-        </div>
-      </div>
-
-      <div className="mb-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <MonthlySpendChart tree={tree} selected={span.periods} />
-        <FunctionBars tree={tree} periods={span.periods} />
-      </div>
-
-      <div className="space-y-5">
-        {/* Function table */}
-        <div className="card min-w-0 overflow-x-auto lg:overflow-visible">
-          <table className="w-full border-collapse text-[13px]">
-            <thead>
-              <tr className="thead-hl border-b border-line text-[11px] font-semibold uppercase tracking-[0.08em]">
-                <th className="px-4 py-2.5 text-left font-medium">Function · line</th>
-                <th className="px-3 py-2.5 text-right font-medium">{L.plan}</th>
-                <th className="px-3 py-2.5 text-right font-medium">{L.forecast}</th>
-                <th className="px-3 py-2.5 text-right font-medium">{L.actual}</th>
-                <th className="px-3 py-2.5 text-right font-medium">vs {L.plan}</th>
-                <th className="px-3 py-2.5 text-right font-medium">vs {L.forecast}</th>
-                <th className="px-3 py-2.5 text-right font-medium">{grain === "year" ? "" : chg}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tree.functions.map((f) => {
-                const a = aggLines(fnLines(f), span.periods), ap = prev ? aggLines(fnLines(f), prev.periods) : null;
-                const isOpen = open.has(f.id);
-                return (
-                  <Fragment key={f.id}>
-                    <tr onClick={() => toggle(f.id)} className="cursor-pointer border-b border-line bg-subtle/40 hover:bg-subtle">
-                      <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <ChevronRight size={14} className={cn("text-ink-3 transition-transform", isOpen && "rotate-90")} />
-                          <span className="font-semibold text-ink">{f.name}</span>
-                          <span className="flex items-center gap-1 text-[12px] text-ink-3"><Avatar name={f.owner} size={16} />{f.owner}</span>
-                          {a.missing > 0 && closed && <Badge tone="amber">{a.missing} missing</Badge>}
-                        </div>
-                      </td>
-                      <Num v={a.plan} strong /><Num v={a.hasForecast ? a.forecast : null} strong /><Num v={a.hasActual ? a.actual : null} strong />
-                      <td className="px-3 py-2.5 text-right">{a.hasActual && a.planReported ? <Gap dir={dir} base={a.planReported} value={a.actual} small /> : <Dash />}</td>
-                      <td className="px-3 py-2.5 text-right">{a.hasActual && a.hasForecast ? <Gap dir={dir} base={a.forecastReported} value={a.actual} small /> : <Dash />}</td>
-                      <td className="px-3 py-2.5 text-right">{(() => { const mm = grain !== "year" && prev ? momLike(fnLines(f), span.periods, prev.periods) : null; return mm ? <Mom dir={dir} prev={mm.prev} cur={mm.cur} small /> : <Dash />; })()}</td>
-                    </tr>
-                    {isOpen && [...f.lines.map((l) => ({ l, group: null as string | null })), ...f.groups.flatMap((g) => g.lines.map((l, i) => ({ l, group: i === 0 ? g.name : null })))].map(({ l, group }) => (
-                      <Fragment key={l.id}>
-                        {group && <tr className="border-b border-line/60"><td colSpan={7} className="px-4 pb-1 pl-10 pt-2.5 text-[11px] font-medium uppercase tracking-[0.04em] text-ink-4">{group}</td></tr>}
-                        <LineRow l={l} span={span} prev={grain === "year" ? null : prev} labels={L} />
-                      </Fragment>
-                    ))}
-                  </Fragment>
-                );
-              })}
-              <tr className="border-t-2 border-line-strong font-semibold">
-                <td className="px-4 py-2.5">Total</td>
-                <Num v={total.plan} strong /><Num v={total.hasForecast ? total.forecast : null} strong /><Num v={total.hasActual ? total.actual : null} strong />
-                <td className="px-3 py-2.5 text-right">{total.hasActual ? <Gap dir={dir} base={total.planReported} value={total.actual} small /> : <Dash />}</td>
-                <td className="px-3 py-2.5 text-right">{total.hasActual && total.hasForecast ? <Gap dir={dir} base={total.forecastReported} value={total.actual} small /> : <Dash />}</td>
-                <td className="px-3 py-2.5 text-right">{(() => { const mm = grain !== "year" && prev ? momLike(all, span.periods, prev.periods) : null; return mm ? <Mom dir={dir} prev={mm.prev} cur={mm.cur} small /> : <Dash />; })()}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="border-t border-line px-4 py-2 text-[11.5px] text-ink-4">Click a function to see its lines · hover a line for remarks · gaps compare only lines that have {L.actual.toLowerCase()}</div>
-        </div>
-
-        {/* Key items to review */}
-        <div className="card">
-          <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <div>
-              <div className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">Key items to review</div>
-              <div className="text-[12px] text-ink-3">{span.label} · {devs.length} deviation{devs.length === 1 ? "" : "s"}</div>
-            </div>
-            <Link href={`${reviewHref}${reviewHref.includes("?") ? "&" : "?"}period=${period}`} className="flex items-center gap-1 text-[12px] text-ink-3 hover:text-ink">Review <ArrowUpRight size={12} /></Link>
-          </div>
-          {key.length ? <div className="grid md:grid-cols-2 xl:grid-cols-3 [&>div]:border-b [&>div]:border-line/70 md:[&>div]:border-r">{key.map((d) => (
-            <div key={d.key} className="px-4 py-2.5">
-              <div className="flex items-start gap-2">
-                <span className={cn("mt-[6px] size-1.5 shrink-0 rounded-full", d.severity === "high" ? "bg-bad" : d.severity === "medium" ? "bg-warn" : "bg-ink-4")} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] leading-snug text-ink">{d.title}</div>
-                  <div className="mt-0.5 truncate text-[11.5px] text-ink-3">{d.path} · {d.detail}</div>
+            {total.plan > 0 && total.hasActual && (
+              <div className="mt-5 max-w-[640px]" aria-hidden>
+                <div className="relative h-2 rounded-full bg-muted">
+                  <div className={cn("absolute inset-y-0 left-0 rounded-full", over ? "bg-bad" : "bg-accent")} style={{ width: `${Math.min(100, (total.actual / Math.max(total.plan, total.actual)) * 100)}%` }} />
+                  <div className="absolute -top-1 h-4 w-px bg-ink" style={{ left: `${(total.plan / Math.max(total.plan, total.actual)) * 100}%` }} />
                 </div>
-                {!span.periods.some((p) => hasReason(d.line, p)) && d.kind !== "under" && <Badge tone="muted">No remark</Badge>}
+                <div className="mt-1.5 flex justify-between text-[11px] text-ink-4"><span>{L.actual}</span><span>tick = {L.plan.toLowerCase()}</span></div>
               </div>
-            </div>
-          ))}</div> : <div className="px-4 py-8 text-center text-[13px] text-ink-3">Nothing material to review for {span.label}.</div>}
+            )}
+          </div>
+          <dl className="grid grid-cols-3 gap-4 border-line lg:grid-cols-1 lg:border-l lg:pl-6">
+            <Fact label={L.forecast} value={total.hasForecast ? inr(total.forecast) : "—"} hint={total.hasForecast && total.plan ? `${pct(total.forecast / total.plan, 0)} of ${L.plan.toLowerCase()}` : "not entered"} />
+            <Fact label={grain === "year" ? "Run-rate / month" : chg}
+              value={grain === "year" ? (total.hasActual ? inr(total.actual / Math.max(1, span.periods.filter((p) => tree.lastClosed && p <= tree.lastClosed).length)) : "—") : momTotal ? pct((momTotal.cur - momTotal.prev) / momTotal.prev, 0, true) : "—"}
+              hint={grain === "year" ? "closed months" : prev && momTotal ? `vs ${prev.short}, same lines` : "no earlier period"} />
+            <Fact label="To review" value={String(devs.length)} hint={devs.length ? "deviations, biggest below" : "nothing material"} />
+          </dl>
         </div>
+      </section>
 
-        <AverageInsights ins={avgIns} labels={L} />
-      </div>
+      {/* Where it went */}
+      <section aria-label="By function">
+        <SectionHead title="Where the money went" hint={`${L.actual} against ${L.plan.toLowerCase()} by function · open one for its lines`} />
+        <div className="card divide-y divide-line overflow-hidden">
+          {fnRows.map(({ f, a, mm }) => {
+            const isOpen = open.has(f.id), act = a.hasActual ? a.actual : 0;
+            return (
+              <div key={f.id}>
+                <button type="button" onClick={() => toggle(f.id)} aria-expanded={isOpen}
+                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:grid-cols-[220px_minmax(0,1fr)_130px_120px_70px]">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ChevronRight size={14} className={cn("shrink-0 text-ink-4 transition-transform", isOpen && "rotate-90")} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-semibold text-ink">{f.name}</span>
+                      <span className="flex items-center gap-1 text-[11.5px] text-ink-4"><Avatar name={f.owner} size={14} />{f.owner}{a.missing > 0 && <span className="ml-1 text-warn">· {a.missing} to report</span>}</span>
+                    </span>
+                  </span>
+                  <span className="relative col-span-2 h-2 rounded-full bg-muted md:col-span-1" aria-hidden>
+                    <span className={cn("absolute inset-y-0 left-0 rounded-full", a.planReported && act > a.planReported ? "bg-bad/80" : "bg-accent")} style={{ width: `${(act / maxFn) * 100}%` }} />
+                    {a.plan > 0 && <span className="absolute -top-1 h-4 w-px bg-ink/70" style={{ left: `${(a.plan / maxFn) * 100}%` }} />}
+                  </span>
+                  <span className="text-right">
+                    <span className="block text-[14px] font-semibold tabular text-ink">{a.hasActual ? inr(a.actual) : "—"}</span>
+                    <span className="block text-[11.5px] tabular text-ink-4">{a.plan ? `of ${inr(a.plan)}` : `no ${L.plan.toLowerCase()} set`}</span>
+                  </span>
+                  <span className="hidden text-right md:block">{a.hasActual && a.planReported ? <Gap dir={dir} base={a.planReported} value={a.actual} small /> : <Dash />}</span>
+                  <span className="hidden text-right md:block">{mm ? <Mom dir={dir} prev={mm.prev} cur={mm.cur} small /> : <Dash />}</span>
+                </button>
+                {isOpen && (
+                  <div className="overflow-x-auto border-t border-line bg-subtle/30">
+                    <table className="w-full min-w-[720px] border-collapse text-[13px]">
+                      <thead><tr className="text-[10.5px] uppercase tracking-[0.08em] text-ink-4">
+                        <th className="px-4 py-2 pl-10 text-left font-semibold">Line</th><th className="px-3 py-2 text-right font-semibold">{L.plan}</th><th className="px-3 py-2 text-right font-semibold">{L.forecast}</th>
+                        <th className="px-3 py-2 text-right font-semibold">{L.actual}</th><th className="px-3 py-2 text-right font-semibold">vs {L.plan}</th><th className="px-3 py-2 text-right font-semibold">vs {L.forecast}</th><th className="px-3 py-2 text-right font-semibold">{grain === "year" ? "" : chg}</th>
+                      </tr></thead>
+                      <tbody>
+                        {[...f.lines.map((l) => ({ l, group: null as string | null })), ...f.groups.flatMap((g) => g.lines.map((l, i) => ({ l, group: i === 0 ? g.name : null })))].map(({ l, group }) => (
+                          <Fragment key={l.id}>
+                            {group && <tr className="border-t border-line/60"><td colSpan={7} className="px-4 pb-1 pl-10 pt-2.5 text-[11px] font-medium uppercase tracking-[0.04em] text-ink-4">{group}</td></tr>}
+                            <LineRow l={l} span={span} prev={grain === "year" ? null : prev} labels={L} />
+                          </Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2 px-1 text-[11.5px] text-ink-4">Bar = {L.actual.toLowerCase()}, tick = {L.plan.toLowerCase()} · gaps compare only lines that have reported · hover a line for its remarks</p>
+      </section>
+
+      {unitCosts}
+
+      {/* Needs a look */}
+      <section aria-label="To review">
+        <SectionHead title="Needs a look" hint={devs.length ? `The ${Math.min(5, key.length)} biggest of ${devs.length} for ${span.label}` : undefined}
+          action={<Link href={`${reviewHref}${reviewHref.includes("?") ? "&" : "?"}period=${period}`} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-ink hover:underline">Open review <ArrowUpRight size={13} /></Link>} />
+        <div className="card divide-y divide-line">
+          {key.length ? key.slice(0, 5).map((d) => (
+            <div key={d.key} className="flex items-start gap-3 px-5 py-3">
+              <span className={cn("mt-[7px] size-2 shrink-0 rounded-full", d.severity === "high" ? "bg-bad" : d.severity === "medium" ? "bg-warn" : "bg-ink-4")} title={`${d.severity} priority`} />
+              <div className="min-w-0 flex-1">
+                <div className="text-[13.5px] leading-snug text-ink">{d.title}</div>
+                <div className="mt-0.5 truncate text-[12px] text-ink-3">{d.path} · {d.detail}</div>
+              </div>
+              {!span.periods.some((p) => hasReason(d.line, p)) && d.kind !== "under" && <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-ink-3">needs a reason</span>}
+            </div>
+          )) : <div className="px-5 py-6 text-center text-[13px] text-ink-3">Nothing material to review for {span.label}.</div>}
+        </div>
+      </section>
+
+      <section aria-label="Trend">
+        <SectionHead title="Month by month" hint={`${L.plan}, ${L.forecast.toLowerCase()} and ${L.actual.toLowerCase()} across the year`} />
+        <MonthlySpendChart tree={tree} selected={span.periods} />
+      </section>
+
+      <Collapsible id="aop:more" title="More detail" sub="Variation from each line's own average · month-by-month variance · Cost Master differences">
+        <div className="space-y-5 border-t border-line p-4">
+          <AverageInsights ins={avgIns} labels={L} />
+          {more}
+        </div>
+      </Collapsible>
+    </div>
+  );
+}
+
+function SectionHead({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
+  return (
+    <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
+      <div><h3 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">{title}</h3>{hint && <p className="text-[12px] text-ink-4">{hint}</p>}</div>
+      {action}
+    </div>
+  );
+}
+function Fact({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="eyebrow truncate">{label}</dt>
+      <dd className="mt-1 font-serif text-[24px] leading-none tabular text-ink">{value}</dd>
+      {hint && <dd className="mt-1 truncate text-[11.5px] text-ink-4">{hint}</dd>}
     </div>
   );
 }
@@ -273,15 +287,6 @@ function Mom({ dir, prev, cur, small }: { dir: Direction; prev: number; cur: num
     </span>
   );
 }
-function Kpi({ label, value, hint, hintTone }: { label: string; value: React.ReactNode; hint?: string; hintTone?: "warn" }) {
-  return (
-    <div className="min-w-0 border-b border-line md:border-b-0">
-      <div className="eyebrow mb-1.5 truncate">{label}</div>
-      <div className="whitespace-nowrap font-serif text-[20px] leading-none tabular text-ink">{value}</div>
-      {hint && <div className={cn("mt-1.5 truncate text-[11.5px]", hintTone === "warn" ? "text-warn" : "text-ink-3")}>{hint}</div>}
-    </div>
-  );
-}
 export type { Agg };
 
 /** Quarter / year: lines whose aggregated actual misses budget by the threshold, plus big quarter-on-quarter moves. */
@@ -314,13 +319,3 @@ function spanDeviations(tree: SummaryTree, span: Span, prev: Span | null): Devia
   return out.sort((x, y) => sev[x.severity] - sev[y.severity] || Math.abs(y.amount) - Math.abs(x.amount));
 }
 
-function HeroTile({ label, value, hint, tone }: { label: string; value: React.ReactNode; hint?: string; tone?: "ok" | "bad" }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
-      <div className="text-[11.5px] font-semibold text-white/55">{label}</div>
-      <div className={cn("mt-2 text-[22px] font-semibold leading-none tracking-[-0.02em] tabular", tone === "bad" ? "text-[#ffb3b3]" : "text-white")}
-        style={tone === "ok" ? { color: "var(--color-accent-2)" } : undefined}>{value}</div>
-      {hint && <div className="mt-2 truncate text-[11.5px] font-medium text-white/50">{hint}</div>}
-    </div>
-  );
-}

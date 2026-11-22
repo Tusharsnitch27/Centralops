@@ -67,6 +67,8 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       catch (e) { console.error("[wcm-sla] pull failed", e instanceof Error ? e.message : e); }
       try { const { pullRetailSpine } = await import("./server/wcm/feed"); const w = await pullRetailSpine(); console.log(`[lg-retail] ${w.read} store-month rows from ${w.from}`); }
       catch (e) { console.error("[lg-retail] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullInventory } = await import("./server/wcm/feed"); const w = await pullInventory(); console.log(`[wcm-inventory] ${w.read} category rows from ${w.from}`); }
+      catch (e) { console.error("[wcm-inventory] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

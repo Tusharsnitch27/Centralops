@@ -7,7 +7,8 @@ import { requireUser } from "@/server/auth";
 import { listCycles, resolveCycle } from "@/server/aop/model";
 import { channelView, currentSnapshot, legacyDualRead, listRules, packagingBridge, wcmMonth, wcmMonths, wcmRights } from "@/server/wcm/queries";
 import { BASES, BASIS_LABEL, FAMILY_LABEL, SITES, type Basis, type Family, type Site, type Totals } from "@/server/wcm/math";
-import { inrFull } from "@/lib/format";
+import { inr, inrFull } from "@/lib/format";
+import { storageView } from "@/server/wcm/storage";
 import { cn } from "@/lib/cn";
 
 export const metadata = { title: "AOP · Warehouse cost master" };
@@ -38,7 +39,7 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
   const href = (o: Partial<SP>) => `/aop/warehouse?${new URLSearchParams(Object.entries({ cycle: cycles.length > 1 ? cycle?.id : undefined, month, site, basis, ...o }).filter(([, v]) => v) as [string, string][])}`;
   const [m, rules, rights] = await Promise.all([wcmMonth(snap.id, month, site, basis), listRules(), wcmRights(u)]);
 
-  const [ch, pkg, dual] = await Promise.all([channelView(m), packagingBridge(month), legacyDualRead(m)]);
+  const [ch, pkg, dual, stor] = await Promise.all([channelView(m), packagingBridge(month), legacyDualRead(m), storageView([month])]);
   const fam = (f: Family) => m.byFamily[f];
   const before: Totals = (["warehousing", "manpower", "ot"] as Family[]).reduce((a, f) => ({
     source: a.source + fam(f).source, assigned: a.assigned + fam(f).assigned, shared: a.shared + fam(f).shared, unallocated: a.unallocated + fam(f).unallocated,
@@ -72,7 +73,32 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="space-y-3">
-        <Section open title="Booked controls" sub={`Source = channel-assigned + approved shared + unallocated, per line, to the paise · snapshot ${snap.id} (${snap.file_name})`}>
+        <Section open title="Storage &amp; handling · by category and bin" sub={`What holding stock costs, ${monLabel(month)} booked actuals — the Emiza method (average units ÷ units per bin) with units per bin measured from today's shelves${stor.binsTakenAt ? ` (${stor.binsTakenAt.slice(0, 10)})` : ""}`}>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {stor.months.filter((x) => site === "Both" || x.site === site).map((x) => {
+              const top = x.categories.slice(0, 10), rest = x.categories.slice(10);
+              const restRow = rest.length ? { category: `${rest.length} other categories`, avgUnits: rest.reduce((a, c) => a + c.avgUnits, 0), bins: rest.reduce((a, c) => a + c.bins, 0), holding: x.sh != null && x.bins ? (x.sh * rest.reduce((a, c) => a + c.bins, 0)) / x.bins : null } : null;
+              return (
+                <div key={x.site} className="rounded-lg border border-line">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-3 py-2.5">
+                    <div className="text-[13.5px] font-semibold">{x.site}</div>
+                    <div className="text-[12px] text-ink-3">{x.sh == null ? "S&H not booked" : <>S&amp;H {inr(x.sh)} · <b className="font-semibold text-ink">{x.perItem == null ? "—" : `₹${x.perItem.toFixed(2)}`}</b> per item · ₹{x.perBin == null ? "—" : x.perBin.toFixed(0)} per bin</>}</div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}><table className="table-base min-w-[460px]">
+                    <thead><tr><th>Category</th><th className="text-right">Avg units</th><th className="text-right">Bins</th><th className="text-right">Holding ₹</th><th className="text-right">₹ / unit</th></tr></thead>
+                    <tbody>{[...top, ...(restRow ? [restRow] : [])].map((c) => (
+                      <tr key={c.category}><td className="font-medium">{c.category}</td><td className="text-right tabular">{new Intl.NumberFormat("en-IN").format(Math.round(c.avgUnits))}</td>
+                        <td className="text-right tabular">{new Intl.NumberFormat("en-IN").format(Math.round(c.bins))}</td><td className="text-right tabular">{c.holding == null ? "—" : inr(c.holding)}</td>
+                        <td className="text-right tabular">{c.holding == null || !c.avgUnits ? "—" : `₹${(c.holding / c.avgUnits).toFixed(2)}`}</td></tr>))}</tbody>
+                  </table></div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11.5px] text-ink-4">S&amp;H = every warehousing head + the Inward, Inventory and Housekeeping share of manpower and OT (attendance headcount). Bins = a category&apos;s average units ÷ its units per bin on today&apos;s shelves (a bin shared by categories is split by units). A bulky category (jackets, shoes) uses more bins per unit, so it carries more cost per unit. Allocation of inventory to channels (pre-packs for retail, marketplace SKUs) comes later.</p>
+        </Section>
+
+        <Section title="Booked controls" sub={`Source = channel-assigned + approved shared + unallocated, per line, to the paise · snapshot ${snap.id} (${snap.file_name})`}>
           <div className="overflow-x-auto"><table className="table-base min-w-[760px]">
             <thead><tr><th>Cost family</th><th className="text-right">Source</th><th className="text-right">Channel-assigned</th><th className="text-right">Shared</th><th className="text-right">Unallocated</th><th className="text-right">Coverage</th><th className="text-right">Check</th></tr></thead>
             <tbody>
