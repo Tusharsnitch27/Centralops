@@ -93,7 +93,10 @@ const usesAttendance = (period: string, dataDays: number) =>
   dataDays > 0 && (period >= `${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()).slice(0, 7)}-01` || dataDays / daysIn(period) >= 0.9);
 
 export async function processingMonth(period: string, warehouse: Wh): Promise<ProcessingMonth> {
-  const [ns, sh, vol, att, stored] = await Promise.all([norms(period, warehouse), sheet(period, warehouse), sopVolumes(period, warehouse), attendance(period, warehouse), storedAssign(period, warehouse)]);
+  const [allNs, sh, vol, att, stored] = await Promise.all([norms(period, warehouse), sheet(period, warehouse), sopVolumes(period, warehouse), attendance(period, warehouse), storedAssign(period, warehouse)]);
+  // "Inventory · Capacity" is the sheet's fixed monthly warehouse lump (₹13.4 L South, ₹14 L North, entered as 1 head × the lump):
+  // rent / space, not manpower — it is booked under Warehousing, so it stays out of planned and actual manpower (22 Nov 2026)
+  const ns = allNs.filter((n) => n.process !== "Capacity");
   const wd = ns[0]?.working_days ?? 23;
   const share = att.dataDays / daysIn(period);
   const useAttendance = usesAttendance(period, att.dataDays);

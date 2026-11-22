@@ -47,6 +47,10 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
   // like-for-like: CPI gap × output, so a month-to-date or part-captured month never reads as a saving against the full-month plan
   const impactRows = pm.flatMap((m) => m.streams.flatMap((s) => s.rows)).filter((r) => r.costImpact != null);
   const impact = impactRows.reduce((a, r) => a + r.costImpact!, 0), impactN = impactRows.length;
+  const todayIst = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const dim = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
+  const mtdShare = todayIst.slice(0, 7) === month.slice(0, 7) ? Number(todayIst.slice(8, 10)) / dim : 1;
+  const mtd = mtdShare < 1 ? `month to date (${todayIst.slice(8, 10)} of ${dim} days)` : null;
   const tot = pm.reduce((a, m) => ({ planned: a.planned + m.totals.plannedExp, actual: a.actual + (m.totals.actualExp ?? 0), pmp: a.pmp + m.totals.plannedMp, amp: a.amp + (m.totals.actualMp ?? 0) }), { planned: 0, actual: 0, pmp: 0, amp: 0 });
 
   return (
@@ -55,8 +59,8 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
       <Pickers months={months} month={month} wh={wh} href={href} />
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-        <Tile label="Planned manpower cost" value={inr(tot.planned)} sub={`${n1(tot.pmp)} planned heads`} />
-        <Tile label="Actual manpower cost" value={inr(tot.actual || null)} sub={`${n1(tot.amp)} actual heads`} />
+        <Tile label="Planned manpower cost" value={inr(tot.planned)} sub={`full month · ${n1(tot.pmp)} heads × ₹21,983 from the S&OP projection`} />
+        <Tile label="Actual manpower cost" value={inr(tot.actual || null)} sub={`${n1(tot.amp)} heads${mtd ? ` · ${mtd} — full month ≈ ${inr(tot.actual / mtdShare)}` : ""}`} />
         <Tile label="Cost vs plan" value={inr(impact, { sign: true })} tone={impactTone(impactN ? impact : null)} sub="(planned − actual CPI) × output · + = under plan" />
         <Tile label="Open for assignment" value={String(open.length)} tone={open.length ? "text-warn" : "text-ok"} sub={open.length ? "departments with unassigned heads" : "all heads assigned"} />
       </div>
