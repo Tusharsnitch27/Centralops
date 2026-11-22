@@ -1,7 +1,7 @@
 // D-1 cost of doing business — pure maths (no server imports; used by dayCost.ts and scripts/check-wcm.mjs).
 
 export type Basis = "measured" | "run-rate" | "booked" | "missing";
-export interface CostLine { key: string; label: string; amount: number | null; basis: Basis; note: string; side: "B2C" | "B2B" | "shared" }
+export interface CostLine { key: string; label: string; amount: number | null; basis: Basis; note: string; side: "B2C" | "B2B" | "shared"; units?: number }
 
 /**
  * Split a day's cost into B2C and B2B: direct lines go to their side; shared lines are split by dispatched items

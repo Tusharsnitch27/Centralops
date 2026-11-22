@@ -27,4 +27,13 @@ close(sp.get("B2C Shopify|Picker"), 74 * 0.6 * (30 + 8 * (1 / 650) / (1 / 650 + 
 const br = ruleSplit("South", [{ stream: "B2B Returns Retail", process: "Processing", department: "B2B Return", target: 1500, volume: null }, { stream: "B2B Returns Marketplace", process: "Processing", department: "B2B Return", target: 1500, volume: null }], new Map([["B2B Return", 30]]));
 assert.equal(br.get("B2B Returns Marketplace|Processing"), 0);
 close(br.get("B2B Returns Retail|Processing"), 30, 1e-9);
+// SPF: only ~15 % of B2C return units pass it, so generic heads weight its 1/IPP by 0.15 (South: no named designations match)
+const R = (process, target) => ({ stream: "B2C Returns Shopify", process, department: "B2C Return", target, volume: 100 });
+const spf = ruleSplit("South", [R("Receiving", 2700), R("Processing", 300), R("SPF", 80)], new Map([["B2C Return", 22]]));
+close(spf.get("B2C Returns Shopify|SPF"), 22 * (0.15 / 80) / (1 / 2700 + 1 / 300 + 0.15 / 80), 1e-9);
+assert.ok(spf.get("B2C Returns Shopify|SPF") < 22 * 0.4, "SPF no longer takes most generic heads");
+// heads needed = ⌈output × pass ÷ (IPP × working days × share of month)⌉ — SPF at 15 %
+const nd = computeRow({ targetPerDay: 80, workingDays: 23, avgSalary: 20000 }, { sopProj: null, plannedMp: null, finalOutput: 10000, salary: 20000, actualMp: 5, actualShare: 0.5, pass: 0.15 });
+assert.equal(nd.needMp, Math.ceil((10000 * 0.15) / (80 * 23 * 0.5)));
+close(nd.needExp, nd.needMp * 20000 * 0.5, 1e-9);
 console.log("processing math OK", { mpRequired: r.mpRequired, plannedExp: r.plannedExp, plannedCpi: r.plannedCpi.toFixed(4), actualCpi: r.actualCpi.toFixed(4), adherence: r.volumeAdherence.toFixed(4) });

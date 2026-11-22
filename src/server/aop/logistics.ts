@@ -17,7 +17,8 @@ import type { AttributionRow } from "./processingTypes";
  * aop_channel_volume rows (family = 'logistics'):
  *  metric 'shipments'          forward AWBs (incl. RTO) per day × warehouse × channel
  *  metric 'rvp'                reverse pickups
- *  metric 'shipments:<Vendor>' every AWB billed by that vendor (forward + RTO + reverse); <Vendor> = the AOP Logistics item name
+ *  metric 'shipments:<Vendor>' B2C: forward AWBs only (no RTO, no reverse); B2B: every AWB of that vendor; <Vendor> = the AOP Logistics item name. Courier rates
+ *                              are all-in (forward + RTO + DTO billed ÷ forward AWBs), so pricing RTO / reverse AWBs again double counts
  */
 export const LOGISTICS_FROM = "2026-07-01";
 const ESHIPZ_TABLE = "snitch_db.maplemonk.ESHIPZ_FINAL_GET_TRACKING";
@@ -55,7 +56,7 @@ SELECT TO_VARCHAR(PICKUP_DATE::date, 'YYYY-MM-DD') AS day,
   CASE WHEN WAREHOUSE IN ('YLK1','YLK2') THEN 'South' WHEN WAREHOUSE = 'TAURU' THEN 'North' ELSE 'Other' END AS warehouse,
   CASE WHEN COURIER_PARTNER ILIKE '%HLD%' THEN 'Q-Com' ELSE 'B2C Shopify' END AS channel,
   ${CP1_VENDOR} AS vendor,
-  CASE WHEN JOURNEY = 'Reverse' THEN 'rvp' ELSE 'fwd' END AS dir,
+  CASE WHEN JOURNEY = 'Reverse' THEN 'rvp' WHEN JOURNEY ILIKE '%RTO%' THEN 'rto' ELSE 'fwd' END AS dir,
   COUNT(DISTINCT AWB_NUMBER) AS n
 FROM ${CP1_TABLE}
 WHERE PICKUP_DATE >= TO_DATE(?)
@@ -71,7 +72,7 @@ FROM ${ESHIPZ_TABLE}
 WHERE ${EZ_DAY} >= TO_DATE(?) AND COALESCE(ORDER_SOURCE, '') <> 'test'
 GROUP BY 1, 2, 3, 4, 5`;
 
-type VolRow = { day: string; warehouse: string; channel: string; vendor: string; dir: "fwd" | "rvp"; n: number };
+type VolRow = { day: string; warehouse: string; channel: string; vendor: string; dir: "fwd" | "rto" | "rvp"; n: number };
 
 /** Snowflake → aop_channel_volume (family 'logistics'), replacing every day from `from`. */
 export async function pullLogisticsVolumes(from = LOGISTICS_FROM) {
@@ -87,7 +88,8 @@ export async function pullLogisticsVolumes(from = LOGISTICS_FROM) {
   for (const r of rows) {
     if (!r.day) continue;
     put(r, r.dir === "rvp" ? "rvp" : "shipments");
-    put(r, `shipments:${r.vendor}`);
+    // B2C couriers: forward only (their rate is all-in); B2B vendors keep every AWB, since some bill reverse only
+    if (r.dir === "fwd" || r.channel.startsWith("B2B")) put(r, `shipments:${r.vendor}`);
   }
   const v = [...m.values()];
   await q(`delete from aop_channel_volume where family = 'logistics' and day >= $1`, [from]);

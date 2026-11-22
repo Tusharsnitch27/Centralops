@@ -1,6 +1,6 @@
 import "server-only";
 import { q } from "../db";
-import { computeRow, rollupStream, ruleSplit } from "./processingMath";
+import { computeRow, passShare, rollupStream, ruleSplit } from "./processingMath";
 import { MP_HEADCOUNT } from "../wcm/math";
 import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type ProcessingMonth, type ProcRow, type StreamKey, type Wh } from "./processingTypes";
 
@@ -73,9 +73,9 @@ async function attendance(period: string, wh: Wh) {
     `select coalesce(fm.department, d.func) as dept, sum(d.heads)::float8 as man_days, count(distinct d.day)::int as days
      from mp_daily d join mp_site_map sm on sm.site = d.site and sm.warehouse = $2
      left join mp_func_map fm on fm.func = d.func
-     where date_trunc('month', d.day)::date = $1::date group by 1`, [period, wh]);
+     where date_trunc('month', d.day)::date = $1::date and d.day < (now() at time zone 'Asia/Kolkata')::date group by 1`, [period, wh]); // through D-1
   const dataDays = (await q<{ n: number }>(
-    `select count(distinct d.day)::int as n from mp_daily d join mp_site_map sm on sm.site = d.site and sm.warehouse = $2 where date_trunc('month', d.day)::date = $1::date`, [period, wh]))[0]?.n ?? 0;
+    `select count(distinct d.day)::int as n from mp_daily d join mp_site_map sm on sm.site = d.site and sm.warehouse = $2 where date_trunc('month', d.day)::date = $1::date and d.day < (now() at time zone 'Asia/Kolkata')::date`, [period, wh]))[0]?.n ?? 0;
   return { byDept: new Map(rows.map((r) => [r.dept, r.man_days])), dataDays };
 }
 
@@ -110,7 +110,7 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
     const sopProj = s?.sop_proj ?? carry?.sop_proj ?? vol.plan[stream] ?? null;
     const salary = s?.avg_salary ?? last?.avg_salary ?? n.avg_salary;
     const plannedMp = s?.planned_mp ?? carry?.planned_mp ?? null;
-    const plan = computeRow({ targetPerDay: n.target_per_day, workingDays: n.working_days, avgSalary: n.avg_salary }, { sopProj, plannedMp, finalOutput: null, salary, actualMp: null });
+    const plan = computeRow({ targetPerDay: n.target_per_day, workingDays: n.working_days, avgSalary: n.avg_salary }, { sopProj, plannedMp, finalOutput: null, salary, actualMp: null, pass: passShare(n.process) });
     return { n, stream, s, carry, sopProj, salary, plannedMp: plan.plannedMp };
   });
   const proposed = ruleSplit(warehouse, base.map((b) => ({ stream: b.stream, process: b.n.process, department: b.n.department ?? "", target: b.n.target_per_day, volume: b.s?.final_output ?? vol.actual[b.stream] ?? b.sopProj })), deptHeads);
@@ -128,10 +128,10 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
       actualShare = share;
     }
     const c = computeRow({ targetPerDay: b.n.target_per_day, workingDays: b.n.working_days, avgSalary: b.n.avg_salary },
-      { sopProj: b.sopProj, plannedMp: b.plannedMp, finalOutput, salary: b.salary, actualMp, actualShare });
+      { sopProj: b.sopProj, plannedMp: b.plannedMp, finalOutput, salary: b.salary, actualMp, actualShare, pass: passShare(b.n.process) });
     return {
       stream: b.stream, process: b.n.process, department: b.n.department, targetPerDay: b.n.target_per_day, workingDays: b.n.working_days, avgSalary: b.salary,
-      outputPerHead: c.outputPerHead, idealCpi: c.idealCpi, sopProj: b.sopProj, mpRequired: c.mpRequired, plannedMp: c.plannedMp, plannedExp: c.plannedExp, plannedCpi: c.plannedCpi,
+      outputPerHead: c.outputPerHead, idealCpi: c.idealCpi, sopProj: b.sopProj, mpRequired: c.mpRequired, needMp: c.needMp, needExp: c.needExp, plannedMp: c.plannedMp, plannedExp: c.plannedExp, plannedCpi: c.plannedCpi,
       actualMp, actualMpSource: src, actualExp: c.actualExp, finalOutput, actualCpi: c.actualCpi, volumeAdherence: c.volumeAdherence, mpAdherence: c.mpAdherence, costImpact: c.costImpact,
     };
   });
@@ -147,7 +147,10 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
     totals: {
       plannedExp: rows.reduce((a, r) => a + (r.plannedExp ?? 0), 0), actualExp: has ? rows.reduce((a, r) => a + (r.actualExp ?? 0), 0) : null,
       plannedMp: rows.reduce((a, r) => a + (r.plannedMp ?? 0), 0), actualMp: rows.some((r) => r.actualMp != null) ? rows.reduce((a, r) => a + (r.actualMp ?? 0), 0) : null,
+      needMp: rows.some((r) => r.needMp != null) ? rows.reduce((a, r) => a + (r.needMp ?? 0), 0) : null,
+      needExp: rows.some((r) => r.needExp != null) ? rows.reduce((a, r) => a + (r.needExp ?? 0), 0) : null,
     },
+    actualDays: useAttendance ? { days: att.dataDays, of: daysIn(period) } : null,
   };
 }
 

@@ -21,7 +21,7 @@ export async function saveMpRate(site: string, effectiveFrom: string, monthlySal
                note = excluded.note, created_by = excluded.created_by, created_at = now()`, [site, effectiveFrom, monthlySalary, daysBasis, otHourly, note.trim(), u.id]);
     await logActivity({ actorId: u.id, entityType: "aop_section", entityId: null, action: "wcm_mp_rate_saved", from: null, to: { site, effectiveFrom, monthlySalary, daysBasis, otHourly },
       summary: `${site} salary master from ${effectiveFrom}: ₹${monthlySalary} / ${daysBasis} days${otHourly ? `, OT ₹${otHourly}/h` : ""} (${note.trim()})` });
-    revalidatePath("/aop/cost");
+    revalidatePath("/aop/cost"); revalidatePath("/aop/data");
     return ok(undefined, "Rate saved");
   } catch (e) { return fail(e); }
 }

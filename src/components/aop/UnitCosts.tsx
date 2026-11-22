@@ -9,22 +9,31 @@ const n0 = (v: number | null) => (v == null ? null : new Intl.NumberFormat("en-I
 const STREAMS = ["B2C forward", "B2B forward", "B2C returns", "B2B returns"];
 
 /** AOP Overview › Unit costs: what one item costs to store, inward and process, per site, for the last closed months. */
-export function UnitCosts({ months, href }: { months: StorageMonth[]; href: string }) {
+export function UnitCosts({ months, href, cps, cpsHref }: { months: StorageMonth[]; href: string; cps?: { month: string; cpsB2c: number | null; cpuB2b: number | null }[]; cpsHref?: string }) {
   const periods = [...new Set(months.map((m) => m.period))];
   const get = (site: "South" | "North", p: string) => months.find((m) => m.site === site && m.period === p)!;
-  const rows: { label: string; hint: string; v: (m: StorageMonth) => string | null }[] = [
-    { label: "Storage & handling", hint: "warehousing heads + Inward / Inventory / Housekeeping manpower", v: (m) => (m.sh == null ? null : inr(m.sh)) },
-    { label: "Storage per item / month", hint: "S&H ÷ average units on hand", v: (m) => rs(m.perItem) ?? (m.sh != null && m.avgUnits == null ? "no inventory feed" : null) },
-    { label: "Per bin / month", hint: "S&H ÷ bins in use", v: (m) => rs(m.perBin, 0) },
-    { label: "Inward per unit", hint: "Inward manpower ÷ category inward units", v: (m) => rs(m.inwardPerItem) ?? (m.inwardMp != null && m.inwardUnits == null ? "no inward feed" : null) },
-    ...STREAMS.map((fn) => ({ label: `${fn[0].toUpperCase()}${fn.slice(1)} manpower`, hint: "manpower + OT, attendance department share", v: (m: StorageMonth) => { const x = m.manpowerByFn.find((f) => f.fn === fn); return x ? inr(x.amount) : null; } })),
+  const rows: { label: string; v: (m: StorageMonth) => string | null }[] = [
+    { label: "Storage & handling", v: (m) => (m.sh == null ? null : inr(m.sh)) },
+    { label: "Storage per item / month", v: (m) => rs(m.perItem) },
+    { label: "Per bin / month", v: (m) => rs(m.perBin, 0) },
+    { label: "Inward per unit", v: (m) => rs(m.inwardPerItem) },
+    ...STREAMS.map((fn) => ({ label: `${fn[0].toUpperCase()}${fn.slice(1)} manpower`, v: (m: StorageMonth) => { const x = m.manpowerByFn.find((f) => f.fn === fn); return x ? inr(x.amount) : null; } })),
   ];
   return (
     <section aria-label="Unit costs">
       <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
-        <div><h3 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">Warehouse unit costs</h3><p className="text-[12px] text-ink-4">Booked Cost Master actuals · last {periods.length} months</p></div>
+        <div><h3 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">Warehouse unit costs</h3><p className="text-[12px] text-ink-4">Booked actuals · last {periods.length} months</p></div>
         <Link href={href} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-ink hover:underline">By category & bin <ArrowUpRight size={13} /></Link>
       </div>
+      {cps && cps.length > 0 && (
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          {([["B2C cost per shipment", "cpsB2c"], ["B2B cost per unit", "cpuB2b"]] as const).map(([label, k]) => (
+            <Link key={k} href={cpsHref ?? href} className="card px-4 py-3 hover:bg-subtle">
+              <div className="text-[11px] text-ink-4">{label} · all-India</div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-4">{cps.map((c, i) => (
+                <span key={c.month} className={i === cps.length - 1 ? "text-[20px] font-semibold tabular text-ink" : "text-[13px] tabular text-ink-3"}>{rs(c[k]) ?? "—"} <span className="text-[11px] font-normal text-ink-4">{mon(c.month)}</span></span>))}</div>
+            </Link>))}
+        </div>)}
       <div className="card"><div style={{ overflowX: "auto" }}>
         <table className="w-full min-w-[760px] border-collapse text-[13px]">
           <thead>
@@ -37,9 +46,9 @@ export function UnitCosts({ months, href }: { months: StorageMonth[]; href: stri
           <tbody>
             {rows.map((r) => (
               <tr key={r.label} className="border-t border-line/70">
-                <td className="px-5 py-2.5"><div className="font-medium text-ink">{r.label}</div><div className="text-[11px] text-ink-4">{r.hint}</div></td>
+                <td className="px-5 py-2.5 font-medium text-ink">{r.label}</td>
                 {(["South", "North"] as const).flatMap((s) => periods.map((p, i) => { const v = r.v(get(s, p)); return (
-                  <td key={s + p} className={`px-3 py-2.5 text-right tabular ${i === 0 ? "border-l border-line" : ""} ${v == null ? "text-[11.5px] text-ink-4" : "text-ink"}`}>{v ?? "not booked"}</td>); }))}
+                  <td key={s + p} className={`px-3 py-2.5 text-right tabular ${i === 0 ? "border-l border-line" : ""} ${v == null ? "text-[11.5px] text-ink-4" : "text-ink"}`}>{v ?? "—"}</td>); }))}
               </tr>
             ))}
             <tr className="border-t border-line/70 text-[12px] text-ink-3">

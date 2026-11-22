@@ -4,12 +4,11 @@ import { PageHeader } from "@/components/ui";
 import type { CycleLite } from "@/server/aop/model";
 import { CycleSwitcher } from "./CycleSwitcher";
 
-export type AopTab = "overview" | "plan" | "inputs" | "review" | "packaging" | "processing" | "warehouse" | "logistics" | "cost" | "analysis" | "insights" | "savings" | "import" | "setup";
-// Grouped so the question picks the tab: the plan (overview, entering, review) · where a cost comes from · what-if.
+export type AopTab = "overview" | "plan" | "inputs" | "review" | "packaging" | "processing" | "warehouse" | "logistics" | "cost" | "analysis" | "data" | "import" | "setup";
+// Leadership tabs only; entry, uploads, controls and setup live under Data.
 const GROUPS: { label: string; tabs: { key: AopTab; label: string; path: string }[] }[] = [
   { label: "Plan", tabs: [
     { key: "overview", label: "Overview", path: "/aop" },
-    { key: "inputs", label: "Enter figures", path: "/aop/inputs" },
     { key: "review", label: "Review", path: "/aop/review" },
   ] },
   { label: "Cost detail", tabs: [
@@ -17,13 +16,13 @@ const GROUPS: { label: string; tabs: { key: AopTab; label: string; path: string 
     { key: "logistics", label: "Logistics", path: "/aop/logistics" },
     { key: "packaging", label: "Packaging", path: "/aop/packaging" },
     { key: "processing", label: "Processing", path: "/aop/processing" },
-    { key: "cost", label: "Cost per day", path: "/aop/cost" },
+    { key: "cost", label: "Unit costs", path: "/aop/cost" },
   ] },
   { label: "What-if", tabs: [{ key: "analysis", label: "Levers", path: "/aop/analysis" }] },
 ];
 const UTIL: { key: AopTab; label: string; path: string }[] = [
-  { key: "import", label: "Import", path: "/aop/import" },
-  { key: "setup", label: "Setup", path: "/aop/setup" },
+  { key: "inputs", label: "Enter figures", path: "/aop/inputs" },
+  { key: "data", label: "Data", path: "/aop/data" },
 ];
 
 /** Shared AOP page header: title, cycle switcher, sub-nav. */
@@ -57,7 +56,7 @@ export function AopHeader({ active, cycleId, cycles, title, subtitle, eyebrow, a
         </nav>
         <div className="flex items-center gap-1 text-[12px] text-ink-4">
           {UTIL.map((t) => (
-            <Link key={t.key} href={`${t.path}${qs}`} className={active === t.key ? "rounded-md bg-muted px-2 py-1 font-medium text-ink" : "rounded-md px-2 py-1 hover:bg-subtle hover:text-ink-2"}>{t.label}</Link>
+            <Link key={t.key} href={`${t.path}${qs}`} className={active === t.key || (t.key === "data" && (active === "import" || active === "setup")) ? "rounded-md bg-muted px-2 py-1 font-medium text-ink" : "rounded-md px-2 py-1 hover:bg-subtle hover:text-ink-2"}>{t.label}</Link>
           ))}
         </div>
       </div>

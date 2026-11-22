@@ -125,7 +125,7 @@ export async function attention(u: User): Promise<AttentionItem[]> {
       push({ key: "aop-dev", area: "aop", severity: total > 2_000_000 ? "high" : "medium", weight: 42,
         title: `${inr(total)} over ${aop.labels.plan.toLowerCase()} YTD across ${plural(dev.length, "function")}`,
         detail: dev.slice(0, 3).map((d) => `${d.section} +${inr(d.over)} (${((d.over / d.budget) * 100).toFixed(1)}%)`).join(" · "),
-        cta: { label: "View deviations", href: "/aop" }, secondary: { label: "Insights", href: "/aop/insights" } });
+        cta: { label: "View deviations", href: "/aop" } });
     }
   }
 

@@ -36,7 +36,9 @@ export interface ProcRow {
   stream: StreamKey; process: string; department: string | null;
   targetPerDay: number | null; workingDays: number; avgSalary: number | null; outputPerHead: number | null; // per month
   idealCpi: number | null;
-  sopProj: number | null; mpRequired: number | null; plannedMp: number | null; plannedExp: number | null; plannedCpi: number | null;
+  sopProj: number | null; mpRequired: number | null;
+  needMp: number | null; needExp: number | null; // heads / ₹ the actual output needed at IPP (same days as actual MP)
+  plannedMp: number | null; plannedExp: number | null; plannedCpi: number | null;
   actualMp: number | null; actualMpSource: "attendance" | "sheet" | "proposed" | null; // proposed = app split not yet confirmed by Manish
   actualExp: number | null; finalOutput: number | null; actualCpi: number | null;
   volumeAdherence: number | null; mpAdherence: number | null; // actualMp ÷ plannedMp
@@ -46,11 +48,14 @@ export interface StreamBlock {
   stream: StreamKey; channel: string; dept: string;
   rows: ProcRow[];
   sopProj: number | null; finalOutput: number | null; plannedMp: number; actualMp: number | null;
+  needMp: number | null; needExp: number | null; actualExp: number | null;
   idealCpi: number | null; plannedCpi: number | null; actualCpi: number | null; volumeAdherence: number | null;
 }
 export interface ProcessingMonth {
   period: string; warehouse: Wh; streams: StreamBlock[];
-  totals: { plannedExp: number; actualExp: number | null; plannedMp: number; actualMp: number | null };
+  totals: { plannedExp: number; actualExp: number | null; plannedMp: number; actualMp: number | null; needMp: number | null; needExp: number | null };
+  /** attendance days behind the actuals (through D-1) and the month's days; null = sheet month */
+  actualDays: { days: number; of: number } | null;
 }
 
 /** Department heads from attendance for a month, and how much of it has been assigned to stream × process. */

@@ -38,7 +38,7 @@ export async function storageView(periods: string[]): Promise<{ months: StorageM
     const monthly = wh.length ? rupees(wh.reduce((a, l) => a + Math.round(l.amount! * 100), 0)) : null;
     const slices = wh.flatMap((l) => l.slices.map((s) => ({ ...s, family: l.family })));
     const shP = slices.filter((s) => s.fn === "Storage & handling").reduce((a, s) => a + s.paise, 0);
-    const sh = wh.length ? rupees(shP) : null;
+    const sh = wh.length && shP ? rupees(shP) : null; // no approved S&H slice = missing, never ₹0
     const mpLines = wh.filter((l) => l.family === "manpower" || l.family === "ot");
     const mp = mpLines.length ? mpLines.reduce((a, l) => a + l.amount!, 0) : null;
     const byFn = new Map<string, number>();

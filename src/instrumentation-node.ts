@@ -45,8 +45,13 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       if (ist[0] * 60 + ist[1] < sh * 60 + sm) return;
       const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(now);
       const { one, q } = await import("./server/db");
-      if ((await one<{ value: string }>(`select value from app_settings where key = 'sop.sync_day'`))?.value === day) return;
       const { sfConfigured } = await import("./server/snowflake");
+      // storage & handling per item needs inventory by category: fill it once on a fresh deploy instead of waiting for tomorrow's run
+      if (sfConfigured() && !(await one(`select 1 from wcm_inv_cat limit 1`))) {
+        try { const { pullInventory } = await import("./server/wcm/feed"); const w = await pullInventory(); console.log(`[wcm-inventory] first fill: ${w.read} category rows`); }
+        catch (e) { console.error("[wcm-inventory] first fill failed", e instanceof Error ? e.message : e); }
+      }
+      if ((await one<{ value: string }>(`select value from app_settings where key = 'sop.sync_day'`))?.value === day) return;
       if (!sfConfigured()) return;
       // a failed day is retried hourly (e.g. after the warehouse is fixed) — the day only counts as done once every feed is ok
       const last = await one<{ value: string }>(`select value from app_settings where key = 'sop.sync_attempt'`);

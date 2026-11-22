@@ -192,7 +192,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
         <MonthlySpendChart tree={tree} selected={span.periods} />
       </section>
 
-      <Collapsible id="aop:more" title="More detail" sub="Variation from each line's own average · month-by-month variance · Cost Master differences">
+      <Collapsible id="aop:more" title="More detail" sub="Lines that moved away from their own average">
         <div className="space-y-5 border-t border-line p-4">
           <AverageInsights ins={avgIns} labels={L} />
           {more}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ButtonLink, EmptyState } from "@/components/ui";
 import { AopHeader, cycleQs } from "@/components/aop/AopNav";
 import { ReviewTable } from "@/components/aop/ReviewTable";
+import { VarianceGrid } from "@/components/aop/VarianceGrid";
 import { requireUser, canManage } from "@/server/auth";
 import { editableItemIds, listCycles, loadModel, resolveCycle } from "@/server/aop/model";
 import { summaryTree } from "@/server/aop/summaryData";
@@ -39,6 +40,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
         )}
       </div>
       <ReviewTable tree={tree} period={period} editable={[...editableItemIds(m, user)]} onlyMine={onlyMine} />
+      {manage && <div className="mt-4"><VarianceGrid tree={tree} /></div>}
     </div>
   );
 }

@@ -46,7 +46,7 @@ export function SlaPanel({ model, volume, productivity }: { model: SlaModel; vol
         <div className="flex flex-col justify-center text-[12px]">
           <span className="text-ink-4">Heads levers · per month</span>
           <span className={cn("text-[18px] font-semibold tabular", dInr < 0 ? "text-ok" : dInr > 0 ? "text-bad" : "")}>{dDe === 0 ? "—" : `${dDe > 0 ? "+" : "−"}${n1(Math.abs(dDe))} DE/day · ${inr(dInr, { sign: true })}`}</span>
-          <span className="text-[10.5px] text-ink-4">Δ present DE × salary master{cost.some((c) => c.d !== 0 && c.isDefault) ? " (default ₹21,983 rate — enter real rates on AOP › Cost per day)" : ""}; volume and productivity come from the levers above</span>
+          <span className="text-[10.5px] text-ink-4">Δ present DE × salary master{cost.some((c) => c.d !== 0 && c.isDefault) ? " (default ₹21,983 rate — real rates go in AOP › Data)" : ""}; volume and productivity come from the levers above</span>
         </div>
       </div>
       <div className="overflow-x-auto">
