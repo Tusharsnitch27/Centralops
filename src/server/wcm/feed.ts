@@ -113,7 +113,8 @@ export async function pullStageOutput(from = STAGE_FROM) {
 
 /**
  * Forward history before warehouse_sla_performance's window, from UC items (UNICOMMERCE_FACT_ITEMS_INTERMEDIATE, Mar 2026 →):
- * packed (PACKED_TIMESTAMP, a date), dispatched, shipments (distinct SHIPPINGPACKAGECODE dispatched) and ordered (items by UC_CREATED day).
+ * packed (PACKED_TIMESTAMP, a date), dispatched, shipments (distinct SHIPPINGPACKAGECODE dispatched) and ordered (items by UC_CREATED day —
+ * every day to yesterday: the SLA source writes no 'ordered', so it is the one creation-day count for Functions' received).
  * The SLA source's window is cut by creation day, so items created before its first day (asked each run) but done later are in neither
  * source unless UC covers event days up to UC_WINS_DAYS past it; UC wins on those days (pullStageOutput skips them). UC labels stores and
  * M-Now differently ('Own Store', 'M-NOW MUMBAI'; Flipkart SOR is marketplace 'FLIPKART B2B CUSTOM'): those map to the same streams first.
@@ -124,12 +125,12 @@ const UC_WINS_DAYS = 14;
 const UC_STREAM = `CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' OR marketplace_mapped LIKE 'M-NOW%' OR UPPER(marketplace_mapped) = 'SLIKK' THEN 'B2B Marketplace'
   WHEN marketplace_mapped IN ('Own Store','Franchise Store') THEN 'B2B Retail' WHEN marketplace_mapped = 'NYKAA_SAPL_TAURU' THEN 'B2C Marketplace'
   ELSE ${STREAM} END`;
-const ucEv = (event: string, col: string, unit = "item", key = "saleorderitemcode") => `SELECT TO_VARCHAR(${col}::date, 'YYYY-MM-DD') AS day, site, stream,
-  '${event}' AS event, '${unit}' AS unit, COUNT(DISTINCT ${key}) AS qty FROM s WHERE ${col} >= TO_DATE('{from}') AND ${col} < TO_DATE('{until}') GROUP BY 1, 2, 3`;
+const ucEv = (event: string, col: string, unit = "item", key = "saleorderitemcode", until = "{until}") => `SELECT TO_VARCHAR(${col}::date, 'YYYY-MM-DD') AS day, site, stream,
+  '${event}' AS event, '${unit}' AS unit, COUNT(DISTINCT ${key}) AS qty FROM s WHERE ${col} >= TO_DATE('{from}') AND ${col} < TO_DATE('${until}') GROUP BY 1, 2, 3`;
 export const UC_SQL = `WITH s AS (
   SELECT saleorderitemcode, shippingpackagecode, ${SITE("warehouse_name")} AS site, ${UC_STREAM} AS stream, uc_created, packed_timestamp, dispatched_timestamp
   FROM ${UC} WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU'))
-${ucEv("ordered", "uc_created")} UNION ALL ${ucEv("packed", "packed_timestamp")} UNION ALL ${ucEv("dispatched", "dispatched_timestamp")}
+${ucEv("ordered", "uc_created", "item", "saleorderitemcode", "{today}")} UNION ALL ${ucEv("packed", "packed_timestamp")} UNION ALL ${ucEv("dispatched", "dispatched_timestamp")}
 UNION ALL ${ucEv("shipments", "dispatched_timestamp", "shipment", "shippingpackagecode")}`;
 
 export async function pullUcHistory(from = "2026-04-01") {
@@ -137,7 +138,8 @@ export async function pullUcHistory(from = "2026-04-01") {
   const until = (await sfQuery<{ until: string | null }>(`SELECT TO_VARCHAR(MIN(uc_created)::date, 'YYYY-MM-DD') AS until FROM ${SLA}`))[0]?.until;
   if (!until) throw new Error("warehouse_sla_performance has no first day — UC history not written");
   const upTo = new Date(Date.parse(`${until}T00:00:00Z`) + UC_WINS_DAYS * 864e5).toISOString().slice(0, 10);
-  const rows = (await sfQuery<Row>(UC_SQL.replaceAll("{from}", from).replaceAll("{until}", upTo))).filter((r) => r.day && r.site);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()); // ordered: every day to yesterday (IST)
+  const rows = (await sfQuery<Row>(UC_SQL.replaceAll("{from}", from).replaceAll("{until}", upTo).replaceAll("{today}", today))).filter((r) => r.day && r.site);
   const days = [...new Set(rows.map((r) => r.day!))];
   await tx(async (t) => {
     if (days.length) await t.q(`delete from wcm_stage_output where source = 'uc_items' and day = any($1::date[])`, [days]);
