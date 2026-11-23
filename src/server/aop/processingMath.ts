@@ -116,3 +116,10 @@ export function ruleSplit(wh: Wh, lines: PLine[], heads: Map<string, number>) {
   return out;
 }
 
+
+/** Updated IPP (units per head per day) for a process: exact stage, else a stage starting with the process name; box stages × 30 units. Missing stays null. */
+export function matchIpp(stream: string, process: string, ipps: { stream: string; stage: string; unit: string; ipp: number | null }[]): number | null {
+  const mine = ipps.filter((i) => i.stream === stream), p = process.toLowerCase();
+  const m = mine.find((i) => i.stage.toLowerCase() === p) ?? mine.find((i) => i.stage.toLowerCase().startsWith(p));
+  return m?.ipp == null ? null : m.unit === "box" ? m.ipp * 30 : m.ipp;
+}

@@ -1,7 +1,7 @@
 // Self-check: processingMath reproduces the Cost Master for South · B2C Shopify · Picker · Oct'25.
 // node --experimental-strip-types scripts/check-processing.mjs
 import assert from "node:assert/strict";
-import { computeRow, outputPerHead, applyLevers, ruleSplit } from "../src/server/aop/processingMath.ts";
+import { computeRow, outputPerHead, applyLevers, ruleSplit, matchIpp } from "../src/server/aop/processingMath.ts";
 
 const n = { targetPerDay: 800, workingDays: 23, avgSalary: 21983 };
 assert.equal(outputPerHead(n), 18400);
@@ -36,4 +36,10 @@ assert.ok(spf.get("B2C Returns Shopify|SPF") < 22 * 0.4, "SPF no longer takes mo
 const nd = computeRow({ targetPerDay: 80, workingDays: 23, avgSalary: 20000 }, { sopProj: null, plannedMp: null, finalOutput: 10000, salary: 20000, actualMp: 5, actualShare: 0.5, pass: 0.15 });
 assert.equal(nd.needMp, Math.ceil((10000 * 0.15) / (80 * 23 * 0.5)));
 close(nd.needExp, nd.needMp * 20000 * 0.5, 1e-9);
+// updated IPP master: exact stage, else stage starting with the process; box stages x 30; missing stays null
+assert.equal(matchIpp("B2C Shopify", "Picker", [{ stream: "B2C Shopify", stage: "Picker", unit: "unit", ipp: 750 }]), 750);
+assert.equal(matchIpp("B2C Returns Shopify", "Processing", [{ stream: "B2C Returns Shopify", stage: "Processing & QC", unit: "unit", ipp: 250 }]), 250);
+assert.equal(matchIpp("Inward", "Unloader", [{ stream: "Inward", stage: "Unloader", unit: "box", ipp: 200 }]), 6000);
+assert.equal(matchIpp("B2B Retail", "Loader", [{ stream: "B2B Retail", stage: "Picker", unit: "unit", ipp: 700 }]), null);
+assert.equal(matchIpp("B2C Shopify", "Picker", [{ stream: "B2C Shopify", stage: "Picker", unit: "unit", ipp: null }]), null);
 console.log("processing math OK", { mpRequired: r.mpRequired, plannedExp: r.plannedExp, plannedCpi: r.plannedCpi.toFixed(4), actualCpi: r.actualCpi.toFixed(4), adherence: r.volumeAdherence.toFixed(4) });

@@ -1,7 +1,8 @@
 import "server-only";
 import { q } from "../db";
-import { computeRow, passShare, rollupStream, ruleSplit } from "./processingMath";
+import { computeRow, matchIpp, passShare, rollupStream, ruleSplit } from "./processingMath";
 import { MP_HEADCOUNT } from "../wcm/math";
+import { activeIpps } from "../wcm/daily";
 import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type ProcessingMonth, type ProcRow, type StreamKey, type Wh } from "./processingTypes";
 
 /**
@@ -21,7 +22,16 @@ const daysIn = (p: string) => new Date(Date.UTC(Number(p.slice(0, 4)), Number(p.
 const col = (wh: Wh) => (wh === "South" ? "south" : "north");
 const key = (s: string, p: string) => `${s}|${p}`;
 
+/** Norms with target_per_day overridden by the updated IPP master (active version on the month's last day, today for the running month); no match = sheet norm. */
 async function norms(period: string, wh: Wh) {
+  const rows = await normRows(period, wh);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const last = `${period.slice(0, 8)}${String(daysIn(period)).padStart(2, "0")}`;
+  const ipps = await activeIpps(today.slice(0, 7) === period.slice(0, 7) ? today : last, wh);
+  return rows.map((n) => ({ ...n, target_per_day: matchIpp(n.stream, n.process, ipps) ?? n.target_per_day }));
+}
+
+async function normRows(period: string, wh: Wh) {
   return q<NormRow>(`select distinct on (stream, process) stream, process, department, target_per_day::float8 as target_per_day, working_days::float8 as working_days,
        avg_salary::float8 as avg_salary, sort from aop_proc_norms where warehouse = $1
        and effective_from <= greatest($2::date, (select min(effective_from) from aop_proc_norms where warehouse = $1)) -- earliest norm also covers sheet history before it
