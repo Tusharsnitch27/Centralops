@@ -1,6 +1,6 @@
 import "server-only";
 import { q } from "../db";
-import { computeRow, matchIpp, passShare, rollupStream, ruleSplit } from "./processingMath";
+import { actualMpOf, computeRow, matchIpp, passShare, rollupStream, ruleSplit } from "./processingMath";
 import { MP_HEADCOUNT } from "../wcm/math";
 import { activeIpps } from "../wcm/daily";
 import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type ProcessingMonth, type ProcRow, type StreamKey, type Wh } from "./processingTypes";
@@ -11,8 +11,10 @@ import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type P
  *  - projection / planned MP / final output: the Cost Master processing tabs for the months they cover (Oct'25–Oct'26 forward,
  *    Oct–Dec'25 returns / inward / inventory) — the sheet stays the source of truth where it has a figure; then S&OP plan / actuals;
  *    Inventory has no S&OP volume, so its last sheet month carries forward.
- *  - actual MP: sheet planned MP (= heads deployed) for sheet months; from 29 Oct 2026 the attendance API, which has only
- *    departments, so heads are split to stream × process — proposed by planned-MP mix until the warehouse lead assigns them.
+ *  - actual MP: the attendance API (from 29 Oct 2026) when it covers ≥ 90 % of the month's days; else sheet planned MP (= heads
+ *    deployed) for sheet months, then attendance for the running month. Attendance has only departments, so heads are split to
+ *    stream × process — proposed by planned-MP mix until the warehouse lead assigns them.
+ *  - returns final output: sop_returns; a month it lacks → putaway (B2C channel-open split by the month's received mix; B2B as put away).
  */
 
 type NormRow = { stream: string; process: string; department: string | null; target_per_day: number | null; working_days: number; avg_salary: number | null; sort: number };
@@ -59,6 +61,10 @@ async function sopVolumes(period: string, wh: Wh) {
   const recv = await q<{ stream: string; n: number }>(`select stream, sum(qty)::float8 as n from wcm_stage_output where event = 'received' and site = $2
      and date_trunc('month', day)::date = $1::date group by 1`, [period, wh]);
   const rShop = recv.find((r) => r.stream === "B2C Returns Shopify")?.n ?? 0, rMp = recv.find((r) => r.stream === "B2C Returns Marketplace")?.n ?? 0;
+  // a month sop_returns lacks (Aug 2026): trading putaway — no putaway row for the month = missing, a stream absent from a month that has rows = 0
+  const put = ret ? [] : await q<{ stream: string; n: number }>(`select stream, sum(qty)::float8 as n from wcm_stage_output where event = 'putaway' and site = $2
+     and date_trunc('month', day)::date = $1::date and stream in ('B2C Returns (channel open)', 'B2B Returns Retail', 'B2B Returns Marketplace') group by 1`, [period, wh]);
+  const putOf = (s: string) => (put.length ? put.find((r) => r.stream === s)?.n ?? 0 : null);
   const sum = (f: (r: (typeof rows)[number]) => boolean, m: "plan" | "actual") => {
     const xs = rows.filter(f).map((r) => r[m]).filter((x): x is number => x != null);
     return xs.length ? xs.reduce((a, x) => a + x, 0) : null;
@@ -67,11 +73,12 @@ async function sopVolumes(period: string, wh: Wh) {
   const v = (m: "plan" | "actual") => {
     const shop = sum(isShopify, m), mp = sum((r) => r.view_key === "b2c" && !isShopify(r), m);
     const retail = sum((r) => r.view_key === "retail_fwd", m), b2bmp = sum((r) => r.view_key === "b2b_mp", m);
-    const b2cRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2c/i.test(r.row_label), m) : ret?.b2c ?? null;
+    const b2cRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2c/i.test(r.row_label), m) : ret ? ret.b2c : putOf("B2C Returns (channel open)");
     const b2bRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2b/i.test(r.row_label), m) : ret?.b2b ?? null;
     const split = (total: number | null, a: number | null, b: number | null): [number | null, number | null] =>
       total == null ? [null, null] : (a ?? 0) + (b ?? 0) ? [total * (a ?? 0) / ((a ?? 0) + (b ?? 0)), total * (b ?? 0) / ((a ?? 0) + (b ?? 0))] : [total / 2, total / 2];
-    const [rs, rm] = rShop + rMp ? split(b2cRet, rShop, rMp) : split(b2cRet, shop, mp), [rr, rb] = split(b2bRet, retail, b2bmp);
+    const [rs, rm] = rShop + rMp ? split(b2cRet, rShop, rMp) : split(b2cRet, shop, mp);
+    const [rr, rb] = m === "actual" && !ret ? [putOf("B2B Returns Retail"), putOf("B2B Returns Marketplace")] : split(b2bRet, retail, b2bmp);
     return {
       "B2C Shopify": shop, "B2C Marketplace": mp, "B2B Retail": retail, "B2B Marketplace": b2bmp,
       "B2C Returns Shopify": rs, "B2C Returns Marketplace": rm, "B2B Returns Retail": rr, "B2B Returns Marketplace": rb,
@@ -139,14 +146,14 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
   const rows: ProcRow[] = base.map((b) => {
     const k = key(b.stream, b.n.process);
     const finalOutput = b.s?.final_output ?? (b.carry ? null : vol.actual[b.stream] ?? null);
-    let actualMp: number | null = null, src: ProcRow["actualMpSource"] = null, actualShare = 1;
-    if (b.s?.planned_mp != null) { actualMp = b.s.planned_mp; src = "sheet"; }
-    else if (useAttendance && b.n.department && deptHeads.has(b.n.department)) {
+    let att: { mp: number; src: "attendance" | "proposed" } | null = null;
+    if (useAttendance && b.n.department && deptHeads.has(b.n.department)) {
       const st = stored.find((x) => x.stream === b.stream && x.process === b.n.process && x.department === b.n.department);
-      actualMp = st?.heads ?? proposed.get(k) ?? null;
-      src = actualMp == null ? null : st?.status === "proposed" ? "proposed" : "attendance"; // the 22 Nov rule split counts as assigned
-      actualShare = share;
+      const mp = st?.heads ?? proposed.get(k) ?? null;
+      if (mp != null) att = { mp, src: st?.status === "proposed" ? "proposed" : "attendance" }; // the 22 Nov rule split counts as assigned
     }
+    const pick = actualMpOf(b.s?.planned_mp ?? null, att, share);
+    const actualMp = pick.actualMp, src: ProcRow["actualMpSource"] = pick.src, actualShare = pick.attendance ? share : 1;
     const c = computeRow({ targetPerDay: b.n.target_per_day, workingDays: b.n.working_days, avgSalary: b.n.avg_salary },
       { sopProj: b.sopProj, plannedMp: b.plannedMp, finalOutput, salary: b.salary, actualMp, actualShare, pass: passShare(b.n.process) });
     return {

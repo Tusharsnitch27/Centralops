@@ -9,7 +9,9 @@ export type Cause = "plan_peak" | "volume" | "held_up" | "below_ipp" | "absentee
 export interface GapPart { cause: Cause; rupees: number | null; note: string }
 export interface Point { key: string; projected: number | null; received: number | null; processed: number | null; issues: number | null;
   idealHeads: number | null; actualHeads: number | null; idealCost: number | null; actualCost: number | null;
-  costPerUnit: number | null; idealCostPerUnit: number | null; overlay: number | null }
+  costPerUnit: number | null; idealCostPerUnit: number | null; overlay: number | null;
+  /** units the actual ₹ per unit divides by: month = Processing's volume over the days the actual ₹ covers; day = processed */
+  actualUnits: number | null }
 export interface FunctionView { fn: FnKey; site: FnSite; mode: FnMode; points: Point[]; manpowerGap: GapPart[]; logisticsGap: GapPart[] | null;
   summary: string[]; grey: string[]; scenario: { points: Point[]; needed: Needed[]; deltaRupees: number | null; deltaPerUnit: number | null } | null }
 /** Heads (and their ₹, costed as ideal) needed for the actual store orders' peak, as placed and on rulebook days; one per point key. */

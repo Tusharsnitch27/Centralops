@@ -26,9 +26,11 @@ const n0 = (n: number) => Math.round(n).toLocaleString("en-IN");
 const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);
 
 /** Norms per site × month: units per head (stages of the function's streams, weighted by Processing's stream volume), salary, Processing's actuals
- *  and units (Σ the streams' final output: sheet, else S&OP actual — the month ₹/unit base; null when any stream lacks it). */
+ *  with the share of the month their ₹ covers, and units (Σ the streams' final output: sheet, else S&OP actual — the month ₹/unit base; null
+ *  when any stream lacks it). No salary from Processing → the salary master (wcm_mp_rate) in force at month end, else the legacy default. */
 export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
-  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, volume: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [];
+  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, volume: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [], master: string[] = [];
+  const rates = await q<{ site: string; from: string; salary: number }>(`select site, effective_from::text as from, monthly_salary::float8 as salary from wcm_mp_rate order by effective_from`);
   await Promise.all(months.flatMap((m) => sites.map(async (s) => {
     const key = `${s}|${mk(m)}`;
     const [pm, ipps] = await Promise.all([pmonth(m, s), activeIpps(m === monthStart(now) ? now : addDays(addMonths(m, 1), -1), s)]); // Processing's IPP day
@@ -40,12 +42,21 @@ export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
     const rows = blocks.flatMap((b) => b?.rows ?? []), paid = rows.filter((r) => r.actualMp && r.avgSalary != null);
     const mp = paid.reduce((a, r) => a + r.actualMp!, 0);
     salary[key] = mp ? paid.reduce((a, r) => a + r.actualMp! * r.avgSalary!, 0) / mp : rows.find((r) => r.avgSalary != null)?.avgSalary ?? null;
-    if (salary[key] == null) { salary[key] = LEGACY_SALARY; legacy.push(key); }
+    if (salary[key] == null) {
+      const r = rates.filter((x) => x.site === s && x.from <= addDays(addMonths(m, 1), -1)).at(-1);
+      salary[key] = r?.salary ?? LEGACY_SALARY; (r ? master : legacy).push(key);
+    }
     wd[key] = pm.streams[0]?.rows[0]?.workingDays ?? 23; // Processing's working days for the month (weekly-off cover in on-roll ideal heads)
     volume[key] = blocks.every((b) => b?.finalOutput != null) ? blocks.reduce((a, b) => a + b!.finalOutput!, 0) : null;
-    if (blocks.every((b) => b && b.actualExp != null && b.actualMp != null)) actuals[key] = { heads: sumN(blocks.map((b) => b!.actualMp)), cost: sumN(blocks.map((b) => b!.actualExp)) };
+    if (blocks.every((b) => b && b.actualExp != null && b.actualMp != null)) {
+      // share of the month the ₹ covers: attendance lines run at Processing's attendance days ÷ days in month, sheet lines the whole month
+      // (₹-weighted when mixed). The running month's volume is month to date already, so its ₹ and units cover the same days as they are.
+      const att = (r: (typeof rows)[number]) => (r.actualMpSource === "attendance" || r.actualMpSource === "proposed") && pm.actualDays ? pm.actualDays.days / pm.actualDays.of : 1;
+      const cost = sumN(blocks.map((b) => b!.actualExp)), full = rows.reduce((a, r) => a + (r.actualExp ?? 0) / att(r), 0);
+      actuals[key] = { heads: sumN(blocks.map((b) => b!.actualMp)), cost, share: m === monthStart(now) || !full || cost == null ? 1 : cost / full };
+    }
   })));
-  return { uph, salary, wd, volume, actuals, legacy };
+  return { uph, salary, wd, volume, actuals, legacy, master, masterRates: [...new Set(master.map((k) => salary[k]!))] };
 }
 
 type Norms = Awaited<ReturnType<typeof norms>>;
@@ -105,10 +116,15 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const noNorm = months.flatMap((m) => sites.filter((s) => !n.uph[`${s}|${mk(m)}`]).map((s) => `${s}|${mk(m)}`));
   if (noNorm.length) grey.push(`There is no productivity norm for ${spans(noNorm, sites)}, so ideal heads are blank there.`);
   if (mode === "day") { const d = new Set(win.filter((r) => r.presentHeads == null).map((r) => r.day)).size; if (d) grey.push(`Attendance is missing on ${d} of the ${new Set(win.map((r) => r.day)).size} days, so actual heads and cost are blank on those days.`); }
-  else { const m = points.filter((p) => p.actualCost == null).flatMap((p) => sites.map((s) => `${s}|${p.key}`)); if (m.length) grey.push(`There are no actual heads for ${spans(m, sites)}.`); }
+  else {
+    const m = points.filter((p) => p.actualCost == null).flatMap((p) => sites.map((s) => `${s}|${p.key}`)); if (m.length) grey.push(`There are no actual heads for ${spans(m, sites)}, so cost and ₹ per unit are blank there.`);
+    const nv = points.flatMap((p) => sites.filter((s) => n.volume[`${s}|${p.key}`] == null).map((s) => `${s}|${p.key}`));
+    if (nv.length) grey.push(`AOP › Processing has no volume for ${spans(nv, sites)}, so ₹ per unit is blank there.`);
+  }
   { const d = new Set(win.filter((r) => r.processed == null).map((r) => r.day)).size; if (d) grey.push(`Daily processed volume is missing for ${d} of the ${new Set(win.map((r) => r.day)).size} days in this period.`); }
   if (fn === "b2b_retail" || fn === "b2b_marketplace") grey.push("Loading, bagging, encoding and dispatch have no scan feed, so they are not counted in processed volume.");
-  if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where no sheet salary exists (${spans(n.legacy, sites)}).`);
+  if (n.master.length) grey.push(`Salary is the salary master's ${n.masterRates.map((r) => `₹${n0(r)}`).join(" / ")} per head where no sheet salary exists (${spans(n.master, sites)}).`);
+  if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where neither a sheet salary nor a salary master rate exists (${spans(n.legacy, sites)}).`);
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
   if (fn !== "inwards") grey.push("Work held up by issues is not recorded for this function.");
   if (left.length || dropped.length) grey.push(`The manpower gap leaves out ${[left.length ? spans(left, sites) : "", dropped.length ? (mode === "day" ? `${dropped.length} days` : spans(dropped.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)) : ""].filter(Boolean).join(" and ")}, which lack a norm, a projection, attendance or processed volume.`);
@@ -139,9 +155,10 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     summary.push(`Manpower cost ${inr(a)} against ${inr(i)} at ideal heads, ${inr(Math.abs(a - i))} ${a >= i ? "more" : "less"}.`);
     // ₹/unit: month on month over Processing's units (as AOP › Processing), day on day over scanned output
     const unitsOf = (p: Point) => (mode === "month" ? volOf(p.key) : p.processed);
-    const units = both.filter((p) => unitsOf(p));
-    const u = units.reduce((x, p) => x + unitsOf(p)!, 0);
-    if (u) summary.push(`That is ₹${(units.reduce((x, p) => x + p.actualCost!, 0) / u).toFixed(2)} per unit against ₹${(units.reduce((x, p) => x + p.idealCost!, 0) / u).toFixed(2)} at ideal heads.`);
+    // actual ₹ over the units of the same days (Point.actualUnits); ideal ₹ covers every day, so over the whole volume
+    const units = both.filter((p) => unitsOf(p) && p.actualUnits);
+    const u = units.reduce((x, p) => x + unitsOf(p)!, 0), au = units.reduce((x, p) => x + p.actualUnits!, 0);
+    if (u && au) summary.push(`That is ₹${(units.reduce((x, p) => x + p.actualCost!, 0) / au).toFixed(2)} per unit against ₹${(units.reduce((x, p) => x + p.idealCost!, 0) / u).toFixed(2)} at ideal heads.`);
   }
 
   // B2B Retail: "Rulebook followed" (store orders on their rulebook days; ideal stays on the plan) and cross-zone freight

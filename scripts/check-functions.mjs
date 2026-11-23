@@ -168,3 +168,18 @@ assert.equal(toMonthPoints([{ ...day("2026-08-10", 100, rp, 2, "North"), receive
 assert.equal(stageTotal([...b2cOnly, { day: "2026-08-10", site: "North", stream: "B2C Returns (channel open)", event: "putaway", qty: 700 }], "North", "2026-08-10", b2b.event, b2b.streams), 0);
 assert.equal(stageTotal([{ day: "2026-08-10", site: "North", stream: "B2B Returns Retail", event: "putaway", qty: 50 }], "North", "2026-08-10", b2b.event, b2b.streams), 50);
 console.log("functions returns split OK");
+
+// Task 4 (backfill): month ₹/unit = Σ₹ ÷ Σunits over the same days — Processing's cost at its share of the month over volume × that share;
+// with no Processing actuals, the attendance days' cost over volume × attendance days ÷ the month's days in the window. Ideal stays over the whole volume.
+const oct = Array.from({ length: 31 }, (_, i) => day(`2026-10-${String(i + 1).padStart(2, "0")}`, 100, 200, i >= 28 ? 30 : null, "North"));
+const octVol = { "North|2026-10": 235504 };
+const [s3] = toMonthPoints(oct, { "2026-10": 100 }, 23000, undefined, undefined, { "North|2026-10": { heads: 40, cost: 132000, share: 3 / 31 } }, undefined, octVol);
+close(s3.costPerUnit, 5.79, 0.01); // not 132000 ÷ 235504 = 0.56
+close(s3.actualUnits, 235504 * 3 / 31);
+close(s3.idealCostPerUnit, s3.idealCost / 235504);
+const [s1] = toMonthPoints(oct, { "2026-10": 100 }, 23000, undefined, undefined, { "North|2026-10": { heads: 40, cost: 132000, share: 1 } }, undefined, octVol);
+close(s1.costPerUnit, 132000 / 235504, 1e-9);
+const [fb] = toMonthPoints(oct, { "2026-10": 100 }, 23000, undefined, undefined, undefined, undefined, octVol); // attendance 29–31 only
+assert.equal(fb.actualCost, 3 * 30 * 1000);
+close(fb.costPerUnit, 90000 / (235504 * 3 / 31), 1e-9);
+console.log("functions same-days per-unit OK");

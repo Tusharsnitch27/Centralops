@@ -43,7 +43,14 @@ export function computeRow(n: Norm, m: MonthIn) {
   };
 }
 
-const sumOrNull = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);
+/** Actual MP for a line: attendance (when the month uses it) ahead of the sheet's planned MP once it covers ≥ 90 % of the month's days
+ *  (controller ruling, 23 Nov 2026); below that the sheet, then attendance. `attendance` = the line's cost runs at the attendance share. */
+export function actualMpOf(sheetMp: number | null, att: { mp: number; src: "attendance" | "proposed" } | null, coverage: number) {
+  if (att && (sheetMp == null || coverage >= 0.9)) return { actualMp: att.mp, src: att.src, attendance: true };
+  return { actualMp: sheetMp, src: sheetMp == null ? null : ("sheet" as const), attendance: false };
+}
+
+const sumOrNull =(xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);
 const maxOrNull = (xs: (number | null)[]) => (xs.some((x) => x != null) ? Math.max(...xs.filter((x): x is number => x != null)) : null);
 
 /** Stream roll-up: CPI = Σ process CPI (sheet rule); volume = the stream's (largest process) volume. */

@@ -48,3 +48,11 @@ assert.equal(passShare("WFR/CS escalation"), 0.05);
 assert.equal(passShare("SPF"), 0.15);
 assert.equal(passShare("Picker"), 1);
 console.log("processing math OK", { mpRequired: r.mpRequired, plannedExp: r.plannedExp, plannedCpi: r.plannedCpi.toFixed(4), actualCpi: r.actualCpi.toFixed(4), adherence: r.volumeAdherence.toFixed(4) });
+// attendance ahead of the sheet's planned MP when it covers ≥ 90 % of the month (28 of 30 days); otherwise the sheet, then attendance
+import { actualMpOf } from "../src/server/aop/processingMath.ts";
+const att = { mp: 30, src: "attendance" };
+assert.deepEqual(actualMpOf(25.5, att, 28 / 30), { actualMp: 30, src: "attendance", attendance: true });
+assert.deepEqual(actualMpOf(25.5, att, 3 / 31), { actualMp: 25.5, src: "sheet", attendance: false });
+assert.deepEqual(actualMpOf(null, att, 3 / 31), { actualMp: 30, src: "attendance", attendance: true });
+assert.deepEqual(actualMpOf(null, null, 1), { actualMp: null, src: null, attendance: false });
+console.log("processing attendance-first OK");

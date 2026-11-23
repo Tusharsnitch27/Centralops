@@ -4,7 +4,8 @@ import type { Cause, DayRow, GapPart, Point } from "./types";
 
 /** Per-month value, site-specific first: keys "South|2026-11" or "2026-11". */
 export type ByMonth = Record<string, number | null | undefined>;
-export type Actuals = Record<string, { heads: number | null; cost: number | null } | undefined>;
+/** Processing's month heads and ₹; share = the part of the month that ₹ covers (attendance days ÷ days in month; 1 for sheet months). */
+export type Actuals = Record<string, { heads: number | null; cost: number | null; share?: number } | undefined>;
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 export const weekdayOf = (day: string) => DAYS[new Date(`${day}T00:00:00Z`).getUTCDay()]!;
@@ -85,18 +86,26 @@ function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
  * the month. Heads: day = present heads that day; month = present per captured day × days in month ÷ 23 (Processing's roster heads).
  * `rows` must cover whole months (the peak is the month's); only days in [from, to] become points. Month ₹/unit divides by `volume`
  * (Processing's units per site × month) when given — a month without it has no ₹/unit; day ₹/unit divides by scanned output.
+ * Actual ₹/unit takes the volume over the same days as the ₹: × Processing's share, or (no Processing ₹) × attendance days ÷ the
+ * month's days in the window; ideal ₹ covers every day, so ideal ₹/unit takes the whole volume.
  */
 function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth, keep?: (r: DayRow) => boolean, volume?: ByMonth): Point[] {
   const ideal = idealBySiteMonth(rows, uph, wd);
   const win = rows.filter((r) => r.day >= from && r.day <= to && (!keep || keep(r))); // peaks still use every row
-  const groups = new Map<string, DayRow[]>(), vols = new Map<string, number | null>();
+  const groups = new Map<string, DayRow[]>(), vols = new Map<string, number | null>(), aUnits = new Map<string, number | null>();
   for (const r of win) { const k = mode === "day" ? r.day : monthKey(r.day); groups.set(k, [...(groups.get(k) ?? []), r]); }
   const pts = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, rs]) => {
     const sites = [...new Set(rs.map((r) => r.site))];
     const month = monthKey(rs[0]!.day), sal = (site: string) => at(salary, site, month);
     const idl = sites.map((s) => ideal.get(`${s}|${month}`) ?? null);
-    if (mode === "month" && volume) vols.set(key, sumAll(sites.map((s) => at(volume, s, month))));
     const fixed = (s: string) => (mode === "month" ? actuals?.[`${s}|${month}`] : undefined);
+    if (mode === "month" && volume) {
+      vols.set(key, sumAll(sites.map((s) => at(volume, s, month))));
+      aUnits.set(key, sumAll(sites.map((s) => {
+        const v = at(volume, s, month), f = fixed(s), mine = rs.filter((r) => r.site === s);
+        return v == null ? null : f?.cost != null ? v * (f.share ?? 1) : (v * mine.filter((r) => r.presentHeads != null).length) / mine.length;
+      })));
+    }
     // across sites a part missing on either site is missing for Both (never half the cost or volume)
     const bySite = (s: string, v: (r: DayRow) => number | null) => sumN(rs.filter((r) => r.site === s).map(v));
     const actualCost = sumAll(sites.map((s) => fixed(s)?.cost ?? bySite(s, (r) => (r.presentHeads == null || sal(s) == null ? null : (r.presentHeads * sal(s)!) / 23))));
@@ -109,14 +118,15 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
     return {
       key, projected: sumN(rs.map((r) => r.projected)), received: sumN(rs.map((r) => r.received)), processed: sumAll(sites.map((s) => bySite(s, (r) => r.processed))),
       issues: sumN(rs.map((r) => r.issues)), idealHeads: sumAll(idl.map((i) => (i == null ? null : mode === "day" ? i.floor : i.roll))), actualHeads, idealCost, actualCost,
-      costPerUnit: null as number | null, idealCostPerUnit: null as number | null,
+      costPerUnit: null as number | null, idealCostPerUnit: null as number | null, actualUnits: null as number | null,
       overlay: baseSum ? base.reduce((a, r) => a + r.overlay! * r.overlayBase!, 0) / baseSum : null,
     };
   });
   const med = median(pts.map((p) => p.processed).filter((x): x is number => x != null));
   for (const p of pts) {
-    const [units, m] = vols.has(p.key) ? [vols.get(p.key) ?? null, 0] : [p.processed, med];
-    p.costPerUnit = perUnit(p.actualCost, units, m); p.idealCostPerUnit = perUnit(p.idealCost, units, m);
+    const month = vols.has(p.key), m = month ? 0 : med;
+    p.actualUnits = month ? aUnits.get(p.key) ?? null : p.processed;
+    p.costPerUnit = perUnit(p.actualCost, p.actualUnits, m); p.idealCostPerUnit = perUnit(p.idealCost, month ? vols.get(p.key) ?? null : p.processed, m);
   }
   return pts;
 }
