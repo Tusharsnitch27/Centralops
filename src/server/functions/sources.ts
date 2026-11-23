@@ -26,8 +26,10 @@ export const SITES: Wh[] = ["South", "North"];
 
 /** processingMonth, once per request (dailyRows and the view both need it). */
 export const pmonth = cache(processingMonth);
+/** The latest store-order day pulled into fn_retail_order (null when none): later days are not known yet, not 0. */
+export const lastOrderDay = cache(async () => (await q<{ last: string | null }>(`select max(order_date)::text as last from fn_retail_order`))[0]?.last ?? null);
 
-export const dayList = (from: string, to: string) => { const out: string[] = []; for (let d = from; d <= to; d = addDays(d, 1)) out.push(d); return out; };
+const dayList = (from: string, to: string) => { const out: string[] = []; for (let d = from; d <= to; d = addDays(d, 1)) out.push(d); return out; };
 const monthOf = monthStart;
 const slaSite = `case wh when 'NORTH' then 'North' else 'South' end`;
 type SiteDay = Map<string, number | null>; // key `${site}|${day}`
@@ -86,7 +88,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   const f = FN[fn], days = dayList(from, to);
   const months = [...new Set(days.map(monthOf))];
   const events = fn === "inwards" || fn === "returns" ? ["putaway", "received"] : [f.processed.event];
-  const [proj, stage, heads, pms, orders, inward, created, deadline] = await Promise.all([
+  const [proj, stage, heads, pms, orders, inward, created, deadline, lastOrder] = await Promise.all([
     projection(fn, from, to, days),
     q<{ day: string; site: string; stream: string; event: string; qty: number }>(
       `select day::text as day, site, stream, event, sum(qty)::float8 as qty from wcm_stage_output where day between $1 and $2 and event = any($3::text[]) group by 1, 2, 3, 4`, [from, to, events]),
@@ -102,6 +104,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       `select day::text as day, site, received::float8 as received, issues::float8 as issues from fn_inward_daily where day between $1 and $2`, [from, to]) : Promise.resolve([]),
     fn === "b2c_shopify" || fn === "b2c_marketplace" ? slaCells(f.label, "created_hr", from, to) : Promise.resolve(new Map()),
     fn === "b2c_shopify" || fn === "b2c_marketplace" || fn === "b2b_marketplace" ? slaCells(f.label, "deadline", from, to) : Promise.resolve(new Map()),
+    fn === "b2b_retail" ? lastOrderDay() : Promise.resolve(null),
   ]);
   // a stage total is null when the feed did not run for that day × site × event, 0 when it ran with nothing for these streams
   const ran = new Set(stage.map((r) => `${r.site}|${r.day}|${r.event}`));
@@ -112,8 +115,9 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   for (const d of days) for (const s of sites) {
     const hs = heads.filter((h) => h.day === d && h.site === s), pm = pms.get(k(s, monthOf(d)));
     const share = (st: StreamKey) => pm?.shares[st];
-    const presentHeads = !hs.length || f.streams.some((st) => share(st) == null) ? null
-      : f.streams.reduce((a, st) => a + (hs.find((h) => h.dept === STREAMS.find((x) => x.key === st)!.dept)?.heads ?? 0) * share(st)!, 0);
+    const deptHeads = f.streams.map((st) => hs.find((h) => h.dept === STREAMS.find((x) => x.key === st)!.dept)?.heads); // a department absent that day is unknown, not 0
+    const presentHeads = !hs.length || f.streams.some((st, i) => share(st) == null || deptHeads[i] == null) ? null
+      : f.streams.reduce((a, st, i) => a + deptHeads[i]! * share(st)!, 0);
     let received: number | null = null, issues: number | null = null, overlay: number | null = null, overlayBase: number | null = null;
     if (fn === "inwards") {
       const w = inward.find((r) => r.day === d && r.site === s);
@@ -125,13 +129,13 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       if (c?.judged) { overlay = (100 * c.ok) / c.judged; overlayBase = c.judged; }
     } else if (fn === "b2b_retail") {
       const o = orders.find((r) => r.day === d && r.site === s);
-      received = o ? o.qty : d >= ORDERS_FROM ? 0 : null;
+      received = o ? o.qty : d >= ORDERS_FROM && lastOrder != null && d <= lastOrder ? 0 : null; // after the latest pulled day: not known yet
       if (o?.qty) { overlay = (100 * o.within) / o.qty; overlayBase = o.qty; }
     } else if (fn === "b2b_marketplace") {
       received = deadline.get(k(s, d))?.units ?? null;
     } else {
       const b2c = stageSum(s, d, "received", ["B2C Returns Shopify", "B2C Returns Marketplace"]), b2b = stageSum(s, d, "putaway", ["B2B Returns Retail", "B2B Returns Marketplace"]);
-      received = b2c == null && b2b == null ? null : (b2c ?? 0) + (b2b ?? 0);
+      received = b2c == null || b2b == null ? null : b2c + b2b; // half a day's returns is not the day's returns
     }
     out.push({ day: d, site: s, projected: proj.get(k(s, d)) ?? null, received, processed: stageSum(s, d, f.processed.event, f.processed.streams), issues, presentHeads, overlay, overlayBase });
   }

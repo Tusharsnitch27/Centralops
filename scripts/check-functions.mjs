@@ -121,3 +121,9 @@ close(wg.gap.reduce((a, p) => a + (p.rupees ?? 0), 0), pairedGap);
 assert.deepEqual(wg.dropped, ["2026-11-02"]);
 close(wg.gap.find((p) => p.cause === "other").rupees, 0);
 console.log("functions gap pairing OK");
+// month ₹/unit divides by Processing's units (sheet final output, else S&OP actual), never scanned output; none → null
+const mrows = [day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)];
+assert.equal(toMonthPoints(mrows, { "2026-11": 100 }, 23000, undefined, undefined, undefined, undefined, { "South|2026-11": 500 })[0].costPerUnit, 8); // ₹4000 ÷ 500
+assert.equal(toMonthPoints(mrows, { "2026-11": 100 }, 23000, undefined, undefined, undefined, undefined, { "South|2026-11": null })[0].costPerUnit, null);
+assert.equal(toMonthPoints(mrows, { "2026-11": 100 }, 23000, undefined, undefined, undefined, undefined, { "South|2026-11": null })[0].idealCostPerUnit, null);
+console.log("functions month per-unit OK");

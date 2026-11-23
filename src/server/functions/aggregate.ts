@@ -60,17 +60,19 @@ function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
 /**
  * Rows → points. Actual ₹ per day = present heads × salary ÷ 23 (Processing's basis); ideal ₹ per day = on-roll ideal × salary ÷ days in
  * the month. Heads: day = present heads that day; month = present per captured day × days in month ÷ 23 (Processing's roster heads).
- * `rows` must cover whole months (the peak is the month's); only days in [from, to] become points.
+ * `rows` must cover whole months (the peak is the month's); only days in [from, to] become points. Month ₹/unit divides by `volume`
+ * (Processing's units per site × month) when given — a month without it has no ₹/unit; day ₹/unit divides by scanned output.
  */
-function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth, keep?: (r: DayRow) => boolean): Point[] {
+function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth, keep?: (r: DayRow) => boolean, volume?: ByMonth): Point[] {
   const ideal = idealBySiteMonth(rows, uph, wd);
   const win = rows.filter((r) => r.day >= from && r.day <= to && (!keep || keep(r))); // peaks still use every row
-  const groups = new Map<string, DayRow[]>();
+  const groups = new Map<string, DayRow[]>(), vols = new Map<string, number | null>();
   for (const r of win) { const k = mode === "day" ? r.day : monthKey(r.day); groups.set(k, [...(groups.get(k) ?? []), r]); }
   const pts = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, rs]) => {
     const sites = [...new Set(rs.map((r) => r.site))];
     const month = monthKey(rs[0]!.day), sal = (site: string) => at(salary, site, month);
     const idl = sites.map((s) => ideal.get(`${s}|${month}`) ?? null);
+    if (mode === "month" && volume) vols.set(key, sumAll(sites.map((s) => at(volume, s, month))));
     const fixed = (s: string) => (mode === "month" ? actuals?.[`${s}|${month}`] : undefined);
     // across sites a part missing on either site is missing for Both (never half the cost or volume)
     const bySite = (s: string, v: (r: DayRow) => number | null) => sumN(rs.filter((r) => r.site === s).map(v));
@@ -89,14 +91,17 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
     };
   });
   const med = median(pts.map((p) => p.processed).filter((x): x is number => x != null));
-  for (const p of pts) { p.costPerUnit = perUnit(p.actualCost, p.processed, med); p.idealCostPerUnit = perUnit(p.idealCost, p.processed, med); }
+  for (const p of pts) {
+    const [units, m] = vols.has(p.key) ? [vols.get(p.key) ?? null, 0] : [p.processed, med];
+    p.costPerUnit = perUnit(p.actualCost, units, m); p.idealCostPerUnit = perUnit(p.idealCost, units, m);
+  }
   return pts;
 }
 
 /** Day view: ideal heads on the floor (against present heads); ideal ₹ is the month's on-roll cost per day. */
 export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, wd?: ByMonth) => toPoints("day", rows, uph, salary, from, to, undefined, wd);
-/** `actuals` ("South|2026-10" → Processing's heads and ₹ for the month) replace the attendance figure, so months tie to AOP › Processing. */
-export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth) => toPoints("month", rows, uph, salary, from, to, actuals, wd);
+/** `actuals` ("South|2026-10" → Processing's heads and ₹ for the month) replace the attendance figure, and `volume` (Processing's units) is the ₹/unit base, so months tie to AOP › Processing. */
+export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth, volume?: ByMonth) => toPoints("month", rows, uph, salary, from, to, actuals, wd, undefined, volume);
 
 /**
  * Manpower gap for the window, per site × month segment, summed by cause. Only periods whose chart point has both actual and ideal ₹
@@ -118,7 +123,7 @@ export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, s
       const proj = monthStats(rows.filter((r) => r.site === s && monthKey(r.day) === seg.key).map((r) => r.projected)), days = win.filter((r) => r.processed != null).length;
       if (!u || !sal || !proj || !days || seg.idealCost == null || seg.actualCost == null || seg.processed == null) { left.push(`${s}|${seg.key}`); continue; }
       const issueDays = win.filter((r) => r.issues != null);
-      const held = o.heldUp && issueDays.length ? issueDays.filter((r) => r.issues! > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
+      const held = o.heldUp && issueDays.length ? issueDays.filter((r) => r.issues! > 0 && r.processed != null).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
       // head-days at ₹ salary ÷ 23: ideal and actual exactly as the chart costs them
       parts.push(manpowerGap({ salary: sal, uph: u, projAvg: proj.avg, days, processed: seg.processed, heldUpUnits: held,
         actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal }));

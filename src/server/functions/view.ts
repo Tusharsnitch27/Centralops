@@ -1,6 +1,7 @@
 import "server-only";
 import { q } from "../db";
-import { addDays, addMonths, monthStart, today } from "@/lib/dates";
+import { addDays, addMonths, fmtDate, monthStart, today } from "@/lib/dates";
+import { inr } from "@/lib/format";
 import { activeIpps } from "../wcm/daily";
 import { courierOf } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
@@ -8,7 +9,7 @@ import type { Wh } from "../aop/processingTypes";
 import { courierSplit, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
-import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
+import { dailyRows, FN, inwardFallbackDays, lastOrderDay, pmonth, SITES } from "./sources";
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 
 /**
@@ -23,9 +24,10 @@ const fyStart = (d: string) => `${+d.slice(5, 7) >= 4 ? +d.slice(0, 4) : +d.slic
 const n0 = (n: number) => Math.round(n).toLocaleString("en-IN");
 const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);
 
-/** Norms per site × month: units per head (stages of the function's streams, weighted by Processing's stream volume), salary, Processing's actuals. */
+/** Norms per site × month: units per head (stages of the function's streams, weighted by Processing's stream volume), salary, Processing's actuals
+ *  and units (Σ the streams' final output: sheet, else S&OP actual — the month ₹/unit base; null when any stream lacks it). */
 export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
-  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [];
+  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, volume: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [];
   await Promise.all(months.flatMap((m) => sites.map(async (s) => {
     const key = `${s}|${mk(m)}`;
     const [pm, ipps] = await Promise.all([pmonth(m, s), activeIpps(m === monthStart(now) ? now : addDays(addMonths(m, 1), -1), s)]); // Processing's IPP day
@@ -39,20 +41,21 @@ export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
     salary[key] = mp ? paid.reduce((a, r) => a + r.actualMp! * r.avgSalary!, 0) / mp : rows.find((r) => r.avgSalary != null)?.avgSalary ?? null;
     if (salary[key] == null) { salary[key] = LEGACY_SALARY; legacy.push(key); }
     wd[key] = pm.streams[0]?.rows[0]?.workingDays ?? 23; // Processing's working days for the month (weekly-off cover in on-roll ideal heads)
+    volume[key] = blocks.every((b) => b?.finalOutput != null) ? blocks.reduce((a, b) => a + b!.finalOutput!, 0) : null;
     if (blocks.every((b) => b && b.actualExp != null && b.actualMp != null)) actuals[key] = { heads: sumN(blocks.map((b) => b!.actualMp)), cost: sumN(blocks.map((b) => b!.actualExp)) };
   })));
-  return { uph, salary, wd, actuals, legacy };
+  return { uph, salary, wd, volume, actuals, legacy };
 }
 
 type Norms = Awaited<ReturnType<typeof norms>>;
 /** Rows (whole months) → chart points for [from, to]. Exported so a scenario (Task 5) can re-run it on re-timed rows. */
 export const pointsOf = (mode: FnMode, rows: DayRow[], n: Norms, from: string, to: string): Point[] =>
-  mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to, n.wd) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals, n.wd);
+  mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to, n.wd) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals, n.wd, n.volume);
 
 
-/** B2C Shopify forward shipments (South + North) priced per courier against that courier's own Jul–Sep cost per shipment (courierSplit). */
+/** B2C Shopify forward shipments (South + North) priced per courier against that courier's own cost per shipment in the latest completed Jul–Sep (courierSplit). */
 async function courierGap(from: string, to: string, site: FnSite) {
-  const fy = fyStart(to).slice(0, 4), jas = [`${fy}-07`, `${fy}-08`, `${fy}-09`];
+  const y = to >= `${to.slice(0, 4)}-10-01` ? +to.slice(0, 4) : +to.slice(0, 4) - 1, jas = [`${y}-07`, `${y}-08`, `${y}-09`];
   const [ships, months] = await Promise.all([
     q<{ day: string; vendor: string; n: number }>(`select day::text as day, substr(metric, 11) as vendor, sum(qty)::float8 as n from aop_channel_volume
        where family = 'logistics' and metric like 'shipments:%' and channel = 'B2C Shopify' and day between $1 and $2 and warehouse = any($3::text[]) group by 1, 2`, [from, to, site === "Both" ? ["South", "North"] : [site]]),
@@ -68,11 +71,12 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const months: string[] = [];
   for (let m = monthStart(from); m <= to; m = addMonths(m, 1)) months.push(m);
-  const [rows, n, fallback, logistics, retail] = await Promise.all([
+  const [rows, n, fallback, logistics, retail, lastOrder] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),
     fn === "b2c_shopify" ? courierGap(from, to, site) : Promise.resolve(null),
     fn === "b2b_retail" ? Promise.all([rulebookScenario(site, monthStart(from), rowsTo), crossZone(site, months)]) : Promise.resolve(null),
+    fn === "b2b_retail" ? lastOrderDay() : Promise.resolve(null),
   ]);
   const points = pointsOf(mode, rows, n, from, to);
   const { gap, left, dropped } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards" });
@@ -81,7 +85,8 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const grey: string[] = [];
   if (fn === "b2b_marketplace" || fn === "returns") grey.push("The projection is the monthly plan spread evenly over the days of the month.");
   if (fn === "b2b_retail") grey.push("The projection is the rulebook's daily processing plan, store by store.");
-  if (fn === "b2b_retail" && win.some((r) => r.received == null)) grey.push("Store orders start on 23 Sep 2026, so received is blank before then.");
+  if (fn === "b2b_retail" && win.some((r) => r.received == null && r.day < "2026-09-23")) grey.push("Store orders start on 23 Sep 2026, so received is blank before then.");
+  if (fn === "b2b_retail" && (lastOrder == null || lastOrder < to)) grey.push(lastOrder == null ? "No store orders are loaded yet, so received is blank." : `Store orders are loaded only to ${fmtDate(lastOrder, { year: true })}, so received is blank after it.`);
   if (fallback) grey.push(`On ${fallback} site-days the WAM feed has no inward, so received is the PO quantity received, dated by the PO's last update, and issues are unknown.`);
   const noProj = months.flatMap((m) => sites.filter((s) => !rows.some((r) => r.site === s && mk(r.day) === mk(m) && r.projected != null)).map((s) => `${s}|${mk(m)}`));
   if (noProj.length) grey.push(`No projection is loaded for ${spans(noProj, sites)}, so projected volume and ideal heads are blank there.`);
@@ -109,15 +114,18 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (proc != null) summary.push(`${where} ${site === "Both" ? "handle" : "handles"} about ${n0(proc / procDays.length)} units a day; received ${rec == null ? "is not known" : n0(rec)}, ${done} ${n0(proc)}${fn === "inwards" && iss != null ? `, ${n0(iss)} issues` : ""}.`);
   const held = gap.find((g) => g.cause === "held_up");
   if (fn === "inwards" && proc != null && held?.rupees) {
-    const units = win.filter((r) => (r.issues ?? 0) > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0);
+    const units = win.filter((r) => (r.issues ?? 0) > 0 && r.processed != null).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0);
     if (units > 0) summary.push(`Without the issues putaway would be ${n0(proc + units)}.`);
   }
+  const volOf = (key: string) => { const v = sites.map((s) => n.volume[`${s}|${key}`]); return v.every((x) => x != null) ? v.reduce<number>((a, x) => a + x!, 0) : null; };
   const both = points.filter((p) => p.actualCost != null && p.idealCost != null);
   if (both.length) {
     const a = both.reduce((x, p) => x + p.actualCost!, 0), i = both.reduce((x, p) => x + p.idealCost!, 0);
-    summary.push(`Manpower cost ₹${n0(a)} against ₹${n0(i)} at ideal heads, ₹${n0(Math.abs(a - i))} ${a >= i ? "more" : "less"}.`);
-    const units = both.filter((p) => p.processed);
-    const u = units.reduce((x, p) => x + p.processed!, 0);
+    summary.push(`Manpower cost ${inr(a)} against ${inr(i)} at ideal heads, ${inr(Math.abs(a - i))} ${a >= i ? "more" : "less"}.`);
+    // ₹/unit: month on month over Processing's units (as AOP › Processing), day on day over scanned output
+    const unitsOf = (p: Point) => (mode === "month" ? volOf(p.key) : p.processed);
+    const units = both.filter((p) => unitsOf(p));
+    const u = units.reduce((x, p) => x + unitsOf(p)!, 0);
     if (u) summary.push(`That is ₹${(units.reduce((x, p) => x + p.actualCost!, 0) / u).toFixed(2)} per unit against ₹${(units.reduce((x, p) => x + p.idealCost!, 0) / u).toFixed(2)} at ideal heads.`);
   }
 
@@ -125,7 +133,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   let scenario: FunctionView["scenario"] = null, logisticsGap: GapPart[] | null = fn === "b2c_shopify" ? logistics?.parts ?? null : null;
   if (retail) {
     const [rb, cz] = retail;
-    const moved = new Map(rb.days.map((r) => [`${r.site}|${r.day}`, r.received]));
+    const moved = new Map(rb.map((r) => [`${r.site}|${r.day}`, r.received]));
     const retimed = rows.map((r) => ({ ...r, received: moved.get(`${r.site}|${r.day}`) ?? (r.received == null ? null : 0) }));
     // heads needed for the actual orders = ideal maths on the order peak (as placed vs re-timed)
     const asIs = pointsOf(mode, rows.map((r) => ({ ...r, projected: r.received })), n, from, to);
@@ -134,7 +142,8 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     const paired = reNeed.map((p, i) => [asIs[i]!, p] as const).filter(([a, b]) => a.idealCost != null && b.idealCost != null);
     const manpower = paired.length ? paired.reduce((x, [a, b]) => x + a.idealCost! - b.idealCost!, 0) : null;
     // cross-zone ₹ over the same periods: whole paired months (month view), or each month's ₹ shared by the window's processed units (day view)
-    const pm = [...new Set(paired.map(([a]) => mk(a.key)))], units = sumN(paired.map(([a]) => a.processed));
+    const pm = [...new Set(paired.map(([a]) => mk(a.key)))];
+    const units = mode === "month" ? (paired.every(([a]) => volOf(a.key) != null) ? sumN(paired.map(([a]) => volOf(a.key))) : null) : sumN(paired.map(([a]) => a.processed));
     const czParts = pm.map((m) => {
       const r = cz.byMonth[`${m}-01`] ?? null;
       if (mode === "month") return r;
@@ -143,7 +152,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     });
     const czNull = pm.filter((_, i) => czParts[i] == null);
     const deltaRupees = manpower == null || czNull.length ? null : manpower + czParts.reduce<number>((a, x) => a + x!, 0);
-    scenario = { label: "Rulebook followed", points: pointsOf(mode, retimed, n, from, to), needed, deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
+    scenario = { points: pointsOf(mode, retimed, n, from, to), needed, deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
     logisticsGap = [
       { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : cz.rupees == null ? `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone`
         : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone cost ₹${n0(Math.abs(cz.rupees))} ${cz.rupees >= 0 ? "more" : "less"} than the home lanes` },
@@ -156,7 +165,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
     if (czNull.length) grey.push(`The rulebook scenario's saving is blank: there is no cross-zone freight for ${spans(czNull.flatMap((m) => sites.map((s) => `${s}|${m}`)), sites)}.`);
     if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight in the freight gap covers the whole months shown; the scenario's saving takes the shown days' share by units.");
-    if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days and were shipped from their home-zone warehouse, cost would be ₹${n0(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : ` (₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit)`}.`);
+    if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days and were shipped from their home-zone warehouse, cost would be ${inr(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : ` (₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit)`}.`);
   }
   return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario };
 }

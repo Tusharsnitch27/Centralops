@@ -10,6 +10,6 @@ export interface Point { key: string; projected: number | null; received: number
   idealHeads: number | null; actualHeads: number | null; idealCost: number | null; actualCost: number | null;
   costPerUnit: number | null; idealCostPerUnit: number | null; overlay: number | null }
 export interface FunctionView { fn: FnKey; site: FnSite; mode: FnMode; points: Point[]; manpowerGap: GapPart[]; logisticsGap: GapPart[] | null;
-  summary: string[]; grey: string[]; scenario: { label: string; points: Point[]; needed: Needed[]; deltaRupees: number | null; deltaPerUnit: number | null } | null }
+  summary: string[]; grey: string[]; scenario: { points: Point[]; needed: Needed[]; deltaRupees: number | null; deltaPerUnit: number | null } | null }
 /** Heads (and their ₹, costed as ideal) needed for the actual store orders' peak, as placed and on rulebook days; one per point key. */
 export interface Needed { key: string; asIsHeads: number | null; asIsCost: number | null; heads: number | null; cost: number | null }

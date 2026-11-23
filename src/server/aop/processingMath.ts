@@ -16,7 +16,7 @@ const div = (a: number | null, b: number | null) => (a == null || b == null || !
 
 /** Share of a stream's units that pass a process. SPF: ~15% of B2C returns (North's named designation mix; Malhar M, 22 Nov 2026). */
 // WPR and WFR/CS escalation are exception stages: "less than 5 %" of returns pass them (Malhar M, 23 Nov 2026)
-export const WPR_PASS = 0.05, WFR_PASS = 0.05;
+const WPR_PASS = 0.05, WFR_PASS = 0.05;
 export const passShare = (process: string) => (/spf/i.test(process) ? 0.15 : /^wpr\b/i.test(process) ? WPR_PASS : /^wfr/i.test(process) ? WFR_PASS : 1);
 
 /** Units one head processes in a month. */

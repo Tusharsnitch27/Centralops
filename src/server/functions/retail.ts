@@ -14,9 +14,9 @@ const sitesOf = (site: FnSite) => (site === "Both" ? ["South", "North"] : [site]
 /**
  * Each store order moved to the processing weekday of its shipping site's rulebook slot (FRESH → fresh slot, else RPL), in the
  * rulebook upload in force on the order date, within the same ISO week. Stores not in that upload, or with no slot, keep their day.
- * days: received per day × site for [from, to] (other fields null); units: units ordered in [from, to] that moved to another day.
+ * Returns received per day × site for [from, to] (other fields null).
  */
-export async function rulebookScenario(site: FnSite, from: string, to: string): Promise<{ days: DayRow[]; units: number }> {
+export async function rulebookScenario(site: FnSite, from: string, to: string): Promise<DayRow[]> {
   const rows = await q<{ day: string; site: string; tat: string | null; qty: number }>(
     `with up as (select distinct upload_date as u from fn_rulebook),
      o as (select o.*, (select max(u) from up where u <= o.order_date) as u from fn_retail_order o
@@ -26,15 +26,12 @@ export async function rulebookScenario(site: FnSite, from: string, to: string): 
        where r.upload_date = o.u and r.site = o.site and upper(trim(r.store)) = upper(trim(o.store)) limit 1) r on true
      group by 1, 2, 3`, [from, to, sitesOf(site)]);
   const by = new Map<string, number>();
-  let units = 0;
   for (const r of rows) {
     const wd = processingWeekday(r.tat), day = wd ? retimeToWeekday(r.day, wd) : r.day;
-    if (day !== r.day && r.day >= from && r.day <= to) units += r.qty;
     if (day >= from && day <= to) by.set(`${r.site}|${day}`, (by.get(`${r.site}|${day}`) ?? 0) + r.qty);
   }
-  const days = [...by].map(([k, qty]) => { const [s, d] = k.split("|") as ["South" | "North", string];
+  return [...by].map(([k, qty]) => { const [s, d] = k.split("|") as ["South" | "North", string];
     return { day: d, site: s, projected: null, received: qty, processed: null, issues: null, presentHeads: null, overlay: null }; });
-  return { days, units };
 }
 
 /** AOP › Logistics' B2B retail freight categories. */
