@@ -49,6 +49,10 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
   const gap = total.actual - total.planReported, over = gap > 0;
   const missingFns = fnRows.filter((r) => r.a.missing > 0).map((r) => `${r.f.name} (${r.a.missing})`);
   const nLines = all.length;
+  // like-for-like: only functions that carry a provision (and, for the Fact, a budget too)
+  const withF = fnRows.filter((r) => r.a.hasForecast && r.a.forecast > 0);
+  const fAct = withF.filter((r) => r.a.hasActual), fActSum = fAct.reduce((s, r) => s + r.a.actual, 0), fForeSum = fAct.reduce((s, r) => s + r.a.forecast, 0);
+  const both = withF.filter((r) => r.a.plan > 0), bothF = both.reduce((s, r) => s + r.a.forecast, 0), bothP = both.reduce((s, r) => s + r.a.plan, 0);
 
   return (
     <div className="space-y-6">
@@ -91,7 +95,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
                 : <>No {L.actual.toLowerCase()} yet for {span.label}.</>}
             </h2>
             <p className="mt-3 max-w-[640px] text-[13.5px] leading-relaxed text-ink-3">
-              {L.plan} {inr(total.plan)}{total.hasActual && total.plan ? <> · {pct(total.actual / total.plan, 0)} used</> : null}{total.hasActual && total.plan && total.hasForecast && total.forecast ? <> · {pct(total.actual / total.forecast, 0)} of {L.forecast}</> : null}
+              {L.plan} {inr(total.plan)}{total.hasActual && total.plan ? <> · {pct(total.actual / total.plan, 0)} used</> : null}{fForeSum > 0 ? <> · {pct(fActSum / fForeSum, 0)} of {L.forecast} (functions with a {L.forecast.toLowerCase()})</> : null}
               {" · "}{nLines - total.missing} of {nLines} lines reported{missingFns.length ? <> — still to report: <span className="text-ink-2">{missingFns.join(", ")}</span></> : null}.
             </p>
             {total.plan > 0 && total.hasActual && (
@@ -105,7 +109,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
             )}
           </div>
           <dl className="grid grid-cols-3 gap-4 border-line lg:grid-cols-1 lg:border-l lg:pl-6">
-            <Fact label={L.forecast} value={total.hasForecast ? inr(total.forecast) : "—"} hint={total.hasForecast && total.plan ? `${pct(total.forecast / total.plan, 0)} of ${L.plan.toLowerCase()}` : "not entered"} />
+            <Fact label={L.forecast} value={total.hasForecast ? inr(total.forecast) : "—"} hint={bothP > 0 ? `${pct(bothF / bothP, 0)} of ${L.plan.toLowerCase()}${both.length < fnRows.length ? ` (${both.length} of ${fnRows.length} functions)` : ""}` : "not entered"} />
             <Fact label={grain === "year" ? "Run-rate / month" : chg}
               value={grain === "year" ? (total.hasActual ? inr(total.actual / Math.max(1, span.periods.filter((p) => tree.lastClosed && p <= tree.lastClosed).length)) : "—") : momTotal ? pct((momTotal.cur - momTotal.prev) / momTotal.prev, 0, true) : "—"}
               hint={grain === "year" ? "closed months" : prev && momTotal ? `vs ${prev.short}, same lines` : "no earlier period"} />
@@ -123,7 +127,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
             return (
               <div key={f.id}>
                 <button type="button" onClick={() => toggle(f.id)} aria-expanded={isOpen}
-                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:grid-cols-[220px_minmax(0,1fr)_260px_120px_70px]">
+                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:grid-cols-[200px_minmax(160px,1fr)_130px_110px_70px] xl:grid-cols-[220px_minmax(0,1fr)_260px_120px_70px]">
                   <span className="flex min-w-0 items-center gap-2">
                     <ChevronRight size={14} className={cn("shrink-0 text-ink-4 transition-transform", isOpen && "rotate-90")} />
                     <span className="min-w-0">
@@ -138,7 +142,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
                   </span>
                   <span className="text-right">
                     <span className="block text-[14px] font-semibold tabular text-ink">{a.hasActual ? inr(a.actual) : "—"}</span>
-                    <span className="block text-[11.5px] tabular text-ink-4">{a.plan ? `of ${inr(a.plan)} ${L.plan}` : `no ${L.plan.toLowerCase()} set`} · {a.hasForecast ? `${inr(a.forecast)} ${L.forecast}` : `no ${L.forecast.toLowerCase()} set`}</span>
+                    <span className="block text-[11.5px] tabular text-ink-4 xl:whitespace-nowrap">{a.plan ? `of ${inr(a.plan)} ${L.plan}` : `no ${L.plan.toLowerCase()} set`} · {a.hasForecast ? `${inr(a.forecast)} ${L.forecast}` : `no ${L.forecast.toLowerCase()} set`}</span>
                   </span>
                   <span className="hidden text-right md:block">{a.hasActual && a.planReported ? <Gap dir={dir} base={a.planReported} value={a.actual} small /> : <Dash />}</span>
                   <span className="hidden text-right md:block">{mm ? <Mom dir={dir} prev={mm.prev} cur={mm.cur} small /> : <Dash />}</span>
