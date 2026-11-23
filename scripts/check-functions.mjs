@@ -2,6 +2,7 @@
 // node --experimental-strip-types scripts/check-functions.mjs
 import assert from "node:assert/strict";
 import { unitsPerHead, idealHeads, manpowerGap, perUnit, zoneClass } from "../src/server/functions/math.ts";
+import { workbookMonthVolumes } from "../src/server/functions/workbookHistory.ts";
 
 const close = (a, b, d = 0.01) => assert.ok(Math.abs(a - b) < d, `${a} ≠ ${b}`);
 close(unitsPerHead([{ ipp: 1000, unit: "unit" }, { ipp: 1600, unit: "unit" }, { ipp: 100, unit: "box" }]), 510.64);
@@ -40,6 +41,15 @@ console.log("functions math OK");
 // Task 4: aggregation of day rows to month points, and the rulebook slot's processing weekday
 import { toMonthPoints, toDayPoints, processingWeekday, onRoll } from "../src/server/functions/aggregate.ts";
 const day = (d, projected, processed, presentHeads, site = "South") => ({ day: d, site, projected, received: null, processed, issues: null, presentHeads, overlay: null });
+assert.deepEqual(workbookMonthVolumes("b2b_retail", "2026-04", ["South", "North"], []),
+  { projected: 537196, processed: 602654, usedProjection: true, usedProcessed: true });
+assert.deepEqual(workbookMonthVolumes("b2c_shopify", "2026-09", ["South", "North"], [day("2026-09-22", 1200, 2800, null)]),
+  { projected: 1200 + 92795, processed: 175338, usedProjection: true, usedProcessed: true });
+assert.deepEqual(workbookMonthVolumes("returns", "2026-08", ["South", "North"], []),
+  { projected: null, processed: null, usedProjection: false, usedProcessed: false });
+assert.equal(workbookMonthVolumes("returns", "2026-09", ["South", "North"], []).processed, 313479);
+assert.deepEqual(workbookMonthVolumes("inwards", "2026-10", ["South"], [day("2026-10-15", 1200, 800, null)]),
+  { projected: 1200, processed: 800, usedProjection: false, usedProcessed: false });
 const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
 assert.equal(mp.projected, 400);
 // month view: on roll with weekly-off cover, ⌈300 ÷ 100 × 30 ÷ 23 × 1.1⌉ = 5 (on the floor ⌈300 ÷ 100⌉ = 3)

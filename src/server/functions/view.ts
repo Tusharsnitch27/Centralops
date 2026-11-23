@@ -11,6 +11,7 @@ import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, lastOrderDay, pmonth, SITES } from "./sources";
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
+import { workbookMonthVolumes } from "./workbookHistory";
 
 /**
  * One function's view: last 30 days to yesterday (IST), day on day, or the financial year to date, month on month.
@@ -81,20 +82,29 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const points = pointsOf(mode, rows, n, from, to);
   const { gap, left, dropped } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards" });
   const win = rows.filter((r) => r.day >= from && r.day <= to);
+  let hasWorkbookPlan = false, hasWorkbookOutput = false;
+  if (mode === "month") {
+    for (const point of points) {
+      const history = workbookMonthVolumes(fn, point.key, sites, win);
+      if (history.usedProjection) { point.projected = history.projected; hasWorkbookPlan = true; }
+      if (history.usedProcessed) { point.processed = history.processed; hasWorkbookOutput = true; }
+    }
+  }
 
   const grey: string[] = [];
+  if (hasWorkbookPlan || hasWorkbookOutput) grey.push("The monthly chart uses S&OP review totals where daily coverage is missing. Those workbook totals do not provide a daily peak or attendance.");
   if (fn === "b2b_marketplace" || fn === "returns") grey.push("The projection is the monthly plan spread evenly over the days of the month.");
   if (fn === "b2b_retail") grey.push("The projection is the rulebook's daily processing plan, store by store.");
   if (fn === "b2b_retail" && win.some((r) => r.received == null && r.day < "2026-09-23")) grey.push("Store orders start on 23 Sep 2026, so received is blank before then.");
   if (fn === "b2b_retail" && (lastOrder == null || lastOrder < to)) grey.push(lastOrder == null ? "No store orders are loaded yet, so received is blank." : `Store orders are loaded only to ${fmtDate(lastOrder, { year: true })}, so received is blank after it.`);
   if (fallback) grey.push(`On ${fallback} site-days the WAM feed has no inward, so received is the PO quantity received, dated by the PO's last update, and issues are unknown.`);
   const noProj = months.flatMap((m) => sites.filter((s) => !rows.some((r) => r.site === s && mk(r.day) === mk(m) && r.projected != null)).map((s) => `${s}|${mk(m)}`));
-  if (noProj.length) grey.push(`No projection is loaded for ${spans(noProj, sites)}, so projected volume and ideal heads are blank there.`);
+  if (noProj.length) grey.push(`No daily projection is loaded for ${spans(noProj, sites)}, so ideal heads are blank there.`);
   const noNorm = months.flatMap((m) => sites.filter((s) => !n.uph[`${s}|${mk(m)}`]).map((s) => `${s}|${mk(m)}`));
   if (noNorm.length) grey.push(`There is no productivity norm for ${spans(noNorm, sites)}, so ideal heads are blank there.`);
   if (mode === "day") { const d = new Set(win.filter((r) => r.presentHeads == null).map((r) => r.day)).size; if (d) grey.push(`Attendance is missing on ${d} of the ${new Set(win.map((r) => r.day)).size} days, so actual heads and cost are blank on those days.`); }
   else { const m = points.filter((p) => p.actualCost == null).flatMap((p) => sites.map((s) => `${s}|${p.key}`)); if (m.length) grey.push(`There are no actual heads for ${spans(m, sites)}.`); }
-  { const d = new Set(win.filter((r) => r.processed == null).map((r) => r.day)).size; if (d) grey.push(`Processed volume is missing for ${d} of the ${new Set(win.map((r) => r.day)).size} days shown.`); }
+  { const d = new Set(win.filter((r) => r.processed == null).map((r) => r.day)).size; if (d) grey.push(`Daily processed volume is missing for ${d} of the ${new Set(win.map((r) => r.day)).size} days in this period.`); }
   if (fn === "b2b_retail" || fn === "b2b_marketplace") grey.push("Loading, bagging, encoding and dispatch have no scan feed, so they are not counted in processed volume.");
   if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where no sheet salary exists (${spans(n.legacy, sites)}).`);
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
@@ -109,9 +119,12 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   // summary: plain sentences with numbers
   const where = site === "Both" ? "South and North" : site, done = fn === "inwards" || fn === "returns" ? "put away" : "dispatched";
   const procDays = [...new Set(win.filter((r) => r.processed != null).map((r) => r.day))];
-  const proc = sumN(win.map((r) => r.processed)), rec = sumN(win.map((r) => r.received)), iss = sumN(win.map((r) => r.issues));
+  const proc = sumN(hasWorkbookOutput ? points.map((p) => p.processed) : win.map((r) => r.processed)), rec = sumN(win.map((r) => r.received)), iss = sumN(win.map((r) => r.issues));
   const summary: string[] = [];
-  if (proc != null) summary.push(`${where} ${site === "Both" ? "handle" : "handles"} about ${n0(proc / procDays.length)} units a day; received ${rec == null ? "is not known" : n0(rec)}, ${done} ${n0(proc)}${fn === "inwards" && iss != null ? `, ${n0(iss)} issues` : ""}.`);
+  if (proc != null) {
+    if (hasWorkbookOutput) summary.push(`${where} ${done} ${n0(proc)} units across the months with reported volume.`);
+    else summary.push(`${where} ${site === "Both" ? "handle" : "handles"} about ${n0(proc / procDays.length)} units a day; received ${rec == null ? "is not known" : n0(rec)}, ${done} ${n0(proc)}${fn === "inwards" && iss != null ? `, ${n0(iss)} issues` : ""}.`);
+  }
   const held = gap.find((g) => g.cause === "held_up");
   if (fn === "inwards" && proc != null && held?.rupees) {
     const units = win.filter((r) => (r.issues ?? 0) > 0 && r.processed != null).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0);
