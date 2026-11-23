@@ -17,7 +17,7 @@ where a source is missing; every grey line true. Numbers in the tables are the p
 | F3 | Inwards Sep–Nov | Ideal 2–6× actual (Sep Both 265 vs 44) | The projection sheet's Sep week 5 is 29–30 Sep only, so its plan lands on 2 days (79,414 S / 1,02,570 N a day vs ~10–30K on other days); ideal heads staff the month's peak day. North's Inward heads (~19) also clear ~1,380 units a head a day against an IPP of ~894 | Explained; flag 1 |
 | F4 | Inwards Oct | Processed (putaway feed) 18 % under the workbook (S −15 %, N −22 %) | From Oct the chart uses the putaway feed; the S&OP inward actual is not putaway throughout (Apr North equals PO received to the unit, 4,26,518) | Flag 2 |
 | F5 | B2B Marketplace Jun, Jul, Oct, Nov | Actual heads 3–4× ideal | Processing's rule split gives B2B Marketplace a fixed 23–24 % of the B2B Forward department (N 7 : 23.5, S 8 : 25.5) whatever the volume; the plan in those months is 27.5K–48K a site | Business rule — flag 3 |
-| F6 | B2B Marketplace South Oct / Nov | Oct −10.6 % vs workbook (37,630 vs 42,086); Nov 8,741 vs S&OP review 14,102 to date | Since UC items stop (8 Oct) dispatch comes from the SLA tracker in lumps: South 6–30 Oct 285 units, 31 Oct 36,213 | Flag 4 (source); Both Oct within 10 % (−8.6 %) |
+| F6 | B2B Marketplace South Oct / Nov | Oct −10.6 % vs workbook (37,630 vs 42,086); Nov 8,741 vs S&OP review 14,102 to date | Since UC items stop (8 Oct) dispatch comes from the SLA tracker in lumps: South 6–30 Oct 285 units, 31 Oct 36,213 | UC items 'ordered' now written to yesterday (`de96b15`), so received stays on UC creation days after 7 Oct. The dispatch lumps are real: UC items shows the same days (South 31 Oct 40,669) |
 | F7 | B2B Marketplace received, Aug–Nov | Two bases mixed: UC order-creation days, and the SLA tracker's deadline days from 21 Sep (Oct read 1.2 L received) | `dailyRows` took deadline cells first, creation-day UC items otherwise; an order created before 21 Sep and due after counted twice | Fixed `6512258`: one basis, units ordered by creation day (UC items while they cover the day, then the tracker's created hours) |
 | F8 | B2B Returns South Jun | Putaway 1,05,323 vs `sop_returns` 1,39,584 (−24.5 %) | Source difference; no feed day missing in Jun | Flag 5 |
 | F9 | B2B Returns North Apr, South Aug | Actual 3× ideal | The plan (50K a site) is below the putaway (80K / 1.16 L); ideal follows the plan. Jul's low 57K is confirmed by `sop_returns` (N 19,836, S 37,373) | Explained |
@@ -32,8 +32,9 @@ where a source is missing; every grey line true. Numbers in the tables are the p
 | c | Month views | A month with neither cost nor volume named twice; no norm and no projection both named | — | Fixed `f510f6b` |
 | d | workbookHistory.ts | Docblock said "21 Sep start" | — | Fixed `67290ca` |
 
-Side effect of F1, for review: B2B Returns' Processing split between its Retail and Marketplace lines in Apr–Jul now follows the forward
-Retail : Marketplace actual mix (it was 50 : 50 because the forward actuals were missing). The B2B Returns function's total volume, heads and ₹ do not change.
+Side effect of F1, fixed in `fd5e815`: filling the forward actuals made Processing split Apr–Jul B2B returns by the forward Retail : Marketplace
+mix (Jun South: 6,438 Marketplace units against 755 put away). The split now follows the month's putaway (North all Retail Apr–Aug; South Jun
+1,04,568 / 755), and the forward mix only where the month has no putaway. The B2B Returns function's total, heads and ₹ do not change.
 
 Observation (no change): North B2C Returns costs ₹10.01 a unit against South ₹5.79 — North's B2C Return department has 35–44 heads from
 Aug against South's 22–28 at similar putaway. It ties to Processing.
@@ -43,12 +44,16 @@ Aug against South's 22–28 at similar putaway. It ties to Processing.
 1. **Inward ideal heads (F3).** The projection sheet's Sep week 5 puts 1,58,828 South / 2,05,140 North units on 29–30 Sep; Oct's last days carry 42,240 / 54,712 a day. Ideal heads staff that peak (Sep 265 vs 44 actual). Needed: confirm that plan, or a plan spread over calendar weeks. Also: North's Inward department (~19 heads) puts away ~1,380 units a head a day against the IPP's ~894 — are unloaders booked under another department?
 2. **Which inward actual (F4).** S&OP inward actual vs putaway feed: Oct South 6,89,727 vs 5,85,997, North 6,28,336 vs 4,92,786; Apr North workbook 4,26,518 = PO received to the unit, putaway 3,46,536. Needed: the definition of the S&OP inward actual (GRN or putaway) so the chart uses one basis.
 3. **B2B Marketplace heads (F5).** The 22 Nov rule split gives B2B Marketplace 23–24 % of B2B Forward heads every month; in Jun (plan 27.5K a site) that is 22.9 heads against an ideal 6 (₹15.86 vs ₹4.16 per unit). Decide whether the split should follow volume.
-4. **B2B Marketplace dispatch after 8 Oct (F6).** South dispatched 285 units 6–30 Oct, then 36,213 on 31 Oct; Nov to date 8,741 vs S&OP 14,102. Needed: the SLA tracker's dispatch date for B2B Marketplace, or a UC items pull past 8 Oct.
+4. **B2B Marketplace dispatch after 8 Oct (F6)**, replaced by the fix `de96b15` (received). The lumps are in UC items too, so they are real. UC items' Oct South dispatch adds up to 42,086, the workbook to the unit; the tracker gives 37,630 (31 Oct: 36,213 vs UC 40,669). The next step is to write UC's dispatched for B2B Marketplace past the window too. The controller decides.
 5. **B2B Returns Jun South (F8).** Putaway feed 1,05,323 vs `sop_returns` 1,39,584. Needed: which is right.
 6. **Black Friday sizing (F10).** Nov Shopify ideal is sized for 26 Nov (51,797 units across sites) while the month runs to 22 Nov — ideal ₹/unit 37.60. Keep peak-day sizing for the running month, or size on the days to date?
 7. **Rulebook window (F13).** Only cutoff-day orders count: Oct 21,777 within vs 2,88,992 early vs 4,26,359 breached. Should early orders count as in window?
 8. **Cost Master final output (F14).** May South: B2B Retail sheet 2,88,528 vs actual 2,39,884; B2C Shopify 1,27,550 vs 1,38,010 (both equal the plan). Oct B2B Retail sheet 5,41,296 S / 4,34,957 N vs workbook 5,06,352 / 4,10,460. Needed: corrected sheet final outputs.
 9. **Returns Aug (F15).** `sop_returns` has no Aug 2026 row (Processing uses putaway). Needed: Aug B2C / B2B returns actuals.
+
+## After fixes (controller re-dump)
+
+Inwards Both, Apr–Aug: ideal heads 49 / 52 / 44 / 38 / 52 against actual 41.8 / 38.6 / 38.5 / 43.9 / 39.1. Ideal ₹, ₹ per unit and the manpower gap are now filled.
 
 ## Day view (Both, 24 Oct – 22 Nov)
 
