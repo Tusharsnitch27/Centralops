@@ -117,12 +117,12 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (fallback) grey.push(`On ${fallback} site-days the WAM feed has no inward, so received is the PO quantity received, dated by the PO's last update, and issues are unknown.`);
   const noProj = months.flatMap((m) => sites.filter((s) => !rows.some((r) => r.site === s && mk(r.day) === mk(m) && r.projected != null)).map((s) => `${s}|${mk(m)}`));
   if (noProj.length) grey.push(`No daily projection is loaded for ${spans(noProj, sites)}, so ideal heads are blank there.`);
-  const noNorm = months.flatMap((m) => sites.filter((s) => !n.uph[`${s}|${mk(m)}`]).map((s) => `${s}|${mk(m)}`));
+  const noNorm = months.flatMap((m) => sites.filter((s) => !n.uph[`${s}|${mk(m)}`]).map((s) => `${s}|${mk(m)}`)).filter((x) => !noProj.includes(x)); // one line per blank
   if (noNorm.length) grey.push(`There is no productivity norm for ${spans(noNorm, sites)}, so ideal heads are blank there.`);
   if (mode === "day") { const d = new Set(win.filter((r) => r.presentHeads == null).map((r) => r.day)).size; if (d) grey.push(`Attendance is missing on ${d} of the ${new Set(win.map((r) => r.day)).size} days, so actual heads and cost are blank on those days.`); }
   else {
     const m = points.filter((p) => p.actualCost == null).flatMap((p) => sites.map((s) => `${s}|${p.key}`)); if (m.length) grey.push(`There are no actual heads for ${spans(m, sites)}, so cost and ₹ per unit are blank there.`);
-    const nv = points.flatMap((p) => sites.filter((s) => n.volume[`${s}|${p.key}`] == null).map((s) => `${s}|${p.key}`));
+    const nv = points.flatMap((p) => sites.filter((s) => n.volume[`${s}|${p.key}`] == null).map((s) => `${s}|${p.key}`)).filter((x) => !m.includes(x)); // ₹ per unit already named blank
     for (const d of [...new Set(n.partial.map((x) => x.split("|")[2]!))]) {
       const ks = [...new Set(n.partial.filter((x) => x.endsWith(`|${d}`)).map((x) => x.split("|").slice(0, 2).join("|")))];
       grey.push(`Actual cost for ${spans(ks, sites)} leaves out ${d} lines with neither attendance nor sheet heads, so it is understated there.`);
