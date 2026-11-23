@@ -127,7 +127,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
             return (
               <div key={f.id}>
                 <button type="button" onClick={() => toggle(f.id)} aria-expanded={isOpen}
-                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:grid-cols-[200px_minmax(160px,1fr)_130px_110px_70px] xl:grid-cols-[220px_minmax(0,1fr)_260px_120px_70px]">
+                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:gap-x-4 md:grid-cols-[180px_minmax(120px,1fr)_130px_110px_70px] xl:gap-x-6 xl:grid-cols-[220px_minmax(0,1fr)_260px_120px_70px]">
                   <span className="flex min-w-0 items-center gap-2">
                     <ChevronRight size={14} className={cn("shrink-0 text-ink-4 transition-transform", isOpen && "rotate-90")} />
                     <span className="min-w-0">
