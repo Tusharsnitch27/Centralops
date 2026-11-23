@@ -1,0 +1,82 @@
+import "server-only";
+import { q } from "../db";
+import { sfQuery } from "../snowflake";
+
+/** Feeds for the AOP Functions view: store orders, handover rulebook, WAM inward. Read-only Snowflake; missing is null, never 0. */
+const num = (v: unknown) => (v == null ? null : Number(v));
+const chunks = <T,>(a: T[], n = 2000) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
+const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+/** DISTRIBUTION_ANALYTICS repeats an order_name 2–4 times (same date / store / quantity, packages differ): one row per order. */
+const ORDERS_SQL = `SELECT ORDER_NAME AS order_name, TO_VARCHAR(MAX(ORDER_DATE), 'YYYY-MM-DD') AS order_date,
+  MAX(IFF(WAREHOUSE_NAME = 'SAPL-NORTH-TAURU', 'North', 'South')) AS site, MAX(STORE) AS store, MAX(RECEIVER_CITY) AS city,
+  MAX(QUANTITY) AS quantity, MAX(PACKAGE_COUNT) AS packages, MAX(ORDER_TYPE) AS order_type, MAX(ORDER_PLACEMENT_SLA) AS placement_sla
+FROM snitch_db.maplemonk.DISTRIBUTION_ANALYTICS WHERE ORDER_DATE >= TO_DATE('{from}') AND ORDER_NAME IS NOT NULL GROUP BY ORDER_NAME`;
+type OrderRow = { order_name: string; order_date: string; site: string; store: string | null; city: string | null; quantity: number | null; packages: number | null; order_type: string | null; placement_sla: string | null };
+
+export async function pullRetailOrders(from = "2026-04-01") {
+  if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
+  const rows = await sfQuery<OrderRow>(ORDERS_SQL.replaceAll("{from}", from));
+  for (const c of chunks(rows)) {
+    await q(`insert into fn_retail_order (order_name, order_date, site, store, city, quantity, packages, order_type, placement_sla)
+             select * from unnest($1::text[], $2::date[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::numeric[], $8::text[], $9::text[])
+             on conflict (order_name) do update set order_date = excluded.order_date, site = excluded.site, store = excluded.store, city = excluded.city,
+               quantity = excluded.quantity, packages = excluded.packages, order_type = excluded.order_type, placement_sla = excluded.placement_sla, fetched_at = now()`,
+      [c.map((r) => r.order_name), c.map((r) => r.order_date), c.map((r) => r.site), c.map((r) => r.store), c.map((r) => r.city),
+        c.map((r) => num(r.quantity)), c.map((r) => num(r.packages)), c.map((r) => r.order_type), c.map((r) => r.placement_sla)]);
+  }
+  return { read: rows.length, note: `${rows.length} store orders from ${from}` };
+}
+
+/** Every upload, one row per store × warehouse (the sheet lists each store once per warehouse). ZONE is '#REF!' in recent uploads → null. */
+const RULEBOOK_SQL = `SELECT TO_VARCHAR(UPLOAD_DATE, 'YYYY-MM-DD') AS upload_date, STORE_NAME AS store, IFF(UPPER(WH) LIKE 'NORTH%', 'North', 'South') AS site,
+  FRESH_QTY AS fresh_qty, RPL_QTY AS rpl_qty, FRESH_HANDOVER_DAY AS fresh_handover_day, RPL_HANDOVER_DAY AS rpl_handover_day,
+  FRESH_TAT AS fresh_tat, RPL_TAT AS rpl_tat, IFF(UPPER(TRIM(ZONE)) IN ('NORTH', 'SOUTH'), UPPER(TRIM(ZONE)), NULL) AS zone
+FROM snitch_db.maplemonk.DISTRIBUTION_RULEBOOK WHERE STORE_NAME IS NOT NULL AND UPLOAD_DATE IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY UPLOAD_DATE, STORE_NAME, IFF(UPPER(WH) LIKE 'NORTH%', 'North', 'South') ORDER BY FRESH_QTY DESC NULLS LAST) = 1`;
+type RuleRow = { upload_date: string; store: string; site: string; fresh_qty: number | null; rpl_qty: number | null; fresh_handover_day: string | null;
+  rpl_handover_day: string | null; fresh_tat: string | null; rpl_tat: string | null; zone: string | null };
+
+export async function pullRulebook() {
+  const rows = await sfQuery<RuleRow>(RULEBOOK_SQL);
+  if (!rows.length) return { read: 0, note: "rulebook returned no rows — table kept" };
+  await q(`delete from fn_rulebook`);
+  for (const c of chunks(rows)) {
+    await q(`insert into fn_rulebook (upload_date, store, site, fresh_qty, rpl_qty, fresh_handover_day, rpl_handover_day, fresh_tat, rpl_tat, zone)
+             select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[], $5::numeric[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[])`,
+      [c.map((r) => r.upload_date), c.map((r) => r.store), c.map((r) => r.site), c.map((r) => num(r.fresh_qty)), c.map((r) => num(r.rpl_qty)),
+        c.map((r) => r.fresh_handover_day), c.map((r) => r.rpl_handover_day), c.map((r) => r.fresh_tat), c.map((r) => r.rpl_tat), c.map((r) => r.zone)]);
+  }
+  return { read: rows.length, note: `${rows.length} rulebook rows (all uploads)` };
+}
+
+/** WAM inward: received = Σ FI_QTY by gate-entry day; boxes = Σ over distinct ASNs of their max ACTUAL_BOXES_RECEIVED; issues by ISSUE_DATE. */
+const WAM_SQL = `WITH a AS (
+  SELECT GATE_ENTRY_TIME::date AS d, IFF(WAREHOUSE = 'NORTH_WH', 'North', 'South') AS site, ASN_NUMBER, SUM(FI_QTY) AS rec, MAX(ACTUAL_BOXES_RECEIVED) AS bx
+  FROM snitch_db.maplemonk.WAM_ASN_INWARD
+  WHERE GATE_ENTRY_TIME >= TO_DATE('{from}') AND WAREHOUSE IN ('NORTH_WH', 'SOUTH_WH') GROUP BY 1, 2, 3),
+inw AS (SELECT d, site, SUM(rec) AS received, SUM(bx) AS boxes FROM a GROUP BY 1, 2),
+iss AS (SELECT ISSUE_DATE AS d, IFF(WAREHOUSE = 'NORTH_WH', 'North', 'South') AS site, SUM(ISSUE_COUNT) AS issues, SUM(SKU_LINES) AS sku_lines
+  FROM snitch_db.maplemonk.WAM_ISSUES_DAILY WHERE ISSUE_DATE >= TO_DATE('{from}') AND WAREHOUSE IN ('NORTH_WH', 'SOUTH_WH') GROUP BY 1, 2)
+SELECT TO_VARCHAR(COALESCE(inw.d, iss.d), 'YYYY-MM-DD') AS day, COALESCE(inw.site, iss.site) AS site, inw.received, inw.boxes, iss.issues, iss.sku_lines
+FROM inw FULL JOIN iss ON inw.d = iss.d AND inw.site = iss.site`;
+type WamRow = { day: string; site: string; received: number | null; boxes: number | null; issues: number | null; sku_lines: number | null };
+
+export async function pullWam(from = "2026-04-01") {
+  if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
+  let rows: WamRow[];
+  try { rows = await sfQuery<WamRow>(WAM_SQL.replaceAll("{from}", from)); }
+  catch (e) {
+    if (/does not exist|not authorized/i.test(e instanceof Error ? e.message : String(e))) return { read: 0, note: "WAM tables not in Snowflake yet — Inwards uses PO receipts" };
+    throw e;
+  }
+  const days = [...new Set(rows.map((r) => r.day))];
+  if (days.length) await q(`delete from fn_inward_daily where source = 'wam' and day = any($1::date[])`, [days]);
+  for (const c of chunks(rows)) {
+    await q(`insert into fn_inward_daily (day, site, received, boxes, issues, sku_lines, source)
+             select d, s, r, b, i, l, 'wam' from unnest($1::date[], $2::text[], $3::numeric[], $4::numeric[], $5::int[], $6::int[]) as t(d, s, r, b, i, l)
+             on conflict (day, site) do update set received = excluded.received, boxes = excluded.boxes, issues = excluded.issues, sku_lines = excluded.sku_lines, source = 'wam'`,
+      [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => num(r.received)), c.map((r) => num(r.boxes)), c.map((r) => num(r.issues)), c.map((r) => num(r.sku_lines))]);
+  }
+  return { read: rows.length, note: `${rows.length} WAM inward days from ${from}` };
+}
