@@ -25,12 +25,22 @@ const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<n
 const sumAll = (xs: (number | null)[]) => (xs.length && xs.every((x) => x != null) ? xs.reduce<number>((a, x) => a + x!, 0) : null);
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2]! : (s[s.length / 2 - 1]! + s[s.length / 2]!) / 2) : 0; };
 
-/** Ideal heads per site × month: the month's literal peak projected day ÷ units per head (floor and on-roll). */
-function idealBySiteMonth(rows: DayRow[], uph: ByMonth) {
+/**
+ * On-roll heads a month needs: the peak day's on-the-floor heads with weekly-off cover (days in month ÷ working days) and the 10 %
+ * absenteeism allowance: ⌈ peak ÷ uph × days ÷ wd × 1.1 ⌉ (idealHeads' roll on the scaled peak).
+ */
+export const onRoll = (peak: number | null, uph: number | null, days: number, wd = 23) => idealHeads(peak == null ? null : (peak * days) / wd, uph)?.roll ?? null;
+
+/** Ideal heads per site × month from the month's literal peak projected day: on the floor (day view) and on roll (month view, ₹). */
+function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
   const groups = new Map<string, (number | null)[]>();
   for (const r of rows) { const k = `${r.site}|${monthKey(r.day)}`; groups.set(k, [...(groups.get(k) ?? []), r.projected]); }
   const out = new Map<string, { floor: number; roll: number } | null>();
-  for (const [k, v] of groups) { const [site, month] = k.split("|") as [string, string]; out.set(k, idealHeads(monthStats(v)?.peak ?? null, at(uph, site, month))); }
+  for (const [k, v] of groups) {
+    const [site, month] = k.split("|") as [string, string], peak = monthStats(v)?.peak ?? null, u = at(uph, site, month);
+    const floor = idealHeads(peak, u)?.floor, roll = onRoll(peak, u, daysIn(month), (wd && at(wd, site, month)) || 23);
+    out.set(k, floor == null || roll == null ? null : { floor, roll });
+  }
   return out;
 }
 
@@ -39,8 +49,8 @@ function idealBySiteMonth(rows: DayRow[], uph: ByMonth) {
  * the month. Heads: day = present heads that day; month = present per captured day × days in month ÷ 23 (Processing's roster heads).
  * `rows` must cover whole months (the peak is the month's); only days in [from, to] become points.
  */
-function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals): Point[] {
-  const ideal = idealBySiteMonth(rows, uph);
+function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth): Point[] {
+  const ideal = idealBySiteMonth(rows, uph, wd);
   const win = rows.filter((r) => r.day >= from && r.day <= to);
   const groups = new Map<string, DayRow[]>();
   for (const r of win) { const k = mode === "day" ? r.day : monthKey(r.day); groups.set(k, [...(groups.get(k) ?? []), r]); }
@@ -58,7 +68,7 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
     const base = rs.filter((r) => r.overlay != null && (r.overlayBase ?? 0) > 0), baseSum = base.reduce((a, r) => a + r.overlayBase!, 0);
     return {
       key, projected: sumN(rs.map((r) => r.projected)), received: sumN(rs.map((r) => r.received)), processed: sumN(rs.map((r) => r.processed)),
-      issues: sumN(rs.map((r) => r.issues)), idealHeads: sumAll(idl.map((i) => i?.floor ?? null)), actualHeads, idealCost, actualCost,
+      issues: sumN(rs.map((r) => r.issues)), idealHeads: sumAll(idl.map((i) => (i == null ? null : mode === "day" ? i.floor : i.roll))), actualHeads, idealCost, actualCost,
       costPerUnit: null as number | null, idealCostPerUnit: null as number | null,
       overlay: baseSum ? base.reduce((a, r) => a + r.overlay! * r.overlayBase!, 0) / baseSum : null,
     };
@@ -68,6 +78,7 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
   return pts;
 }
 
-export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string) => toPoints("day", rows, uph, salary, from, to);
+/** Day view: ideal heads on the floor (against present heads); ideal ₹ is the month's on-roll cost per day. */
+export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, wd?: ByMonth) => toPoints("day", rows, uph, salary, from, to, undefined, wd);
 /** `actuals` ("South|2026-10" → Processing's heads and ₹ for the month) replace the attendance figure, so months tie to AOP › Processing. */
-export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals) => toPoints("month", rows, uph, salary, from, to, actuals);
+export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth) => toPoints("month", rows, uph, salary, from, to, actuals, wd);

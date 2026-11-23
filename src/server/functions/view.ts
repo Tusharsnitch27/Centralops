@@ -5,14 +5,15 @@ import { activeIpps } from "../wcm/daily";
 import { courierOf, monthHistory } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
-import { daysIn, toDayPoints, toMonthPoints, type Actuals, type ByMonth } from "./aggregate";
-import { idealHeads, manpowerGap, monthStats, unitsPerHead } from "./math";
+import { daysIn, onRoll, toDayPoints, toMonthPoints, type Actuals, type ByMonth } from "./aggregate";
+import { manpowerGap, monthStats, unitsPerHead } from "./math";
 import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
 import type { Cause, DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 
 /**
  * One function's view: last 30 days to yesterday (IST), day on day, or the financial year to date, month on month.
- * Ideal heads per site × month = the month's peak projected day ÷ units per head (active updated IPPs, as Processing);
+ * Ideal heads per site × month = the month's peak projected day ÷ units per head (active updated IPPs, as Processing): on the floor in
+ * the day view; on roll in the month view (× days in month ÷ working days for weekly offs, × 1.1 absenteeism);
  * actual heads and ₹ are Processing's (attendance split by the rule split; sheet months from the sheet).
  */
 const LEGACY_SALARY = 21983;
@@ -24,7 +25,7 @@ const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<n
 
 /** Norms per site × month: units per head (stages of the function's streams, weighted by Processing's stream volume), salary, Processing's actuals. */
 export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
-  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [];
+  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [];
   await Promise.all(months.flatMap((m) => sites.map(async (s) => {
     const key = `${s}|${mk(m)}`;
     const [pm, ipps] = await Promise.all([pmonth(m, s), activeIpps(m === monthStart(now) ? now : addDays(addMonths(m, 1), -1), s)]); // Processing's IPP day
@@ -37,32 +38,33 @@ export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
     const mp = paid.reduce((a, r) => a + r.actualMp!, 0);
     salary[key] = mp ? paid.reduce((a, r) => a + r.actualMp! * r.avgSalary!, 0) / mp : rows.find((r) => r.avgSalary != null)?.avgSalary ?? null;
     if (salary[key] == null) { salary[key] = LEGACY_SALARY; legacy.push(key); }
+    wd[key] = pm.streams[0]?.rows[0]?.workingDays ?? 23; // Processing's working days for the month (weekly-off cover in on-roll ideal heads)
     if (blocks.every((b) => b && b.actualExp != null && b.actualMp != null)) actuals[key] = { heads: sumN(blocks.map((b) => b!.actualMp)), cost: sumN(blocks.map((b) => b!.actualExp)) };
   })));
-  return { uph, salary, actuals, legacy };
+  return { uph, salary, wd, actuals, legacy };
 }
 
 type Norms = Awaited<ReturnType<typeof norms>>;
 /** Rows (whole months) → chart points for [from, to]. Exported so a scenario (Task 5) can re-run it on re-timed rows. */
 export const pointsOf = (mode: FnMode, rows: DayRow[], n: Norms, from: string, to: string): Point[] =>
-  mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals);
+  mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to, n.wd) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals, n.wd);
 
 /** Manpower gap for the window: per site × month, then summed by cause (each part keeps causes + other = actual − ideal). */
 function gapOf(fn: FnKey, mode: FnMode, rows: DayRow[], n: Norms, sites: Wh[], from: string, to: string) {
   const parts: GapPart[][] = [], left: string[] = [];
   for (const s of sites) {
     const mine = rows.filter((r) => r.site === s);
-    for (const seg of toMonthPoints(mine, n.uph, n.salary, from, to, mode === "month" ? n.actuals : undefined)) {
+    for (const seg of toMonthPoints(mine, n.uph, n.salary, from, to, mode === "month" ? n.actuals : undefined, n.wd)) {
       const key = `${s}|${seg.key}`, uph = n.uph[key], sal = n.salary[key];
       const month = mine.filter((r) => mk(r.day) === seg.key), win = month.filter((r) => r.day >= from && r.day <= to);
       const proj = monthStats(month.map((r) => r.projected));
       const act = monthStats(win.some((r) => r.received != null) ? win.map((r) => r.received) : win.map((r) => r.processed));
-      const roll = idealHeads(proj?.peak ?? null, uph ?? null)?.roll;
+      const roll = onRoll(proj?.peak ?? null, uph ?? null, daysIn(seg.key), n.wd[key] || 23);
       if (!uph || !sal || !proj || !act || roll == null || seg.actualCost == null || seg.processed == null) { left.push(`${s} ${monthName(seg.key)}`); continue; }
       const issueDays = win.filter((r) => r.issues != null);
       const heldUp = fn === "inwards" && issueDays.length ? issueDays.filter((r) => r.issues! > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
       parts.push(manpowerGap({ salary: sal, workDays: (23 * win.length) / daysIn(seg.key), uph, proj, act, processed: seg.processed, heldUpUnits: heldUp,
-        actualHeadDays: (seg.actualCost * 23) / sal, idealFloor: roll })); // ₹ compare on-roll ideal (with the 10 % allowance) against actual ₹
+        actualHeadDays: (seg.actualCost * 23) / sal, idealFloor: roll })); // ₹ compare on-roll ideal (weekly-off cover + 10 % allowance) against actual ₹
     }
   }
   const causes = [...new Set(parts.flatMap((p) => p.map((x) => x.cause)))] as Cause[];

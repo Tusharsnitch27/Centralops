@@ -33,11 +33,14 @@ assert.equal(zoneClass("South", null), "unmapped");
 console.log("functions math OK");
 
 // Task 4: aggregation of day rows to month points, and the rulebook slot's processing weekday
-import { toMonthPoints, toDayPoints, processingWeekday } from "../src/server/functions/aggregate.ts";
+import { toMonthPoints, toDayPoints, processingWeekday, onRoll } from "../src/server/functions/aggregate.ts";
 const day = (d, projected, processed, presentHeads, site = "South") => ({ day: d, site, projected, received: null, processed, issues: null, presentHeads, overlay: null });
 const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
 assert.equal(mp.projected, 400);
-assert.equal(mp.idealHeads, 3);
+// month view: on roll with weekly-off cover, ⌈300 ÷ 100 × 30 ÷ 23 × 1.1⌉ = 5 (on the floor ⌈300 ÷ 100⌉ = 3)
+assert.equal(mp.idealHeads, 5);
+assert.equal(onRoll(300, 100, 30), 5);
+assert.equal(onRoll(null, 100, 30), null);
 assert.equal(mp.actualCost, 4000);
 assert.equal(mp.costPerUnit, 10);
 // no projection for the month → projected and ideal are missing, never 0
