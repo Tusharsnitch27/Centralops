@@ -84,10 +84,11 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const slaEvs = ["picked", "packed", "manifested", "dispatched", "shipments"];
   const first = raw.filter((r) => slaEvs.includes(r.event)).map((r) => r.day!).sort()[0];
   const edge = first ? new Date(Date.parse(`${first}T00:00:00Z`) + EDGE_DAYS * 864e5).toISOString().slice(0, 10) : null;
-  const stored = new Set(edge ? (await q<{ d: string }>(`select distinct day::text as d from wcm_stage_output where event = any($1::text[]) and day < $2`, [slaEvs, edge])).map((r) => r.d) : []);
+  const stored = new Set(edge ? (await q<{ k: string }>(`select distinct day::text || '|' || event as k from wcm_stage_output
+    where event = any($1::text[]) and day < $2 and source is distinct from 'uc_items'`, [slaEvs, edge])).map((r) => r.k) : []);
   // day × event that UC items history owns (pullUcHistory): the SLA source's count there is partial, never written over it
   const uc = new Set((await q<{ k: string }>(`select distinct day::text || '|' || event as k from wcm_stage_output where source = 'uc_items' and event = any($1::text[])`, [slaEvs])).map((r) => r.k));
-  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(r.day!)) || uc.has(`${r.day}|${r.event}`))));
+  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(`${r.day}|${r.event}`)) || uc.has(`${r.day}|${r.event}`))));
   // replace per source (event family) only the days that source returned
   const families = [slaEvs, ["putaway", "audit_move"], ["received", "qc", "unloaded"]];
   for (const evs of families) {
@@ -103,7 +104,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
         c.map((r) => (["putaway", "audit_move"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
           : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
   }
-  return { read: rows.length, from, keptEdgeDays: [...stored].length };
+  return { read: rows.length, from, keptEdgeDays: new Set([...stored].map((k) => k.split("|")[0])).size };
 }
 
 /**
