@@ -9,7 +9,7 @@ import type { Wh } from "../aop/processingTypes";
 import { courierSplit, retimeOrders, scenarioDelta, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
-import { dailyRows, FN, inwardFallbackDays, lastOrderDay, pmonth, SITES } from "./sources";
+import { dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, pmonth, SITES } from "./sources";
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
 
@@ -83,9 +83,10 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const months: string[] = [];
   for (let m = monthStart(from); m <= to; m = addMonths(m, 1)) months.push(m);
-  const [rows, n, fallback, logistics, retail, lastOrder] = await Promise.all([
+  const [rows, n, fallback, evenMonths, logistics, retail, lastOrder] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),
+    fn === "inwards" ? inwardEvenMonths(monthStart(from), to) : Promise.resolve([] as string[]),
     fn === "b2c_shopify" ? courierGap(from, to, site) : Promise.resolve(null),
     fn === "b2b_retail" ? Promise.all([rulebookScenario(site, monthStart(from), rowsTo), crossZone(site, months)]) : Promise.resolve(null),
     fn === "b2b_retail" ? lastOrderDay() : Promise.resolve(null),
@@ -105,6 +106,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const grey: string[] = [];
   if (hasWorkbookPlan || hasWorkbookOutput) grey.push("The monthly chart uses S&OP review totals where daily coverage is missing. Those workbook totals do not provide a daily peak or attendance.");
   if (fn === "b2b_marketplace" || fn === "b2c_returns" || fn === "b2b_returns") grey.push("The projection is the monthly plan spread evenly over the days of the month.");
+  if (evenMonths.length) grey.push(`There is no daily inward plan for ${spans(evenMonths.flatMap((m) => sites.map((s) => `${s}|${m}`)), sites)}, so the projection there is the monthly plan spread evenly over the days of the month.`);
   if (fn === "b2c_returns") grey.push("Returns received are packets from the returns app (about 1.05–1.2 units each); processed is units put away.");
   if (fn === "b2b_returns") grey.push("B2B returns have no receiving scan, so received is the putaway.");
   if (fn === "b2b_retail") grey.push("The projection is the rulebook's daily processing plan, store by store.");

@@ -4,7 +4,7 @@ import { q } from "../db";
 import { addDays, monthStart } from "@/lib/dates";
 import { processingMonth } from "../aop/processing";
 import { STREAMS, type StreamKey, type Wh } from "../aop/processingTypes";
-import { placementShare, processingWeekday, stageTotal, weekdayOf } from "./aggregate";
+import { daysIn, placementShare, processingWeekday, stageTotal, weekdayOf } from "./aggregate";
 import { FN, type DayRow, type FnKey } from "./types";
 export { FN };
 
@@ -17,6 +17,10 @@ export const SITES: Wh[] = ["South", "North"];
 
 /** processingMonth, once per request (dailyRows and the view both need it). */
 export const pmonth = cache(processingMonth);
+/** Months in [from, to] ("2026-04-01") with no daily inward plan, whose inward projection is the monthly plan spread evenly. */
+export const inwardEvenMonths = async (from: string, to: string) => (await q<{ m: string }>(
+  `select period::text as m from sop_review_rows r where view_key = 'category_inward' and period between $1::date and $2::date and south_plan is not null
+    and not exists (select 1 from sop_plan_daily d where d.view_key = 'category_inward' and date_trunc('month', d.day)::date = r.period) group by 1`, [monthOf(from), monthOf(to)])).map((r) => r.m);
 /** The latest store-order day pulled into fn_retail_order (null when none): later days are not known yet, not 0. */
 export const lastOrderDay = cache(async () => (await q<{ last: string | null }>(`select max(order_date)::text as last from fn_retail_order`))[0]?.last ?? null);
 
@@ -29,7 +33,7 @@ const k = (site: string, day: string) => `${site}|${day}`;
 const RETURNS = { b2c_returns: "b2c", b2b_returns: "b2b" } as const;
 const isReturns = (fn: FnKey): fn is keyof typeof RETURNS => fn in RETURNS;
 
-/** Daily projection per site: S&OP daily plan, the monthly plan spread evenly (B2B Marketplace, Returns), or the rulebook (B2B Retail). */
+/** Daily projection per site: S&OP daily plan, the monthly plan spread evenly (B2B Marketplace, Returns; Inwards before its daily plan), or the rulebook (B2B Retail). */
 async function projection(fn: FnKey, from: string, to: string, days: string[]): Promise<SiteDay> {
   const out: SiteDay = new Map();
   if (fn === "b2b_marketplace" || isReturns(fn)) {
@@ -65,7 +69,17 @@ async function projection(fn: FnKey, from: string, to: string, days: string[]): 
   const rows = await q<{ day: string; south: number; north: number }>(
     `select day::text as day, sum(south)::float8 as south, sum(north)::float8 as north from sop_plan_daily where ${filter} and day between $1 and $2 group by 1`, [from, to]);
   const months = new Set(rows.map((r) => monthOf(r.day))); // a month with a daily plan: a day with no row is a planned 0
-  for (const d of days) { const r = rows.find((x) => x.day === d); for (const s of SITES) out.set(k(s, d), r ? (s === "South" ? r.south : r.north) : months.has(monthOf(d)) ? 0 : null); }
+  // inward months with no daily plan (before Sep 2026): the review's monthly plan spread evenly over the days
+  const monthly = fn === "inwards" ? await q<{ period: string; south: number | null; north: number | null }>(
+    `select period::text as period, sum(south_plan)::float8 as south, sum(north_plan)::float8 as north from sop_review_rows
+      where view_key = 'category_inward' and period between $1::date and $2::date group by 1`, [monthOf(from), monthOf(to)]) : [];
+  for (const d of days) {
+    const r = rows.find((x) => x.day === d), m = months.has(monthOf(d)) ? null : monthly.find((x) => x.period === monthOf(d));
+    for (const s of SITES) {
+      const v = m?.[s === "South" ? "south" : "north"];
+      out.set(k(s, d), r ? (s === "South" ? r.south : r.north) : months.has(monthOf(d)) ? 0 : v == null ? null : v / daysIn(d));
+    }
+  }
   return out;
 }
 
