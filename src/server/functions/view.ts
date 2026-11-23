@@ -76,7 +76,7 @@ async function courierGap(from: string, to: string, site: FnSite): Promise<GapPa
   const fy = fyStart(to).slice(0, 4), jas = [`${fy}-07-01`, `${fy}-08-01`, `${fy}-09-01`];
   const [ships, cps, hist] = await Promise.all([
     q<{ day: string; vendor: string; n: number }>(`select day::text as day, substr(metric, 11) as vendor, sum(qty)::float8 as n from aop_channel_volume
-       where family = 'logistics' and metric like 'shipments:%' and channel = 'B2C Shopify' and day between $1 and $2 and ($3 = 'Both' or warehouse = $3) group by 1, 2`, [from, to, site]),
+       where family = 'logistics' and metric like 'shipments:%' and channel = 'B2C Shopify' and day between $1 and $2 and warehouse = any($3::text[]) group by 1, 2`, [from, to, site === "Both" ? ["South", "North"] : [site]]),
     q<{ courier: string; month: string; cps: number }>(`select courier, month::text as month, (sum(cost) / nullif(sum(awbs) filter (where type = 'FWD'), 0))::float8 as cps from lg_b2c_month group by 1, 2`),
     monthHistory(),
   ]);
@@ -122,7 +122,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (noNorm.length) grey.push(`There is no productivity norm for ${noNorm.join(", ")}, so ideal heads are blank there.`);
   if (mode === "day") { const d = new Set(win.filter((r) => r.presentHeads == null).map((r) => r.day)).size; if (d) grey.push(`Attendance is missing on ${d} of the ${new Set(win.map((r) => r.day)).size} days, so actual heads and cost are blank on those days.`); }
   else { const m = points.filter((p) => p.actualCost == null).map((p) => monthName(p.key)); if (m.length) grey.push(`There are no actual heads for ${m.join(", ")}.`); }
-  if (win.some((r) => r.processed == null)) grey.push("Stage scans start on 21 Sep 2026, so processed volume is blank before then.");
+  { const d = new Set(win.filter((r) => r.processed == null).map((r) => r.day)).size; if (d) grey.push(`Processed volume is missing for ${d} of the ${new Set(win.map((r) => r.day)).size} days shown.`); }
   if (fn === "b2b_retail" || fn === "b2b_marketplace") grey.push("Loading, bagging, encoding and dispatch have no scan feed, so they are not counted in processed volume.");
   if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where no sheet salary exists (${n.legacy.map((k) => k.replace("|", " ")).join(", ")}).`);
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");

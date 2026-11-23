@@ -59,15 +59,17 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
     const month = monthKey(rs[0]!.day), sal = (site: string) => at(salary, site, month);
     const idl = sites.map((s) => ideal.get(`${s}|${month}`) ?? null);
     const fixed = (s: string) => (mode === "month" ? actuals?.[`${s}|${month}`] : undefined);
-    const actualCost = sumN(sites.map((s) => fixed(s)?.cost ?? sumN(rs.filter((r) => r.site === s).map((r) => (r.presentHeads == null || sal(s) == null ? null : (r.presentHeads * sal(s)!) / 23)))));
+    // across sites a part missing on either site is missing for Both (never half the cost or volume)
+    const bySite = (s: string, v: (r: DayRow) => number | null) => sumN(rs.filter((r) => r.site === s).map(v));
+    const actualCost = sumAll(sites.map((s) => fixed(s)?.cost ?? bySite(s, (r) => (r.presentHeads == null || sal(s) == null ? null : (r.presentHeads * sal(s)!) / 23))));
     const idealCost = sumAll(rs.map((r) => { const i = ideal.get(`${r.site}|${month}`), s = sal(r.site); return i && s != null ? (i.roll * s) / daysIn(month) : null; }));
-    const actualHeads = mode === "day" ? sumN(rs.map((r) => r.presentHeads)) : sumN(sites.map((s) => {
+    const actualHeads = mode === "day" ? sumAll(sites.map((s) => bySite(s, (r) => r.presentHeads))) : sumAll(sites.map((s) => {
       const h = rs.filter((r) => r.site === s && r.presentHeads != null);
       return fixed(s)?.heads ?? (h.length ? (h.reduce((a, r) => a + r.presentHeads!, 0) / h.length) * (daysIn(month) / 23) : null);
     }));
     const base = rs.filter((r) => r.overlay != null && (r.overlayBase ?? 0) > 0), baseSum = base.reduce((a, r) => a + r.overlayBase!, 0);
     return {
-      key, projected: sumN(rs.map((r) => r.projected)), received: sumN(rs.map((r) => r.received)), processed: sumN(rs.map((r) => r.processed)),
+      key, projected: sumN(rs.map((r) => r.projected)), received: sumN(rs.map((r) => r.received)), processed: sumAll(sites.map((s) => bySite(s, (r) => r.processed))),
       issues: sumN(rs.map((r) => r.issues)), idealHeads: sumAll(idl.map((i) => (i == null ? null : mode === "day" ? i.floor : i.roll))), actualHeads, idealCost, actualCost,
       costPerUnit: null as number | null, idealCostPerUnit: null as number | null,
       overlay: baseSum ? base.reduce((a, r) => a + r.overlay! * r.overlayBase!, 0) / baseSum : null,

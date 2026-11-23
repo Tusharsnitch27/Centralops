@@ -63,3 +63,9 @@ assert.equal(processingWeekday("Thursday 6 PM"), "Thursday");
 assert.equal(processingWeekday(null), null);
 assert.equal(processingWeekday("garbage"), null);
 console.log("functions aggregate OK");
+// Both: a part missing on either site is missing for Both (North has no attendance or scans that day)
+const [bp] = toDayPoints([day("2026-11-01", 100, 200, 2), day("2026-11-01", 50, null, null, "North")], { "2026-11": 100 }, 23000, "2026-11-01", "2026-11-01");
+assert.equal(bp.actualCost, null);
+assert.equal(bp.actualHeads, null);
+assert.equal(bp.processed, null);
+console.log("functions Both OK");
