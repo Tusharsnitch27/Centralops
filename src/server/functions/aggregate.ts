@@ -1,5 +1,6 @@
 // Pure aggregation for the AOP Functions view: day rows → chart points (no server imports; scripts/check-functions.mjs runs it).
 import { idealHeads, manpowerGap, monthStats, perUnit } from "./math.ts";
+import { UC_ALL_DAYS_EVENTS, UC_ALL_DAYS_STREAM } from "../wcm/math.ts";
 import type { Cause, DayRow, GapPart, Point } from "./types";
 
 /** Per-month value, site-specific first: keys "South|2026-11" or "2026-11". */
@@ -81,10 +82,12 @@ export const unitShare = (rupees: number | null, monthUnits: number | null, wind
   rupees == null || !monthUnits || windowUnits == null ? null : (rupees * windowUnits) / monthUnits;
 
 /** Σ a stage's units for these streams on one site-day: null when the feed has no row for that site × day × event (it did not cover the day),
- *  0 when it ran with none of these streams. */
-export function stageTotal(rows: { day: string; site: string; stream: string; event: string; qty: number }[], site: string, day: string, event: string, streams: string[]) {
-  const ran = rows.filter((r) => r.site === site && r.day === day && r.event === event);
-  return ran.length ? ran.filter((r) => streams.includes(r.stream)).reduce((a, r) => a + r.qty, 0) : null;
+ *  0 when it ran with none of these streams. B2B Marketplace packed / dispatched / shipments come from UC items only: the feed ran only
+ *  when UC items wrote that site-day (its 'ordered' row, written daily) — another source's rows don't make it 0. */
+export function stageTotal(rows: { day: string; site: string; stream: string; event: string; qty: number; source?: string | null }[], site: string, day: string, event: string, streams: string[]) {
+  const mine = rows.filter((r) => r.site === site && r.day === day);
+  const ran = streams.includes(UC_ALL_DAYS_STREAM) && UC_ALL_DAYS_EVENTS.includes(event) ? mine.some((r) => r.source === "uc_items") : mine.some((r) => r.event === event);
+  return ran ? mine.filter((r) => r.event === event && streams.includes(r.stream)).reduce((a, r) => a + r.qty, 0) : null;
 }
 
 const monthKey = (day: string) => day.slice(0, 7);

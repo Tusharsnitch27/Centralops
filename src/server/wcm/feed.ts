@@ -106,7 +106,8 @@ export async function pullStageOutput(from = STAGE_FROM) {
         const c = fam.slice(i, i + 2000);
         await t.q(`insert into wcm_stage_output (day, site, stream, event, unit, qty, source)
                  select d::date, s, st, e, u, n, src from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::text[]) as t(d, s, st, e, u, n, src)
-                 on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()`,
+                 on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()
+                 where wcm_stage_output.source is distinct from 'uc_items'`,
           [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
             c.map((r) => (["putaway", "audit_move"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
               : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
@@ -119,7 +120,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
 /**
  * Forward history before warehouse_sla_performance's window, from UC items (UNICOMMERCE_FACT_ITEMS_INTERMEDIATE, Mar 2026 →):
  * packed (PACKED_TIMESTAMP, a date), dispatched, shipments (distinct SHIPPINGPACKAGECODE dispatched) and ordered (items by UC_CREATED day —
- * every day to yesterday: the SLA source writes no 'ordered', so it is the one creation-day count for Functions' received).
+ * every day to yesterday, or to the day before UC's latest uc_created when UC lags: the SLA source writes no 'ordered', so it is the one creation-day count for Functions' received).
  * The SLA source's window is cut by creation day, so items created before its first day (asked each run) but done later are in neither
  * source unless UC covers event days up to UC_WINS_DAYS past it; UC wins on those days (pullStageOutput skips them). UC labels stores and
  * M-Now differently ('Own Store', 'M-NOW MUMBAI'; Flipkart SOR is marketplace 'FLIPKART B2B CUSTOM'): those map to the same streams first.
@@ -145,7 +146,12 @@ export async function pullUcHistory(from = "2026-04-01") {
   const until = (await sfQuery<{ until: string | null }>(`SELECT TO_VARCHAR(MIN(uc_created)::date, 'YYYY-MM-DD') AS until FROM ${SLA}`))[0]?.until;
   if (!until) throw new Error("warehouse_sla_performance has no first day — UC history not written");
   const upTo = new Date(Date.parse(`${until}T00:00:00Z`) + UC_WINS_DAYS * 864e5).toISOString().slice(0, 10);
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()); // ordered: every day to yesterday (IST)
+  const istToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()); // ordered: every day to yesterday (IST)
+  // UC items lags: the day of its latest uc_created is still filling, so days from it on are not written (never a partial last day)
+  const ucLast = (await sfQuery<{ d: string | null }>(`SELECT TO_VARCHAR(MAX(uc_created)::date, 'YYYY-MM-DD') AS d FROM ${UC}
+    WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')`))[0]?.d;
+  if (!ucLast) throw new Error("UC items has no uc_created — UC history not written");
+  const today = ucLast < istToday ? ucLast : istToday;
   const rows = (await sfQuery<Row>(UC_SQL.replaceAll("{from}", from).replaceAll("{until}", upTo).replaceAll("{today}", today))).filter((r) => r.day && r.site);
   const days = [...new Set(rows.map((r) => r.day!))];
   await tx(async (t) => {

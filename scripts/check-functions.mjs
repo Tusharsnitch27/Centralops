@@ -184,6 +184,14 @@ assert.equal(toMonthPoints([{ ...day("2026-08-10", 100, rp, 2, "North"), receive
 assert.equal(stageTotal([...b2cOnly, { day: "2026-08-10", site: "North", stream: "B2C Returns (channel open)", event: "putaway", qty: 700 }], "North", "2026-08-10", b2b.event, b2b.streams), 0);
 assert.equal(stageTotal([{ day: "2026-08-10", site: "North", stream: "B2B Returns Retail", event: "putaway", qty: 50 }], "North", "2026-08-10", b2b.event, b2b.streams), 50);
 console.log("functions returns split OK");
+// B2B Marketplace dispatched comes from UC items only: SLA rows for other streams that day don't make it 0 — null until UC wrote the site-day
+const mpSla = [{ day: "2026-11-22", site: "South", stream: "B2C Shopify", event: "dispatched", qty: 900, source: "warehouse_sla_performance" }];
+const mpUc = { day: "2026-11-22", site: "South", stream: "B2C Shopify", event: "ordered", qty: 800, source: "uc_items" };
+assert.equal(stageTotal(mpSla, "South", "2026-11-22", "dispatched", FN.b2b_marketplace.processed.streams), null);
+assert.equal(stageTotal([...mpSla, mpUc], "South", "2026-11-22", "dispatched", FN.b2b_marketplace.processed.streams), 0);
+assert.equal(stageTotal([...mpSla, mpUc, { ...mpUc, stream: "B2B Marketplace", event: "dispatched", qty: 40 }], "South", "2026-11-22", "dispatched", FN.b2b_marketplace.processed.streams), 40);
+assert.equal(stageTotal(mpSla, "South", "2026-11-22", "dispatched", FN.b2c_shopify.processed.streams), 900);
+console.log("functions B2B MP UC-only OK");
 
 // Task 4 (backfill): month ₹/unit = Σ₹ ÷ Σunits over the same days — Processing's cost at its share of the month over volume × that share;
 // with no Processing actuals, the attendance days' cost over volume × attendance days ÷ the month's days in the window. Ideal stays over the whole volume.

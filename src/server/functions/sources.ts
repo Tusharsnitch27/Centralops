@@ -99,8 +99,8 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   const events = fn === "inwards" || fn === "b2c_returns" ? ["putaway", "received"] : fn === "b2b_returns" ? ["putaway"] : fn === "b2b_retail" ? [f.processed.event] : [f.processed.event, "ordered"];
   const [proj, stage, heads, pms, orders, inward, created, deadline, lastOrder] = await Promise.all([
     projection(fn, from, to, days),
-    q<{ day: string; site: string; stream: string; event: string; qty: number }>(
-      `select day::text as day, site, stream, event, sum(qty)::float8 as qty from wcm_stage_output where day between $1 and $2 and event = any($3::text[]) group by 1, 2, 3, 4`, [from, to, events]),
+    q<{ day: string; site: string; stream: string; event: string; qty: number; source: string | null }>(
+      `select day::text as day, site, stream, event, source, sum(qty)::float8 as qty from wcm_stage_output where day between $1 and $2 and event = any($3::text[]) group by 1, 2, 3, 4, 5`, [from, to, events]),
     q<{ day: string; site: string; dept: string; heads: number }>(
       `select d.day::text as day, sm.warehouse as site, coalesce(fm.department, d.func) as dept, sum(d.heads)::float8 as heads
        from mp_daily d join mp_site_map sm on sm.site = d.site left join mp_func_map fm on fm.func = d.func
