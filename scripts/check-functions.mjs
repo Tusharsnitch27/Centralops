@@ -31,3 +31,32 @@ assert.equal(zoneClass("North", "SOUTH"), "cross");
 assert.equal(zoneClass("South", "WEST"), "unmapped");
 assert.equal(zoneClass("South", null), "unmapped");
 console.log("functions math OK");
+
+// Task 4: aggregation of day rows to month points, and the rulebook slot's processing weekday
+import { toMonthPoints, toDayPoints, processingWeekday } from "../src/server/functions/aggregate.ts";
+const day = (d, projected, processed, presentHeads, site = "South") => ({ day: d, site, projected, received: null, processed, issues: null, presentHeads, overlay: null });
+const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
+assert.equal(mp.projected, 400);
+assert.equal(mp.idealHeads, 3);
+assert.equal(mp.actualCost, 4000);
+assert.equal(mp.costPerUnit, 10);
+// no projection for the month → projected and ideal are missing, never 0
+const [np] = toMonthPoints([day("2026-11-01", null, 200, 2)], { "2026-11": 100 }, 23000);
+assert.equal(np.projected, null);
+assert.equal(np.idealHeads, null);
+assert.equal(np.idealCost, null);
+// day mode: each day carries its month's peak (300 → 3 heads), Both = sum of the sites
+const dp = toDayPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2), day("2026-11-01", 50, 100, 1, "North")], { "South|2026-11": 100, "North|2026-11": 50 }, 23000, "2026-11-01", "2026-11-01");
+assert.equal(dp.length, 1);
+assert.equal(dp[0].idealHeads, 4);
+assert.equal(dp[0].actualHeads, 3);
+// Processing's month actuals replace the attendance figure (ties to AOP › Processing)
+const [op] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000, undefined, undefined, { "South|2026-11": { heads: 7, cost: 9000 } });
+assert.equal(op.actualHeads, 7);
+assert.equal(op.actualCost, 9000);
+assert.equal(processingWeekday("Monday 5 AM"), "Sunday");
+assert.equal(processingWeekday("Sunday 5 AM"), "Saturday");
+assert.equal(processingWeekday("Thursday 6 PM"), "Thursday");
+assert.equal(processingWeekday(null), null);
+assert.equal(processingWeekday("garbage"), null);
+console.log("functions aggregate OK");

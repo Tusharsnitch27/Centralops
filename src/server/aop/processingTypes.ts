@@ -56,6 +56,8 @@ export interface ProcessingMonth {
   totals: { plannedExp: number; actualExp: number | null; plannedMp: number; actualMp: number | null; needMp: number | null; needExp: number | null };
   /** attendance days behind the actuals (through D-1) and the month's days; null = sheet month */
   actualDays: { days: number; of: number } | null;
+  /** each stream's share of its attendance department's heads under the rule split (Σ over a department's streams = 1) */
+  shares: Partial<Record<StreamKey, number>>;
 }
 
 /** Department heads from attendance for a month, and how much of it has been assigned to stream × process. */

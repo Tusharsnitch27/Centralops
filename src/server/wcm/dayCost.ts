@@ -19,7 +19,7 @@ const B2C_FN = ["B2C Forward", "B2C Return"], B2B_FN = ["B2B Forward", "B2B Retu
 const daysIn = (m: string) => new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0)).getUTCDate();
 const monthOf = (d: string) => `${d.slice(0, 7)}-01`;
 /** working-file courier names ↔ shipment feed vendor names */
-const courierOf = (vendor: string) => (/blitz|bigshort/i.test(vendor) ? "Blitz" : /ekart|instakart/i.test(vendor) ? "Ekart" : /shiprocket|bigfoot/i.test(vendor) ? "Shiprocket"
+export const courierOf = (vendor: string) => (/blitz|bigshort/i.test(vendor) ? "Blitz" : /ekart|instakart/i.test(vendor) ? "Ekart" : /shiprocket|bigfoot/i.test(vendor) ? "Shiprocket"
   : /bluedart/i.test(vendor) ? "Bluedart" : /delhivery/i.test(vendor) ? "Delhivery" : /^shadowfax$/i.test(vendor) ? "Shadowfax" : /prozo/i.test(vendor) ? "Prozo" : null);
 
 export async function dayCost(from: string, to: string, site: DaySite) {

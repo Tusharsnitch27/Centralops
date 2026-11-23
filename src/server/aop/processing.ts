@@ -127,7 +127,13 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
     const plan = computeRow({ targetPerDay: n.target_per_day, workingDays: n.working_days, avgSalary: n.avg_salary }, { sopProj, plannedMp, finalOutput: null, salary, actualMp: null, pass: passShare(n.process) });
     return { n, stream, s, carry, sopProj, salary, plannedMp: plan.plannedMp };
   });
-  const proposed = ruleSplit(warehouse, base.map((b) => ({ stream: b.stream, process: b.n.process, department: b.n.department ?? "", target: b.n.target_per_day, volume: b.s?.final_output ?? vol.actual[b.stream] ?? b.sopProj })), deptHeads);
+  const lines = base.map((b) => ({ stream: b.stream, process: b.n.process, department: b.n.department ?? "", target: b.n.target_per_day, volume: b.s?.final_output ?? vol.actual[b.stream] ?? b.sopProj }));
+  const proposed = ruleSplit(warehouse, lines, deptHeads);
+  // each stream's share of its department's heads under the same rule split (one head per department) — Functions splits daily heads by it
+  const shares: ProcessingMonth["shares"] = {};
+  for (const [k, v] of ruleSplit(warehouse, lines, new Map([...new Set(lines.map((l) => l.department).filter(Boolean))].map((d) => [d, 1])))) {
+    const st = k.split("|")[0] as StreamKey; shares[st] = (shares[st] ?? 0) + v;
+  }
 
   // pass 2: actuals
   const rows: ProcRow[] = base.map((b) => {
@@ -164,7 +170,7 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
       needMp: rows.some((r) => r.needMp != null) ? rows.reduce((a, r) => a + (r.needMp ?? 0), 0) : null,
       needExp: rows.some((r) => r.needExp != null) ? rows.reduce((a, r) => a + (r.needExp ?? 0), 0) : null,
     },
-    actualDays: useAttendance ? { days: att.dataDays, of: daysIn(period) } : null,
+    actualDays: useAttendance ? { days: att.dataDays, of: daysIn(period) } : null, shares,
   };
 }
 

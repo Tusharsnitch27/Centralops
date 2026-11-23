@@ -3,7 +3,7 @@ export type FnKey = "inwards" | "b2c_shopify" | "b2c_marketplace" | "b2b_retail"
 export type FnSite = "South" | "North" | "Both";
 export type FnMode = "day" | "month";
 export interface DayRow { day: string; site: "South" | "North"; projected: number | null; received: number | null; processed: number | null;
-  issues: number | null; presentHeads: number | null; overlay: number | null } // overlay: SLA % or merchandising SLA %, function-specific
+  issues: number | null; presentHeads: number | null; overlay: number | null; overlayBase?: number | null } // overlay: SLA % or merchandising SLA %, function-specific; overlayBase: its denominator (units judged), so Both / months weight it
 export type Cause = "volume" | "erratic" | "held_up" | "below_ipp" | "absenteeism" | "cross_zone" | "courier_rate" | "other";
 export interface GapPart { cause: Cause; rupees: number | null; note: string }
 export interface Point { key: string; projected: number | null; received: number | null; processed: number | null; issues: number | null;
