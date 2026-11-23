@@ -1,5 +1,5 @@
 import "server-only";
-import { q } from "../db";
+import { q, tx } from "../db";
 import { sfQuery } from "../snowflake";
 
 /** Feeds for the AOP Functions view: store orders, handover rulebook, WAM inward. Read-only Snowflake; missing is null, never 0. */
@@ -40,13 +40,15 @@ type RuleRow = { upload_date: string; store: string; site: string; fresh_qty: nu
 export async function pullRulebook() {
   const rows = await sfQuery<RuleRow>(RULEBOOK_SQL);
   if (!rows.length) return { read: 0, note: "rulebook returned no rows — table kept" };
-  await q(`delete from fn_rulebook`);
+  await tx(async (t) => {
+  await t.q(`delete from fn_rulebook`);
   for (const c of chunks(rows)) {
-    await q(`insert into fn_rulebook (upload_date, store, site, fresh_qty, rpl_qty, fresh_handover_day, rpl_handover_day, fresh_tat, rpl_tat, zone)
+    await t.q(`insert into fn_rulebook (upload_date, store, site, fresh_qty, rpl_qty, fresh_handover_day, rpl_handover_day, fresh_tat, rpl_tat, zone)
              select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[], $5::numeric[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[])`,
       [c.map((r) => r.upload_date), c.map((r) => r.store), c.map((r) => r.site), c.map((r) => num(r.fresh_qty)), c.map((r) => num(r.rpl_qty)),
         c.map((r) => r.fresh_handover_day), c.map((r) => r.rpl_handover_day), c.map((r) => r.fresh_tat), c.map((r) => r.rpl_tat), c.map((r) => r.zone)]);
   }
+  });
   return { read: rows.length, note: `${rows.length} rulebook rows (all uploads)` };
 }
 
@@ -71,12 +73,14 @@ export async function pullWam(from = "2026-04-01") {
     throw e;
   }
   const days = [...new Set(rows.map((r) => r.day))];
-  if (days.length) await q(`delete from fn_inward_daily where source = 'wam' and day = any($1::date[])`, [days]);
+  await tx(async (t) => {
+  if (days.length) await t.q(`delete from fn_inward_daily where source = 'wam' and day = any($1::date[])`, [days]);
   for (const c of chunks(rows)) {
-    await q(`insert into fn_inward_daily (day, site, received, boxes, issues, sku_lines, source)
+    await t.q(`insert into fn_inward_daily (day, site, received, boxes, issues, sku_lines, source)
              select d, s, r, b, i, l, 'wam' from unnest($1::date[], $2::text[], $3::numeric[], $4::numeric[], $5::int[], $6::int[]) as t(d, s, r, b, i, l)
              on conflict (day, site) do update set received = excluded.received, boxes = excluded.boxes, issues = excluded.issues, sku_lines = excluded.sku_lines, source = 'wam'`,
       [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => num(r.received)), c.map((r) => num(r.boxes)), c.map((r) => num(r.issues)), c.map((r) => num(r.sku_lines))]);
   }
+  });
   return { read: rows.length, note: `${rows.length} WAM inward days from ${from}` };
 }
