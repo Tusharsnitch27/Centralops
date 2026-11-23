@@ -60,8 +60,8 @@ function sumComplete(values: (number | null)[]) {
   return values.reduce<number>((total, value) => total + value!, 0);
 }
 
-/** Use the workbook at its original monthly grain. Keep current feed data where the
- * stage feed covers the month and use the workbook for months before its 21 Sep start. */
+/** Use the workbook at its original monthly grain: its actual for Apr–Sep 2026, and from Oct the stage feed's daily output
+ * where the month has any (the workbook where it has none); its plan where the month has no daily plan. */
 export function workbookMonthVolumes(fn: FnKey, month: string, sites: DayRow["site"][], rows: DayRow[]) {
   const sheet = workbook.find(([period, key]) => period === month && key === fn);
   const monthRows = rows.filter((row) => row.day.slice(0, 7) === month);
