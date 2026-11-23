@@ -1,7 +1,7 @@
 // Self-check: processingMath reproduces the Cost Master for South · B2C Shopify · Picker · Oct'25.
 // node --experimental-strip-types scripts/check-processing.mjs
 import assert from "node:assert/strict";
-import { computeRow, outputPerHead, applyLevers, ruleSplit, matchIpp } from "../src/server/aop/processingMath.ts";
+import { computeRow, outputPerHead, applyLevers, ruleSplit, matchIpp, passShare } from "../src/server/aop/processingMath.ts";
 
 const n = { targetPerDay: 800, workingDays: 23, avgSalary: 21983 };
 assert.equal(outputPerHead(n), 18400);
@@ -42,4 +42,9 @@ assert.equal(matchIpp("B2C Returns Shopify", "Processing", [{ stream: "B2C Retur
 assert.equal(matchIpp("Inward", "Unloader", [{ stream: "Inward", stage: "Unloader", unit: "box", ipp: 200 }]), 6000);
 assert.equal(matchIpp("B2B Retail", "Loader", [{ stream: "B2B Retail", stage: "Picker", unit: "unit", ipp: 700 }]), null);
 assert.equal(matchIpp("B2C Shopify", "Picker", [{ stream: "B2C Shopify", stage: "Picker", unit: "unit", ipp: null }]), null);
+// exception stages at a 5 % pass (23 Nov 2026); SPF 15 %; everything else every unit
+assert.equal(passShare("WPR"), 0.05);
+assert.equal(passShare("WFR/CS escalation"), 0.05);
+assert.equal(passShare("SPF"), 0.15);
+assert.equal(passShare("Picker"), 1);
 console.log("processing math OK", { mpRequired: r.mpRequired, plannedExp: r.plannedExp, plannedCpi: r.plannedCpi.toFixed(4), actualCpi: r.actualCpi.toFixed(4), adherence: r.volumeAdherence.toFixed(4) });
