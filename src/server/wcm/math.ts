@@ -159,8 +159,10 @@ export function rate(parts: { paise: number; qty: number | null; unit: string | 
 
 /** B2B Marketplace: UC items owns packed / dispatched / shipments on every day (ties to the S&OP workbook; the SLA source undercounts it). */
 export const UC_ALL_DAYS_STREAM = "B2B Marketplace";
+export const UC_ALL_DAYS_EVENTS = ["packed", "dispatched", "shipments"];
 /** Whether an SLA-source stage row must be skipped because UC items owns it: any stream on a day × event UC's window covers (from its
  *  non-B2B-Marketplace rows), and B2B Marketplace's own site × day × event on every other day. */
 export function ucOwned(r: { day: string; site: string; stream: string; event: string }, uc: { day: string; site: string; stream: string; event: string }[]) {
+  if (r.stream === UC_ALL_DAYS_STREAM && UC_ALL_DAYS_EVENTS.includes(r.event)) return true; // UC owns every day, also those it has no row for (else items count on two days)
   return uc.some((u) => u.day === r.day && u.event === r.event && (u.stream !== UC_ALL_DAYS_STREAM || (r.stream === u.stream && r.site === u.site)));
 }

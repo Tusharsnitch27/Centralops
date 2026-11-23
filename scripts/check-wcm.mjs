@@ -144,7 +144,10 @@ console.log("wcm OK", { octBoth: oct.Both.source / 100, julKnown: jul.source / 1
   assert.equal(ucOwned(r("2026-09-30", "B2C Shopify"), win), true);
   assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace"), mp), true);
   assert.equal(ucOwned(r("2026-10-31", "B2C Shopify"), mp), false); // other streams' SLA rows that day are kept
-  assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace", "North"), mp), false);
-  assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace", "South", "packed"), mp), false);
+  // B2B Marketplace packed / dispatched / shipments: UC owns every day, even one it has no row for; picked / manifested stay with the SLA source
+  assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace", "North"), mp), true);
+  assert.equal(ucOwned(r("2026-11-02", "B2B Marketplace", "South", "shipments"), []), true);
+  assert.equal(ucOwned(r("2026-11-02", "B2B Marketplace", "South", "picked"), []), false);
+  assert.equal(ucOwned(r("2026-11-02", "B2B Marketplace", "South", "manifested"), []), false);
   console.log("wcm UC ownership OK");
 }
