@@ -152,23 +152,26 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     if (u) summary.push(`That is ₹${(units.reduce((x, p) => x + p.actualCost!, 0) / u).toFixed(2)} per unit against ₹${(units.reduce((x, p) => x + p.idealCost!, 0) / u).toFixed(2)} at ideal heads.`);
   }
 
-  // B2B Retail: "Rulebook followed" (store orders on their rulebook days; same heads, ideal from the orders' peak) and cross-zone freight
+  // B2B Retail: "Rulebook followed" (store orders on their rulebook days; ideal stays on the plan) and cross-zone freight
   let scenario: FunctionView["scenario"] = null, logisticsGap = fn === "b2c_shopify" ? logistics : null;
   if (retail) {
     const [rb, cz] = retail;
     const moved = new Map(rb.days.map((r) => [`${r.site}|${r.day}`, r.received]));
+    const retimed = rows.map((r) => ({ ...r, received: moved.get(`${r.site}|${r.day}`) ?? (r.received == null ? null : 0) }));
+    // heads needed for the actual orders = ideal maths on the order peak (as placed vs re-timed)
     const asIs = pointsOf(mode, rows.map((r) => ({ ...r, projected: r.received })), n, from, to);
-    const scen = pointsOf(mode, rows.map((r) => { const x = moved.get(`${r.site}|${r.day}`) ?? (r.received == null ? null : 0); return { ...r, projected: x, received: x }; }), n, from, to);
-    const paired = scen.map((p, i) => [asIs[i]!, p] as const).filter(([a, b]) => a.idealCost != null && b.idealCost != null);
+    const reNeed = pointsOf(mode, retimed.map((r) => ({ ...r, projected: r.received })), n, from, to);
+    const needed = reNeed.map((p, i) => ({ key: p.key, asIsHeads: asIs[i]!.idealHeads, asIsCost: asIs[i]!.idealCost, heads: p.idealHeads, cost: p.idealCost }));
+    const paired = reNeed.map((p, i) => [asIs[i]!, p] as const).filter(([a, b]) => a.idealCost != null && b.idealCost != null);
     const manpower = paired.length ? paired.reduce((x, [a, b]) => x + a.idealCost! - b.idealCost!, 0) : null;
     const deltaRupees = manpower == null || cz.rupees == null ? null : manpower + cz.rupees, units = sumN(paired.map(([a]) => a.processed));
-    scenario = { label: "Rulebook followed", points: scen.map((p, i) => ({ ...p, projected: points[i]!.projected })), deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
+    scenario = { label: "Rulebook followed", points: pointsOf(mode, retimed, n, from, to), needed, deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
     logisticsGap = [
-      { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone` },
+      { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : cz.rupees == null ? `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone`
+        : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone cost ₹${n0(Math.abs(cz.rupees))} ${cz.rupees >= 0 ? "more" : "less"} than the home lanes` },
       { cause: "other", rupees: null, note: "there is no ideal retail freight to set the rest against" },
     ];
-    grey.push("In the rulebook scenario, ideal heads follow the busiest day of store orders, as placed and on their rulebook days.");
-    const out = scen.filter((p, i) => p.idealCost == null || asIs[i]!.idealCost == null).map((p) => (mode === "day" ? p.key : monthName(p.key)));
+    const out = reNeed.filter((p, i) => p.idealCost == null || asIs[i]!.idealCost == null).map((p) => (mode === "day" ? p.key : monthName(p.key)));
     if (!paired.length) grey.push("The rulebook scenario is blank: no period here has store orders with a norm and salary.");
     else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : out.join(", ")} with no store orders, norm or salary.`);
     if (cz.unpriced.length) grey.push(`Cross-zone freight leaves out ${cz.unpriced.join(", ")}, which have no rate in the LR file.`);
