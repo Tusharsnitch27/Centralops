@@ -45,7 +45,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
 
   const fnRows = tree.functions.map((f) => ({ f, a: aggLines(fnLines(f), span.periods), mm: grain !== "year" && prev ? momLike(fnLines(f), span.periods, prev.periods) : null }))
     .sort((x, y) => (y.a.hasActual ? y.a.actual : y.a.plan) - (x.a.hasActual ? x.a.actual : x.a.plan));
-  const maxFn = Math.max(1, ...fnRows.map((r) => Math.max(r.a.plan, r.a.hasActual ? r.a.actual : 0)));
+  const maxFn = Math.max(1, ...fnRows.map((r) => Math.max(r.a.plan, r.a.forecast, r.a.hasActual ? r.a.actual : 0)));
   const gap = total.actual - total.planReported, over = gap > 0;
   const missingFns = fnRows.filter((r) => r.a.missing > 0).map((r) => `${r.f.name} (${r.a.missing})`);
   const nLines = all.length;
@@ -91,7 +91,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
                 : <>No {L.actual.toLowerCase()} yet for {span.label}.</>}
             </h2>
             <p className="mt-3 max-w-[640px] text-[13.5px] leading-relaxed text-ink-3">
-              {L.plan} {inr(total.plan)}{total.hasActual && total.plan ? <> · {pct(total.actual / total.plan, 0)} used</> : null}
+              {L.plan} {inr(total.plan)}{total.hasActual && total.plan ? <> · {pct(total.actual / total.plan, 0)} used</> : null}{total.hasActual && total.plan && total.hasForecast && total.forecast ? <> · {pct(total.actual / total.forecast, 0)} of {L.forecast}</> : null}
               {" · "}{nLines - total.missing} of {nLines} lines reported{missingFns.length ? <> — still to report: <span className="text-ink-2">{missingFns.join(", ")}</span></> : null}.
             </p>
             {total.plan > 0 && total.hasActual && (
@@ -123,7 +123,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
             return (
               <div key={f.id}>
                 <button type="button" onClick={() => toggle(f.id)} aria-expanded={isOpen}
-                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:grid-cols-[220px_minmax(0,1fr)_130px_120px_70px]">
+                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-4 text-left transition hover:bg-subtle/60 md:grid-cols-[220px_minmax(0,1fr)_260px_120px_70px]">
                   <span className="flex min-w-0 items-center gap-2">
                     <ChevronRight size={14} className={cn("shrink-0 text-ink-4 transition-transform", isOpen && "rotate-90")} />
                     <span className="min-w-0">
@@ -134,10 +134,11 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
                   <span className="relative col-span-2 h-2 rounded-full bg-muted md:col-span-1" aria-hidden>
                     <span className={cn("absolute inset-y-0 left-0 rounded-full", a.planReported && act > a.planReported ? "bg-bad/80" : "bg-accent")} style={{ width: `${(act / maxFn) * 100}%` }} />
                     {a.plan > 0 && <span className="absolute -top-1 h-4 w-px bg-ink/70" style={{ left: `${(a.plan / maxFn) * 100}%` }} />}
+                    {a.hasForecast && a.forecast > 0 && <span className="absolute -top-0.5 h-3 w-px bg-ink/30" style={{ left: `${(a.forecast / maxFn) * 100}%` }} />}
                   </span>
                   <span className="text-right">
                     <span className="block text-[14px] font-semibold tabular text-ink">{a.hasActual ? inr(a.actual) : "—"}</span>
-                    <span className="block text-[11.5px] tabular text-ink-4">{a.plan ? `of ${inr(a.plan)}` : `no ${L.plan.toLowerCase()} set`}</span>
+                    <span className="block text-[11.5px] tabular text-ink-4">{a.plan ? `of ${inr(a.plan)} ${L.plan}` : `no ${L.plan.toLowerCase()} set`} · {a.hasForecast ? `${inr(a.forecast)} ${L.forecast}` : `no ${L.forecast.toLowerCase()} set`}</span>
                   </span>
                   <span className="hidden text-right md:block">{a.hasActual && a.planReported ? <Gap dir={dir} base={a.planReported} value={a.actual} small /> : <Dash />}</span>
                   <span className="hidden text-right md:block">{mm ? <Mom dir={dir} prev={mm.prev} cur={mm.cur} small /> : <Dash />}</span>
@@ -164,7 +165,7 @@ export function MonthSummary({ tree, reviewHref, unitCosts, more }: { tree: Summ
             );
           })}
         </div>
-        <p className="mt-2 px-1 text-[11.5px] text-ink-4">Bar = {L.actual.toLowerCase()}, tick = {L.plan.toLowerCase()} · gaps compare only lines that have reported · hover a line for its remarks</p>
+        <p className="mt-2 px-1 text-[11.5px] text-ink-4">Bar = {L.actual.toLowerCase()}, dark tick = {L.plan.toLowerCase()}, light tick = {L.forecast.toLowerCase()} · gaps compare only lines that have reported · hover a line for its remarks</p>
       </section>
 
       {unitCosts}
