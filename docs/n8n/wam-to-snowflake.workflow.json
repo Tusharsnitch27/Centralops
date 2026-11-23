@@ -1,0 +1,283 @@
+{
+  "name": "WAM (Metabase) -> Snowflake: inward ASN, issues, KPI",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        380,
+        600
+      ],
+      "id": "wam-trigger",
+      "name": "Daily 06:30 IST"
+    },
+    {
+      "parameters": {
+        "operation": "resultData",
+        "questionId": "2177",
+        "format": "json",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.metabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        400
+      ],
+      "id": "wam-mb-2177",
+      "name": "Metabase #2177",
+      "credentials": {
+        "metabaseApi": {
+          "id": "UfGJxMIN2Mre5wct",
+          "name": "Metabase Karthik"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (Run Once for All Items): Metabase question rows -> MERGE batches into Snowflake.\n// Same pattern as the RFID_STORE_INWARD sync. Re-running is safe (MERGE on the key); the first run is the backfill.\nconst TABLE = 'SNITCH_DB.MAPLEMONK.WAM_ASN_INWARD';\nconst KEY = [\"PO_NUMBER\", \"SKU_GROUP_ID\"];\nconst COLS = [[\"SKU_GROUP_ID\", \"sku_group_id\", \"s\"], [\"PO_NUMBER\", \"po_number\", \"s\"], [\"WAREHOUSE\", \"rts_warehouse_id\", \"s\"], [\"ASN_NUMBER\", \"asn_number\", \"s\"], [\"STATUS\", \"status\", \"s\"], [\"FI_QTY\", \"fi_qty\", \"n\"], [\"TOTAL_QTY\", \"total_qty\", \"n\"], [\"SOLID_QTY\", \"solid_qty\", \"n\"], [\"AVG_DEPTH\", \"avg_depth\", \"n\"], [\"NUM_PREPACKS\", \"num_prepacks\", \"n\"], [\"PUTAWAY_QTY\", \"quantity\", \"n\"], [\"ACTUAL_BOXES_RECEIVED\", \"actual_boxes_received\", \"n\"], [\"PREPACK_STATUS\", \"prepack_status\", \"s\"], [\"PREPACK_CREATED_AT\", \"prepack_created_at\", \"t\"], [\"ASN_CREATED_AT\", \"asn_created_at\", \"t\"], [\"RTS_DATE\", \"rts_date\", \"t\"], [\"RTS_ALLOCATED_AT\", \"rts_allocated_at\", \"t\"], [\"DISPATCHED_AT\", \"dispatched_at\", \"t\"], [\"GATE_ENTRY_TIME\", \"gate_entry_time\", \"t\"], [\"UNLOADING_START_TIME\", \"unloading_start_time\", \"t\"], [\"UNLOADING_END_TIME\", \"unloading_end_time\", \"t\"], [\"GRN_SUBMITTED_AT\", \"grn_submitted_at\", \"t\"], [\"FIRST_PUV_AT\", \"first_puv_at\", \"t\"], [\"LAST_PUV_AT\", \"last_puv_at\", \"t\"], [\"PV_CODE\", \"pv_code\", \"s\"], [\"PUV_CODES\", \"puv_codes\", \"s\"], [\"PUV_BRANCH_CODES\", \"puv_branch_codes\", \"s\"]]; // [snowflake column, metabase column, type: s|n|d|t]\nconst BATCH_SIZE = 200;\nlet rows = [];\nfor (const item of $input.all()) {\n  const d = item.json;\n  if (Array.isArray(d)) rows.push(...d);\n  else if (Array.isArray(d.data)) rows.push(...d.data);\n  else if (Array.isArray(d.rows)) rows.push(...d.rows);\n  else rows.push(d);\n}\nconst src = Object.fromEntries(COLS.map(([sf, mb]) => [sf, mb]));\n// drop rows without a full key, and keep the last row per key (MERGE fails on duplicate source keys)\nconst byKey = new Map();\nfor (const r of rows) {\n  const k = KEY.map((c) => r[src[c]]);\n  if (k.some((v) => v === null || v === undefined || v === '')) continue;\n  byKey.set(JSON.stringify(k), r);\n}\nrows = [...byKey.values()];\nif (!rows.length) throw new Error('Metabase returned no rows for ' + TABLE + '. No Snowflake changes made.');\nconst expr = ([sf, mb, t]) => {\n  const ref = `j:${JSON.stringify(mb)}::STRING`;\n  if (t === 'n') return `TRY_TO_NUMBER(${ref}, 38, 4) AS ${sf}`;\n  if (t === 'd') return `TRY_TO_DATE(${ref}) AS ${sf}`;\n  if (t === 't') return `TRY_TO_TIMESTAMP_NTZ(${ref}) AS ${sf}`;\n  return `${ref} AS ${sf}`;\n};\nconst selects = COLS.map(expr).join(',\\n    ');\nconst on = KEY.map((c) => `t.${c} = s.${c}`).join(' AND ');\nconst output = [];\nfor (let start = 0; start < rows.length; start += BATCH_SIZE) {\n  const batch = rows.slice(start, start + BATCH_SIZE);\n  const values = batch.map((row) => `('${JSON.stringify(row).replace(/\\\\/g, '\\\\\\\\').replace(/'/g, \"''\")}')`).join(',\\n      ');\n  const sql = `MERGE INTO ${TABLE} t\nUSING (\n  SELECT\n    ${selects},\n    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS SYNCED_AT\n  FROM (SELECT PARSE_JSON(column1) AS j FROM VALUES\n      ${values})\n) s ON ${on}\nWHEN MATCHED THEN UPDATE ALL BY NAME\nWHEN NOT MATCHED THEN INSERT ALL BY NAME`;\n  output.push({ json: { sql, table: TABLE, batch_number: output.length + 1, batch_size: batch.length, total_records: rows.length } });\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        400
+      ],
+      "id": "wam-code-2177",
+      "name": "MERGE batches WAM_ASN_INWARD"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql }}"
+      },
+      "type": "n8n-nodes-base.snowflake",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        400
+      ],
+      "id": "wam-sf-2177",
+      "name": "Snowflake WAM_ASN_INWARD",
+      "credentials": {
+        "snowflake": {
+          "id": "MjVL2MU4BcIAwLLA",
+          "name": "Snowflake account - N8N_OPS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "resultData",
+        "questionId": "2281",
+        "format": "json",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.metabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        620
+      ],
+      "id": "wam-mb-2281",
+      "name": "Metabase #2281",
+      "credentials": {
+        "metabaseApi": {
+          "id": "UfGJxMIN2Mre5wct",
+          "name": "Metabase Karthik"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (Run Once for All Items): Metabase question rows -> MERGE batches into Snowflake.\n// Same pattern as the RFID_STORE_INWARD sync. Re-running is safe (MERGE on the key); the first run is the backfill.\nconst TABLE = 'SNITCH_DB.MAPLEMONK.WAM_ISSUES_DAILY';\nconst KEY = [\"ISSUE_DATE\", \"WAREHOUSE\"];\nconst COLS = [[\"ISSUE_DATE\", \"issue_created_at_date\", \"d\"], [\"WAREHOUSE\", \"warehouse_name\", \"s\"], [\"ISSUE_COUNT\", \"issue_count\", \"n\"], [\"SKU_LINES\", \"sku_lines\", \"n\"]]; // [snowflake column, metabase column, type: s|n|d|t]\nconst BATCH_SIZE = 200;\nlet rows = [];\nfor (const item of $input.all()) {\n  const d = item.json;\n  if (Array.isArray(d)) rows.push(...d);\n  else if (Array.isArray(d.data)) rows.push(...d.data);\n  else if (Array.isArray(d.rows)) rows.push(...d.rows);\n  else rows.push(d);\n}\nconst src = Object.fromEntries(COLS.map(([sf, mb]) => [sf, mb]));\n// drop rows without a full key, and keep the last row per key (MERGE fails on duplicate source keys)\nconst byKey = new Map();\nfor (const r of rows) {\n  const k = KEY.map((c) => r[src[c]]);\n  if (k.some((v) => v === null || v === undefined || v === '')) continue;\n  byKey.set(JSON.stringify(k), r);\n}\nrows = [...byKey.values()];\nif (!rows.length) throw new Error('Metabase returned no rows for ' + TABLE + '. No Snowflake changes made.');\nconst expr = ([sf, mb, t]) => {\n  const ref = `j:${JSON.stringify(mb)}::STRING`;\n  if (t === 'n') return `TRY_TO_NUMBER(${ref}, 38, 4) AS ${sf}`;\n  if (t === 'd') return `TRY_TO_DATE(${ref}) AS ${sf}`;\n  if (t === 't') return `TRY_TO_TIMESTAMP_NTZ(${ref}) AS ${sf}`;\n  return `${ref} AS ${sf}`;\n};\nconst selects = COLS.map(expr).join(',\\n    ');\nconst on = KEY.map((c) => `t.${c} = s.${c}`).join(' AND ');\nconst output = [];\nfor (let start = 0; start < rows.length; start += BATCH_SIZE) {\n  const batch = rows.slice(start, start + BATCH_SIZE);\n  const values = batch.map((row) => `('${JSON.stringify(row).replace(/\\\\/g, '\\\\\\\\').replace(/'/g, \"''\")}')`).join(',\\n      ');\n  const sql = `MERGE INTO ${TABLE} t\nUSING (\n  SELECT\n    ${selects},\n    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS SYNCED_AT\n  FROM (SELECT PARSE_JSON(column1) AS j FROM VALUES\n      ${values})\n) s ON ${on}\nWHEN MATCHED THEN UPDATE ALL BY NAME\nWHEN NOT MATCHED THEN INSERT ALL BY NAME`;\n  output.push({ json: { sql, table: TABLE, batch_number: output.length + 1, batch_size: batch.length, total_records: rows.length } });\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        620
+      ],
+      "id": "wam-code-2281",
+      "name": "MERGE batches WAM_ISSUES_DAILY"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql }}"
+      },
+      "type": "n8n-nodes-base.snowflake",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        620
+      ],
+      "id": "wam-sf-2281",
+      "name": "Snowflake WAM_ISSUES_DAILY",
+      "credentials": {
+        "snowflake": {
+          "id": "MjVL2MU4BcIAwLLA",
+          "name": "Snowflake account - N8N_OPS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "resultData",
+        "questionId": "2283",
+        "format": "json",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.metabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        840
+      ],
+      "id": "wam-mb-2283",
+      "name": "Metabase #2283",
+      "credentials": {
+        "metabaseApi": {
+          "id": "UfGJxMIN2Mre5wct",
+          "name": "Metabase Karthik"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (Run Once for All Items): Metabase question rows -> MERGE batches into Snowflake.\n// Same pattern as the RFID_STORE_INWARD sync. Re-running is safe (MERGE on the key); the first run is the backfill.\nconst TABLE = 'SNITCH_DB.MAPLEMONK.WAM_KPI_DAILY';\nconst KEY = [\"VOUCH_DATE\", \"WAREHOUSE\"];\nconst COLS = [[\"VOUCH_DATE\", \"vouch_date\", \"d\"], [\"WAREHOUSE\", \"warehouse\", \"s\"], [\"TOTAL_GRN\", \"total_grn\", \"n\"], [\"GRNS_WITH_DISCREPANCY\", \"grns_with_discrepancy\", \"n\"], [\"POS_WITH_DISCREPANCY\", \"pos_with_discrepancy\", \"n\"], [\"TOTAL_DISCREPANCIES_REPORTED\", \"total_discrepancies_reported\", \"n\"], [\"INWARD_QTY\", \"inward_qty\", \"n\"], [\"DISCREPANCY_RATE_PCT\", \"discrepancy_rate_pct\", \"n\"]]; // [snowflake column, metabase column, type: s|n|d|t]\nconst BATCH_SIZE = 200;\nlet rows = [];\nfor (const item of $input.all()) {\n  const d = item.json;\n  if (Array.isArray(d)) rows.push(...d);\n  else if (Array.isArray(d.data)) rows.push(...d.data);\n  else if (Array.isArray(d.rows)) rows.push(...d.rows);\n  else rows.push(d);\n}\nconst src = Object.fromEntries(COLS.map(([sf, mb]) => [sf, mb]));\n// drop rows without a full key, and keep the last row per key (MERGE fails on duplicate source keys)\nconst byKey = new Map();\nfor (const r of rows) {\n  const k = KEY.map((c) => r[src[c]]);\n  if (k.some((v) => v === null || v === undefined || v === '')) continue;\n  byKey.set(JSON.stringify(k), r);\n}\nrows = [...byKey.values()];\nif (!rows.length) throw new Error('Metabase returned no rows for ' + TABLE + '. No Snowflake changes made.');\nconst expr = ([sf, mb, t]) => {\n  const ref = `j:${JSON.stringify(mb)}::STRING`;\n  if (t === 'n') return `TRY_TO_NUMBER(${ref}, 38, 4) AS ${sf}`;\n  if (t === 'd') return `TRY_TO_DATE(${ref}) AS ${sf}`;\n  if (t === 't') return `TRY_TO_TIMESTAMP_NTZ(${ref}) AS ${sf}`;\n  return `${ref} AS ${sf}`;\n};\nconst selects = COLS.map(expr).join(',\\n    ');\nconst on = KEY.map((c) => `t.${c} = s.${c}`).join(' AND ');\nconst output = [];\nfor (let start = 0; start < rows.length; start += BATCH_SIZE) {\n  const batch = rows.slice(start, start + BATCH_SIZE);\n  const values = batch.map((row) => `('${JSON.stringify(row).replace(/\\\\/g, '\\\\\\\\').replace(/'/g, \"''\")}')`).join(',\\n      ');\n  const sql = `MERGE INTO ${TABLE} t\nUSING (\n  SELECT\n    ${selects},\n    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS SYNCED_AT\n  FROM (SELECT PARSE_JSON(column1) AS j FROM VALUES\n      ${values})\n) s ON ${on}\nWHEN MATCHED THEN UPDATE ALL BY NAME\nWHEN NOT MATCHED THEN INSERT ALL BY NAME`;\n  output.push({ json: { sql, table: TABLE, batch_number: output.length + 1, batch_size: batch.length, total_records: rows.length } });\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        840
+      ],
+      "id": "wam-code-2283",
+      "name": "MERGE batches WAM_KPI_DAILY"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql }}"
+      },
+      "type": "n8n-nodes-base.snowflake",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        840
+      ],
+      "id": "wam-sf-2283",
+      "name": "Snowflake WAM_KPI_DAILY",
+      "credentials": {
+        "snowflake": {
+          "id": "MjVL2MU4BcIAwLLA",
+          "name": "Snowflake account - N8N_OPS"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 06:30 IST": {
+      "main": [
+        [
+          {
+            "node": "Metabase #2177",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Metabase #2281",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Metabase #2283",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metabase #2177": {
+      "main": [
+        [
+          {
+            "node": "MERGE batches WAM_ASN_INWARD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MERGE batches WAM_ASN_INWARD": {
+      "main": [
+        [
+          {
+            "node": "Snowflake WAM_ASN_INWARD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metabase #2281": {
+      "main": [
+        [
+          {
+            "node": "MERGE batches WAM_ISSUES_DAILY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MERGE batches WAM_ISSUES_DAILY": {
+      "main": [
+        [
+          {
+            "node": "Snowflake WAM_ISSUES_DAILY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metabase #2283": {
+      "main": [
+        [
+          {
+            "node": "MERGE batches WAM_KPI_DAILY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MERGE batches WAM_KPI_DAILY": {
+      "main": [
+        [
+          {
+            "node": "Snowflake WAM_KPI_DAILY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}
