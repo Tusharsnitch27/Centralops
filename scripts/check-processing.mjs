@@ -1,7 +1,7 @@
 // Self-check: processingMath reproduces the Cost Master for South · B2C Shopify · Picker · Oct'25.
 // node --experimental-strip-types scripts/check-processing.mjs
 import assert from "node:assert/strict";
-import { computeRow, outputPerHead, applyLevers, ruleSplit, matchIpp, passShare } from "../src/server/aop/processingMath.ts";
+import { computeRow, outputPerHead, applyLevers, ruleSplit, matchIpp, passShare, b2bReturnsSplit, splitTotal } from "../src/server/aop/processingMath.ts";
 
 const n = { targetPerDay: 800, workingDays: 23, avgSalary: 21983 };
 assert.equal(outputPerHead(n), 18400);
@@ -63,3 +63,13 @@ close(sd.costImpact, (sd.plannedCpi - sd.actualCpi) * 192709, 1e-6);
 const mtd = computeRow(n, { sopProj: 202362, plannedMp: 25.5, finalOutput: 192709, salary: 21983, actualMp: 30, actualShare: 21 / 30 });
 close(mtd.actualCpi, (30 * 21983 * 21 / 30) / 192709, 1e-9);
 console.log("processing same-days cost per item OK");
+
+// B2B returns split: the putaway's own Retail / Marketplace split (Jun South 1,04,568 / 755) wins over the forward mix; none → forward mix
+{
+  const [r, m] = b2bReturnsSplit(139584, [104568, 755], [317675, 15360]);
+  close(m, 139584 * 755 / 105323, 1e-6); close(r + m, 139584, 1e-6);
+  assert.deepEqual(b2bReturnsSplit(100, [0, 0], [3, 1]), [75, 25]);
+  assert.deepEqual(b2bReturnsSplit(100, null, [null, null]), [50, 50]);
+  assert.deepEqual(splitTotal(null, 1, 1), [null, null]);
+  console.log("processing b2b returns split OK");
+}

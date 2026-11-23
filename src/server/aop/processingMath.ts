@@ -53,6 +53,16 @@ export function actualMpOf(sheetMp: number | null, att: { mp: number; src: "atte
   return { actualMp: sheetMp, src: sheetMp == null ? null : ("sheet" as const), attendance: false };
 }
 
+/** total split a : b (missing = 0); neither known → halves; no total → nulls. */
+export function splitTotal(total: number | null, a: number | null, b: number | null): [number | null, number | null] {
+  if (total == null) return [null, null];
+  const t = (a ?? 0) + (b ?? 0);
+  return t ? [(total * (a ?? 0)) / t, (total * (b ?? 0)) / t] : [total / 2, total / 2];
+}
+/** B2B returns actual → Retail / Marketplace: the putaway feed's split for the month when it has one, else the forward Retail : Marketplace mix. */
+export const b2bReturnsSplit = (total: number | null, put: [number | null, number | null] | null, fwd: [number | null, number | null]) =>
+  put && (put[0] ?? 0) + (put[1] ?? 0) ? splitTotal(total, ...put) : splitTotal(total, ...fwd);
+
 const sumOrNull =(xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);
 const maxOrNull = (xs: (number | null)[]) => (xs.some((x) => x != null) ? Math.max(...xs.filter((x): x is number => x != null)) : null);
 

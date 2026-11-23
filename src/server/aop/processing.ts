@@ -1,6 +1,6 @@
 import "server-only";
 import { q } from "../db";
-import { actualMpOf, computeRow, matchIpp, passShare, rollupStream, ruleSplit } from "./processingMath";
+import { actualMpOf, b2bReturnsSplit, computeRow, matchIpp, passShare, rollupStream, ruleSplit, splitTotal } from "./processingMath";
 import { MP_HEADCOUNT } from "../wcm/math";
 import { activeIpps } from "../wcm/daily";
 import { workbookActual } from "../functions/workbookHistory";
@@ -17,6 +17,7 @@ import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type P
  *    deployed) for sheet months, then attendance for the running month. Attendance has only departments, so heads are split to
  *    stream × process — proposed by planned-MP mix until the warehouse lead assigns them.
  *  - returns final output: sop_returns; a month it lacks → putaway (B2C channel-open split by the month's received mix; B2B as put away).
+ *    B2B returns split Retail / Marketplace by the month's putaway, else the forward mix.
  */
 
 type NormRow = { stream: string; process: string; department: string | null; target_per_day: number | null; working_days: number; avg_salary: number | null; sort: number };
@@ -64,9 +65,10 @@ async function sopVolumes(period: string, wh: Wh) {
      and date_trunc('month', day)::date = $1::date group by 1`, [period, wh]);
   const rShop = recv.find((r) => r.stream === "B2C Returns Shopify")?.n ?? 0, rMp = recv.find((r) => r.stream === "B2C Returns Marketplace")?.n ?? 0;
   // a month sop_returns lacks (Aug 2026): trading putaway — no putaway row for the month = missing, a stream absent from a month that has rows = 0
-  const put = ret ? [] : await q<{ stream: string; n: number }>(`select stream, sum(qty)::float8 as n from wcm_stage_output where event = 'putaway' and site = $2
+  const put = await q<{ stream: string; n: number }>(`select stream, sum(qty)::float8 as n from wcm_stage_output where event = 'putaway' and site = $2
      and date_trunc('month', day)::date = $1::date and stream in ('B2C Returns (channel open)', 'B2B Returns Retail', 'B2B Returns Marketplace') group by 1`, [period, wh]);
   const putOf = (s: string) => (put.length ? put.find((r) => r.stream === s)?.n ?? 0 : null);
+  const b2bPut = put.some((r) => r.stream.startsWith("B2B Returns")); // the putaway feed's real Retail / Marketplace split for the month
   // a month the review rows have no actual for (Apr–Aug 2026): the S&OP workbook's full-month actual
   const sum = (f: (r: (typeof rows)[number]) => boolean, m: "plan" | "actual", fn?: FnKey) => {
     const xs = rows.filter(f).map((r) => r[m]).filter((x): x is number => x != null);
@@ -78,10 +80,10 @@ async function sopVolumes(period: string, wh: Wh) {
     const retail = sum((r) => r.view_key === "retail_fwd", m, "b2b_retail"), b2bmp = sum((r) => r.view_key === "b2b_mp", m, "b2b_marketplace");
     const b2cRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2c/i.test(r.row_label), m) : ret ? ret.b2c : putOf("B2C Returns (channel open)");
     const b2bRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2b/i.test(r.row_label), m) : ret?.b2b ?? null;
-    const split = (total: number | null, a: number | null, b: number | null): [number | null, number | null] =>
-      total == null ? [null, null] : (a ?? 0) + (b ?? 0) ? [total * (a ?? 0) / ((a ?? 0) + (b ?? 0)), total * (b ?? 0) / ((a ?? 0) + (b ?? 0))] : [total / 2, total / 2];
-    const [rs, rm] = rShop + rMp ? split(b2cRet, rShop, rMp) : split(b2cRet, shop, mp);
-    const [rr, rb] = m === "actual" && !ret ? [putOf("B2B Returns Retail"), putOf("B2B Returns Marketplace")] : split(b2bRet, retail, b2bmp);
+    const [rs, rm] = rShop + rMp ? splitTotal(b2cRet, rShop, rMp) : splitTotal(b2cRet, shop, mp);
+    const [rr, rb] = m === "actual" && !ret ? [putOf("B2B Returns Retail"), putOf("B2B Returns Marketplace")]
+      : m === "actual" ? b2bReturnsSplit(b2bRet, b2bPut ? [putOf("B2B Returns Retail"), putOf("B2B Returns Marketplace")] : null, [retail, b2bmp])
+      : splitTotal(b2bRet, retail, b2bmp);
     return {
       "B2C Shopify": shop, "B2C Marketplace": mp, "B2B Retail": retail, "B2B Marketplace": b2bmp,
       "B2C Returns Shopify": rs, "B2C Returns Marketplace": rm, "B2B Returns Retail": rr, "B2B Returns Marketplace": rb,
