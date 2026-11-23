@@ -17,7 +17,7 @@ where a source is missing; every grey line true. Numbers in the tables are the p
 | F3 | Inwards Sep–Nov | Ideal 2–6× actual (Sep Both 265 vs 44) | The projection sheet's Sep week 5 is 29–30 Sep only, so its plan lands on 2 days (79,414 S / 1,02,570 N a day vs ~10–30K on other days); ideal heads staff the month's peak day. North's Inward heads (~19) also clear ~1,380 units a head a day against an IPP of ~894 | Explained; flag 1 |
 | F4 | Inwards Oct | Processed (putaway feed) 18 % under the workbook (S −15 %, N −22 %) | From Oct the chart uses the putaway feed; the S&OP inward actual is not putaway throughout (Apr North equals PO received to the unit, 4,26,518) | Flag 2 |
 | F5 | B2B Marketplace Jun, Jul, Oct, Nov | Actual heads 3–4× ideal | Processing's rule split gives B2B Marketplace a fixed 23–24 % of the B2B Forward department (N 7 : 23.5, S 8 : 25.5) whatever the volume; the plan in those months is 27.5K–48K a site | Business rule — flag 3 |
-| F6 | B2B Marketplace South Oct / Nov | Oct −10.6 % vs workbook (37,630 vs 42,086); Nov 8,741 vs S&OP review 14,102 to date | Since UC items stop (8 Oct) dispatch comes from the SLA tracker in lumps: South 6–30 Oct 285 units, 31 Oct 36,213 | UC items 'ordered' now written to yesterday (`de96b15`), so received stays on UC creation days after 7 Oct. The dispatch lumps are real: UC items shows the same days (South 31 Oct 40,669) |
+| F6 | B2B Marketplace South Oct / Nov | Oct −10.6 % vs workbook (37,630 vs 42,086); Nov 8,741 vs S&OP review 14,102 to date | Since UC items stop (8 Oct) dispatch comes from the SLA tracker in lumps: South 6–30 Oct 285 units, 31 Oct 36,213 | Fixed: UC items 'ordered' to yesterday (`de96b15`, received on creation days after 7 Oct); UC items owns B2B Marketplace packed / dispatched / shipments on every day (`074c323`, SLA rows for them dropped in the next commit) — Oct ties to the workbook: South 42,086, North 9,540. The lumps are real (UC: South 31 Oct 40,669) |
 | F7 | B2B Marketplace received, Aug–Nov | Two bases mixed: UC order-creation days, and the SLA tracker's deadline days from 21 Sep (Oct read 1.2 L received) | `dailyRows` took deadline cells first, creation-day UC items otherwise; an order created before 21 Sep and due after counted twice | Fixed `6512258`: one basis, units ordered by creation day (UC items while they cover the day, then the tracker's created hours) |
 | F8 | B2B Returns South Jun | Putaway 1,05,323 vs `sop_returns` 1,39,584 (−24.5 %) | Source difference; no feed day missing in Jun | Flag 5 |
 | F9 | B2B Returns North Apr, South Aug | Actual 3× ideal | The plan (50K a site) is below the putaway (80K / 1.16 L); ideal follows the plan. Jul's low 57K is confirmed by `sop_returns` (N 19,836, S 37,373) | Explained |
@@ -44,7 +44,7 @@ Aug against South's 22–28 at similar putaway. It ties to Processing.
 1. **Inward ideal heads (F3).** The projection sheet's Sep week 5 puts 1,58,828 South / 2,05,140 North units on 29–30 Sep; Oct's last days carry 42,240 / 54,712 a day. Ideal heads staff that peak (Sep 265 vs 44 actual). Needed: confirm that plan, or a plan spread over calendar weeks. Also: North's Inward department (~19 heads) puts away ~1,380 units a head a day against the IPP's ~894 — are unloaders booked under another department?
 2. **Which inward actual (F4).** S&OP inward actual vs putaway feed: Oct South 6,89,727 vs 5,85,997, North 6,28,336 vs 4,92,786; Apr North workbook 4,26,518 = PO received to the unit, putaway 3,46,536. Needed: the definition of the S&OP inward actual (GRN or putaway) so the chart uses one basis.
 3. **B2B Marketplace heads (F5).** The 22 Nov rule split gives B2B Marketplace 23–24 % of B2B Forward heads every month; in Jun (plan 27.5K a site) that is 22.9 heads against an ideal 6 (₹15.86 vs ₹4.16 per unit). Decide whether the split should follow volume.
-4. **B2B Marketplace dispatch after 8 Oct (F6)**, replaced by the fix `de96b15` (received). The lumps are in UC items too, so they are real. UC items' Oct South dispatch adds up to 42,086, the workbook to the unit; the tracker gives 37,630 (31 Oct: 36,213 vs UC 40,669). The next step is to write UC's dispatched for B2B Marketplace past the window too. The controller decides.
+4. ~~B2B Marketplace dispatch after 8 Oct (F6)~~ — fixed: `de96b15` (received from UC 'ordered' to yesterday) and `074c323` (UC items owns B2B Marketplace packed / dispatched / shipments on every day). Oct now ties to the workbook: South 42,086, North 9,540 (the SLA tracker gave 37,630 South). The lumps are in UC items too, so they are real.
 5. **B2B Returns Jun South (F8).** Putaway feed 1,05,323 vs `sop_returns` 1,39,584. Needed: which is right.
 6. **Black Friday sizing (F10).** Nov Shopify ideal is sized for 26 Nov (51,797 units across sites) while the month runs to 22 Nov — ideal ₹/unit 37.60. Keep peak-day sizing for the running month, or size on the days to date?
 7. **Rulebook window (F13).** Only cutoff-day orders count: Oct 21,777 within vs 2,88,992 early vs 4,26,359 breached. Should early orders count as in window?
@@ -79,8 +79,8 @@ Inwards Both, Apr–Aug: ideal heads 49 / 52 / 44 / 38 / 52 against actual 41.8 
 | Jul ’26 | 78,000 | 1,02,523 | 70,818 | 70,818 | 0.0 % | 9 | 26.9 | 8.69 | 2.89 | ok — F5 flag |
 | Aug ’26 | 1,69,500 | 2,98,208 | 1,37,382 | 1,37,382 | 0.0 % | 18 | 24.5 | 4.11 | 2.98 | ok — received F7 fixed (6512258) |
 | Sep ’26 | 3,42,000 | 4,68,371 | 2,63,749 | 2,63,749 | 0.0 % | 36 | 28.6 | 2.49 | 3.11 | ok — received F7 fixed (6512258) |
-| Oct ’26 | 96,000 | 1,20,391 | 47,170 | 51,626 | -8.6 % | 11 | 36.6 | 16.24 | 4.85 | ideal/actual >3× — F5, F6 flag; received F7 fixed (6512258) |
-| Nov ’26 | 75,533 | 81,284 | 34,719 | — | — | 11 | 30.4 | 12.75 | 4.79 | ok — F5, F6 flag; received F7 fixed |
+| Oct ’26 | 96,000 | 1,20,391 | 47,170 | 51,626 | -8.6 % | 11 | 36.6 | 16.24 | 4.85 | ideal/actual >3× — F5 flag; F6 fixed (de96b15, 074c323); received F7 fixed (6512258) |
+| Nov ’26 | 75,533 | 81,284 | 34,719 | — | — | 11 | 30.4 | 12.75 | 4.79 | ok — F5 flag; F6 fixed (de96b15, 074c323); received F7 fixed |
 
 #### b2b_marketplace · North · month
 
@@ -92,8 +92,8 @@ Inwards Both, Apr–Aug: ideal heads 49 / 52 / 44 / 38 / 52 against actual 41.8 
 | Jul ’26 | 39,000 | 38,482 | 32,873 | 32,873 | 0.0 % | 5 | 13.1 | 8.80 | 3.36 | ok — F5 flag |
 | Aug ’26 | 84,750 | 1,51,248 | 44,698 | 44,698 | 0.0 % | 10 | 10.5 | 5.18 | 4.94 | ok — received F7 fixed (6512258) |
 | Sep ’26 | 1,71,000 | 1,37,135 | 90,869 | 90,869 | 0.0 % | 19 | 12.1 | 2.93 | 4.62 | ok — received F7 fixed (6512258) |
-| Oct ’26 | 48,000 | 26,914 | 9,540 | 9,540 | 0.0 % | 6 | 16.9 | 39.18 | 13.88 | ok — F5, F6 flag; received F7 fixed (6512258) |
-| Nov ’26 | 37,767 | 38,827 | 25,978 | — | — | 6 | 12.4 | 7.89 | 4.00 | ok — F5, F6 flag; received F7 fixed |
+| Oct ’26 | 48,000 | 26,914 | 9,540 | 9,540 | 0.0 % | 6 | 16.9 | 39.18 | 13.88 | ok — F5 flag; F6 fixed (de96b15, 074c323); received F7 fixed (6512258) |
+| Nov ’26 | 37,767 | 38,827 | 25,978 | — | — | 6 | 12.4 | 7.89 | 4.00 | ok — F5 flag; F6 fixed (de96b15, 074c323); received F7 fixed |
 
 #### b2b_marketplace · South · month
 
@@ -105,8 +105,8 @@ Inwards Both, Apr–Aug: ideal heads 49 / 52 / 44 / 38 / 52 against actual 41.8 
 | Jul ’26 | 39,000 | 64,041 | 37,945 | 37,945 | 0.0 % | 4 | 13.8 | 8.59 | 2.49 | ideal/actual >3× — F5 flag |
 | Aug ’26 | 84,750 | 1,46,960 | 92,684 | 92,684 | 0.0 % | 8 | 14.1 | 3.58 | 2.04 | ok — received F7 fixed (6512258) |
 | Sep ’26 | 1,71,000 | 3,31,236 | 1,72,880 | 1,72,880 | 0.0 % | 17 | 16.5 | 2.26 | 2.32 | ok — received F7 fixed (6512258) |
-| Oct ’26 | 48,000 | 93,477 | 37,630 | 42,086 | -10.6 % | 5 | 19.7 | 11.04 | 2.81 | Δ>10 %; ideal/actual >3× — F5, F6 flag; received F7 fixed (6512258) |
-| Nov ’26 | 37,767 | 42,457 | 8,741 | — | — | 5 | 18.0 | 21.11 | 6.15 | ideal/actual >3× — F5, F6 flag; received F7 fixed |
+| Oct ’26 | 48,000 | 93,477 | 37,630 | 42,086 | -10.6 % | 5 | 19.7 | 11.04 | 2.81 | Δ>10 %; ideal/actual >3× — F5 flag; F6 fixed (de96b15, 074c323); received F7 fixed (6512258) |
+| Nov ’26 | 37,767 | 42,457 | 8,741 | — | — | 5 | 18.0 | 21.11 | 6.15 | ideal/actual >3× — F5 flag; F6 fixed (de96b15, 074c323); received F7 fixed |
 
 #### b2b_retail · Both · month
 
