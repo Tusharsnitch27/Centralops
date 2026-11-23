@@ -80,8 +80,8 @@ export async function refreshStageOutput(): Promise<ActionResult> {
     if (!canManage(u)) throw new Error("Only admins and program managers can refresh feeds");
     const [r] = await Promise.all([pullStageOutput(), pullSla(), pullRetailSpine(), pullInventory()]);
     // AOP › Functions feeds: one failing must not stop the planner's refresh
-    const fns = await Promise.allSettled([pullRetailOrders(), pullRulebook(), pullWam(), pullUcHistory()]);
-    const failed = fns.map((x, i) => (x.status === "rejected" ? `${["store orders", "rulebook", "WAM inward", "UC forward history"][i]} did not refresh (${x.reason instanceof Error ? x.reason.message : String(x.reason)})` : null)).filter(Boolean);
+    const fns = await Promise.allSettled([pullRulebook().finally(pullRetailOrders), pullWam(), pullUcHistory()]); // orders compute placement on the fresh rulebook
+    const failed = fns.map((x, i) => (x.status === "rejected" ? `${["rulebook / store orders", "WAM inward", "UC forward history"][i]} did not refresh (${x.reason instanceof Error ? x.reason.message : String(x.reason)})` : null)).filter(Boolean);
     const pools = await autoDeployDays((await deployDays()).slice(0, 10)); // output shares moved: re-split the auto pools of the last 10 days
     revalidatePath("/aop/processing/daily");
     return ok(undefined, [`${r.read} day × stream × stage rows from ${r.from} · ${pools} auto pools re-split`, ...failed].join(" · "));

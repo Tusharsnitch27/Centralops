@@ -85,12 +85,14 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const first = raw.filter((r) => slaEvs.includes(r.event)).map((r) => r.day!).sort()[0];
   const edge = first ? new Date(Date.parse(`${first}T00:00:00Z`) + EDGE_DAYS * 864e5).toISOString().slice(0, 10) : null;
   const stored = new Set(edge ? (await q<{ d: string }>(`select distinct day::text as d from wcm_stage_output where event = any($1::text[]) and day < $2`, [slaEvs, edge])).map((r) => r.d) : []);
-  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && edge && r.day! < edge && stored.has(r.day!)));
+  // day × event that UC items history owns (pullUcHistory): the SLA source's count there is partial, never written over it
+  const uc = new Set((await q<{ k: string }>(`select distinct day::text || '|' || event as k from wcm_stage_output where source = 'uc_items' and event = any($1::text[])`, [slaEvs])).map((r) => r.k));
+  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(r.day!)) || uc.has(`${r.day}|${r.event}`))));
   // replace per source (event family) only the days that source returned
   const families = [slaEvs, ["putaway", "audit_move"], ["received", "qc", "unloaded"]];
   for (const evs of families) {
     const days = [...new Set(rows.filter((r) => evs.includes(r.event)).map((r) => r.day!))];
-    if (days.length) await q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[])`, [evs, days]);
+    if (days.length) await q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[]) and source is distinct from 'uc_items'`, [evs, days]);
   }
   for (let i = 0; i < rows.length; i += 2000) {
     const c = rows.slice(i, i + 2000);
@@ -107,10 +109,13 @@ export async function pullStageOutput(from = STAGE_FROM) {
 /**
  * Forward history before warehouse_sla_performance's window, from UC items (UNICOMMERCE_FACT_ITEMS_INTERMEDIATE, Mar 2026 →):
  * packed (PACKED_TIMESTAMP, a date), dispatched, shipments (distinct SHIPPINGPACKAGECODE dispatched) and ordered (items by UC_CREATED day).
- * Only days before the SLA source's first day (asked each run) are written, never over a row the SLA source stored. UC labels stores and
+ * The SLA source's window is cut by creation day, so items created before its first day (asked each run) but done later are in neither
+ * source unless UC covers event days up to UC_WINS_DAYS past it; UC wins on those days (pullStageOutput skips them). UC labels stores and
  * M-Now differently ('Own Store', 'M-NOW MUMBAI'; Flipkart SOR is marketplace 'FLIPKART B2B CUSTOM'): those map to the same streams first.
  */
 const UC = "snitch_db.maplemonk.UNICOMMERCE_FACT_ITEMS_INTERMEDIATE";
+/** B2B Marketplace dispatches up to ~3 weeks after creation: UC owns event days until 14 days past the SLA source's first creation day. */
+const UC_WINS_DAYS = 14;
 const UC_STREAM = `CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' OR marketplace_mapped LIKE 'M-NOW%' OR UPPER(marketplace_mapped) = 'SLIKK' THEN 'B2B Marketplace'
   WHEN marketplace_mapped IN ('Own Store','Franchise Store') THEN 'B2B Retail' WHEN marketplace_mapped = 'NYKAA_SAPL_TAURU' THEN 'B2C Marketplace'
   ELSE ${STREAM} END`;
@@ -126,7 +131,8 @@ export async function pullUcHistory(from = "2026-04-01") {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
   const until = (await sfQuery<{ until: string | null }>(`SELECT TO_VARCHAR(MIN(uc_created)::date, 'YYYY-MM-DD') AS until FROM ${SLA}`))[0]?.until;
   if (!until) throw new Error("warehouse_sla_performance has no first day — UC history not written");
-  const rows = (await sfQuery<Row>(UC_SQL.replaceAll("{from}", from).replaceAll("{until}", until))).filter((r) => r.day && r.site);
+  const upTo = new Date(Date.parse(`${until}T00:00:00Z`) + UC_WINS_DAYS * 864e5).toISOString().slice(0, 10);
+  const rows = (await sfQuery<Row>(UC_SQL.replaceAll("{from}", from).replaceAll("{until}", upTo))).filter((r) => r.day && r.site);
   const days = [...new Set(rows.map((r) => r.day!))];
   await tx(async (t) => {
     if (days.length) await t.q(`delete from wcm_stage_output where source = 'uc_items' and day = any($1::date[])`, [days]);
@@ -134,11 +140,11 @@ export async function pullUcHistory(from = "2026-04-01") {
       const c = rows.slice(i, i + 2000);
       await t.q(`insert into wcm_stage_output (day, site, stream, event, unit, qty, source)
                select d::date, s, st, e, u, n, 'uc_items' from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[]) as t(d, s, st, e, u, n)
-               on conflict (day, site, stream, event) do nothing`,
+               on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = 'uc_items', fetched_at = now()`,
         [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0)]);
     }
   });
-  return { read: rows.length, until };
+  return { read: rows.length, until: upTo };
 }
 
 /**
