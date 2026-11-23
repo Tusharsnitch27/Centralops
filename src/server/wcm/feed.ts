@@ -9,7 +9,7 @@ import { sfQuery } from "../snowflake";
  *    picked = PICKED_TIMESTAMP (partly filled upstream — 48–82 % of packed items — so pick output is understated),
  *    packed = PACKED_TIMESTAMP, manifested = MANIFESTED_TIMESTAMP, dispatched = DISPATCHED_TIMESTAMP1.
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
- *  Inward / returns / audit (putaway_tracking, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
+ *  Inward / returns / audit (putaway_tracking from RETURNS_FROM, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
  *    feeds): units = putaway_completed_quantity, by final type. Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
  *  B2C returns (RETURN_2_INWARDING_DATA, the returns app's full history — PG_INWARDING_DATA is its Sep→ subset; one row per packet;
  *    channel B2C = Shopify, MP-* = marketplace; TYPE WH-1/WH-2 = South, North_WH = North): received = RECEIVING_DATE, qc =
@@ -24,7 +24,8 @@ const PUT = "snitch_db.maplemonk.putaway_tracking";
 const RET = "snitch_db.maplemonk.RETURN_2_INWARDING_DATA";
 const PO = "snitch_db.maplemonk.UC_FINAL_GET_PURCHASE_ORDERS";
 const PCS_PER_BOX = 30;
-/** Returns and PO receipts are re-read from April each run, so Processing's earlier months get a real channel split. */
+/** Returns, putaway and PO receipts are re-read from April each run, so Processing's earlier months get a real channel split
+ *  and Functions' returns have putaway history (the SLA events keep their own window, `{from}`). */
 const RETURNS_FROM = "2026-04-01";
 const PO_SITE = `CASE WHEN FACILITY IN ('SAPL-WH1','SAPL-WH2') THEN 'South' WHEN FACILITY = 'SAPL-NORTH-TAURU' THEN 'North' END`;
 const PO_TRADING = `"Purchase Order Status" = 'COMPLETE' AND FACILITY IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND CATEGORY NOT ILIKE '%NON%TRADING%'
@@ -61,7 +62,7 @@ SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"
     WHEN 'B2B MP Returns' THEN 'B2B Returns Marketplace' WHEN 'Audit Activity' THEN 'Inventory' END,
   IFF(final_type = 'Audit Activity', 'audit_move', 'putaway'), 'item', SUM(putaway_completed_quantity)
 FROM ${PUT}
-WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
+WHERE putaway_updated >= TO_DATE('${RETURNS_FROM}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
   AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE
 GROUP BY 1, 2, 3, 4
 UNION ALL

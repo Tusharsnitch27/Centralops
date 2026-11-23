@@ -93,7 +93,9 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
 
   const grey: string[] = [];
   if (hasWorkbookPlan || hasWorkbookOutput) grey.push("The monthly chart uses S&OP review totals where daily coverage is missing. Those workbook totals do not provide a daily peak or attendance.");
-  if (fn === "b2b_marketplace" || fn === "returns") grey.push("The projection is the monthly plan spread evenly over the days of the month.");
+  if (fn === "b2b_marketplace" || fn === "b2c_returns" || fn === "b2b_returns") grey.push("The projection is the monthly plan spread evenly over the days of the month.");
+  if (fn === "b2c_returns") grey.push("Returns received are packets from the returns app (about 1.05–1.2 units each); processed is units put away.");
+  if (fn === "b2b_returns") grey.push("B2B returns have no receiving scan, so received is the putaway.");
   if (fn === "b2b_retail") grey.push("The projection is the rulebook's daily processing plan, store by store.");
   if (fn === "b2b_retail" && win.some((r) => r.received == null && r.day < "2026-09-23")) grey.push("Store orders start on 23 Sep 2026, so received is blank before then.");
   if (fn === "b2b_retail" && (lastOrder == null || lastOrder < to)) grey.push(lastOrder == null ? "No store orders are loaded yet, so received is blank." : `Store orders are loaded only to ${fmtDate(lastOrder, { year: true })}, so received is blank after it.`);
@@ -117,7 +119,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   }
 
   // summary: plain sentences with numbers
-  const where = site === "Both" ? "South and North" : site, done = fn === "inwards" || fn === "returns" ? "put away" : "dispatched";
+  const where = site === "Both" ? "South and North" : site, done = fn === "inwards" || fn === "b2c_returns" || fn === "b2b_returns" ? "put away" : "dispatched";
   const procDays = [...new Set(win.filter((r) => r.processed != null).map((r) => r.day))];
   const proc = sumN(hasWorkbookOutput ? points.map((p) => p.processed) : win.map((r) => r.processed)), rec = sumN(win.map((r) => r.received)), iss = sumN(win.map((r) => r.issues));
   const summary: string[] = [];

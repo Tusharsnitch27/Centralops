@@ -45,9 +45,9 @@ assert.deepEqual(workbookMonthVolumes("b2b_retail", "2026-04", ["South", "North"
   { projected: 537196, processed: 602654, usedProjection: true, usedProcessed: true });
 assert.deepEqual(workbookMonthVolumes("b2c_shopify", "2026-09", ["South", "North"], [day("2026-09-22", 1200, 2800, null)]),
   { projected: 1200 + 92795, processed: 175338, usedProjection: true, usedProcessed: true });
-assert.deepEqual(workbookMonthVolumes("returns", "2026-08", ["South", "North"], []),
+// returns have no workbook rows: putaway from April and the S&OP plan rows cover them
+assert.deepEqual(workbookMonthVolumes("b2c_returns", "2026-09", ["South", "North"], []),
   { projected: null, processed: null, usedProjection: false, usedProcessed: false });
-assert.equal(workbookMonthVolumes("returns", "2026-09", ["South", "North"], []).processed, 313479);
 assert.deepEqual(workbookMonthVolumes("inwards", "2026-10", ["South"], [day("2026-10-15", 1200, 800, null)]),
   { projected: 1200, processed: 800, usedProjection: false, usedProcessed: false });
 const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
@@ -151,3 +151,20 @@ assert.equal(placementSla("2026-05-28T15:00", { cutoff: "Monday 9 AM" }), "BREAC
 assert.equal(placementSla("2026-06-03T10:00", null), null);
 assert.equal(placementSla("2026-06-03T10:00", { cutoff: "" }), null);
 console.log("functions placement OK");
+
+// Task 3 (backfill): returns are two functions over disjoint streams; B2B returns' processed is null on a day the putaway feed
+// has no row (only B2C returns-app rows), 0 when putaway ran with no B2B returns
+import { FN } from "../src/server/functions/types.ts";
+import { stageTotal } from "../src/server/functions/aggregate.ts";
+assert.ok("b2c_returns" in FN && "b2b_returns" in FN && !("returns" in FN));
+assert.ok(!FN.b2c_returns.streams.some((s) => FN.b2b_returns.streams.includes(s)));
+assert.ok(!FN.b2c_returns.processed.streams.some((s) => FN.b2b_returns.processed.streams.includes(s)));
+const b2cOnly = [{ day: "2026-08-10", site: "North", stream: "B2C Returns Shopify", event: "received", qty: 900 },
+  { day: "2026-08-10", site: "North", stream: "B2C Returns Marketplace", event: "qc", qty: 400 }];
+const b2b = FN.b2b_returns.processed;
+const rp = stageTotal(b2cOnly, "North", "2026-08-10", b2b.event, b2b.streams);
+assert.equal(rp, null);
+assert.equal(toMonthPoints([{ ...day("2026-08-10", 100, rp, 2, "North"), received: rp }], { "2026-08": 100 }, 23000)[0].processed, null);
+assert.equal(stageTotal([...b2cOnly, { day: "2026-08-10", site: "North", stream: "B2C Returns (channel open)", event: "putaway", qty: 700 }], "North", "2026-08-10", b2b.event, b2b.streams), 0);
+assert.equal(stageTotal([{ day: "2026-08-10", site: "North", stream: "B2B Returns Retail", event: "putaway", qty: 50 }], "North", "2026-08-10", b2b.event, b2b.streams), 50);
+console.log("functions returns split OK");

@@ -15,7 +15,7 @@ export const metadata = { title: "AOP · Functions" };
 
 type SP = { fn?: string; site?: string; mode?: string; scenario?: string; cycle?: string };
 const FNS = Object.keys(FN) as FnKey[];
-const RECEIVED: Record<FnKey, string> = { inwards: "Received", b2c_shopify: "Orders", b2c_marketplace: "Orders", b2b_retail: "Store orders", b2b_marketplace: "Orders", returns: "Returns received" };
+const RECEIVED: Record<FnKey, string> = { inwards: "Received", b2c_shopify: "Orders", b2c_marketplace: "Orders", b2b_retail: "Store orders", b2b_marketplace: "Orders", b2c_returns: "Returns received (packets)", b2b_returns: "Received" };
 const OVERLAY: Partial<Record<FnKey, string>> = { b2c_shopify: "Within SLA", b2c_marketplace: "Within SLA", b2b_retail: "Ordered in rulebook window" };
 const CAUSE: Record<Cause, string> = { plan_peak: "Plan's cover for its busiest day", volume: "Volume vs projection", held_up: "Work held up by issues", below_ipp: "Output per head against the norm",
   absenteeism: "Absenteeism above 10 %", cross_zone: "Cross-zone freight", courier_rate: "Courier rates", other: "Other" };
@@ -24,7 +24,7 @@ const CAUSE: Record<Cause, string> = { plan_peak: "Plan's cover for its busiest 
 export default async function FunctionsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   await requireUser();
-  const fn: FnKey = FNS.includes(sp.fn as FnKey) ? (sp.fn as FnKey) : "b2b_retail";
+  const fn: FnKey = sp.fn === "returns" ? "b2c_returns" : FNS.includes(sp.fn as FnKey) ? (sp.fn as FnKey) : "b2b_retail"; // old links: Returns → B2C Returns
   const site: FnSite = sp.site === "South" || sp.site === "North" ? sp.site : "Both";
   const mode: FnMode = sp.mode === "month" ? "month" : "day";
   const rulebook = fn === "b2b_retail" && sp.scenario === "1";

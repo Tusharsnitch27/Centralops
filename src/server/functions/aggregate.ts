@@ -47,6 +47,13 @@ export function retimeToWeekday(orderDate: string, weekday: string): string {
 export const unitShare = (rupees: number | null, monthUnits: number | null, windowUnits: number | null) =>
   rupees == null || !monthUnits || windowUnits == null ? null : (rupees * windowUnits) / monthUnits;
 
+/** Σ a stage's units for these streams on one site-day: null when the feed has no row for that site × day × event (it did not cover the day),
+ *  0 when it ran with none of these streams. */
+export function stageTotal(rows: { day: string; site: string; stream: string; event: string; qty: number }[], site: string, day: string, event: string, streams: string[]) {
+  const ran = rows.filter((r) => r.site === site && r.day === day && r.event === event);
+  return ran.length ? ran.filter((r) => streams.includes(r.stream)).reduce((a, r) => a + r.qty, 0) : null;
+}
+
 const monthKey = (day: string) => day.slice(0, 7);
 const at = (r: number | ByMonth, site: string, month: string) => (typeof r === "number" ? r : r[`${site}|${month}`] ?? r[month] ?? null);
 const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);

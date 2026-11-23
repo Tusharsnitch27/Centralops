@@ -4,24 +4,15 @@ import { q } from "../db";
 import { addDays, monthStart } from "@/lib/dates";
 import { processingMonth } from "../aop/processing";
 import { STREAMS, type StreamKey, type Wh } from "../aop/processingTypes";
-import { processingWeekday, weekdayOf } from "./aggregate";
-import type { DayRow, FnKey } from "./types";
+import { processingWeekday, stageTotal, weekdayOf } from "./aggregate";
+import { FN, type DayRow, type FnKey } from "./types";
+export { FN };
 
 /**
  * Per-function daily sources (one row per day × site). Missing is null, never 0: a day a feed did not cover stays null; a day it
  * covered with nothing for the function is a real 0. Heads: attendance present heads of the department(s) × the stream's share
  * of that department under Processing's rule split, so they tie to AOP › Processing.
  */
-type Stage = { streams: string[]; event: string };
-export const FN: Record<FnKey, { label: string; streams: StreamKey[]; processed: Stage }> = {
-  inwards: { label: "Inwards", streams: ["Inward"], processed: { streams: ["Inward"], event: "putaway" } },
-  b2c_shopify: { label: "B2C Shopify", streams: ["B2C Shopify"], processed: { streams: ["B2C Shopify"], event: "dispatched" } },
-  b2c_marketplace: { label: "B2C Marketplace", streams: ["B2C Marketplace"], processed: { streams: ["B2C Marketplace"], event: "dispatched" } },
-  b2b_retail: { label: "B2B Retail", streams: ["B2B Retail"], processed: { streams: ["B2B Retail"], event: "dispatched" } },
-  b2b_marketplace: { label: "B2B Marketplace", streams: ["B2B Marketplace"], processed: { streams: ["B2B Marketplace"], event: "dispatched" } },
-  returns: { label: "Returns", streams: ["B2C Returns Shopify", "B2C Returns Marketplace", "B2B Returns Retail", "B2B Returns Marketplace"],
-    processed: { streams: ["B2C Returns (channel open)", "B2B Returns Retail", "B2B Returns Marketplace"], event: "putaway" } },
-};
 export const SITES: Wh[] = ["South", "North"];
 
 /** processingMonth, once per request (dailyRows and the view both need it). */
@@ -35,14 +26,17 @@ const slaSite = `case wh when 'NORTH' then 'North' else 'South' end`;
 type SiteDay = Map<string, number | null>; // key `${site}|${day}`
 const k = (site: string, day: string) => `${site}|${day}`;
 
+const RETURNS = { b2c_returns: "b2c", b2b_returns: "b2b" } as const;
+const isReturns = (fn: FnKey): fn is keyof typeof RETURNS => fn in RETURNS;
+
 /** Daily projection per site: S&OP daily plan, the monthly plan spread evenly (B2B Marketplace, Returns), or the rulebook (B2B Retail). */
 async function projection(fn: FnKey, from: string, to: string, days: string[]): Promise<SiteDay> {
   const out: SiteDay = new Map();
-  if (fn === "b2b_marketplace" || fn === "returns") {
+  if (fn === "b2b_marketplace" || isReturns(fn)) {
     const rows = await q<{ period: string; south: number | null; north: number | null }>(
       `select period::text as period, sum(south_plan)::float8 as south, sum(north_plan)::float8 as north from sop_review_rows
-        where view_key = $1 and period between $2::date and $3::date ${fn === "returns" ? `and row_label ~* '^(b2c|b2b)'` : ""} group by 1`,
-      [fn === "returns" ? "returns" : "b2b_mp", monthOf(from), monthOf(to)]);
+        where view_key = $1 and period between $2::date and $3::date ${isReturns(fn) ? `and row_label ~* '^${RETURNS[fn]}'` : ""} group by 1`,
+      [isReturns(fn) ? "returns" : "b2b_mp", monthOf(from), monthOf(to)]);
     const dim = (p: string) => new Date(Date.UTC(+p.slice(0, 4), +p.slice(5, 7), 0)).getUTCDate();
     for (const d of days) { const r = rows.find((x) => x.period === monthOf(d)); for (const s of SITES) { const v = r?.[s === "South" ? "south" : "north"]; out.set(k(s, d), v == null ? null : v / dim(monthOf(d))); } }
     return out;
@@ -88,7 +82,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   const f = FN[fn], days = dayList(from, to);
   const months = [...new Set(days.map(monthOf))];
   // B2C / B2B MP received: UC items created that day ("ordered", before the SLA source's window) where no SLA cell has the day
-  const events = fn === "inwards" || fn === "returns" ? ["putaway", "received"] : fn === "b2b_retail" ? [f.processed.event] : [f.processed.event, "ordered"];
+  const events = fn === "inwards" || fn === "b2c_returns" ? ["putaway", "received"] : fn === "b2b_returns" ? ["putaway"] : fn === "b2b_retail" ? [f.processed.event] : [f.processed.event, "ordered"];
   const [proj, stage, heads, pms, orders, inward, created, deadline, lastOrder] = await Promise.all([
     projection(fn, from, to, days),
     q<{ day: string; site: string; stream: string; event: string; qty: number }>(
@@ -108,9 +102,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
     fn === "b2b_retail" ? lastOrderDay() : Promise.resolve(null),
   ]);
   // a stage total is null when the feed did not run for that day × site × event, 0 when it ran with nothing for these streams
-  const ran = new Set(stage.map((r) => `${r.site}|${r.day}|${r.event}`));
-  const stageSum = (s: string, d: string, event: string, streams: string[]) =>
-    ran.has(`${s}|${d}|${event}`) ? stage.filter((r) => r.site === s && r.day === d && r.event === event && streams.includes(r.stream)).reduce((a, r) => a + r.qty, 0) : null;
+  const stageSum = (s: string, d: string, event: string, streams: string[]) => stageTotal(stage, s, d, event, streams);
   const ORDERS_FROM = "2026-04-01"; // fn_retail_order: store orders from the spine from April
   const out: DayRow[] = [];
   for (const d of days) for (const s of sites) {
@@ -134,11 +126,12 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       if (o?.qty) { overlay = (100 * o.within) / o.qty; overlayBase = o.qty; }
     } else if (fn === "b2b_marketplace") {
       received = deadline.get(k(s, d))?.units ?? stageSum(s, d, "ordered", f.streams);
-    } else {
-      const b2c = stageSum(s, d, "received", ["B2C Returns Shopify", "B2C Returns Marketplace"]), b2b = stageSum(s, d, "putaway", ["B2B Returns Retail", "B2B Returns Marketplace"]);
-      received = b2c == null || b2b == null ? null : b2c + b2b; // half a day's returns is not the day's returns
+    } else if (fn === "b2c_returns") {
+      received = stageSum(s, d, "received", f.streams); // returns-app packets (~1.05–1.2 units each)
     }
-    out.push({ day: d, site: s, projected: proj.get(k(s, d)) ?? null, received, processed: stageSum(s, d, f.processed.event, f.processed.streams), issues, presentHeads, overlay, overlayBase });
+    const processed = stageSum(s, d, f.processed.event, f.processed.streams);
+    if (fn === "b2b_returns") received = processed; // no B2B receiving scan: received is the putaway
+    out.push({ day: d, site: s, projected: proj.get(k(s, d)) ?? null, received, processed, issues, presentHeads, overlay, overlayBase });
   }
   return out;
 }

@@ -46,14 +46,7 @@ const workbook: WorkbookRow[] = [
   ["2026-10", "b2b_marketplace", 48000, 42086, 48000, 9540], // F22, G22, I22, J22
   ["2026-10", "b2b_retail", 308532, 506352, 308532, 410460], // F30, G30, I30, J30
   ["2026-10", "inwards", 633605, 689727, 820685, 628336], // F39, G39, I39, J39
-  // Monthly Returns Summary %: B2C + B2B actual units per warehouse (H, K).
-  ["2026-04", "returns", null, 166257, null, 141677], // H5, K5
-  ["2026-05", "returns", null, 173171, null, 149653], // H6, K6
-  ["2026-06", "returns", null, 258904, null, 180300], // H7, K7
-  ["2026-07", "returns", null, 196334, null, 119469], // H8, K8
-  // WH Utilization WeeklyMonthly: the three return streams per warehouse.
-  ["2026-09", "returns", null, 166268, null, 147211], // SUM(I18:I20), SUM(I21:I23)
-  ["2026-10", "returns", null, 253569, null, 235503], // SUM(J18:J20), SUM(J21:J23)
+  // Returns: none here — B2C and B2B putaway are read from April, and the plan from the S&OP returns rows.
 ];
 
 function sumComplete(values: (number | null)[]) {
