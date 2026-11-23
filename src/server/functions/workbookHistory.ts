@@ -49,6 +49,12 @@ const workbook: WorkbookRow[] = [
   // Returns: none here — B2C and B2B putaway are read from April, and the plan from the S&OP returns rows.
 ];
 
+/** The workbook's full-month actual for one site (month "2026-04" or "2026-04-01"); null when the workbook has no row. */
+export function workbookActual(fn: FnKey, month: string, site: DayRow["site"]) {
+  const sheet = workbook.find(([period, key]) => period === month.slice(0, 7) && key === fn);
+  return sheet ? sheet[site === "South" ? 3 : 5] : null;
+}
+
 function sumComplete(values: (number | null)[]) {
   if (!values.length || values.some((value) => value == null)) return null;
   return values.reduce<number>((total, value) => total + value!, 0);

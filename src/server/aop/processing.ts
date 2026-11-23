@@ -3,13 +3,15 @@ import { q } from "../db";
 import { actualMpOf, computeRow, matchIpp, passShare, rollupStream, ruleSplit } from "./processingMath";
 import { MP_HEADCOUNT } from "../wcm/math";
 import { activeIpps } from "../wcm/daily";
+import { workbookActual } from "../functions/workbookHistory";
+import type { FnKey } from "../functions/types";
 import { OVERHEAD_DEPTS, STREAMS, type AttributionRow, type MpAssignment, type ProcessingMonth, type ProcRow, type StreamKey, type Wh } from "./processingTypes";
 
 /**
  * Warehouse processing cost: S&OP projection → planned MP → actual MP & adherence → cost per item, per stream × process.
  * Source per number (first that has it):
  *  - projection / planned MP / final output: the Cost Master processing tabs for the months they cover (Oct'25–Oct'26 forward,
- *    Oct–Dec'25 returns / inward / inventory) — the sheet stays the source of truth where it has a figure; then S&OP plan / actuals;
+ *    Oct–Dec'25 returns / inward / inventory) — the sheet stays the source of truth where it has a figure; then S&OP plan / actuals (the S&OP workbook's monthly actual where the review has none);
  *    Inventory has no S&OP volume, so its last sheet month carries forward.
  *  - actual MP: the attendance API (from 29 Oct 2026) when it covers ≥ 90 % of the month's days; else sheet planned MP (= heads
  *    deployed) for sheet months, then attendance for the running month. Attendance has only departments, so heads are split to
@@ -65,14 +67,15 @@ async function sopVolumes(period: string, wh: Wh) {
   const put = ret ? [] : await q<{ stream: string; n: number }>(`select stream, sum(qty)::float8 as n from wcm_stage_output where event = 'putaway' and site = $2
      and date_trunc('month', day)::date = $1::date and stream in ('B2C Returns (channel open)', 'B2B Returns Retail', 'B2B Returns Marketplace') group by 1`, [period, wh]);
   const putOf = (s: string) => (put.length ? put.find((r) => r.stream === s)?.n ?? 0 : null);
-  const sum = (f: (r: (typeof rows)[number]) => boolean, m: "plan" | "actual") => {
+  // a month the review rows have no actual for (Apr–Aug 2026): the S&OP workbook's full-month actual
+  const sum = (f: (r: (typeof rows)[number]) => boolean, m: "plan" | "actual", fn?: FnKey) => {
     const xs = rows.filter(f).map((r) => r[m]).filter((x): x is number => x != null);
-    return xs.length ? xs.reduce((a, x) => a + x, 0) : null;
+    return xs.length ? xs.reduce((a, x) => a + x, 0) : m === "actual" && fn ? workbookActual(fn, period, wh) : null;
   };
   const isShopify = (r: (typeof rows)[number]) => r.view_key === "b2c" && /^shopify/i.test(r.row_label);
   const v = (m: "plan" | "actual") => {
-    const shop = sum(isShopify, m), mp = sum((r) => r.view_key === "b2c" && !isShopify(r), m);
-    const retail = sum((r) => r.view_key === "retail_fwd", m), b2bmp = sum((r) => r.view_key === "b2b_mp", m);
+    const shop = sum(isShopify, m, "b2c_shopify"), mp = sum((r) => r.view_key === "b2c" && !isShopify(r), m, "b2c_marketplace");
+    const retail = sum((r) => r.view_key === "retail_fwd", m, "b2b_retail"), b2bmp = sum((r) => r.view_key === "b2b_mp", m, "b2b_marketplace");
     const b2cRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2c/i.test(r.row_label), m) : ret ? ret.b2c : putOf("B2C Returns (channel open)");
     const b2bRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2b/i.test(r.row_label), m) : ret?.b2b ?? null;
     const split = (total: number | null, a: number | null, b: number | null): [number | null, number | null] =>
@@ -82,7 +85,7 @@ async function sopVolumes(period: string, wh: Wh) {
     return {
       "B2C Shopify": shop, "B2C Marketplace": mp, "B2B Retail": retail, "B2B Marketplace": b2bmp,
       "B2C Returns Shopify": rs, "B2C Returns Marketplace": rm, "B2B Returns Retail": rr, "B2B Returns Marketplace": rb,
-      Inward: sum((r) => r.view_key === "category_inward", m), Inventory: null,
+      Inward: sum((r) => r.view_key === "category_inward", m, "inwards"), Inventory: null,
     } as Record<StreamKey, number | null>;
   };
   return { plan: v("plan"), actual: v("actual") };

@@ -2,7 +2,7 @@
 // node --experimental-strip-types scripts/check-functions.mjs
 import assert from "node:assert/strict";
 import { unitsPerHead, idealHeads, manpowerGap, perUnit, zoneClass } from "../src/server/functions/math.ts";
-import { workbookMonthVolumes } from "../src/server/functions/workbookHistory.ts";
+import { workbookActual, workbookMonthVolumes } from "../src/server/functions/workbookHistory.ts";
 
 const close = (a, b, d = 0.01) => assert.ok(Math.abs(a - b) < d, `${a} ≠ ${b}`);
 close(unitsPerHead([{ ipp: 1000, unit: "unit" }, { ipp: 1600, unit: "unit" }, { ipp: 100, unit: "box" }]), 510.64);
@@ -50,6 +50,11 @@ assert.deepEqual(workbookMonthVolumes("b2c_returns", "2026-09", ["South", "North
   { projected: null, processed: null, usedProjection: false, usedProcessed: false });
 assert.deepEqual(workbookMonthVolumes("inwards", "2026-10", ["South"], [day("2026-10-15", 1200, 800, null)]),
   { projected: 1200, processed: 800, usedProjection: false, usedProcessed: false });
+// Processing's volume where the review rows have no actual (Inward Apr–Aug): the workbook's full-month actual, per site; none → null
+assert.equal(workbookActual("inwards", "2026-04-01", "North"), 426518);
+assert.equal(workbookActual("inwards", "2026-08", "South"), 530229);
+assert.equal(workbookActual("b2c_returns", "2026-04", "South"), null);
+assert.equal(workbookActual("inwards", "2026-11", "South"), null);
 const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
 assert.equal(mp.projected, 400);
 // month view: on roll with weekly-off cover, ⌈300 ÷ 100 × 30 ÷ 23 × 1.1⌉ = 5 (on the floor ⌈300 ÷ 100⌉ = 3)
