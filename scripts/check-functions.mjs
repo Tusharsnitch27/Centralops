@@ -55,6 +55,14 @@ assert.equal(workbookActual("inwards", "2026-04-01", "North"), 426518);
 assert.equal(workbookActual("inwards", "2026-08", "South"), 530229);
 assert.equal(workbookActual("b2c_returns", "2026-04", "South"), null);
 assert.equal(workbookActual("inwards", "2026-11", "South"), null);
+// Both: a site missing the day makes received / projected missing, never the other site's half
+{
+  const rows = [{ ...day("2026-11-01", 100, null, 2), received: null }, { ...day("2026-11-01", 50, 0, 2, "North"), received: 0 }];
+  const [b] = toDayPoints(rows, { "2026-11": 100 }, 23000);
+  assert.equal(b.received, null); assert.equal(b.processed, null); assert.equal(b.projected, 150);
+  const [b2] = toDayPoints([{ ...rows[0], received: 7 }, rows[1]], { "2026-11": 100 }, 23000);
+  assert.equal(b2.received, 7);
+}
 const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
 assert.equal(mp.projected, 400);
 // month view: on roll with weekly-off cover, ⌈300 ÷ 100 × 30 ÷ 23 × 1.1⌉ = 5 (on the floor ⌈300 ÷ 100⌉ = 3)

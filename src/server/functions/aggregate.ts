@@ -148,8 +148,8 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
     }));
     const base = rs.filter((r) => r.overlay != null && (r.overlayBase ?? 0) > 0), baseSum = base.reduce((a, r) => a + r.overlayBase!, 0);
     return {
-      key, projected: sumN(rs.map((r) => r.projected)), received: sumN(rs.map((r) => r.received)), processed: sumAll(sites.map((s) => bySite(s, (r) => r.processed))),
-      issues: sumN(rs.map((r) => r.issues)), idealHeads: sumAll(idl.map((i) => (i == null ? null : mode === "day" ? i.floor : i.roll))), actualHeads, idealCost, actualCost,
+      key, projected: sumAll(sites.map((s) => bySite(s, (r) => r.projected))), received: sumAll(sites.map((s) => bySite(s, (r) => r.received))),
+      processed: sumAll(sites.map((s) => bySite(s, (r) => r.processed))), issues: sumAll(sites.map((s) => bySite(s, (r) => r.issues))), idealHeads: sumAll(idl.map((i) => (i == null ? null : mode === "day" ? i.floor : i.roll))), actualHeads, idealCost, actualCost,
       costPerUnit: null as number | null, idealCostPerUnit: null as number | null, actualUnits: null as number | null,
       overlay: baseSum ? base.reduce((a, r) => a + r.overlay! * r.overlayBase!, 0) / baseSum : null,
     };
