@@ -1,6 +1,6 @@
 // Pure aggregation for the AOP Functions view: day rows → chart points (no server imports; scripts/check-functions.mjs runs it).
 import { idealHeads, monthStats, perUnit } from "./math.ts";
-import type { DayRow, Point } from "./types";
+import type { DayRow, GapPart, Point } from "./types";
 
 /** Per-month value, site-specific first: keys "South|2026-11" or "2026-11". */
 export type ByMonth = Record<string, number | null | undefined>;
@@ -109,4 +109,31 @@ export function spans(keys: string[], sites: string[]) {
   for (const m of months) { const w = who(m), last = runs.at(-1); if (last && last.who === w && nextMonth(last.to) === m) last.to = m; else runs.push({ who: w, from: m, to: m }); }
   const range = (a: string, b: string) => (a === b ? monthName(a) : a.slice(0, 4) === b.slice(0, 4) ? `${monthName(a).split(" ")[0]}–${monthName(b)}` : `${monthName(a)}–${monthName(b)}`);
   return runs.map((r) => (r.who === "both" ? `${range(r.from, r.to)} (both sites)` : `${r.who ? `${r.who} ` : ""}${range(r.from, r.to)}`)).join(", ");
+}
+
+/**
+ * B2C Shopify courier gap, each courier against its own Jul–Sep all-in cost per forward shipment (Σ cost ÷ Σ FWD AWBs over `base` months).
+ * Rate on a shipment = the courier's latest month ≤ the shipment's month. Shipments whose courier lacks either are returned as unpriced
+ * (named, by count); then `other` is null since part of the cost can't be attributed. No priced shipment → parts null.
+ */
+export function courierSplit(ships: { month: string; courier: string; n: number }[], months: { courier: string; month: string; cost: number | null; fwd: number | null }[], base: string[]) {
+  const ok = months.filter((m) => m.cost != null && m.fwd);
+  const baseline = new Map<string, number>();
+  for (const c of new Set(ok.map((m) => m.courier))) {
+    const b = ok.filter((m) => m.courier === c && base.includes(monthKey(m.month)));
+    if (b.length) baseline.set(c, b.reduce((a, m) => a + m.cost!, 0) / b.reduce((a, m) => a + m.fwd!, 0));
+  }
+  let actual = 0, atBase = 0, rate = 0, priced = 0;
+  const unpriced = new Map<string, number>();
+  for (const s of ships) {
+    const r = ok.filter((m) => m.courier === s.courier && monthKey(m.month) <= monthKey(s.month)).sort((a, b) => a.month.localeCompare(b.month)).at(-1), b = baseline.get(s.courier);
+    if (!r || b == null) { unpriced.set(s.courier, (unpriced.get(s.courier) ?? 0) + s.n); continue; }
+    const cps = r.cost! / r.fwd!;
+    actual += s.n * cps; atBase += s.n * b; rate += s.n * (cps - b); priced += s.n;
+  }
+  const parts: GapPart[] | null = priced ? [
+    { cause: "courier_rate", rupees: rate, note: "courier rates above each courier's own Jul–Sep cost per shipment" },
+    { cause: "other", rupees: unpriced.size ? null : actual - atBase - rate, note: unpriced.size ? "couriers without a Jul–Sep rate" : "remainder" },
+  ] : null;
+  return { parts, unpriced: [...unpriced].map(([courier, n]) => ({ courier, n })) };
 }

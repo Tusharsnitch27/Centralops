@@ -2,10 +2,10 @@ import "server-only";
 import { q } from "../db";
 import { addDays, addMonths, monthStart, today } from "@/lib/dates";
 import { activeIpps } from "../wcm/daily";
-import { courierOf, monthHistory } from "../wcm/dayCost";
+import { courierOf } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
-import { daysIn, spans, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
+import { courierSplit, daysIn, spans, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { manpowerGap, monthStats, unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
@@ -70,29 +70,16 @@ function gapOf(fn: FnKey, mode: FnMode, rows: DayRow[], n: Norms, sites: Wh[], f
   return { gap: causes.map((c) => ({ cause: c, rupees: sumN(parts.map((p) => p.find((x) => x.cause === c)?.rupees ?? null)), note: parts[0]!.find((x) => x.cause === c)!.note })), left };
 }
 
-/** B2C Shopify courier ₹ against the Jul–Sep courier cost per order: courier_rate = Σ shipments × (courier's rate − baseline); other = the rest. */
-async function courierGap(from: string, to: string, site: FnSite): Promise<GapPart[] | null> {
-  const fy = fyStart(to).slice(0, 4), jas = [`${fy}-07-01`, `${fy}-08-01`, `${fy}-09-01`];
-  const [ships, cps, hist] = await Promise.all([
+/** B2C Shopify forward shipments (South + North) priced per courier against that courier's own Jul–Sep cost per shipment (courierSplit). */
+async function courierGap(from: string, to: string, site: FnSite) {
+  const fy = fyStart(to).slice(0, 4), jas = [`${fy}-07`, `${fy}-08`, `${fy}-09`];
+  const [ships, months] = await Promise.all([
     q<{ day: string; vendor: string; n: number }>(`select day::text as day, substr(metric, 11) as vendor, sum(qty)::float8 as n from aop_channel_volume
        where family = 'logistics' and metric like 'shipments:%' and channel = 'B2C Shopify' and day between $1 and $2 and warehouse = any($3::text[]) group by 1, 2`, [from, to, site === "Both" ? ["South", "North"] : [site]]),
-    q<{ courier: string; month: string; cps: number }>(`select courier, month::text as month, (sum(cost) / nullif(sum(awbs) filter (where type = 'FWD'), 0))::float8 as cps from lg_b2c_month group by 1, 2`),
-    monthHistory(),
+    q<{ courier: string; month: string; cost: number | null; fwd: number | null }>(
+      `select courier, month::text as month, sum(cost)::float8 as cost, (sum(awbs) filter (where type = 'FWD'))::float8 as fwd from lg_b2c_month group by 1, 2`),
   ]);
-  const base = hist.filter((h) => jas.includes(h.month) && h.b2cLogistics != null && h.b2cOrders);
-  const baseline = base.length ? base.reduce((a, h) => a + h.b2cLogistics!, 0) / base.reduce((a, h) => a + h.b2cOrders!, 0) : null;
-  let actual = 0, priced = 0, rate = 0, all = 0;
-  for (const r of ships) {
-    all += r.n;
-    const c = courierOf(r.vendor), x = c ? cps.filter((p) => p.courier === c && p.month <= monthStart(r.day) && p.cps != null).sort((a, b) => a.month.localeCompare(b.month)).at(-1) : null;
-    if (!x || baseline == null) continue;
-    actual += r.n * x.cps; priced += r.n; rate += r.n * (x.cps - baseline);
-  }
-  if (baseline == null || !priced) return null;
-  return [
-    { cause: "courier_rate", rupees: rate, note: "courier rates above the Jul–Sep cost per order" },
-    { cause: "other", rupees: actual - baseline * all - rate, note: "shipments with no courier rate, and the rest" },
-  ];
+  return courierSplit(ships.map((r) => ({ month: r.day, courier: courierOf(r.vendor) ?? r.vendor, n: r.n })), months, jas);
 }
 
 export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promise<FunctionView> {
@@ -128,7 +115,10 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
   if (fn !== "inwards") grey.push("Work held up by issues is not recorded for this function.");
   if (left.length) grey.push(`The manpower gap leaves out ${spans(left, sites)}, which lack a norm, a projection, attendance or processed volume.`);
-  if (fn === "b2c_shopify") grey.push(logistics ? "Courier cost is as billed, before credit notes." : "There is no courier rate or Jul–Sep baseline for this window, so the logistics gap is blank.");
+  if (fn === "b2c_shopify") {
+    grey.push(logistics?.parts ? "Courier cost is as billed, before credit notes." : "No courier has both a rate and a Jul–Sep history for these shipments, so the logistics gap is blank.");
+    if (logistics?.unpriced.length) grey.push(`${logistics.unpriced.map((u) => `${n0(u.n)} ${u.courier}`).join(", ")} shipments have no Jul–Sep rate for their courier, so they are not priced.`);
+  }
 
   // summary: plain sentences with numbers
   const where = site === "Both" ? "South and North" : site, done = fn === "inwards" || fn === "returns" ? "put away" : "dispatched";
@@ -151,7 +141,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   }
 
   // B2B Retail: "Rulebook followed" (store orders on their rulebook days; ideal stays on the plan) and cross-zone freight
-  let scenario: FunctionView["scenario"] = null, logisticsGap = fn === "b2c_shopify" ? logistics : null;
+  let scenario: FunctionView["scenario"] = null, logisticsGap: GapPart[] | null = fn === "b2c_shopify" ? logistics?.parts ?? null : null;
   if (retail) {
     const [rb, cz] = retail;
     const moved = new Map(rb.days.map((r) => [`${r.site}|${r.day}`, r.received]));

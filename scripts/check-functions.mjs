@@ -98,3 +98,16 @@ assert.equal(spans(["South|2026-04", "North|2026-04", "South|2026-05", "North|20
 assert.equal(spans(["South|2026-12", "South|2027-01"], ["South"]), "Dec 2026–Jan 2027");
 assert.equal(spans(["South|2026-09-01"], both), "South Sep 2026");
 console.log("functions spans OK");
+// B2C Shopify courier gap: each courier against its own Jul–Sep cost per shipment
+import { courierSplit } from "../src/server/functions/aggregate.ts";
+const lg = [{ courier: "A", month: "2026-07-01", cost: 100, fwd: 10 }, { courier: "A", month: "2026-08-01", cost: 300, fwd: 10 }, { courier: "A", month: "2026-10-01", cost: 300, fwd: 10 },
+  { courier: "B", month: "2026-10-01", cost: 50, fwd: 10 }];
+const jas = ["2026-07", "2026-08", "2026-09"];
+const cs = courierSplit([{ month: "2026-11-01", courier: "A", n: 100 }], lg, jas); // baseline 400 ÷ 20 = 20; Nov rate = Oct 30 → (30 − 20) × 100
+assert.equal(cs.parts.find((p) => p.cause === "courier_rate").rupees, 1000);
+assert.equal(cs.parts.find((p) => p.cause === "other").rupees, 0);
+const cs2 = courierSplit([{ month: "2026-11-01", courier: "A", n: 100 }, { month: "2026-11-01", courier: "B", n: 7 }], lg, jas); // B has no Jul–Sep
+assert.equal(cs2.parts.find((p) => p.cause === "other").rupees, null);
+assert.deepEqual(cs2.unpriced, [{ courier: "B", n: 7 }]);
+assert.equal(courierSplit([{ month: "2026-11-01", courier: "B", n: 7 }], lg, jas).parts, null);
+console.log("functions courier OK");
