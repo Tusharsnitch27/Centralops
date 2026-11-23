@@ -69,3 +69,12 @@ assert.equal(bp.actualCost, null);
 assert.equal(bp.actualHeads, null);
 assert.equal(bp.processed, null);
 console.log("functions Both OK");
+
+// Task 5: an order re-timed to its rulebook weekday within the same ISO week (Mon–Sun)
+import { retimeToWeekday } from "../src/server/functions/aggregate.ts";
+assert.equal(retimeToWeekday("2026-11-04", "Monday"), "2026-11-02");
+assert.equal(retimeToWeekday("2026-11-04", "Saturday"), "2026-11-07");
+assert.equal(retimeToWeekday("2026-11-04", "Sunday"), "2026-11-08");
+assert.equal(retimeToWeekday("2026-11-08", "Monday"), "2026-11-02");
+assert.equal(retimeToWeekday("2026-11-04", "Someday"), "2026-11-04");
+console.log("functions retime OK");

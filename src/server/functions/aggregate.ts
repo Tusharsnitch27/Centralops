@@ -18,6 +18,15 @@ export function processingWeekday(tat: string | null): string | null {
   return /AM/i.test(m![2]!) ? DAYS[(i + 6) % 7]! : DAYS[i]!;
 }
 
+/** The day of `orderDate`'s ISO week (Mon–Sun) that falls on `weekday`; an unknown weekday leaves the date as it is. */
+export function retimeToWeekday(orderDate: string, weekday: string): string {
+  const i = DAYS.findIndex((d) => d.toLowerCase() === weekday.trim().toLowerCase());
+  if (i < 0) return orderDate;
+  const d = new Date(`${orderDate}T00:00:00Z`), mon = (x: number) => (x + 6) % 7; // Monday = 0
+  d.setUTCDate(d.getUTCDate() + mon(i) - mon(d.getUTCDay()));
+  return d.toISOString().slice(0, 10);
+}
+
 const monthKey = (day: string) => day.slice(0, 7);
 const at = (r: number | ByMonth, site: string, month: string) => (typeof r === "number" ? r : r[`${site}|${month}`] ?? r[month] ?? null);
 const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);

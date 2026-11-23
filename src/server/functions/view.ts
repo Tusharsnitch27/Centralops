@@ -7,6 +7,7 @@ import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
 import { daysIn, onRoll, toDayPoints, toMonthPoints, type Actuals, type ByMonth } from "./aggregate";
 import { manpowerGap, monthStats, unitsPerHead } from "./math";
+import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
 import type { Cause, DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 
@@ -102,10 +103,11 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const months: string[] = [];
   for (let m = monthStart(from); m <= to; m = addMonths(m, 1)) months.push(m);
-  const [rows, n, fallback, logistics] = await Promise.all([
+  const [rows, n, fallback, logistics, retail] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),
     fn === "b2c_shopify" ? courierGap(from, to, site) : Promise.resolve(null),
+    fn === "b2b_retail" ? Promise.all([rulebookScenario(site, monthStart(from), rowsTo), crossZone(site, months)]) : Promise.resolve(null),
   ]);
   const points = pointsOf(mode, rows, n, from, to);
   const { gap, left } = gapOf(fn, mode, rows, n, sites, from, to);
@@ -150,6 +152,29 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     if (u) summary.push(`That is ₹${(units.reduce((x, p) => x + p.actualCost!, 0) / u).toFixed(2)} per unit against ₹${(units.reduce((x, p) => x + p.idealCost!, 0) / u).toFixed(2)} at ideal heads.`);
   }
 
-  // B2B Retail's rulebook scenario and cross-zone freight gap are attached by Task 5 (retail.ts)
-  return { fn, site, mode, points, manpowerGap: gap, logisticsGap: fn === "b2c_shopify" ? logistics : null, summary: summary.slice(0, 4), grey, scenario: null };
+  // B2B Retail: "Rulebook followed" (store orders on their rulebook days; same heads, ideal from the orders' peak) and cross-zone freight
+  let scenario: FunctionView["scenario"] = null, logisticsGap = fn === "b2c_shopify" ? logistics : null;
+  if (retail) {
+    const [rb, cz] = retail;
+    const moved = new Map(rb.days.map((r) => [`${r.site}|${r.day}`, r.received]));
+    const asIs = pointsOf(mode, rows.map((r) => ({ ...r, projected: r.received })), n, from, to);
+    const scen = pointsOf(mode, rows.map((r) => { const x = moved.get(`${r.site}|${r.day}`) ?? (r.received == null ? null : 0); return { ...r, projected: x, received: x }; }), n, from, to);
+    const paired = scen.map((p, i) => [asIs[i]!, p] as const).filter(([a, b]) => a.idealCost != null && b.idealCost != null);
+    const manpower = paired.length ? paired.reduce((x, [a, b]) => x + a.idealCost! - b.idealCost!, 0) : null;
+    const deltaRupees = manpower == null || cz.rupees == null ? null : manpower + cz.rupees, units = sumN(paired.map(([a]) => a.processed));
+    scenario = { label: "Rulebook followed", points: scen.map((p, i) => ({ ...p, projected: points[i]!.projected })), deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
+    logisticsGap = [
+      { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone` },
+      { cause: "other", rupees: null, note: "there is no ideal retail freight to set the rest against" },
+    ];
+    grey.push("In the rulebook scenario, ideal heads follow the busiest day of store orders, as placed and on their rulebook days.");
+    const out = scen.filter((p, i) => p.idealCost == null || asIs[i]!.idealCost == null).map((p) => (mode === "day" ? p.key : monthName(p.key)));
+    if (!paired.length) grey.push("The rulebook scenario is blank: no period here has store orders with a norm and salary.");
+    else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : out.join(", ")} with no store orders, norm or salary.`);
+    if (cz.unpriced.length) grey.push(`Cross-zone freight leaves out ${cz.unpriced.join(", ")}, which have no rate in the LR file.`);
+    if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
+    if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight covers the whole months shown, not only these days.");
+    if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days, cost would be ₹${n0(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : `, ₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit`}.`);
+  }
+  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario };
 }
