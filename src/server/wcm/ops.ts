@@ -161,7 +161,7 @@ export const UPDATED_IPP: Record<OpsSite, U[]> = {
     ["B2C Returns Marketplace", "Receiving", "B2C Return", 1000, "received"], ["B2C Returns Marketplace", "Processing", "B2C Return", 250, "qc"], ["B2C Returns Marketplace", "SPF", "B2C Return", 40],
     ["B2B Returns Retail", "Receiving", "B2B Return", 10000], ["B2B Returns Retail", "Processing", "B2B Return", 4000], ["B2B Returns Retail", "QC+Repack", "B2B Return", 550], ["B2B Returns Retail", "WPR", "B2B Return", 150],
     ["B2B Returns Marketplace", "Receiving", "B2B Return", 4000], ["B2B Returns Marketplace", "Processing", "B2B Return", 600], ["B2B Returns Marketplace", "QC+Repack", "B2B Return", 600], ["B2B Returns Marketplace", "WPR", "B2B Return", null],
-    ["Inward", "Receiving", "Inward", 30000], ["Inward", "Ratio", "Inward", 10000], ["Inward", "QC", "Inward", 5000], ["Inward", "Putaway", "Inward", 2700, "putaway"], ["Inward", "Unloader", "Inward", 200, "unloaded"],
+    ["Inward", "Receiving", "Inward", 30000, "received"], ["Inward", "Ratio", "Inward", 10000], ["Inward", "QC", "Inward", 5000], ["Inward", "Putaway", "Inward", 2700, "putaway"], ["Inward", "Unloader", "Inward", 200, "unloaded"],
     ["Inventory", "Capacity", "Inventory", null], ["Inventory", "CC", "Inventory", 4000], ["Inventory", "Audit", "Inventory", 4000], ["Inventory", "Mismatch/NF", "Inventory", 200], ["Inventory", "Consolidation", "Inventory", 1500],
     ["Ad-hoc", "Re-stickering & re-tagging", null, 400], ["Ad-hoc", "Category-wise segregation", null, 1500], ["Ad-hoc", "Liquidation", null, 300],
   ],

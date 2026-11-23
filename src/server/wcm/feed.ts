@@ -11,19 +11,28 @@ import { sfQuery } from "../snowflake";
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
  *  Inward / returns / audit (putaway_tracking, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
  *    feeds): units = putaway_completed_quantity, by final type. Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
- *  B2C returns (PG_INWARDING_DATA, one row per returned packet; channel B2C = Shopify, MP-* = marketplace; TYPE WH-1/WH-2 = South,
- *    North_WH = North): received = RECEIVING_DATE, qc = QC_TIMESTAMP, counted in packets (~1.05–1.2 units each).
- *  Inward unloading: New Inward putaway units ÷ 30 = boxes (assumed pieces per box, Malhar M 23 Nov 2026), on the putaway day.
+ *  B2C returns (RETURN_2_INWARDING_DATA, the returns app's full history — PG_INWARDING_DATA is its Sep→ subset; one row per packet;
+ *    channel B2C = Shopify, MP-* = marketplace; TYPE WH-1/WH-2 = South, North_WH = North): received = RECEIVING_DATE, qc =
+ *    QC_TIMESTAMP, distinct packets (~1.05–1.2 units each), from RETURNS_FROM.
+ *  Inward receiving (uc_final_get_purchase_orders, COMPLETE trading PO lines — non-trading, carry-bag and packaging vendors out):
+ *    received = quantity received on the PO's last-update day; unloaded = that ÷ 30 pieces per box (Malhar M, 23 Nov 2026).
+ *    Runs 10–35 % above putaway, which counts later and trading stock only.
  * The SLA source keeps ~60 days: only days it returns are replaced, so older days are kept (same rule as packaging).
  */
 const SLA = "snitch_db.maplemonk.warehouse_sla_performance";
 const PUT = "snitch_db.maplemonk.putaway_tracking";
-const PG_RET = "snitch_db.maplemonk.PG_INWARDING_DATA";
+const RET = "snitch_db.maplemonk.RETURN_2_INWARDING_DATA";
+const PO = "snitch_db.maplemonk.UC_FINAL_GET_PURCHASE_ORDERS";
 const PCS_PER_BOX = 30;
+/** Returns and PO receipts are re-read from April each run, so Processing's earlier months get a real channel split. */
+const RETURNS_FROM = "2026-04-01";
+const PO_SITE = `CASE WHEN FACILITY IN ('SAPL-WH1','SAPL-WH2') THEN 'South' WHEN FACILITY = 'SAPL-NORTH-TAURU' THEN 'North' END`;
+const PO_TRADING = `"Purchase Order Status" = 'COMPLETE' AND FACILITY IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND CATEGORY NOT ILIKE '%NON%TRADING%'
+  AND CATEGORY NOT ILIKE '%CARRY BAG%' AND "Vendor Name" NOT ILIKE '%NON TRADING%' AND "Vendor Name" NOT ILIKE '%PACKAGING%'`;
 const PG_EV = (event: string, dayExpr: string) => `SELECT TO_VARCHAR(${dayExpr}, 'YYYY-MM-DD'),
   CASE WHEN TYPE ILIKE 'North%' THEN 'North' WHEN TYPE ILIKE 'WH-%' THEN 'South' END, IFF(CHANEL = 'B2C', 'B2C Returns Shopify', 'B2C Returns Marketplace'),
   '${event}', 'packet', COUNT(DISTINCT AWB_NO)
-FROM ${PG_RET} WHERE ${dayExpr} >= TO_DATE('{from}') AND (TYPE ILIKE 'North%' OR TYPE ILIKE 'WH-%')
+FROM ${RET} WHERE ${dayExpr} >= TO_DATE('${RETURNS_FROM}') AND (TYPE ILIKE 'North%' OR TYPE ILIKE 'WH-%')
 GROUP BY 1, 2, 3`;
 export const STAGE_FROM = "2026-09-21";
 /** Days at the start of the SLA source's window treated as partial (see pullStageOutput). */
@@ -56,10 +65,10 @@ WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','
   AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE
 GROUP BY 1, 2, 3, 4
 UNION ALL
-SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')}, 'Inward', 'unloaded', 'box', ROUND(SUM(putaway_completed_quantity) / ${PCS_PER_BOX})
-FROM ${PUT}
-WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND final_type = 'New Inward' AND is_trading = TRUE
-GROUP BY 1, 2
+SELECT TO_VARCHAR(TRY_TO_TIMESTAMP(UPDATED)::date, 'YYYY-MM-DD'), ${PO_SITE}, 'Inward', ev, u, ROUND(SUM(TRY_TO_NUMBER("Recieved Quantity")) / k.dv)
+FROM ${PO}, (SELECT 'received' AS ev, 'item' AS u, 1 AS dv UNION ALL SELECT 'unloaded', 'box', ${PCS_PER_BOX}) k
+WHERE TRY_TO_TIMESTAMP(UPDATED) >= TO_DATE('${RETURNS_FROM}') AND ${PO_TRADING}
+GROUP BY 1, 2, 4, 5, k.dv
 UNION ALL
 ${PG_EV("received", "TRY_TO_DATE(RECEIVING_DATE, 'DD-MM-YYYY')")}
 UNION ALL
@@ -78,7 +87,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const stored = new Set(edge ? (await q<{ d: string }>(`select distinct day::text as d from wcm_stage_output where event = any($1::text[]) and day < $2`, [slaEvs, edge])).map((r) => r.d) : []);
   const rows = raw.filter((r) => !(slaEvs.includes(r.event) && edge && r.day! < edge && stored.has(r.day!)));
   // replace per source (event family) only the days that source returned
-  const families = [slaEvs, ["putaway", "audit_move", "unloaded"], ["received", "qc"]];
+  const families = [slaEvs, ["putaway", "audit_move"], ["received", "qc", "unloaded"]];
   for (const evs of families) {
     const days = [...new Set(rows.filter((r) => evs.includes(r.event)).map((r) => r.day!))];
     if (days.length) await q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[])`, [evs, days]);
@@ -89,7 +98,8 @@ export async function pullStageOutput(from = STAGE_FROM) {
              select d::date, s, st, e, u, n, src from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::text[]) as t(d, s, st, e, u, n, src)
              on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()`,
       [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
-        c.map((r) => (["putaway", "audit_move", "unloaded"].includes(r.event) ? "putaway_tracking" : ["received", "qc"].includes(r.event) ? "pg_inwarding_data" : "warehouse_sla_performance"))]);
+        c.map((r) => (["putaway", "audit_move"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
+          : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
   }
   return { read: rows.length, from, keptEdgeDays: [...stored].length };
 }
