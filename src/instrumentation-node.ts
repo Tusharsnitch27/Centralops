@@ -74,10 +74,13 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       catch (e) { console.error("[lg-retail] pull failed", e instanceof Error ? e.message : e); }
       try { const { pullInventory } = await import("./server/wcm/feed"); const w = await pullInventory(); console.log(`[wcm-inventory] ${w.read} category rows from ${w.from}`); }
       catch (e) { console.error("[wcm-inventory] pull failed", e instanceof Error ? e.message : e); }
-      try { const { pullRetailOrders } = await import("./server/functions/feed"); const w = await pullRetailOrders(); console.log(`[fn-orders] ${w.note}`); }
-      catch (e) { console.error("[fn-orders] pull failed", e instanceof Error ? e.message : e); }
+      // rulebook first: store orders compute placement against it
       try { const { pullRulebook } = await import("./server/functions/feed"); const w = await pullRulebook(); console.log(`[fn-rulebook] ${w.note}`); }
       catch (e) { console.error("[fn-rulebook] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullRetailOrders } = await import("./server/functions/feed"); const w = await pullRetailOrders(); console.log(`[fn-orders] ${w.note}`); }
+      catch (e) { console.error("[fn-orders] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullUcHistory } = await import("./server/wcm/feed"); const w = await pullUcHistory(); console.log(`[wcm-uc-history] ${w.read} rows before ${w.until}`); }
+      catch (e) { console.error("[wcm-uc-history] pull failed", e instanceof Error ? e.message : e); }
       try { const { pullWam } = await import("./server/functions/feed"); const w = await pullWam(); console.log(`[fn-wam] ${w.note}`); }
       catch (e) { console.error("[fn-wam] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {

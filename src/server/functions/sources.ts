@@ -87,7 +87,8 @@ async function slaCells(stream: string, by: "created_hr" | "deadline", from: str
 export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[] = SITES): Promise<DayRow[]> {
   const f = FN[fn], days = dayList(from, to);
   const months = [...new Set(days.map(monthOf))];
-  const events = fn === "inwards" || fn === "returns" ? ["putaway", "received"] : [f.processed.event];
+  // B2C / B2B MP received: UC items created that day ("ordered", before the SLA source's window) where no SLA cell has the day
+  const events = fn === "inwards" || fn === "returns" ? ["putaway", "received"] : fn === "b2b_retail" ? [f.processed.event] : [f.processed.event, "ordered"];
   const [proj, stage, heads, pms, orders, inward, created, deadline, lastOrder] = await Promise.all([
     projection(fn, from, to, days),
     q<{ day: string; site: string; stream: string; event: string; qty: number }>(
@@ -110,7 +111,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   const ran = new Set(stage.map((r) => `${r.site}|${r.day}|${r.event}`));
   const stageSum = (s: string, d: string, event: string, streams: string[]) =>
     ran.has(`${s}|${d}|${event}`) ? stage.filter((r) => r.site === s && r.day === d && r.event === event && streams.includes(r.stream)).reduce((a, r) => a + r.qty, 0) : null;
-  const ORDERS_FROM = "2026-09-23"; // fn_retail_order: Snowflake has nothing earlier
+  const ORDERS_FROM = "2026-04-01"; // fn_retail_order: store orders from the spine from April
   const out: DayRow[] = [];
   for (const d of days) for (const s of sites) {
     const hs = heads.filter((h) => h.day === d && h.site === s), pm = pms.get(k(s, monthOf(d)));
@@ -124,7 +125,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       received = w?.received ?? stageSum(s, d, "received", ["Inward"]); // WAM, else PO receipts
       issues = w?.issues ?? null;
     } else if (fn === "b2c_shopify" || fn === "b2c_marketplace") {
-      received = created.get(k(s, d))?.units ?? null;
+      received = created.get(k(s, d))?.units ?? stageSum(s, d, "ordered", f.streams);
       const c = deadline.get(k(s, d));
       if (c?.judged) { overlay = (100 * c.ok) / c.judged; overlayBase = c.judged; }
     } else if (fn === "b2b_retail") {
@@ -132,7 +133,7 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       received = o ? o.qty : d >= ORDERS_FROM && lastOrder != null && d <= lastOrder ? 0 : null; // after the latest pulled day: not known yet
       if (o?.qty) { overlay = (100 * o.within) / o.qty; overlayBase = o.qty; }
     } else if (fn === "b2b_marketplace") {
-      received = deadline.get(k(s, d))?.units ?? null;
+      received = deadline.get(k(s, d))?.units ?? stageSum(s, d, "ordered", f.streams);
     } else {
       const b2c = stageSum(s, d, "received", ["B2C Returns Shopify", "B2C Returns Marketplace"]), b2b = stageSum(s, d, "putaway", ["B2B Returns Retail", "B2B Returns Marketplace"]);
       received = b2c == null || b2b == null ? null : b2c + b2b; // half a day's returns is not the day's returns

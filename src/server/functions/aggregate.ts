@@ -18,6 +18,22 @@ export function processingWeekday(tat: string | null): string | null {
   return /AM/i.test(m![2]!) ? DAYS[(i + 6) % 7]! : DAYS[i]!;
 }
 
+/**
+ * Store-order placement against the rulebook cutoff ("Wednesday 9 AM"), as retail_journey_spine flags it (matched on its Sep–Nov rows):
+ * the next cutoff on or after the order day; on that day before the cutoff = WITHIN_SLA, after it = BREACHED; 1–2 days ahead (Friday
+ * for a Monday cutoff) = EARLY_CREATION; further ahead = BREACHED (placed after the previous week's cutoff). No rule → null.
+ */
+export function placementSla(orderTs: string, rule: { cutoff: string | null } | null): "WITHIN_SLA" | "EARLY_CREATION" | "BREACHED" | null {
+  const m = /^(\w+day) (\d{1,2})(?::(\d{2}))? ?(AM|PM)$/i.exec(rule?.cutoff?.trim() ?? "");
+  const t = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/.exec(orderTs);
+  const ci = m ? DAYS.findIndex((d) => d.toLowerCase() === m[1]!.toLowerCase()) : -1;
+  if (ci < 0 || !t) return null;
+  const ahead = (ci - new Date(`${t[1]}T00:00:00Z`).getUTCDay() + 7) % 7;
+  const cut = ((+m![2]! % 12) + (/PM/i.test(m![4]!) ? 12 : 0)) * 60 + +(m![3] ?? 0);
+  if (ahead === 0) return +t[2]! * 60 + +t[3]! <= cut ? "WITHIN_SLA" : "BREACHED";
+  return ahead <= 2 || (ahead === 3 && ci === 1) ? "EARLY_CREATION" : "BREACHED";
+}
+
 /** The day of `orderDate`'s ISO week (Mon–Sun) that falls on `weekday`; an unknown weekday leaves the date as it is. */
 export function retimeToWeekday(orderDate: string, weekday: string): string {
   const i = DAYS.findIndex((d) => d.toLowerCase() === weekday.trim().toLowerCase());

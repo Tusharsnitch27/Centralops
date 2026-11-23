@@ -1,5 +1,5 @@
 import "server-only";
-import { q } from "../db";
+import { q, tx } from "../db";
 import { sfQuery } from "../snowflake";
 
 /**
@@ -102,6 +102,43 @@ export async function pullStageOutput(from = STAGE_FROM) {
           : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
   }
   return { read: rows.length, from, keptEdgeDays: [...stored].length };
+}
+
+/**
+ * Forward history before warehouse_sla_performance's window, from UC items (UNICOMMERCE_FACT_ITEMS_INTERMEDIATE, Mar 2026 →):
+ * packed (PACKED_TIMESTAMP, a date), dispatched, shipments (distinct SHIPPINGPACKAGECODE dispatched) and ordered (items by UC_CREATED day).
+ * Only days before the SLA source's first day (asked each run) are written, never over a row the SLA source stored. UC labels stores and
+ * M-Now differently ('Own Store', 'M-NOW MUMBAI'; Flipkart SOR is marketplace 'FLIPKART B2B CUSTOM'): those map to the same streams first.
+ */
+const UC = "snitch_db.maplemonk.UNICOMMERCE_FACT_ITEMS_INTERMEDIATE";
+const UC_STREAM = `CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' OR marketplace_mapped LIKE 'M-NOW%' OR UPPER(marketplace_mapped) = 'SLIKK' THEN 'B2B Marketplace'
+  WHEN marketplace_mapped IN ('Own Store','Franchise Store') THEN 'B2B Retail' WHEN marketplace_mapped = 'NYKAA_SAPL_TAURU' THEN 'B2C Marketplace'
+  ELSE ${STREAM} END`;
+const ucEv = (event: string, col: string, unit = "item", key = "saleorderitemcode") => `SELECT TO_VARCHAR(${col}::date, 'YYYY-MM-DD') AS day, site, stream,
+  '${event}' AS event, '${unit}' AS unit, COUNT(DISTINCT ${key}) AS qty FROM s WHERE ${col} >= TO_DATE('{from}') AND ${col} < TO_DATE('{until}') GROUP BY 1, 2, 3`;
+export const UC_SQL = `WITH s AS (
+  SELECT saleorderitemcode, shippingpackagecode, ${SITE("warehouse_name")} AS site, ${UC_STREAM} AS stream, uc_created, packed_timestamp, dispatched_timestamp
+  FROM ${UC} WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU'))
+${ucEv("ordered", "uc_created")} UNION ALL ${ucEv("packed", "packed_timestamp")} UNION ALL ${ucEv("dispatched", "dispatched_timestamp")}
+UNION ALL ${ucEv("shipments", "dispatched_timestamp", "shipment", "shippingpackagecode")}`;
+
+export async function pullUcHistory(from = "2026-04-01") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
+  const until = (await sfQuery<{ until: string | null }>(`SELECT TO_VARCHAR(MIN(uc_created)::date, 'YYYY-MM-DD') AS until FROM ${SLA}`))[0]?.until;
+  if (!until) throw new Error("warehouse_sla_performance has no first day — UC history not written");
+  const rows = (await sfQuery<Row>(UC_SQL.replaceAll("{from}", from).replaceAll("{until}", until))).filter((r) => r.day && r.site);
+  const days = [...new Set(rows.map((r) => r.day!))];
+  await tx(async (t) => {
+    if (days.length) await t.q(`delete from wcm_stage_output where source = 'uc_items' and day = any($1::date[])`, [days]);
+    for (let i = 0; i < rows.length; i += 2000) {
+      const c = rows.slice(i, i + 2000);
+      await t.q(`insert into wcm_stage_output (day, site, stream, event, unit, qty, source)
+               select d::date, s, st, e, u, n, 'uc_items' from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[]) as t(d, s, st, e, u, n)
+               on conflict (day, site, stream, event) do nothing`,
+        [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0)]);
+    }
+  });
+  return { read: rows.length, until };
 }
 
 /**

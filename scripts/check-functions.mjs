@@ -137,3 +137,17 @@ assert.equal(toMonthPoints(mrows, { "2026-11": 100 }, 23000, undefined, undefine
 assert.equal(toMonthPoints(mrows, { "2026-11": 100 }, 23000, undefined, undefined, undefined, undefined, { "South|2026-11": null })[0].costPerUnit, null);
 assert.equal(toMonthPoints(mrows, { "2026-11": 100 }, 23000, undefined, undefined, undefined, undefined, { "South|2026-11": null })[0].idealCostPerUnit, null);
 console.log("functions month per-unit OK");
+
+// Task 2 (backfill): order placement against the rulebook cutoff, as retail_journey_spine flags it (Sep–Nov rows):
+// on the cutoff day before the cutoff = within; 1–2 days ahead = early (Friday counts for a Monday cutoff); later or further ahead = breached
+import { placementSla } from "../src/server/functions/aggregate.ts";
+const wed = { cutoff: "Wednesday 12 PM" };
+assert.equal(placementSla("2026-06-03T10:00", wed), "WITHIN_SLA");
+assert.equal(placementSla("2026-06-03 14:00:00", wed), "BREACHED");
+assert.equal(placementSla("2026-06-01T10:00", wed), "EARLY_CREATION"); // Monday, 2 days ahead
+assert.equal(placementSla("2026-05-31T10:00", wed), "BREACHED"); // Sunday, 3 days ahead: after the previous cutoff
+assert.equal(placementSla("2026-05-29T15:00", { cutoff: "Monday 9 AM" }), "EARLY_CREATION"); // Friday for Monday
+assert.equal(placementSla("2026-05-28T15:00", { cutoff: "Monday 9 AM" }), "BREACHED");
+assert.equal(placementSla("2026-06-03T10:00", null), null);
+assert.equal(placementSla("2026-06-03T10:00", { cutoff: "" }), null);
+console.log("functions placement OK");
