@@ -31,7 +31,7 @@ export async function processProductivity(nWeeks = 6) {
     q<{ day: string; site: string; stream: string; event: string; qty: number }>(
       `select day::text as day, site, stream, event, qty::float8 as qty from wcm_stage_output where day >= $1::date and day <= $2::date`, [from, to]),
     q<{ site: string; stream: string; stage: string; home_fn: string | null; ipp: number | null; feed: string | null; version: string; eff: string }>(
-      `select site, stream, stage, home_fn, ipp::float8 as ipp, feed, version, effective_from::text as eff from wcm_ipp where status = 'active' and unit = 'unit'`),
+      `select site, stream, stage, home_fn, ipp::float8 as ipp, feed, version, effective_from::text as eff from wcm_ipp where status = 'active' and unit in ('unit', 'box')`),
     q<{ day: string; site: string; func: string; role: string; de: number }>(
       `select day::text as day, case site when 'NORTH' then 'North' else 'South' end as site, func, role, sum(de)::float8 as de
        from mp_role_daily where day >= $1::date and day <= $2::date group by 1, 2, 3, 4`, [from, to]),

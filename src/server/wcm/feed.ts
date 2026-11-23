@@ -11,10 +11,20 @@ import { sfQuery } from "../snowflake";
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
  *  Inward / returns / audit (putaway_tracking, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
  *    feeds): units = putaway_completed_quantity, by final type. Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
+ *  B2C returns (PG_INWARDING_DATA, one row per returned packet; channel B2C = Shopify, MP-* = marketplace; TYPE WH-1/WH-2 = South,
+ *    North_WH = North): received = RECEIVING_DATE, qc = QC_TIMESTAMP, counted in packets (~1.05–1.2 units each).
+ *  Inward unloading: New Inward putaway units ÷ 30 = boxes (assumed pieces per box, Malhar M 23 Nov 2026), on the putaway day.
  * The SLA source keeps ~60 days: only days it returns are replaced, so older days are kept (same rule as packaging).
  */
 const SLA = "snitch_db.maplemonk.warehouse_sla_performance";
 const PUT = "snitch_db.maplemonk.putaway_tracking";
+const PG_RET = "snitch_db.maplemonk.PG_INWARDING_DATA";
+const PCS_PER_BOX = 30;
+const PG_EV = (event: string, dayExpr: string) => `SELECT TO_VARCHAR(${dayExpr}, 'YYYY-MM-DD'),
+  CASE WHEN TYPE ILIKE 'North%' THEN 'North' WHEN TYPE ILIKE 'WH-%' THEN 'South' END, IFF(CHANEL = 'B2C', 'B2C Returns Shopify', 'B2C Returns Marketplace'),
+  '${event}', 'packet', COUNT(DISTINCT AWB_NO)
+FROM ${PG_RET} WHERE ${dayExpr} >= TO_DATE('{from}') AND (TYPE ILIKE 'North%' OR TYPE ILIKE 'WH-%')
+GROUP BY 1, 2, 3`;
 export const STAGE_FROM = "2026-09-21";
 /** Days at the start of the SLA source's window treated as partial (see pullStageOutput). */
 const EDGE_DAYS = 7;
@@ -44,7 +54,16 @@ SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"
 FROM ${PUT}
 WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
   AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE
-GROUP BY 1, 2, 3, 4`;
+GROUP BY 1, 2, 3, 4
+UNION ALL
+SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')}, 'Inward', 'unloaded', 'box', ROUND(SUM(putaway_completed_quantity) / ${PCS_PER_BOX})
+FROM ${PUT}
+WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND final_type = 'New Inward' AND is_trading = TRUE
+GROUP BY 1, 2
+UNION ALL
+${PG_EV("received", "TRY_TO_DATE(RECEIVING_DATE, 'DD-MM-YYYY')")}
+UNION ALL
+${PG_EV("qc", "TRY_TO_TIMESTAMP(QC_TIMESTAMP, 'MON DD, YYYY HH12:MI AM')::date")}`;
 
 type Row = { day: string | null; site: string | null; stream: string; event: string; unit: string; qty: number };
 
@@ -59,7 +78,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const stored = new Set(edge ? (await q<{ d: string }>(`select distinct day::text as d from wcm_stage_output where event = any($1::text[]) and day < $2`, [slaEvs, edge])).map((r) => r.d) : []);
   const rows = raw.filter((r) => !(slaEvs.includes(r.event) && edge && r.day! < edge && stored.has(r.day!)));
   // replace per source (event family) only the days that source returned
-  const families = [slaEvs, ["putaway", "audit_move"]];
+  const families = [slaEvs, ["putaway", "audit_move", "unloaded"], ["received", "qc"]];
   for (const evs of families) {
     const days = [...new Set(rows.filter((r) => evs.includes(r.event)).map((r) => r.day!))];
     if (days.length) await q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[])`, [evs, days]);
@@ -70,7 +89,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
              select d::date, s, st, e, u, n, src from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::text[]) as t(d, s, st, e, u, n, src)
              on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()`,
       [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
-        c.map((r) => (r.event === "putaway" || r.event === "audit_move" ? "putaway_tracking" : "warehouse_sla_performance"))]);
+        c.map((r) => (["putaway", "audit_move", "unloaded"].includes(r.event) ? "putaway_tracking" : ["received", "qc"].includes(r.event) ? "pg_inwarding_data" : "warehouse_sla_performance"))]);
   }
   return { read: rows.length, from, keptEdgeDays: [...stored].length };
 }

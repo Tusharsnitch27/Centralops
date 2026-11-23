@@ -45,6 +45,10 @@ async function sopVolumes(period: string, wh: Wh) {
     `select view_key, row_label, ${c}_plan::float8 as plan, ${c}_actual::float8 as actual from sop_review_rows
      where period = $1 and view_key in ('b2c','b2b_mp','retail_fwd','category_inward','returns')`, [period]);
   const ret = (await q<{ b2c: number | null; b2b: number | null }>(`select b2c::float8 as b2c, b2b::float8 as b2b from sop_returns where period = $1 and warehouse = $2`, [period, wh]))[0];
+  // B2C returns received by channel (returns inwarding app, packets) — the real Shopify / marketplace split when the month has it
+  const recv = await q<{ stream: string; n: number }>(`select stream, sum(qty)::float8 as n from wcm_stage_output where event = 'received' and site = $2
+     and date_trunc('month', day)::date = $1::date group by 1`, [period, wh]);
+  const rShop = recv.find((r) => r.stream === "B2C Returns Shopify")?.n ?? 0, rMp = recv.find((r) => r.stream === "B2C Returns Marketplace")?.n ?? 0;
   const sum = (f: (r: (typeof rows)[number]) => boolean, m: "plan" | "actual") => {
     const xs = rows.filter(f).map((r) => r[m]).filter((x): x is number => x != null);
     return xs.length ? xs.reduce((a, x) => a + x, 0) : null;
@@ -57,7 +61,7 @@ async function sopVolumes(period: string, wh: Wh) {
     const b2bRet = m === "plan" ? sum((r) => r.view_key === "returns" && /^b2b/i.test(r.row_label), m) : ret?.b2b ?? null;
     const split = (total: number | null, a: number | null, b: number | null): [number | null, number | null] =>
       total == null ? [null, null] : (a ?? 0) + (b ?? 0) ? [total * (a ?? 0) / ((a ?? 0) + (b ?? 0)), total * (b ?? 0) / ((a ?? 0) + (b ?? 0))] : [total / 2, total / 2];
-    const [rs, rm] = split(b2cRet, shop, mp), [rr, rb] = split(b2bRet, retail, b2bmp);
+    const [rs, rm] = rShop + rMp ? split(b2cRet, rShop, rMp) : split(b2cRet, shop, mp), [rr, rb] = split(b2bRet, retail, b2bmp);
     return {
       "B2C Shopify": shop, "B2C Marketplace": mp, "B2B Retail": retail, "B2B Marketplace": b2bmp,
       "B2C Returns Shopify": rs, "B2C Returns Marketplace": rm, "B2B Returns Retail": rr, "B2B Returns Marketplace": rb,
