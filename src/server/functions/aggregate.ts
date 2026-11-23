@@ -27,6 +27,10 @@ export function retimeToWeekday(orderDate: string, weekday: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** A month's ₹ shared to part of the month by units: ₹ × window units ÷ month units; null when either is unknown or the month has none. */
+export const unitShare = (rupees: number | null, monthUnits: number | null, windowUnits: number | null) =>
+  rupees == null || !monthUnits || windowUnits == null ? null : (rupees * windowUnits) / monthUnits;
+
 const monthKey = (day: string) => day.slice(0, 7);
 const at = (r: number | ByMonth, site: string, month: string) => (typeof r === "number" ? r : r[`${site}|${month}`] ?? r[month] ?? null);
 const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);

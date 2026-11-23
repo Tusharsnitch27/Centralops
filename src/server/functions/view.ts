@@ -5,7 +5,7 @@ import { activeIpps } from "../wcm/daily";
 import { courierOf, monthHistory } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
-import { daysIn, onRoll, toDayPoints, toMonthPoints, type Actuals, type ByMonth } from "./aggregate";
+import { daysIn, onRoll, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { manpowerGap, monthStats, unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
@@ -164,7 +164,16 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     const needed = reNeed.map((p, i) => ({ key: p.key, asIsHeads: asIs[i]!.idealHeads, asIsCost: asIs[i]!.idealCost, heads: p.idealHeads, cost: p.idealCost }));
     const paired = reNeed.map((p, i) => [asIs[i]!, p] as const).filter(([a, b]) => a.idealCost != null && b.idealCost != null);
     const manpower = paired.length ? paired.reduce((x, [a, b]) => x + a.idealCost! - b.idealCost!, 0) : null;
-    const deltaRupees = manpower == null || cz.rupees == null ? null : manpower + cz.rupees, units = sumN(paired.map(([a]) => a.processed));
+    // cross-zone ₹ over the same periods: whole paired months (month view), or each month's ₹ shared by the window's processed units (day view)
+    const pm = [...new Set(paired.map(([a]) => mk(a.key)))], units = sumN(paired.map(([a]) => a.processed));
+    const czParts = pm.map((m) => {
+      const r = cz.byMonth[`${m}-01`] ?? null;
+      if (mode === "month") return r;
+      const whole = sumN(rows.filter((x) => mk(x.day) === m).map((x) => x.processed));
+      return unitShare(r, whole, sumN(paired.filter(([a]) => mk(a.key) === m).map(([a]) => a.processed)));
+    });
+    const czNull = pm.filter((_, i) => czParts[i] == null);
+    const deltaRupees = manpower == null || czNull.length ? null : manpower + czParts.reduce<number>((a, x) => a + x!, 0);
     scenario = { label: "Rulebook followed", points: pointsOf(mode, retimed, n, from, to), needed, deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
     logisticsGap = [
       { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : cz.rupees == null ? `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone`
@@ -176,8 +185,9 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : out.join(", ")} with no store orders, norm or salary.`);
     if (cz.unpriced.length) grey.push(`Cross-zone freight leaves out ${cz.unpriced.join(", ")}, which have no rate in the LR file.`);
     if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
-    if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight covers the whole months shown, not only these days.");
-    if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days, cost would be ₹${n0(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : `, ₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit`}.`);
+    if (czNull.length) grey.push(`The rulebook scenario's saving is blank: there is no cross-zone freight for ${czNull.map(monthName).join(", ")}.`);
+    if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight in the freight gap covers the whole months shown; the scenario's saving takes the shown days' share by units.");
+    if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days and were shipped from their home-zone warehouse, cost would be ₹${n0(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : ` (₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit)`}.`);
   }
   return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario };
 }
