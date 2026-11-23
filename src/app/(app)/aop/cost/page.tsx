@@ -46,6 +46,9 @@ export default async function CostPage({ searchParams }: { searchParams: Promise
   // own logistics) — a part-loaded day misreads CPS
   const fed = (r: (typeof rows)[number]) => r.shipments.b2c > 0 && (site !== "Both" || (r.lines.find((l) => l.key === "lg:b2c")?.units ?? 0) >= 0.6 * r.shipments.shopify);
   const d1 = [...rows].reverse().find(fed) ?? rows.at(-1);
+  // a day with almost no B2B dispatch (e.g. 9 Nov, after Diwali: 15 units) puts a whole day's fixed cost on a handful of units
+  const medB2b = [...rows.map((r) => r.items.b2b)].sort((a, b) => a - b)[Math.floor(rows.length / 2)] ?? 0;
+  const thinB2b = (r: (typeof rows)[number]) => r.items.b2b < 0.1 * medB2b;
   const jas = hist.filter((h) => ["2026-07-01", "2026-08-01", "2026-09-01"].includes(h.month));
   const jasComplete = jas.filter((h) => h.complete);
   // baseline = Σ cost ÷ Σ volume over the complete JAS months (never an average of monthly ratios)
@@ -89,7 +92,7 @@ export default async function CostPage({ searchParams }: { searchParams: Promise
               <td className="tabular">{r.day.slice(5)}</td><td className="text-right tabular">{r0(r.total)}</td><td className="text-right tabular">{r0(r.b2c)}</td><td className="text-right tabular">{r0(r.b2b)}</td>
               <td className="text-right tabular">{n0(r.shipments.b2c)}</td><td className="text-right tabular">{n0(r.items.b2b)}</td>
               <td className={cn("text-right tabular", !fed(r) ? "text-ink-4" : baseB2c != null && r.cpsB2c != null && r.cpsB2c > baseB2c * 1.1 && "text-bad")} title={fed(r) ? undefined : "feed not complete for this day"}>{r2(r.cpsB2c)}{!fed(r) && " *"}</td>
-              <td className={cn("text-right tabular", baseB2b != null && r.cpuB2b != null && r.cpuB2b > baseB2b * 1.1 && "text-bad")}>{r2(r.cpuB2b)}</td>
+              <td className={cn("text-right tabular", thinB2b(r) ? "text-ink-4" : baseB2b != null && r.cpuB2b != null && r.cpuB2b > baseB2b * 1.1 && "text-bad")} title={thinB2b(r) ? "almost no B2B dispatch that day" : undefined}>{thinB2b(r) ? "—" : r2(r.cpuB2b)}</td>
               <td className="text-[11.5px] text-warn">{r.missing.join(", ")}</td></tr>)}</tbody>
           </table></div>
         </Section>

@@ -14,12 +14,12 @@ export const metadata = { title: "AOP · Warehouse" };
 type SP = { month?: string; site?: string; cycle?: string };
 
 const nf = (v: number) => new Intl.NumberFormat("en-IN").format(Math.round(v));
-const FAMILIES: Family[] = ["warehousing", "manpower", "ot", "packaging"];
+const FAMILIES: Family[] = ["warehousing", "manpower", "ot"]; // packaging has its own tab — same total as Overview's Warehousing & Fulfilment
 
 /** Cost heads of one month: family × head → ₹ (null = every line missing). */
 function byHead(m: WcmMonth) {
   const out = new Map<string, { family: Family; head: string; amount: number | null }>();
-  for (const l of m.lines) {
+  for (const l of m.lines.filter((x) => FAMILIES.includes(x.family as Family))) {
     const k = `${l.family}|${l.head}`, cur = out.get(k) ?? { family: l.family as Family, head: l.head, amount: null };
     if (l.amount != null) cur.amount = (cur.amount ?? 0) + l.amount;
     out.set(k, cur);
@@ -58,7 +58,7 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-        <Tile label={`Spend · ${monLabel(month)}`} value={inr(tA)} sub={act.total.missing ? `${act.total.missing} lines not booked yet` : site} />
+        <Tile label={`Spend · ${monLabel(month)}`} value={inr(tA)} sub={heads.some((h) => h.actual == null) ? `${heads.filter((h) => h.actual == null).length} heads not booked yet` : site} />
         <Tile label="Budget" value={inr(tB)} sub={tA != null && tB ? `${Math.round((tA / tB) * 100)}% used` : undefined} />
         <Tile label="Over / under budget" value={tA != null && tB != null ? inr(tA - tB, { sign: true }) : "—"} tone={tA != null && tB != null ? (tA > tB ? "text-bad" : "text-ok") : undefined} />
         <Tile label="Storage & handling per item" value={sites.map((x) => (x.perItem == null ? "—" : `₹${x.perItem.toFixed(2)}`)).join(" · ")} sub={sites.map((x) => x.site).join(" · ")} />
@@ -90,7 +90,7 @@ export default async function WarehousePage({ searchParams }: { searchParams: Pr
                 <div key={x.site} className="rounded-lg border border-line">
                   <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-3 py-2.5">
                     <div className="text-[13.5px] font-semibold">{x.site}</div>
-                    <div className="text-[12px] text-ink-3">{x.sh == null ? "not booked yet" : <>{inr(x.sh)} · <b className="font-semibold text-ink">{x.perItem == null ? "—" : `₹${x.perItem.toFixed(2)}`}</b> per item · ₹{x.perBin == null ? "—" : x.perBin.toFixed(0)} per bin</>}</div>
+                    <div className="text-[12px] text-ink-3">{x.sh == null ? "manpower or rent not booked for the month" : <>{inr(x.sh)} · <b className="font-semibold text-ink">{x.perItem == null ? "—" : `₹${x.perItem.toFixed(2)}`}</b> per item · ₹{x.perBin == null ? "—" : x.perBin.toFixed(0)} per bin</>}</div>
                   </div>
                   {x.categories.length ? <div style={{ overflowX: "auto" }}><table className="table-base min-w-[460px]">
                     <thead><tr><th>Category</th><th className="text-right">Avg units</th><th className="text-right">Bins</th><th className="text-right">₹</th><th className="text-right">₹ / unit</th></tr></thead>
