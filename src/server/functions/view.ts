@@ -196,10 +196,10 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
     if (freightMissing) grey.push(`The rulebook scenario's freight part and total are blank: there is no cross-zone freight for ${freightMissing}.`);
     const unjudged = orders.filter((o) => o.sla == null && o.day >= from && o.day <= to).reduce((a, o) => a + o.qty, 0);
-    if (unjudged) grey.push(`${n0(unjudged)} store-order units come from stores with no rulebook cutoff, so the rulebook scenario leaves them on their day and "Ordered in rulebook window" leaves them out.`);
+    if (unjudged) grey.push(`${n0(unjudged)} store-order units have no rulebook placement flag, so the rulebook scenario leaves them on their day and "Ordered in rulebook window" leaves them out.`);
     if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight in the freight gap covers the whole months shown; the scenario's saving takes the shown days' share by units.");
     const lm = (x: number) => `${inr(Math.abs(x))} ${x >= 0 ? "less" : "more"}`;
-    if (d.deltaManpower != null) summary.splice(3, 0, `If stores ordered on their rulebook days, staffing would cost ${lm(d.deltaManpower)}${d.manpowerPerUnit == null ? "" : ` (₹${Math.abs(d.manpowerPerUnit).toFixed(2)} per unit)`}${d.deltaFreight == null ? "" : `, and shipping from the home-zone warehouse ${lm(d.deltaFreight)} in freight`}.`);
+    if (d.deltaManpower != null) summary.splice(3, 0, `Staffing sized to the store-order peak would cost ${lm(d.deltaManpower)} if stores ordered on their rulebook days${d.manpowerPerUnit == null ? "" : ` (₹${Math.abs(d.manpowerPerUnit).toFixed(2)} per unit)`}${d.deltaFreight == null ? "" : `; shipping from the home-zone warehouse would cost ${lm(d.deltaFreight)} in freight`}.`);
   }
   return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario };
 }

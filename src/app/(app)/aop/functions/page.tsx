@@ -70,7 +70,7 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
               <Link href={href({ scenario: undefined })} scroll={false} data-on={!rulebook} className="seg-item">As is</Link>
               <Link href={href({ scenario: "1" })} scroll={false} data-on={rulebook} className="seg-item">Rulebook followed</Link>
             </div>
-            {rulebook && <Scenario s={view.scenario} mode={mode} />}
+            {rulebook && <Scenario s={view.scenario} />}
           </div>
         )}
         {view.summary.length > 0 && (
@@ -92,19 +92,19 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
 }
 
 /** As is vs rulebook followed: the most heads the store orders needed in any period, and ₹ summed over periods with both figures. */
-function Scenario({ s, mode }: { s: NonNullable<Awaited<ReturnType<typeof functionView>>["scenario"]>; mode: FnMode }) {
-  const max = (xs: (number | null)[]) => (xs.some((x) => x != null) ? Math.max(...xs.filter((x): x is number => x != null)) : null);
+function Scenario({ s }: { s: NonNullable<Awaited<ReturnType<typeof functionView>>["scenario"]> }) {
+  // heads: the as-placed peak period and the rulebook-days heads of that same period; ₹ summed over periods with both
+  const peak = s.needed.filter((x) => x.asIsHeads != null).reduce<(typeof s.needed)[number] | null>((a, x) => (a && a.asIsHeads! >= x.asIsHeads! ? a : x), null);
   const both = s.needed.filter((x) => x.asIsCost != null && x.cost != null);
   const asIs = both.length ? both.reduce((a, x) => a + x.asIsCost!, 0) : null, rb = both.length ? both.reduce((a, x) => a + x.cost!, 0) : null;
   const lm = (x: number) => `${inr(Math.abs(x))} ${x >= 0 ? "less" : "more"}`;
   return (
     <span className="tabular text-ink-2">
-      As is: {n0(max(s.needed.map((x) => x.asIsHeads)))} heads, {inr(asIs)} → Rulebook followed: {n0(max(s.needed.map((x) => x.heads)))} heads, {inr(rb)}
+      Heads needed for store orders — as placed: {n0(peak?.asIsHeads ?? null)} heads{peak ? ` in ${fmtMonth(peak.key)}` : ""}, {inr(asIs)} → on rulebook days: {n0(peak?.heads ?? null)} heads, {inr(rb)}
       <span className="block">
-        Staffing: {s.deltaManpower == null ? "—" : `${lm(s.deltaManpower)}${s.manpowerPerUnit == null ? "" : ` (₹${Math.abs(s.manpowerPerUnit).toFixed(2)} per unit)`}`}
+        Staffing sized to the store-order peak: {s.deltaManpower == null ? "—" : `${lm(s.deltaManpower)}${s.manpowerPerUnit == null ? "" : ` (₹${Math.abs(s.manpowerPerUnit).toFixed(2)} per unit)`}`}
         {" · "}Cross-zone freight: {s.deltaFreight != null ? lm(s.deltaFreight) : s.freightMissing ? `not available for ${s.freightMissing}` : "—"}
       </span>
-      <span className="block text-[11.5px] text-ink-4">Heads are the most needed on any one {mode === "day" ? "day" : "month"}.</span>
     </span>
   );
 }

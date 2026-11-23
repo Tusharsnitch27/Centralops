@@ -85,13 +85,16 @@ assert.equal(bp.actualHeads, null);
 assert.equal(bp.processed, null);
 console.log("functions Both OK");
 
-// Task 5: an order re-timed to its rulebook weekday within the same ISO week (Mon–Sun)
+// Task 5 / Task 6 fix 1: an order re-timed to the nearest rulebook weekday forward (early) or back (breached), within 6 days
 import { retimeToWeekday } from "../src/server/functions/aggregate.ts";
-assert.equal(retimeToWeekday("2026-11-04", "Monday"), "2026-11-02");
-assert.equal(retimeToWeekday("2026-11-04", "Saturday"), "2026-11-07");
-assert.equal(retimeToWeekday("2026-11-04", "Sunday"), "2026-11-08");
-assert.equal(retimeToWeekday("2026-11-08", "Monday"), "2026-11-02");
-assert.equal(retimeToWeekday("2026-11-04", "Someday"), "2026-11-04");
+assert.equal(retimeToWeekday("2026-11-04", "Monday", "forward"), "2026-11-09"); // Wed → next Mon
+assert.equal(retimeToWeekday("2026-11-04", "Monday", "back"), "2026-11-02");
+assert.equal(retimeToWeekday("2026-11-04", "Wednesday", "forward"), "2026-11-04");
+assert.equal(retimeToWeekday("2026-11-04", "Wednesday", "back"), "2026-11-04");
+assert.equal(retimeToWeekday("2026-11-06", "Monday", "forward"), "2026-11-09"); // Fri early for Monday → the coming Monday, not the past one
+assert.equal(retimeToWeekday("2026-11-08", "Monday", "forward"), "2026-11-09");
+assert.equal(retimeToWeekday("2026-11-04", "Saturday", "back"), "2026-10-31");
+assert.equal(retimeToWeekday("2026-11-04", "Someday", "forward"), "2026-11-04");
 console.log("functions retime OK");
 
 // Fix round 1: a month's ₹ shared to the window by processed units
@@ -186,7 +189,7 @@ console.log("functions same-days per-unit OK");
 
 // Task 6 (backfill): the rulebook scenario moves only late orders (EARLY_CREATION / BREACHED); WITHIN_SLA and no-rule (null) orders keep their day
 import { retimeOrders, scenarioDelta, placementShare } from "../src/server/functions/aggregate.ts";
-const wedOrders = [ // Wed 4 Nov; slot "Monday 6 PM" → Monday 2 Nov
+const wedOrders = [ // Wed 4 Nov; slot "Monday 6 PM" → breached back to Mon 2 Nov, early forward to Mon 9 Nov
   { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: "BREACHED", qty: 10 },
   { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: "EARLY_CREATION", qty: 5 },
   { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: "WITHIN_SLA", qty: 7 },
@@ -194,9 +197,10 @@ const wedOrders = [ // Wed 4 Nov; slot "Monday 6 PM" → Monday 2 Nov
   { day: "2026-11-04", site: "South", tat: null, sla: "BREACHED", qty: 2 }, // no slot: stays
 ];
 const rt = retimeOrders(wedOrders, "2026-11-01", "2026-11-30");
-assert.equal(rt.find((r) => r.day === "2026-11-02").received, 15);
+assert.equal(rt.find((r) => r.day === "2026-11-02").received, 10);
+assert.equal(rt.find((r) => r.day === "2026-11-09").received, 5);
 assert.equal(rt.find((r) => r.day === "2026-11-04").received, 12); // 7 within + 3 no rule + 2 no slot
-assert.equal(rt.length, 2);
+assert.equal(rt.length, 3);
 // manpower part shows while freight is missing (Nov has no LR file); the total is missing, never manpower alone
 const sd = scenarioDelta([{ asIsCost: 1000, cost: 600 }, { asIsCost: 500, cost: 700 }], [null], 100);
 assert.equal(sd.deltaManpower, 200);

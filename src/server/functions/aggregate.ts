@@ -35,24 +35,25 @@ export function placementSla(orderTs: string, rule: { cutoff: string | null } | 
   return ahead <= 2 || (ahead === 3 && ci === 1) ? "EARLY_CREATION" : "BREACHED";
 }
 
-/** The day of `orderDate`'s ISO week (Mon–Sun) that falls on `weekday`; an unknown weekday leaves the date as it is. */
-export function retimeToWeekday(orderDate: string, weekday: string): string {
+/** The nearest `weekday` on or after `orderDate` (forward) or on or before it (back), within 6 days; an unknown weekday leaves the date as it is. */
+export function retimeToWeekday(orderDate: string, weekday: string, dir: "forward" | "back"): string {
   const i = DAYS.findIndex((d) => d.toLowerCase() === weekday.trim().toLowerCase());
   if (i < 0) return orderDate;
-  const d = new Date(`${orderDate}T00:00:00Z`), mon = (x: number) => (x + 6) % 7; // Monday = 0
-  d.setUTCDate(d.getUTCDate() + mon(i) - mon(d.getUTCDay()));
+  const d = new Date(`${orderDate}T00:00:00Z`), cur = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() + (dir === "forward" ? (i - cur + 7) % 7 : -((cur - i + 7) % 7)));
   return d.toISOString().slice(0, 10);
 }
 
 type Placement = "WITHIN_SLA" | "EARLY_CREATION" | "BREACHED" | null;
 export interface StoreOrders { day: string; site: "South" | "North"; tat: string | null; sla: Placement | string; qty: number }
 
-/** "Rulebook followed": late orders (EARLY_CREATION / BREACHED) move to their slot's processing weekday in the same ISO week; WITHIN_SLA,
+/** "Rulebook followed": early orders move forward to their slot's next processing weekday, breached ones back to the last one (≤ 6 days); WITHIN_SLA,
  *  no-rule (null) and no-slot orders keep their day. Received per day × site within [from, to] (other fields null). */
 export function retimeOrders(orders: StoreOrders[], from: string, to: string): DayRow[] {
   const by = new Map<string, number>();
   for (const o of orders) {
-    const wd = o.sla === "EARLY_CREATION" || o.sla === "BREACHED" ? processingWeekday(o.tat) : null, day = wd ? retimeToWeekday(o.day, wd) : o.day;
+    const wd = o.sla === "EARLY_CREATION" || o.sla === "BREACHED" ? processingWeekday(o.tat) : null;
+    const day = wd ? retimeToWeekday(o.day, wd, o.sla === "EARLY_CREATION" ? "forward" : "back") : o.day;
     if (day >= from && day <= to) by.set(`${o.site}|${day}`, (by.get(`${o.site}|${day}`) ?? 0) + o.qty);
   }
   return [...by].map(([k, qty]) => { const [s, d] = k.split("|") as ["South" | "North", string];
