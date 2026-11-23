@@ -37,8 +37,10 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
 
   const label = (key: string) => (mode === "day" ? fmtDate(key) : fmtMonth(key));
   const moved = rulebook && view.scenario ? new Map(view.scenario.points.map((p) => [p.key, p.received])) : null;
+  const need = rulebook && view.scenario ? new Map(view.scenario.needed.map((x) => [x.key, x])) : null;
   const data: FnChartPoint[] = view.points.map((p) => ({ label: label(p.key), projected: p.projected, received: moved ? moved.get(p.key) ?? null : p.received,
-    processed: p.processed, issues: p.issues, idealHeads: p.idealHeads, actualHeads: p.actualHeads, costPerUnit: p.costPerUnit, idealCostPerUnit: p.idealCostPerUnit, overlay: p.overlay }));
+    processed: p.processed, issues: p.issues, idealHeads: p.idealHeads, actualHeads: p.actualHeads, costPerUnit: p.costPerUnit, idealCostPerUnit: p.idealCostPerUnit, overlay: p.overlay,
+    ...(need ? { neededAsIs: need.get(p.key)?.asIsHeads ?? null, neededRulebook: need.get(p.key)?.heads ?? null } : {}) }));
 
   return (
     <div className="animate-fade-in">
@@ -94,12 +96,15 @@ function Scenario({ s, mode }: { s: NonNullable<Awaited<ReturnType<typeof functi
   const max = (xs: (number | null)[]) => (xs.some((x) => x != null) ? Math.max(...xs.filter((x): x is number => x != null)) : null);
   const both = s.needed.filter((x) => x.asIsCost != null && x.cost != null);
   const asIs = both.length ? both.reduce((a, x) => a + x.asIsCost!, 0) : null, rb = both.length ? both.reduce((a, x) => a + x.cost!, 0) : null;
-  const d = s.deltaRupees;
+  const lm = (x: number) => `${inr(Math.abs(x))} ${x >= 0 ? "less" : "more"}`;
   return (
     <span className="tabular text-ink-2">
       As is: {n0(max(s.needed.map((x) => x.asIsHeads)))} heads, {inr(asIs)} → Rulebook followed: {n0(max(s.needed.map((x) => x.heads)))} heads, {inr(rb)}
-      {" · "}{d == null ? "saving —" : `${d >= 0 ? "saves" : "costs"} ${inr(Math.abs(d))}${s.deltaPerUnit == null ? "" : ` (₹${Math.abs(s.deltaPerUnit).toFixed(2)} per unit)`}${d >= 0 ? "" : " more"}`}
-      <span className="block text-[11.5px] text-ink-4">Heads are the most needed on any one {mode === "day" ? "day" : "month"}; the saving includes cross-zone freight.</span>
+      <span className="block">
+        Staffing: {s.deltaManpower == null ? "—" : `${lm(s.deltaManpower)}${s.manpowerPerUnit == null ? "" : ` (₹${Math.abs(s.manpowerPerUnit).toFixed(2)} per unit)`}`}
+        {" · "}Cross-zone freight: {s.deltaFreight != null ? lm(s.deltaFreight) : s.freightMissing ? `not available for ${s.freightMissing}` : "—"}
+      </span>
+      <span className="block text-[11.5px] text-ink-4">Heads are the most needed on any one {mode === "day" ? "day" : "month"}.</span>
     </span>
   );
 }

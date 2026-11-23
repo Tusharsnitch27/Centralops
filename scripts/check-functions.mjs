@@ -183,3 +183,34 @@ const [fb] = toMonthPoints(oct, { "2026-10": 100 }, 23000, undefined, undefined,
 assert.equal(fb.actualCost, 3 * 30 * 1000);
 close(fb.costPerUnit, 90000 / (235504 * 3 / 31), 1e-9);
 console.log("functions same-days per-unit OK");
+
+// Task 6 (backfill): the rulebook scenario moves only late orders (EARLY_CREATION / BREACHED); WITHIN_SLA and no-rule (null) orders keep their day
+import { retimeOrders, scenarioDelta, placementShare } from "../src/server/functions/aggregate.ts";
+const wedOrders = [ // Wed 4 Nov; slot "Monday 6 PM" → Monday 2 Nov
+  { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: "BREACHED", qty: 10 },
+  { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: "EARLY_CREATION", qty: 5 },
+  { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: "WITHIN_SLA", qty: 7 },
+  { day: "2026-11-04", site: "South", tat: "Monday 6 PM", sla: null, qty: 3 },
+  { day: "2026-11-04", site: "South", tat: null, sla: "BREACHED", qty: 2 }, // no slot: stays
+];
+const rt = retimeOrders(wedOrders, "2026-11-01", "2026-11-30");
+assert.equal(rt.find((r) => r.day === "2026-11-02").received, 15);
+assert.equal(rt.find((r) => r.day === "2026-11-04").received, 12); // 7 within + 3 no rule + 2 no slot
+assert.equal(rt.length, 2);
+// manpower part shows while freight is missing (Nov has no LR file); the total is missing, never manpower alone
+const sd = scenarioDelta([{ asIsCost: 1000, cost: 600 }, { asIsCost: 500, cost: 700 }], [null], 100);
+assert.equal(sd.deltaManpower, 200);
+assert.equal(sd.manpowerPerUnit, 2);
+assert.equal(sd.deltaFreight, null);
+assert.equal(sd.deltaRupees, null);
+assert.equal(sd.deltaPerUnit, null);
+const sd2 = scenarioDelta([{ asIsCost: 1000, cost: 600 }], [50, 30], 100);
+assert.equal(sd2.deltaFreight, 80);
+assert.equal(sd2.deltaRupees, 480);
+assert.equal(sd2.deltaPerUnit, 4.8);
+assert.equal(scenarioDelta([], [], 100).deltaManpower, null);
+assert.equal(scenarioDelta([{ asIsCost: 1000, cost: 600 }], [5], null).manpowerPerUnit, null);
+// "Ordered in rulebook window": within ÷ units judged; no-rule (null) units are out of the denominator
+assert.deepEqual(placementShare([{ sla: "WITHIN_SLA", qty: 20 }, { sla: "BREACHED", qty: 60 }, { sla: "EARLY_CREATION", qty: 20 }, { sla: null, qty: 100 }]), { overlay: 20, overlayBase: 100 });
+assert.deepEqual(placementShare([{ sla: null, qty: 100 }]), { overlay: null, overlayBase: null });
+console.log("functions rulebook scenario OK");

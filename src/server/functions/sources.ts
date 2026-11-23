@@ -4,7 +4,7 @@ import { q } from "../db";
 import { addDays, monthStart } from "@/lib/dates";
 import { processingMonth } from "../aop/processing";
 import { STREAMS, type StreamKey, type Wh } from "../aop/processingTypes";
-import { processingWeekday, stageTotal, weekdayOf } from "./aggregate";
+import { placementShare, processingWeekday, stageTotal, weekdayOf } from "./aggregate";
 import { FN, type DayRow, type FnKey } from "./types";
 export { FN };
 
@@ -92,9 +92,9 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
        from mp_daily d join mp_site_map sm on sm.site = d.site left join mp_func_map fm on fm.func = d.func
        where d.day between $1 and $2 and sm.warehouse = any($3::text[]) group by 1, 2, 3`, [from, to, sites]),
     Promise.all(months.flatMap((m) => sites.map(async (s) => [k(s, m), await pmonth(m, s)] as const))).then((x) => new Map(x)),
-    fn === "b2b_retail" ? q<{ day: string; site: string; qty: number; within: number }>(
-      `select order_date::text as day, site, sum(quantity)::float8 as qty, coalesce(sum(quantity) filter (where placement_sla = 'WITHIN_SLA'), 0)::float8 as within
-       from fn_retail_order where order_date between $1 and $2 group by 1, 2`, [from, to]) : Promise.resolve([]),
+    fn === "b2b_retail" ? q<{ day: string; site: string; sla: string | null; qty: number }>(
+      `select order_date::text as day, site, placement_sla as sla, sum(quantity)::float8 as qty
+       from fn_retail_order where order_date between $1 and $2 and quantity is not null group by 1, 2, 3`, [from, to]) : Promise.resolve([]),
     fn === "inwards" ? q<{ day: string; site: string; received: number | null; issues: number | null }>(
       `select day::text as day, site, received::float8 as received, issues::float8 as issues from fn_inward_daily where day between $1 and $2`, [from, to]) : Promise.resolve([]),
     fn === "b2c_shopify" || fn === "b2c_marketplace" ? slaCells(f.label, "created_hr", from, to) : Promise.resolve(new Map()),
@@ -121,9 +121,9 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       const c = deadline.get(k(s, d));
       if (c?.judged) { overlay = (100 * c.ok) / c.judged; overlayBase = c.judged; }
     } else if (fn === "b2b_retail") {
-      const o = orders.find((r) => r.day === d && r.site === s);
-      received = o ? o.qty : d >= ORDERS_FROM && lastOrder != null && d <= lastOrder ? 0 : null; // after the latest pulled day: not known yet
-      if (o?.qty) { overlay = (100 * o.within) / o.qty; overlayBase = o.qty; }
+      const o = orders.filter((r) => r.day === d && r.site === s);
+      received = o.length ? o.reduce((a, r) => a + r.qty, 0) : d >= ORDERS_FROM && lastOrder != null && d <= lastOrder ? 0 : null; // after the latest pulled day: not known yet
+      ({ overlay, overlayBase } = placementShare(o)); // no-rule units are not judged
     } else if (fn === "b2b_marketplace") {
       received = deadline.get(k(s, d))?.units ?? stageSum(s, d, "ordered", f.streams);
     } else if (fn === "b2c_returns") {

@@ -4,23 +4,29 @@ import { num } from "@/lib/format";
 
 /** One chart point, labelled on the server; null = missing (a gap, never 0). */
 export interface FnChartPoint { label: string; projected: number | null; received: number | null; processed: number | null; issues: number | null;
-  idealHeads: number | null; actualHeads: number | null; costPerUnit: number | null; idealCostPerUnit: number | null; overlay: number | null }
+  idealHeads: number | null; actualHeads: number | null; costPerUnit: number | null; idealCostPerUnit: number | null; overlay: number | null;
+  /** rulebook scenario only: heads the store orders need, as placed and on rulebook days */
+  neededAsIs?: number | null; neededRulebook?: number | null }
 
 const PROJ = "var(--color-ink-3)", REC = "var(--color-line-strong)", PROC = "var(--color-ink)", ISS = "var(--color-bad)";
-const CPU = "var(--color-accent)", OVL = "var(--color-warn)";
+const CPU = "var(--color-accent)", OVL = "var(--color-warn)", NEED = "var(--color-ok)";
 const r2 = (v: number | null) => (v == null || !Number.isFinite(v) ? "—" : `₹${v.toFixed(2)}`);
 
-/** Units on the left (projected, received, processed, issues), manpower ₹ per unit on the right, overlay % on its own hidden 0–100 axis. */
+/** Units on the left (projected, received, processed, issues), manpower ₹ per unit on the right, overlay % on its own hidden 0–100 axis,
+ *  heads needed (rulebook scenario) on their own hidden heads axis. */
 export function FunctionChart({ data, heads, received, overlay, height = 300 }: {
   data: FnChartPoint[]; heads: string; received: string; overlay: string | null; height?: number;
 }) {
   const hasIssues = data.some((d) => d.issues != null), hasOverlay = overlay != null && data.some((d) => d.overlay != null);
   const maxIss = Math.max(1, ...data.map((d) => d.issues ?? 0));
+  const hasNeed = data.some((d) => d.neededAsIs != null || d.neededRulebook != null);
+  const maxNeed = Math.max(1, ...data.flatMap((d) => [d.neededAsIs ?? 0, d.neededRulebook ?? 0]));
   const key = [
     { label: "Projected", line: PROJ, dash: true }, { label: received, box: REC }, { label: "Processed", line: PROC },
     ...(hasIssues ? [{ label: "Issues", box: ISS }] : []),
     { label: "₹ / unit", line: CPU }, { label: "Ideal ₹ / unit", line: CPU, dash: true },
     ...(hasOverlay ? [{ label: overlay!, line: OVL }] : []),
+    ...(hasNeed ? [{ label: "Heads needed, as placed", line: NEED, dash: true }, { label: "Heads needed, on rulebook days", line: NEED }] : []),
   ];
   return (
     <div>
@@ -32,7 +38,7 @@ export function FunctionChart({ data, heads, received, overlay, height = 300 }: 
             {k.label}
           </span>
         ))}
-        <span className="ml-auto text-ink-4">units · ₹ per unit</span>
+        <span className="ml-auto text-ink-4">units · ₹ per unit{hasNeed ? " · heads on their own scale" : ""}</span>
       </div>
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} barGap={2} barCategoryGap="20%">
@@ -43,6 +49,7 @@ export function FunctionChart({ data, heads, received, overlay, height = 300 }: 
           {/* issues sit low on their own scale; overlay on 0–100 % */}
           <YAxis yAxisId="i" hide domain={[0, maxIss * 4]} />
           <YAxis yAxisId="p" hide domain={[0, 100]} />
+          <YAxis yAxisId="h" hide domain={[0, maxNeed * 1.15]} />
           <Tooltip cursor={{ fill: "rgb(127 127 127 / 0.06)" }} content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
             const p = payload[0]!.payload as FnChartPoint;
@@ -58,6 +65,8 @@ export function FunctionChart({ data, heads, received, overlay, height = 300 }: 
                 <Row k="₹ / unit" v={r2(p.costPerUnit)} />
                 <Row k="Ideal ₹ / unit" v={r2(p.idealCostPerUnit)} />
                 {hasOverlay && <Row k={overlay!} v={p.overlay == null ? "—" : `${p.overlay.toFixed(0)}%`} />}
+                {hasNeed && <Row k="Heads needed, as placed" v={num(p.neededAsIs ?? null)} />}
+                {hasNeed && <Row k="Heads needed, on rulebook days" v={num(p.neededRulebook ?? null)} />}
               </div>
             );
           }} />
@@ -68,6 +77,8 @@ export function FunctionChart({ data, heads, received, overlay, height = 300 }: 
           <Line yAxisId="r" dataKey="costPerUnit" stroke={CPU} strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: CPU }} connectNulls={false} isAnimationActive={false} />
           <Line yAxisId="r" dataKey="idealCostPerUnit" stroke={CPU} strokeWidth={1.5} strokeDasharray="5 4" dot={{ r: 1.5, strokeWidth: 0, fill: CPU }} connectNulls={false} isAnimationActive={false} />
           {hasOverlay && <Line yAxisId="p" dataKey="overlay" stroke={OVL} strokeWidth={1} dot={false} connectNulls={false} isAnimationActive={false} />}
+          {hasNeed && <Line yAxisId="h" dataKey="neededAsIs" stroke={NEED} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls={false} isAnimationActive={false} />}
+          {hasNeed && <Line yAxisId="h" dataKey="neededRulebook" stroke={NEED} strokeWidth={2} dot={{ r: 2, strokeWidth: 0, fill: NEED }} connectNulls={false} isAnimationActive={false} />}
         </ComposedChart>
       </ResponsiveContainer>
     </div>

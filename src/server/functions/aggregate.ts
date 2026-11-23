@@ -44,6 +44,37 @@ export function retimeToWeekday(orderDate: string, weekday: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+type Placement = "WITHIN_SLA" | "EARLY_CREATION" | "BREACHED" | null;
+export interface StoreOrders { day: string; site: "South" | "North"; tat: string | null; sla: Placement | string; qty: number }
+
+/** "Rulebook followed": late orders (EARLY_CREATION / BREACHED) move to their slot's processing weekday in the same ISO week; WITHIN_SLA,
+ *  no-rule (null) and no-slot orders keep their day. Received per day × site within [from, to] (other fields null). */
+export function retimeOrders(orders: StoreOrders[], from: string, to: string): DayRow[] {
+  const by = new Map<string, number>();
+  for (const o of orders) {
+    const wd = o.sla === "EARLY_CREATION" || o.sla === "BREACHED" ? processingWeekday(o.tat) : null, day = wd ? retimeToWeekday(o.day, wd) : o.day;
+    if (day >= from && day <= to) by.set(`${o.site}|${day}`, (by.get(`${o.site}|${day}`) ?? 0) + o.qty);
+  }
+  return [...by].map(([k, qty]) => { const [s, d] = k.split("|") as ["South" | "North", string];
+    return { day: d, site: s, projected: null, received: qty, processed: null, issues: null, presentHeads: null, overlay: null }; });
+}
+
+/** Store orders placed in the rulebook window, % of the units judged (WITHIN ÷ flagged units); no-rule (null) units are not judged. */
+export function placementShare(rows: { sla: string | null; qty: number }[]) {
+  const judged = rows.filter((r) => r.sla != null).reduce((a, r) => a + r.qty, 0), within = rows.filter((r) => r.sla === "WITHIN_SLA").reduce((a, r) => a + r.qty, 0);
+  return judged ? { overlay: (100 * within) / judged, overlayBase: judged } : { overlay: null, overlayBase: null };
+}
+
+/** The scenario's saving in two parts over the same periods: staffing = Σ(as placed − rulebook) heads' ₹ over periods with both; freight =
+ *  Σ cross-zone ₹ of those periods (null when any is missing). Total and per unit only when both parts exist. */
+export function scenarioDelta(pairs: { asIsCost: number; cost: number }[], freight: (number | null)[], units: number | null) {
+  const deltaManpower = pairs.length ? pairs.reduce((a, p) => a + p.asIsCost - p.cost, 0) : null;
+  const deltaFreight = freight.length && freight.every((x) => x != null) ? freight.reduce<number>((a, x) => a + x!, 0) : null;
+  const deltaRupees = deltaManpower == null || deltaFreight == null ? null : deltaManpower + deltaFreight;
+  const per = (x: number | null) => (x == null || !units ? null : x / units);
+  return { deltaManpower, deltaFreight, deltaRupees, manpowerPerUnit: per(deltaManpower), deltaPerUnit: per(deltaRupees) };
+}
+
 /** A month's ₹ shared to part of the month by units: ₹ × window units ÷ month units; null when either is unknown or the month has none. */
 export const unitShare = (rupees: number | null, monthUnits: number | null, windowUnits: number | null) =>
   rupees == null || !monthUnits || windowUnits == null ? null : (rupees * windowUnits) / monthUnits;

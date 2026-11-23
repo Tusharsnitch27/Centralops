@@ -6,7 +6,7 @@ import { activeIpps } from "../wcm/daily";
 import { courierOf } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
-import { courierSplit, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
+import { courierSplit, retimeOrders, scenarioDelta, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, lastOrderDay, pmonth, SITES } from "./sources";
@@ -164,7 +164,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   // B2B Retail: "Rulebook followed" (store orders on their rulebook days; ideal stays on the plan) and cross-zone freight
   let scenario: FunctionView["scenario"] = null, logisticsGap: GapPart[] | null = fn === "b2c_shopify" ? logistics?.parts ?? null : null;
   if (retail) {
-    const [rb, cz] = retail;
+    const [orders, cz] = retail, rb = retimeOrders(orders, monthStart(from), rowsTo);
     const moved = new Map(rb.map((r) => [`${r.site}|${r.day}`, r.received]));
     const retimed = rows.map((r) => ({ ...r, received: moved.get(`${r.site}|${r.day}`) ?? (r.received == null ? null : 0) }));
     // heads needed for the actual orders = ideal maths on the order peak (as placed vs re-timed)
@@ -172,7 +172,6 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     const reNeed = pointsOf(mode, retimed.map((r) => ({ ...r, projected: r.received })), n, from, to);
     const needed = reNeed.map((p, i) => ({ key: p.key, asIsHeads: asIs[i]!.idealHeads, asIsCost: asIs[i]!.idealCost, heads: p.idealHeads, cost: p.idealCost }));
     const paired = reNeed.map((p, i) => [asIs[i]!, p] as const).filter(([a, b]) => a.idealCost != null && b.idealCost != null);
-    const manpower = paired.length ? paired.reduce((x, [a, b]) => x + a.idealCost! - b.idealCost!, 0) : null;
     // cross-zone ₹ over the same periods: whole paired months (month view), or each month's ₹ shared by the window's processed units (day view)
     const pm = [...new Set(paired.map(([a]) => mk(a.key)))];
     const units = mode === "month" ? (paired.every(([a]) => volOf(a.key) != null) ? sumN(paired.map(([a]) => volOf(a.key))) : null) : sumN(paired.map(([a]) => a.processed));
@@ -182,9 +181,9 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
       const whole = sumN(rows.filter((x) => mk(x.day) === m).map((x) => x.processed));
       return unitShare(r, whole, sumN(paired.filter(([a]) => mk(a.key) === m).map(([a]) => a.processed)));
     });
-    const czNull = pm.filter((_, i) => czParts[i] == null);
-    const deltaRupees = manpower == null || czNull.length ? null : manpower + czParts.reduce<number>((a, x) => a + x!, 0);
-    scenario = { points: pointsOf(mode, retimed, n, from, to), needed, deltaRupees, deltaPerUnit: deltaRupees == null || !units ? null : deltaRupees / units };
+    const czNull = pm.filter((_, i) => czParts[i] == null), freightMissing = czNull.length ? spans(czNull.map((m) => `${sites[0]}|${m}`), [sites[0]!]) : null;
+    const d = scenarioDelta(paired.map(([a, b]) => ({ asIsCost: a.idealCost!, cost: b.idealCost! })), czParts, units);
+    scenario = { points: pointsOf(mode, retimed, n, from, to), needed, ...d, freightMissing };
     logisticsGap = [
       { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : cz.rupees == null ? `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone`
         : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone cost ₹${n0(Math.abs(cz.rupees))} ${cz.rupees >= 0 ? "more" : "less"} than the home lanes` },
@@ -195,9 +194,12 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : spans(out.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)} with no store orders, norm or salary.`);
     if (cz.unpriced.length) grey.push(`Cross-zone freight leaves out ${cz.unpriced.join(", ")}, which have no rate in the LR file.`);
     if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
-    if (czNull.length) grey.push(`The rulebook scenario's saving is blank: there is no cross-zone freight for ${spans(czNull.flatMap((m) => sites.map((s) => `${s}|${m}`)), sites)}.`);
+    if (freightMissing) grey.push(`The rulebook scenario's freight part and total are blank: there is no cross-zone freight for ${freightMissing}.`);
+    const unjudged = orders.filter((o) => o.sla == null && o.day >= from && o.day <= to).reduce((a, o) => a + o.qty, 0);
+    if (unjudged) grey.push(`${n0(unjudged)} store-order units come from stores with no rulebook cutoff, so the rulebook scenario leaves them on their day and "Ordered in rulebook window" leaves them out.`);
     if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight in the freight gap covers the whole months shown; the scenario's saving takes the shown days' share by units.");
-    if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days and were shipped from their home-zone warehouse, cost would be ${inr(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : ` (₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit)`}.`);
+    const lm = (x: number) => `${inr(Math.abs(x))} ${x >= 0 ? "less" : "more"}`;
+    if (d.deltaManpower != null) summary.splice(3, 0, `If stores ordered on their rulebook days, staffing would cost ${lm(d.deltaManpower)}${d.manpowerPerUnit == null ? "" : ` (₹${Math.abs(d.manpowerPerUnit).toFixed(2)} per unit)`}${d.deltaFreight == null ? "" : `, and shipping from the home-zone warehouse ${lm(d.deltaFreight)} in freight`}.`);
   }
   return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario };
 }
