@@ -5,11 +5,11 @@ import { activeIpps } from "../wcm/daily";
 import { courierOf } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
-import { courierSplit, daysIn, spans, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
-import { manpowerGap, monthStats, unitsPerHead } from "./math";
+import { courierSplit, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
+import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
-import type { Cause, DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
+import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 
 /**
  * One function's view: last 30 days to yesterday (IST), day on day, or the financial year to date, month on month.
@@ -49,26 +49,6 @@ type Norms = Awaited<ReturnType<typeof norms>>;
 export const pointsOf = (mode: FnMode, rows: DayRow[], n: Norms, from: string, to: string): Point[] =>
   mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to, n.wd) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals, n.wd);
 
-/** Manpower gap for the window: per site × month, then summed by cause (each part keeps causes + other = actual − ideal). */
-function gapOf(fn: FnKey, mode: FnMode, rows: DayRow[], n: Norms, sites: Wh[], from: string, to: string) {
-  const parts: GapPart[][] = [], left: string[] = [];
-  for (const s of sites) {
-    const mine = rows.filter((r) => r.site === s);
-    for (const seg of toMonthPoints(mine, n.uph, n.salary, from, to, mode === "month" ? n.actuals : undefined, n.wd)) {
-      const key = `${s}|${seg.key}`, uph = n.uph[key], sal = n.salary[key];
-      const month = mine.filter((r) => mk(r.day) === seg.key), win = month.filter((r) => r.day >= from && r.day <= to);
-      const proj = monthStats(month.map((r) => r.projected)), days = win.filter((r) => r.processed != null).length;
-      if (!uph || !sal || !proj || !days || seg.idealCost == null || seg.actualCost == null || seg.processed == null) { left.push(`${s}|${seg.key}`); continue; }
-      const issueDays = win.filter((r) => r.issues != null);
-      const heldUp = fn === "inwards" && issueDays.length ? issueDays.filter((r) => r.issues! > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
-      // head-days at ₹ salary ÷ 23: ideal and actual exactly as the chart costs them (on-roll ideal, Processing's actual)
-      parts.push(manpowerGap({ salary: sal, uph, projAvg: proj.avg, days, processed: seg.processed, heldUpUnits: heldUp,
-        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal }));
-    }
-  }
-  const causes = [...new Set(parts.flatMap((p) => p.map((x) => x.cause)))] as Cause[];
-  return { gap: causes.map((c) => ({ cause: c, rupees: sumN(parts.map((p) => p.find((x) => x.cause === c)?.rupees ?? null)), note: parts[0]!.find((x) => x.cause === c)!.note })), left };
-}
 
 /** B2C Shopify forward shipments (South + North) priced per courier against that courier's own Jul–Sep cost per shipment (courierSplit). */
 async function courierGap(from: string, to: string, site: FnSite) {
@@ -95,7 +75,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     fn === "b2b_retail" ? Promise.all([rulebookScenario(site, monthStart(from), rowsTo), crossZone(site, months)]) : Promise.resolve(null),
   ]);
   const points = pointsOf(mode, rows, n, from, to);
-  const { gap, left } = gapOf(fn, mode, rows, n, sites, from, to);
+  const { gap, left, dropped } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards" });
   const win = rows.filter((r) => r.day >= from && r.day <= to);
 
   const grey: string[] = [];
@@ -114,9 +94,10 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where no sheet salary exists (${spans(n.legacy, sites)}).`);
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
   if (fn !== "inwards") grey.push("Work held up by issues is not recorded for this function.");
-  if (left.length) grey.push(`The manpower gap leaves out ${spans(left, sites)}, which lack a norm, a projection, attendance or processed volume.`);
+  if (left.length || dropped.length) grey.push(`The manpower gap leaves out ${[left.length ? spans(left, sites) : "", dropped.length ? (mode === "day" ? `${dropped.length} days` : spans(dropped.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)) : ""].filter(Boolean).join(" and ")}, which lack a norm, a projection, attendance or processed volume.`);
   if (fn === "b2c_shopify") {
     grey.push(logistics?.parts ? "Courier cost is as billed, before credit notes." : "No courier has both a rate and a Jul–Sep history for these shipments, so the logistics gap is blank.");
+    grey.push("The courier cost file has no channel split, so each courier's rate is its cost per shipment across all its B2C shipments.");
     if (logistics?.unpriced.length) grey.push(`${logistics.unpriced.map((u) => `${n0(u.n)} ${u.courier}`).join(", ")} shipments have no Jul–Sep rate for their courier, so they are not priced.`);
   }
 

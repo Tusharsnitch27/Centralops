@@ -111,3 +111,13 @@ assert.equal(cs2.parts.find((p) => p.cause === "other").rupees, null);
 assert.deepEqual(cs2.unpriced, [{ courier: "B", n: 7 }]);
 assert.equal(courierSplit([{ month: "2026-11-01", courier: "B", n: 7 }], lg, jas).parts, null);
 console.log("functions courier OK");
+// gap pairs like the summary: a day with no attendance is left out of both sides, so Σ causes = Σ paired (actual − ideal)
+import { windowGap } from "../src/server/functions/aggregate.ts";
+const gr = [day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, null), day("2026-11-03", 200, 150, 3)];
+const gpts = toDayPoints(gr, { "2026-11": 100 }, 23000, "2026-11-01", "2026-11-03");
+const pairedGap = gpts.filter((p) => p.actualCost != null && p.idealCost != null).reduce((a, p) => a + p.actualCost - p.idealCost, 0);
+const wg = windowGap("day", gr, { "2026-11": 100 }, 23000, ["South"], "2026-11-01", "2026-11-03");
+close(wg.gap.reduce((a, p) => a + (p.rupees ?? 0), 0), pairedGap);
+assert.deepEqual(wg.dropped, ["2026-11-02"]);
+close(wg.gap.find((p) => p.cause === "other").rupees, 0);
+console.log("functions gap pairing OK");

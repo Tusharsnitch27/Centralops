@@ -34,12 +34,12 @@ export function manpowerGap(i: { salary: number; uph: number; projAvg: number; d
   const other = (A - I) - (plan + volume + (held ?? 0) + below);
   const R = (d: number | null) => (d == null ? null : d * r);
   return [
-    { cause: "plan_peak", rupees: R(plan), note: "heads the plan holds for its busiest day, beyond the average day" },
+    { cause: "plan_peak", rupees: R(plan), note: "the ideal staffs for the busiest projected day plus the 10 % and weekly-off cover; an average day needs fewer heads" },
     { cause: "volume", rupees: R(volume), note: "processed volume against the projected average" },
     { cause: "held_up", rupees: R(held), note: held == null ? "held-up units not available" : "heads idle on held-up units" },
-    { cause: "below_ipp", rupees: R(below), note: "output per head below IPP" },
+    { cause: "below_ipp", rupees: R(below), note: "units each head processed against the norm (a plus means fewer units per head)" },
     { cause: "absenteeism", rupees: null, note: "not measured — 10 % allowance assumed" },
-    { cause: "other", rupees: R(other), note: "remainder" },
+    { cause: "other", rupees: R(other), note: "what the causes above don't explain" },
   ];
 }
 

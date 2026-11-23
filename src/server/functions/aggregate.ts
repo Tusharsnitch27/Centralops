@@ -1,6 +1,6 @@
 // Pure aggregation for the AOP Functions view: day rows → chart points (no server imports; scripts/check-functions.mjs runs it).
-import { idealHeads, monthStats, perUnit } from "./math.ts";
-import type { DayRow, GapPart, Point } from "./types";
+import { idealHeads, manpowerGap, monthStats, perUnit } from "./math.ts";
+import type { Cause, DayRow, GapPart, Point } from "./types";
 
 /** Per-month value, site-specific first: keys "South|2026-11" or "2026-11". */
 export type ByMonth = Record<string, number | null | undefined>;
@@ -62,9 +62,9 @@ function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
  * the month. Heads: day = present heads that day; month = present per captured day × days in month ÷ 23 (Processing's roster heads).
  * `rows` must cover whole months (the peak is the month's); only days in [from, to] become points.
  */
-function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth): Point[] {
+function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth, keep?: (r: DayRow) => boolean): Point[] {
   const ideal = idealBySiteMonth(rows, uph, wd);
-  const win = rows.filter((r) => r.day >= from && r.day <= to);
+  const win = rows.filter((r) => r.day >= from && r.day <= to && (!keep || keep(r))); // peaks still use every row
   const groups = new Map<string, DayRow[]>();
   for (const r of win) { const k = mode === "day" ? r.day : monthKey(r.day); groups.set(k, [...(groups.get(k) ?? []), r]); }
   const pts = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, rs]) => {
@@ -97,6 +97,40 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
 export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, wd?: ByMonth) => toPoints("day", rows, uph, salary, from, to, undefined, wd);
 /** `actuals` ("South|2026-10" → Processing's heads and ₹ for the month) replace the attendance figure, so months tie to AOP › Processing. */
 export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth) => toPoints("month", rows, uph, salary, from, to, actuals, wd);
+
+/**
+ * Manpower gap for the window, per site × month segment, summed by cause. Only periods whose chart point has both actual and ideal ₹
+ * count (the summary's pairing), so Σ causes = Σ paired (actual − ideal). `dropped` = the points left out; `left` = site-months with no
+ * norm, salary, projection or processed volume.
+ */
+export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, sites: string[], from: string, to: string,
+  o: { actuals?: Actuals; wd?: ByMonth; heldUp?: boolean } = {}) {
+  const acts = mode === "month" ? o.actuals : undefined;
+  const pts = toPoints(mode, rows, uph, salary, from, to, acts, o.wd);
+  const paired = new Set(pts.filter((p) => p.actualCost != null && p.idealCost != null).map((p) => p.key));
+  const inWin = (d: string) => d >= from && d <= to, keyOf = (d: string) => (mode === "day" ? d : monthKey(d));
+  const parts: GapPart[][] = [], left: string[] = [];
+  for (const s of sites) {
+    const mine = rows.filter((r) => r.site === s);
+    for (const seg of toPoints("month", mine, uph, salary, from, to, acts, o.wd, (r) => paired.has(keyOf(r.day)))) {
+      const u = at(uph, s, seg.key), sal = at(salary, s, seg.key);
+      const win = mine.filter((r) => monthKey(r.day) === seg.key && inWin(r.day) && paired.has(keyOf(r.day)));
+      const proj = monthStats(rows.filter((r) => r.site === s && monthKey(r.day) === seg.key).map((r) => r.projected)), days = win.filter((r) => r.processed != null).length;
+      if (!u || !sal || !proj || !days || seg.idealCost == null || seg.actualCost == null || seg.processed == null) { left.push(`${s}|${seg.key}`); continue; }
+      const issueDays = win.filter((r) => r.issues != null);
+      const held = o.heldUp && issueDays.length ? issueDays.filter((r) => r.issues! > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
+      // head-days at ₹ salary ÷ 23: ideal and actual exactly as the chart costs them
+      parts.push(manpowerGap({ salary: sal, uph: u, projAvg: proj.avg, days, processed: seg.processed, heldUpUnits: held,
+        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal }));
+    }
+  }
+  const causes = [...new Set(parts.flatMap((p) => p.map((x) => x.cause)))] as Cause[];
+  const gap = causes.map((c) => {
+    const xs = parts.map((p) => p.find((x) => x.cause === c)!);
+    return { cause: c, rupees: sumN(xs.map((x) => x.rupees)), note: (xs.find((x) => x.rupees != null) ?? xs[0]!).note };
+  });
+  return { gap, left, dropped: pts.filter((p) => !paired.has(p.key)).map((p) => p.key) };
+}
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const monthName = (m: string) => `${MONTHS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`;
@@ -132,8 +166,8 @@ export function courierSplit(ships: { month: string; courier: string; n: number 
     actual += s.n * cps; atBase += s.n * b; rate += s.n * (cps - b); priced += s.n;
   }
   const parts: GapPart[] | null = priced ? [
-    { cause: "courier_rate", rupees: rate, note: "courier rates above each courier's own Jul–Sep cost per shipment" },
-    { cause: "other", rupees: unpriced.size ? null : actual - atBase - rate, note: unpriced.size ? "couriers without a Jul–Sep rate" : "remainder" },
+    { cause: "courier_rate", rupees: rate, note: "courier rates against each courier's own Jul–Sep cost per shipment" },
+    { cause: "other", rupees: unpriced.size ? null : actual - atBase - rate, note: unpriced.size ? "couriers without a Jul–Sep rate" : "what the courier rates don't explain" },
   ] : null;
   return { parts, unpriced: [...unpriced].map(([courier, n]) => ({ courier, n })) };
 }

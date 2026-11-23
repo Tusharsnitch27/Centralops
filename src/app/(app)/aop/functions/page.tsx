@@ -17,7 +17,7 @@ type SP = { fn?: string; site?: string; mode?: string; scenario?: string; cycle?
 const FNS = Object.keys(FN) as FnKey[];
 const RECEIVED: Record<FnKey, string> = { inwards: "Received", b2c_shopify: "Orders", b2c_marketplace: "Orders", b2b_retail: "Store orders", b2b_marketplace: "Orders", returns: "Returns received" };
 const OVERLAY: Partial<Record<FnKey, string>> = { b2c_shopify: "Within SLA", b2c_marketplace: "Within SLA", b2b_retail: "Ordered in rulebook window" };
-const CAUSE: Record<Cause, string> = { plan_peak: "Heads held for the plan's peak", volume: "Volume vs projection", held_up: "Work held up by issues", below_ipp: "Output per head below norm",
+const CAUSE: Record<Cause, string> = { plan_peak: "Plan's cover for its busiest day", volume: "Volume vs projection", held_up: "Work held up by issues", below_ipp: "Output per head against the norm",
   absenteeism: "Absenteeism above 10 %", cross_zone: "Cross-zone freight", courier_rate: "Courier rates", other: "Other" };
 
 /** AOP › Functions: per function, volume against ideal and actual manpower cost, the cost gap split into causes, and what is assumed or missing. */
@@ -109,13 +109,16 @@ function GapTable({ title, parts }: { title: string; parts: GapPart[] }) {
   return (
     <table className="table-base">
       <thead><tr><th>{title}</th><th className="text-right">₹</th><th>Note</th></tr></thead>
-      <tbody>{rows.map((p) => (
-        <tr key={p.cause}>
-          <td>{CAUSE[p.cause]}</td>
-          <td className={cn("text-right tabular", p.rupees == null ? "text-ink-4" : p.rupees > 0 ? "text-bad" : p.rupees < 0 ? "text-ok" : "text-ink-3")}>{inr(p.rupees, { sign: true })}</td>
-          <td className="text-ink-3">{p.note}</td>
-        </tr>
-      ))}</tbody>
+      <tbody>{rows.map((p) => {
+        const r = p.rupees == null ? null : Math.round(p.rupees) || 0; // whole rupees before sign and colour (no red "+₹0")
+        return (
+          <tr key={p.cause}>
+            <td>{CAUSE[p.cause]}</td>
+            <td className={cn("text-right tabular", r == null ? "text-ink-4" : r > 0 ? "text-bad" : r < 0 ? "text-ok" : "text-ink-3")}>{inr(r, { sign: true })}</td>
+            <td className="text-ink-3">{p.note}</td>
+          </tr>
+        );
+      })}</tbody>
     </table>
   );
 }
