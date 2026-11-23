@@ -109,6 +109,11 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (hasWorkbookPlan || hasWorkbookOutput) grey.push("The monthly chart uses S&OP review totals where daily coverage is missing. Those workbook totals do not provide a daily peak or attendance.");
   if (fn === "b2b_marketplace" || fn === "b2c_returns" || fn === "b2b_returns") grey.push("The projection is the monthly plan spread evenly over the days of the month.");
   if (evenMonths.length) grey.push(`There is no daily inward plan for ${spans(evenMonths.flatMap((m) => sites.map((s) => `${s}|${m}`)), sites)}, so the projection there is the monthly plan spread evenly over the days of the month.`);
+  if (fn === "b2c_shopify" || fn === "b2c_marketplace") {
+    const first = win.find((r) => r.overlay != null)?.day;
+    if (!first) grey.push("There is no SLA tracker data for this period, so Within SLA is blank.");
+    else if (win[0]!.day < first) grey.push(`The SLA tracker's data starts on ${fmtDate(first, { year: true })}, so Within SLA is blank before then.`);
+  }
   if (fn === "b2c_returns") grey.push("Returns received are packets from the returns app (about 1.05–1.2 units each); processed is units put away.");
   if (fn === "b2b_returns") grey.push("B2B returns have no receiving scan, so received is the putaway.");
   if (fn === "b2b_retail") grey.push("The projection is the rulebook's daily processing plan, store by store.");
