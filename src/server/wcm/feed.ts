@@ -90,20 +90,23 @@ export async function pullStageOutput(from = STAGE_FROM) {
   // day × event that UC items history owns (pullUcHistory): the SLA source's count there is partial, never written over it
   const uc = new Set((await q<{ k: string }>(`select distinct day::text || '|' || event as k from wcm_stage_output where source = 'uc_items' and event = any($1::text[])`, [slaEvs])).map((r) => r.k));
   const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(`${r.day}|${r.event}`)) || uc.has(`${r.day}|${r.event}`))));
-  // replace per source (event family) only the days that source returned
+  // replace per source (event family) only the days that source returned — one transaction per family, so a failed run leaves its days as they were
   const families = [slaEvs, ["putaway", "audit_move"], ["received", "qc", "unloaded"]];
   for (const evs of families) {
-    const days = [...new Set(rows.filter((r) => evs.includes(r.event)).map((r) => r.day!))];
-    if (days.length) await q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[]) and source is distinct from 'uc_items'`, [evs, days]);
-  }
-  for (let i = 0; i < rows.length; i += 2000) {
-    const c = rows.slice(i, i + 2000);
-    await q(`insert into wcm_stage_output (day, site, stream, event, unit, qty, source)
-             select d::date, s, st, e, u, n, src from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::text[]) as t(d, s, st, e, u, n, src)
-             on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()`,
-      [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
-        c.map((r) => (["putaway", "audit_move"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
-          : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
+    const fam = rows.filter((r) => evs.includes(r.event)), days = [...new Set(fam.map((r) => r.day!))];
+    if (!days.length) continue;
+    await tx(async (t) => {
+      await t.q(`delete from wcm_stage_output where event = any($1::text[]) and day = any($2::date[]) and source is distinct from 'uc_items'`, [evs, days]);
+      for (let i = 0; i < fam.length; i += 2000) {
+        const c = fam.slice(i, i + 2000);
+        await t.q(`insert into wcm_stage_output (day, site, stream, event, unit, qty, source)
+                 select d::date, s, st, e, u, n, src from unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::text[]) as t(d, s, st, e, u, n, src)
+                 on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()`,
+          [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
+            c.map((r) => (["putaway", "audit_move"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
+              : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
+      }
+    });
   }
   return { read: rows.length, from, keptEdgeDays: new Set([...stored].map((k) => k.split("|")[0])).size };
 }
