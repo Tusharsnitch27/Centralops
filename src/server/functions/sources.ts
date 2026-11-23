@@ -95,7 +95,7 @@ async function slaCells(stream: string, by: "created_hr" | "deadline", from: str
 export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[] = SITES): Promise<DayRow[]> {
   const f = FN[fn], days = dayList(from, to);
   const months = [...new Set(days.map(monthOf))];
-  // B2C / B2B MP received: UC items created that day ("ordered", before the SLA source's window) where no SLA cell has the day
+  // B2C / B2B MP received: units ordered by creation day — UC items ("ordered") and the SLA tracker's created hours
   const events = fn === "inwards" || fn === "b2c_returns" ? ["putaway", "received"] : fn === "b2b_returns" ? ["putaway"] : fn === "b2b_retail" ? [f.processed.event] : [f.processed.event, "ordered"];
   const [proj, stage, heads, pms, orders, inward, created, deadline, lastOrder] = await Promise.all([
     projection(fn, from, to, days),
@@ -111,8 +111,8 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
        from fn_retail_order where order_date between $1 and $2 and quantity is not null group by 1, 2, 3`, [from, to]) : Promise.resolve([]),
     fn === "inwards" ? q<{ day: string; site: string; received: number | null; issues: number | null }>(
       `select day::text as day, site, received::float8 as received, issues::float8 as issues from fn_inward_daily where day between $1 and $2`, [from, to]) : Promise.resolve([]),
-    fn === "b2c_shopify" || fn === "b2c_marketplace" ? slaCells(f.label, "created_hr", from, to) : Promise.resolve(new Map()),
-    fn === "b2c_shopify" || fn === "b2c_marketplace" || fn === "b2b_marketplace" ? slaCells(f.label, "deadline", from, to) : Promise.resolve(new Map()),
+    fn === "b2c_shopify" || fn === "b2c_marketplace" || fn === "b2b_marketplace" ? slaCells(f.label, "created_hr", from, to) : Promise.resolve(new Map()),
+    fn === "b2c_shopify" || fn === "b2c_marketplace" ? slaCells(f.label, "deadline", from, to) : Promise.resolve(new Map()),
     fn === "b2b_retail" ? lastOrderDay() : Promise.resolve(null),
   ]);
   // a stage total is null when the feed did not run for that day × site × event, 0 when it ran with nothing for these streams
@@ -139,7 +139,9 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
       received = o.length ? o.reduce((a, r) => a + r.qty, 0) : d >= ORDERS_FROM && lastOrder != null && d <= lastOrder ? 0 : null; // after the latest pulled day: not known yet
       ({ overlay, overlayBase } = placementShare(o)); // no-rule units are not judged
     } else if (fn === "b2b_marketplace") {
-      received = deadline.get(k(s, d))?.units ?? stageSum(s, d, "ordered", f.streams);
+      // by the day the order was created, as B2C: UC items while they cover the day, then the SLA tracker (its created hours reach back
+      // only to orders still open in its window, so it never replaces UC; by deadline it counted lagged orders twice)
+      received = stageSum(s, d, "ordered", f.streams) ?? created.get(k(s, d))?.units ?? null;
     } else if (fn === "b2c_returns") {
       received = stageSum(s, d, "received", f.streams); // returns-app packets (~1.05–1.2 units each)
     }
