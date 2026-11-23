@@ -10,6 +10,9 @@ export interface MonthIn {
   actualShare?: number;
   /** share of the stream's units that pass this process (passShare) */
   pass?: number;
+  /** share of finalOutput's days the actual ₹ covers: actualShare for a closed month (full-month output), 1 when the output is
+   *  month to date (running month) — cost per item is ₹ ÷ output over the same days */
+  outputShare?: number;
 }
 
 const div = (a: number | null, b: number | null) => (a == null || b == null || !b ? null : a / b);
@@ -35,7 +38,7 @@ export function computeRow(n: Norm, m: MonthIn) {
   const plannedCpi = div(plannedExp, m.sopProj);
   const actualExp = m.actualMp != null && salary != null ? m.actualMp * salary * share : null;
   const needExp = needMp != null && salary != null ? needMp * salary * share : null;
-  const actualCpi = div(actualExp, m.finalOutput);
+  const actualCpi = div(actualExp, m.finalOutput == null ? null : m.finalOutput * (m.outputShare ?? 1));
   return {
     outputPerHead: oph, idealCpi: n.avgSalary == null ? null : div(n.avgSalary * pass, oph), mpRequired, needMp, needExp, plannedMp, plannedExp, plannedCpi, actualExp, actualCpi,
     volumeAdherence: div(m.finalOutput, m.sopProj), mpAdherence: div(m.actualMp, plannedMp),

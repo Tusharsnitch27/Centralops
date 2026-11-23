@@ -35,9 +35,9 @@ export default async function ProcessingPage({ searchParams }: { searchParams: P
   const sum = (f: (m: (typeof pm)[number]) => number | null) => (pm.some((m) => f(m) != null) ? pm.reduce((a, m) => a + (f(m) ?? 0), 0) : null);
   const cur = sum((m) => m.totals.actualMp), need = sum((m) => m.totals.needMp);
   const curExp = sum((m) => m.totals.actualExp), needExp = sum((m) => m.totals.needExp);
-  // forward cost per item = forward streams' actual ₹ ÷ their output (Σ over streams, never an average of rates)
-  const fwd = pm.flatMap((m) => m.streams).filter((s) => s.dept.endsWith("Forward") && s.actualExp != null && s.finalOutput);
-  const fwdExp = fwd.reduce((a, s) => a + s.actualExp!, 0), fwdOut = fwd.reduce((a, s) => a + s.finalOutput!, 0);
+  // forward cost per item = forward streams' actual ₹ ÷ their output over the same days (each stream's cost per item × its output, Σ over streams)
+  const fwd = pm.flatMap((m) => m.streams).filter((s) => s.dept.endsWith("Forward") && s.actualCpi != null && s.finalOutput);
+  const fwdExp = fwd.reduce((a, s) => a + s.actualCpi! * s.finalOutput!, 0), fwdOut = fwd.reduce((a, s) => a + s.finalOutput!, 0);
   const fwdStd = fwd.reduce((a, s) => a + (s.idealCpi ?? 0) * s.finalOutput!, 0);
   const basis = days ? `${days.days} of ${days.of} days, through yesterday` : "full month";
 

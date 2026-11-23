@@ -110,8 +110,8 @@ async function storedAssign(period: string, wh: Wh) {
 
 /** A closed month with only a few captured days (Oct 2026: attendance starts 29 Oct) would read as a big saving — attendance is
  *  used only for the running month (MTD) or when it covers ≥ 90% of the month. */
-const usesAttendance = (period: string, dataDays: number) =>
-  dataDays > 0 && (period >= `${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()).slice(0, 7)}-01` || dataDays / daysIn(period) >= 0.9);
+const isRunning = (period: string) => period >= `${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date()).slice(0, 7)}-01`;
+const usesAttendance = (period: string, dataDays: number) => dataDays > 0 && (isRunning(period) || dataDays / daysIn(period) >= 0.9);
 
 export async function processingMonth(period: string, warehouse: Wh): Promise<ProcessingMonth> {
   const [allNs, sh, vol, att, stored] = await Promise.all([norms(period, warehouse), sheet(period, warehouse), sopVolumes(period, warehouse), attendance(period, warehouse), storedAssign(period, warehouse)]);
@@ -155,7 +155,8 @@ export async function processingMonth(period: string, warehouse: Wh): Promise<Pr
     const pick = actualMpOf(b.s?.planned_mp ?? null, att, share);
     const actualMp = pick.actualMp, src: ProcRow["actualMpSource"] = pick.src, actualShare = pick.attendance ? share : 1;
     const c = computeRow({ targetPerDay: b.n.target_per_day, workingDays: b.n.working_days, avgSalary: b.n.avg_salary },
-      { sopProj: b.sopProj, plannedMp: b.plannedMp, finalOutput, salary: b.salary, actualMp, actualShare, pass: passShare(b.n.process) });
+      { sopProj: b.sopProj, plannedMp: b.plannedMp, finalOutput, salary: b.salary, actualMp, actualShare, pass: passShare(b.n.process),
+        outputShare: isRunning(period) ? 1 : actualShare }); // closed month: full-month output over the attendance days the ₹ covers
     return {
       stream: b.stream, process: b.n.process, department: b.n.department, targetPerDay: b.n.target_per_day, workingDays: b.n.working_days, avgSalary: b.salary,
       outputPerHead: c.outputPerHead, idealCpi: c.idealCpi, sopProj: b.sopProj, mpRequired: c.mpRequired, needMp: c.needMp, needExp: c.needExp, plannedMp: c.plannedMp, plannedExp: c.plannedExp, plannedCpi: c.plannedCpi,

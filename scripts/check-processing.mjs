@@ -56,3 +56,10 @@ assert.deepEqual(actualMpOf(25.5, att, 3 / 31), { actualMp: 25.5, src: "sheet", 
 assert.deepEqual(actualMpOf(null, att, 3 / 31), { actualMp: 30, src: "attendance", attendance: true });
 assert.deepEqual(actualMpOf(null, null, 1), { actualMp: null, src: null, attendance: false });
 console.log("processing attendance-first OK");
+// cost per item over the same days: a closed month with attendance on 28 of 30 days — ₹ at 28/30 ÷ output × 28/30; running month (MTD output) ÷ output
+const sd = computeRow(n, { sopProj: 202362, plannedMp: 25.5, finalOutput: 192709, salary: 21983, actualMp: 30, actualShare: 28 / 30, outputShare: 28 / 30 });
+close(sd.actualCpi, (30 * 21983) / 192709, 1e-9);
+close(sd.costImpact, (sd.plannedCpi - sd.actualCpi) * 192709, 1e-6);
+const mtd = computeRow(n, { sopProj: 202362, plannedMp: 25.5, finalOutput: 192709, salary: 21983, actualMp: 30, actualShare: 21 / 30 });
+close(mtd.actualCpi, (30 * 21983 * 21 / 30) / 192709, 1e-9);
+console.log("processing same-days cost per item OK");
