@@ -160,8 +160,9 @@ export async function pullManpower(trigger: "manual" | "schedule" = "manual", ac
   const url = manpowerUrl();
   if (!url) throw new Error("ATTENDANCE_API_BASE_URL (or MANPOWER_API_URL) isn't set on the server");
   const to = istToday();
-  const any = await one<{ n: number }>(`select count(*)::int as n from mp_daily`);
   const cover = COVERAGE_START();
+  // only API days count: the attendance seed fills mp_daily before coverage, and the first pull must still start at coverage
+  const any = await one<{ n: number }>(`select count(*)::int as n from mp_daily where day >= $1::date`, [cover]);
   const from = [fromOverride ?? (any?.n ? minus(to, 10) : cover), cover].sort().at(-1)!;
   const [run] = await q<{ id: string }>(`insert into mp_sync_runs (trigger, from_date, to_date, actor_id) values ($1,$2,$3,$4) returning id`, [trigger, from, to, actorId]);
   try {

@@ -24,8 +24,8 @@ export async function seedWcmSnapshot(S: RunQ) {
 }
 
 /**
- * IPP master: the revised targets become the active version from 29 Oct 2026 (first day of attendance capture; effective date still
- * to be confirmed with Ops); the Cost Master processing norms are kept as the legacy version for history. Default site leads.
+ * IPP master: the revised targets and the Cost Master processing norms are seeded as legacy versions (history only); the updated
+ * master (migration 083, effective from 1 Apr 2026 by migration 091) is the one in force. Default site leads.
  */
 export async function seedWcmOps(S: RunQ) {
   const { REVISED_IPP, REVISED_VERSION } = await import("../wcm/ops");
