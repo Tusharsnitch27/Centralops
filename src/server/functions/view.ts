@@ -127,6 +127,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (fn === "b2b_retail" || fn === "b2b_marketplace") grey.push("Loading, bagging, encoding and dispatch have no scan feed, so they are not counted in processed volume.");
   if (n.master.length) grey.push(`Salary is the salary master's ${n.masterRates.map((r) => `₹${n0(r)}`).join(" / ")} per head where no sheet salary exists (${spans(n.master, sites)}).`);
   if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where neither a sheet salary nor a salary master rate exists (${spans(n.legacy, sites)}).`);
+  if (mode === "month" && months.some((m) => mk(m) === "2026-04")) grey.push("April's first 24 days of attendance come from the site attendance workbooks, which count more heads than the attendance app used from 25 April.");
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
   if (fn !== "inwards") grey.push("Work held up by issues is not recorded for this function.");
   if (left.length || dropped.length) grey.push(`The manpower gap leaves out ${[left.length ? spans(left, sites) : "", dropped.length ? (mode === "day" ? `${dropped.length} days` : spans(dropped.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)) : ""].filter(Boolean).join(" and ")}, which lack a norm, a projection, attendance or processed volume.`);
