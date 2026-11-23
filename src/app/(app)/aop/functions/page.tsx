@@ -17,7 +17,7 @@ type SP = { fn?: string; site?: string; mode?: string; scenario?: string; cycle?
 const FNS = Object.keys(FN) as FnKey[];
 const RECEIVED: Record<FnKey, string> = { inwards: "Received", b2c_shopify: "Orders", b2c_marketplace: "Orders", b2b_retail: "Store orders", b2b_marketplace: "Orders", returns: "Returns received" };
 const OVERLAY: Partial<Record<FnKey, string>> = { b2c_shopify: "Within SLA", b2c_marketplace: "Within SLA", b2b_retail: "Ordered in rulebook window" };
-const CAUSE: Record<Cause, string> = { volume: "Volume above projection", erratic: "Uneven daily load", held_up: "Work held up by issues", below_ipp: "Output per head below norm",
+const CAUSE: Record<Cause, string> = { plan_peak: "Heads held for the plan's peak", volume: "Volume vs projection", held_up: "Work held up by issues", below_ipp: "Output per head below norm",
   absenteeism: "Absenteeism above 10 %", cross_zone: "Cross-zone freight", courier_rate: "Courier rates", other: "Other" };
 
 /** AOP › Functions: per function, volume against ideal and actual manpower cost, the cost gap split into causes, and what is assumed or missing. */

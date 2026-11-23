@@ -20,19 +20,22 @@ export function monthStats(values: (number | null)[]): { peak: number; avg: numb
 
 import type { GapPart } from "./types";
 
-/** Splits (actual head-days − ideal head-days) × ₹/head-day into causes; `other` is the remainder so parts always sum to the total. */
-export function manpowerGap(i: { salary: number; workDays: number; uph: number; proj: { peak: number; avg: number }; act: { peak: number; avg: number };
-  processed: number; heldUpUnits: number | null; actualHeadDays: number; idealFloor: number }): GapPart[] {
-  const r = i.salary / 23, W = i.workDays;
-  const volume = ((i.act.avg - i.proj.avg) / i.uph) * W;
-  const erratic = ((i.act.peak - i.act.avg) - (i.proj.peak - i.proj.avg)) / i.uph * W;
+/**
+ * Splits actual − ideal (head-days × ₹ salary ÷ 23) into causes that add up, walking ideal → plan average → processed → actual:
+ *  plan_peak = Pavg − I (I = ideal head-days, Pavg = projected average day ÷ uph × days), volume = N − Pavg (N = processed ÷ uph),
+ *  held_up = H (held-up units ÷ uph; null when unknown, then it sits in below_ipp), below_ipp = A − N − H. `other` = the remainder (≈ 0).
+ */
+export function manpowerGap(i: { salary: number; uph: number; projAvg: number; days: number; processed: number; heldUpUnits: number | null;
+  actualHeadDays: number; idealHeadDays: number }): GapPart[] {
+  const r = i.salary / 23, A = i.actualHeadDays, I = i.idealHeadDays;
+  const pavg = (i.projAvg / i.uph) * i.days, need = i.processed / i.uph;
   const held = i.heldUpUnits == null ? null : i.heldUpUnits / i.uph;
-  const below = i.actualHeadDays - i.processed / i.uph - (held ?? 0);
-  const other = (i.actualHeadDays - i.idealFloor * W) - (volume + erratic + (held ?? 0) + below);
+  const plan = pavg - I, volume = need - pavg, below = A - need - (held ?? 0);
+  const other = (A - I) - (plan + volume + (held ?? 0) + below);
   const R = (d: number | null) => (d == null ? null : d * r);
   return [
-    { cause: "volume", rupees: R(volume), note: "actual average volume vs projected" },
-    { cause: "erratic", rupees: R(erratic), note: "peak-to-average spread wider than planned" },
+    { cause: "plan_peak", rupees: R(plan), note: "heads the plan holds for its busiest day, beyond the average day" },
+    { cause: "volume", rupees: R(volume), note: "processed volume against the projected average" },
     { cause: "held_up", rupees: R(held), note: held == null ? "held-up units not available" : "heads idle on held-up units" },
     { cause: "below_ipp", rupees: R(below), note: "output per head below IPP" },
     { cause: "absenteeism", rupees: null, note: "not measured — 10 % allowance assumed" },

@@ -97,3 +97,16 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
 export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, wd?: ByMonth) => toPoints("day", rows, uph, salary, from, to, undefined, wd);
 /** `actuals` ("South|2026-10" → Processing's heads and ₹ for the month) replace the attendance figure, so months tie to AOP › Processing. */
 export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth) => toPoints("month", rows, uph, salary, from, to, actuals, wd);
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const monthName = (m: string) => `${MONTHS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`;
+const nextMonth = (m: string) => new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 1)).toISOString().slice(0, 7);
+/** "South|2026-04" keys → one short phrase: "Apr–Sep 2026 (both sites), North Oct 2026" (runs of consecutive months per site set). */
+export function spans(keys: string[], sites: string[]) {
+  const months = [...new Set(keys.map((k) => monthKey(k.split("|")[1]!)))].sort();
+  const who = (m: string) => { const ss = sites.filter((s) => keys.some((k) => k === `${s}|${m}` || k === `${s}|${m}-01`)); return ss.length === sites.length ? (sites.length > 1 ? "both" : "") : ss.join(" and "); };
+  const runs: { who: string; from: string; to: string }[] = [];
+  for (const m of months) { const w = who(m), last = runs.at(-1); if (last && last.who === w && nextMonth(last.to) === m) last.to = m; else runs.push({ who: w, from: m, to: m }); }
+  const range = (a: string, b: string) => (a === b ? monthName(a) : a.slice(0, 4) === b.slice(0, 4) ? `${monthName(a).split(" ")[0]}–${monthName(b)}` : `${monthName(a)}–${monthName(b)}`);
+  return runs.map((r) => (r.who === "both" ? `${range(r.from, r.to)} (both sites)` : `${r.who ? `${r.who} ` : ""}${range(r.from, r.to)}`)).join(", ");
+}

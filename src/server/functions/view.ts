@@ -5,7 +5,7 @@ import { activeIpps } from "../wcm/daily";
 import { courierOf, monthHistory } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
-import { daysIn, onRoll, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
+import { daysIn, spans, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { manpowerGap, monthStats, unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
 import { dailyRows, FN, inwardFallbackDays, pmonth, SITES } from "./sources";
@@ -19,7 +19,6 @@ import type { Cause, DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point
  */
 const LEGACY_SALARY = 21983;
 const mk = (m: string) => m.slice(0, 7);
-const monthName = (m: string) => new Date(`${mk(m)}-01T00:00:00Z`).toLocaleString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
 const fyStart = (d: string) => `${+d.slice(5, 7) >= 4 ? +d.slice(0, 4) : +d.slice(0, 4) - 1}-04-01`;
 const n0 = (n: number) => Math.round(n).toLocaleString("en-IN");
 const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null);
@@ -58,14 +57,13 @@ function gapOf(fn: FnKey, mode: FnMode, rows: DayRow[], n: Norms, sites: Wh[], f
     for (const seg of toMonthPoints(mine, n.uph, n.salary, from, to, mode === "month" ? n.actuals : undefined, n.wd)) {
       const key = `${s}|${seg.key}`, uph = n.uph[key], sal = n.salary[key];
       const month = mine.filter((r) => mk(r.day) === seg.key), win = month.filter((r) => r.day >= from && r.day <= to);
-      const proj = monthStats(month.map((r) => r.projected));
-      const act = monthStats(win.some((r) => r.received != null) ? win.map((r) => r.received) : win.map((r) => r.processed));
-      const roll = onRoll(proj?.peak ?? null, uph ?? null, daysIn(seg.key), n.wd[key] || 23);
-      if (!uph || !sal || !proj || !act || roll == null || seg.actualCost == null || seg.processed == null) { left.push(`${s} ${monthName(seg.key)}`); continue; }
+      const proj = monthStats(month.map((r) => r.projected)), days = win.filter((r) => r.processed != null).length;
+      if (!uph || !sal || !proj || !days || seg.idealCost == null || seg.actualCost == null || seg.processed == null) { left.push(`${s}|${seg.key}`); continue; }
       const issueDays = win.filter((r) => r.issues != null);
       const heldUp = fn === "inwards" && issueDays.length ? issueDays.filter((r) => r.issues! > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
-      parts.push(manpowerGap({ salary: sal, workDays: (23 * win.length) / daysIn(seg.key), uph, proj, act, processed: seg.processed, heldUpUnits: heldUp,
-        actualHeadDays: (seg.actualCost * 23) / sal, idealFloor: roll })); // ₹ compare on-roll ideal (weekly-off cover + 10 % allowance) against actual ₹
+      // head-days at ₹ salary ÷ 23: ideal and actual exactly as the chart costs them (on-roll ideal, Processing's actual)
+      parts.push(manpowerGap({ salary: sal, uph, projAvg: proj.avg, days, processed: seg.processed, heldUpUnits: heldUp,
+        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal }));
     }
   }
   const causes = [...new Set(parts.flatMap((p) => p.map((x) => x.cause)))] as Cause[];
@@ -118,18 +116,18 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (fn === "b2b_retail") grey.push("The projection is the rulebook's daily processing plan, store by store.");
   if (fn === "b2b_retail" && win.some((r) => r.received == null)) grey.push("Store orders start on 23 Sep 2026, so received is blank before then.");
   if (fallback) grey.push(`On ${fallback} site-days the WAM feed has no inward, so received is the PO quantity received, dated by the PO's last update, and issues are unknown.`);
-  const noProj = months.filter((m) => sites.some((s) => !rows.some((r) => r.site === s && mk(r.day) === mk(m) && r.projected != null)));
-  if (noProj.length) grey.push(`No projection is loaded for ${noProj.map(monthName).join(", ")}, so projected volume and ideal heads are blank there.`);
-  const noNorm = months.flatMap((m) => sites.filter((s) => !n.uph[`${s}|${mk(m)}`]).map((s) => `${s} ${monthName(m)}`));
-  if (noNorm.length) grey.push(`There is no productivity norm for ${noNorm.join(", ")}, so ideal heads are blank there.`);
+  const noProj = months.flatMap((m) => sites.filter((s) => !rows.some((r) => r.site === s && mk(r.day) === mk(m) && r.projected != null)).map((s) => `${s}|${mk(m)}`));
+  if (noProj.length) grey.push(`No projection is loaded for ${spans(noProj, sites)}, so projected volume and ideal heads are blank there.`);
+  const noNorm = months.flatMap((m) => sites.filter((s) => !n.uph[`${s}|${mk(m)}`]).map((s) => `${s}|${mk(m)}`));
+  if (noNorm.length) grey.push(`There is no productivity norm for ${spans(noNorm, sites)}, so ideal heads are blank there.`);
   if (mode === "day") { const d = new Set(win.filter((r) => r.presentHeads == null).map((r) => r.day)).size; if (d) grey.push(`Attendance is missing on ${d} of the ${new Set(win.map((r) => r.day)).size} days, so actual heads and cost are blank on those days.`); }
-  else { const m = points.filter((p) => p.actualCost == null).map((p) => monthName(p.key)); if (m.length) grey.push(`There are no actual heads for ${m.join(", ")}.`); }
+  else { const m = points.filter((p) => p.actualCost == null).flatMap((p) => sites.map((s) => `${s}|${p.key}`)); if (m.length) grey.push(`There are no actual heads for ${spans(m, sites)}.`); }
   { const d = new Set(win.filter((r) => r.processed == null).map((r) => r.day)).size; if (d) grey.push(`Processed volume is missing for ${d} of the ${new Set(win.map((r) => r.day)).size} days shown.`); }
   if (fn === "b2b_retail" || fn === "b2b_marketplace") grey.push("Loading, bagging, encoding and dispatch have no scan feed, so they are not counted in processed volume.");
-  if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where no sheet salary exists (${n.legacy.map((k) => k.replace("|", " ")).join(", ")}).`);
+  if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where no sheet salary exists (${spans(n.legacy, sites)}).`);
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
   if (fn !== "inwards") grey.push("Work held up by issues is not recorded for this function.");
-  if (left.length) grey.push(`The manpower gap leaves out ${left.join(", ")}, which lack a norm, a projection, attendance or processed volume.`);
+  if (left.length) grey.push(`The manpower gap leaves out ${spans(left, sites)}, which lack a norm, a projection, attendance or processed volume.`);
   if (fn === "b2c_shopify") grey.push(logistics ? "Courier cost is as billed, before credit notes." : "There is no courier rate or Jul–Sep baseline for this window, so the logistics gap is blank.");
 
   // summary: plain sentences with numbers
@@ -137,7 +135,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const procDays = [...new Set(win.filter((r) => r.processed != null).map((r) => r.day))];
   const proc = sumN(win.map((r) => r.processed)), rec = sumN(win.map((r) => r.received)), iss = sumN(win.map((r) => r.issues));
   const summary: string[] = [];
-  if (proc != null) summary.push(`${where} handles about ${n0(proc / procDays.length)} units a day; received ${rec == null ? "is not known" : n0(rec)}, ${done} ${n0(proc)}${fn === "inwards" && iss != null ? `, ${n0(iss)} issues` : ""}.`);
+  if (proc != null) summary.push(`${where} ${site === "Both" ? "handle" : "handles"} about ${n0(proc / procDays.length)} units a day; received ${rec == null ? "is not known" : n0(rec)}, ${done} ${n0(proc)}${fn === "inwards" && iss != null ? `, ${n0(iss)} issues` : ""}.`);
   const held = gap.find((g) => g.cause === "held_up");
   if (fn === "inwards" && proc != null && held?.rupees) {
     const units = win.filter((r) => (r.issues ?? 0) > 0).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0);
@@ -180,12 +178,12 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
         : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone cost ₹${n0(Math.abs(cz.rupees))} ${cz.rupees >= 0 ? "more" : "less"} than the home lanes` },
       { cause: "other", rupees: null, note: "there is no ideal retail freight to set the rest against" },
     ];
-    const out = reNeed.filter((p, i) => p.idealCost == null || asIs[i]!.idealCost == null).map((p) => (mode === "day" ? p.key : monthName(p.key)));
+    const out = reNeed.filter((p, i) => p.idealCost == null || asIs[i]!.idealCost == null).map((p) => p.key);
     if (!paired.length) grey.push("The rulebook scenario is blank: no period here has store orders with a norm and salary.");
-    else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : out.join(", ")} with no store orders, norm or salary.`);
+    else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : spans(out.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)} with no store orders, norm or salary.`);
     if (cz.unpriced.length) grey.push(`Cross-zone freight leaves out ${cz.unpriced.join(", ")}, which have no rate in the LR file.`);
     if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
-    if (czNull.length) grey.push(`The rulebook scenario's saving is blank: there is no cross-zone freight for ${czNull.map(monthName).join(", ")}.`);
+    if (czNull.length) grey.push(`The rulebook scenario's saving is blank: there is no cross-zone freight for ${spans(czNull.flatMap((m) => sites.map((s) => `${s}|${m}`)), sites)}.`);
     if (mode === "day" && cz.rupees != null) grey.push("Cross-zone freight in the freight gap covers the whole months shown; the scenario's saving takes the shown days' share by units.");
     if (deltaRupees != null) summary.splice(3, 0, `If stores ordered on their rulebook days and were shipped from their home-zone warehouse, cost would be ₹${n0(Math.abs(deltaRupees))} ${deltaRupees >= 0 ? "less" : "more"}${scenario.deltaPerUnit == null ? "" : ` (₹${Math.abs(scenario.deltaPerUnit).toFixed(2)} per unit)`}.`);
   }

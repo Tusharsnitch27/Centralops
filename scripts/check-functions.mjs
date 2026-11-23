@@ -10,19 +10,24 @@ assert.equal(unitsPerHead([{ ipp: null, unit: "unit" }]), null);
 assert.deepEqual(idealHeads(10000, 512.82), { floor: 20, roll: 22 });
 assert.equal(idealHeads(null, 500), null);
 
-const input = { salary: 21983, workDays: 23, uph: 500, proj: { peak: 12000, avg: 9000 }, act: { peak: 15000, avg: 10000 }, processed: 200000, heldUpUnits: 5000, actualHeadDays: 600, idealFloor: 24 };
+// ₹ per head-day = 23000 ÷ 23 = 1000. I 500, Pavg 9000 ÷ 500 × 23 = 414, N 200000 ÷ 500 = 400, H 5000 ÷ 500 = 10, A 600
+const input = { salary: 23000, uph: 500, projAvg: 9000, days: 23, processed: 200000, heldUpUnits: 5000, actualHeadDays: 600, idealHeadDays: 500 };
 const by = (g, c) => g.find((p) => p.cause === c);
 const total = (g) => g.reduce((a, p) => a + (p.rupees ?? 0), 0);
 const g = manpowerGap(input);
-close(by(g, "volume").rupees, 43966, 1);
-close(by(g, "erratic").rupees, 87932, 1);
-close(by(g, "held_up").rupees, 9558, 1);
-close(by(g, "below_ipp").rupees, 181599, 1);
+close(by(g, "plan_peak").rupees, -86000);
+close(by(g, "volume").rupees, -14000);
+close(by(g, "held_up").rupees, 10000);
+close(by(g, "below_ipp").rupees, 190000);
 assert.equal(by(g, "absenteeism").rupees, null);
-close(total(g), 45877, 1);
+close(by(g, "other").rupees, 0);
+close(total(g), 100000); // = (A − I) × 1000 exactly
+assert.equal(by(g, "erratic"), undefined);
 const g2 = manpowerGap({ ...input, heldUpUnits: null });
 assert.equal(by(g2, "held_up").rupees, null);
-close(total(g2), 45877, 1);
+close(by(g2, "below_ipp").rupees, 200000);
+close(by(g2, "other").rupees, 0);
+close(total(g2), 100000);
 
 assert.equal(perUnit(100000, 15, 18000), null);
 assert.equal(perUnit(100000, 20000, 18000), 5);
@@ -86,3 +91,10 @@ assert.equal(unitShare(1000, 0, 100), null);
 assert.equal(unitShare(1000, null, 100), null);
 assert.equal(unitShare(null, 400, 100), null);
 console.log("functions unit share OK");
+// grey lines name site-months as short runs
+import { spans } from "../src/server/functions/aggregate.ts";
+const both = ["South", "North"];
+assert.equal(spans(["South|2026-04", "North|2026-04", "South|2026-05", "North|2026-05", "South|2026-06", "North|2026-06", "North|2026-10"], both), "Apr–Jun 2026 (both sites), North Oct 2026");
+assert.equal(spans(["South|2026-12", "South|2027-01"], ["South"]), "Dec 2026–Jan 2027");
+assert.equal(spans(["South|2026-09-01"], both), "South Sep 2026");
+console.log("functions spans OK");
