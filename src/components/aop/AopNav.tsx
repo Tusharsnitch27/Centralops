@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui";
 import type { CycleLite } from "@/server/aop/model";
 import { CycleSwitcher } from "./CycleSwitcher";
 
-export type AopTab = "overview" | "plan" | "inputs" | "review" | "packaging" | "processing" | "warehouse" | "logistics" | "cost" | "analysis" | "data" | "import" | "setup";
+export type AopTab = "overview" | "plan" | "inputs" | "review" | "packaging" | "processing" | "functions" | "warehouse" | "logistics" | "cost" | "analysis" | "data" | "import" | "setup";
 // Leadership tabs only; entry, uploads, controls and setup live under Data.
 const GROUPS: { label: string; tabs: { key: AopTab; label: string; path: string }[] }[] = [
   { label: "Plan", tabs: [
@@ -12,6 +12,7 @@ const GROUPS: { label: string; tabs: { key: AopTab; label: string; path: string 
     { key: "review", label: "Review", path: "/aop/review" },
   ] },
   { label: "Cost detail", tabs: [
+    { key: "functions", label: "Functions", path: "/aop/functions" },
     { key: "warehouse", label: "Warehouse", path: "/aop/warehouse" },
     { key: "logistics", label: "Logistics", path: "/aop/logistics" },
     { key: "packaging", label: "Packaging", path: "/aop/packaging" },
