@@ -78,9 +78,12 @@ export async function refreshStageOutput(): Promise<ActionResult> {
   try {
     const u = await requireUser();
     if (!canManage(u)) throw new Error("Only admins and program managers can refresh feeds");
-    const [r] = await Promise.all([pullStageOutput(), pullSla(), pullRetailSpine(), pullInventory(), pullRetailOrders(), pullRulebook(), pullWam()]);
+    const [r] = await Promise.all([pullStageOutput(), pullSla(), pullRetailSpine(), pullInventory()]);
+    // AOP › Functions feeds: one failing must not stop the planner's refresh
+    const fns = await Promise.allSettled([pullRetailOrders(), pullRulebook(), pullWam()]);
+    const failed = fns.map((x, i) => (x.status === "rejected" ? `${["store orders", "rulebook", "WAM inward"][i]} did not refresh (${x.reason instanceof Error ? x.reason.message : String(x.reason)})` : null)).filter(Boolean);
     const pools = await autoDeployDays((await deployDays()).slice(0, 10)); // output shares moved: re-split the auto pools of the last 10 days
     revalidatePath("/aop/processing/daily");
-    return ok(undefined, `${r.read} day × stream × stage rows from ${r.from} · ${pools} auto pools re-split`);
+    return ok(undefined, [`${r.read} day × stream × stage rows from ${r.from} · ${pools} auto pools re-split`, ...failed].join(" · "));
   } catch (e) { return fail(e); }
 }
