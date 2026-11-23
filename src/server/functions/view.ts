@@ -29,7 +29,7 @@ const sumN = (xs: (number | null)[]) => (xs.some((x) => x != null) ? xs.reduce<n
  *  with the share of the month their ₹ covers, and units (Σ the streams' final output: sheet, else S&OP actual — the month ₹/unit base; null
  *  when any stream lacks it). No salary from Processing → the salary master (wcm_mp_rate) in force at month end, else the legacy default. */
 export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
-  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, volume: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [], master: string[] = [];
+  const f = FN[fn], now = today(), uph: ByMonth = {}, salary: ByMonth = {}, wd: ByMonth = {}, volume: ByMonth = {}, actuals: Actuals = {}, legacy: string[] = [], master: string[] = [], partial: string[] = [];
   const rates = await q<{ site: string; from: string; salary: number }>(`select site, effective_from::text as from, monthly_salary::float8 as salary from wcm_mp_rate order by effective_from`);
   await Promise.all(months.flatMap((m) => sites.map(async (s) => {
     const key = `${s}|${mk(m)}`;
@@ -54,9 +54,11 @@ export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
       const att = (r: (typeof rows)[number]) => (r.actualMpSource === "attendance" || r.actualMpSource === "proposed") && pm.actualDays ? pm.actualDays.days / pm.actualDays.of : 1;
       const cost = sumN(blocks.map((b) => b!.actualExp)), full = rows.reduce((a, r) => a + (r.actualExp ?? 0) / att(r), 0);
       actuals[key] = { heads: sumN(blocks.map((b) => b!.actualMp)), cost, share: m === monthStart(now) || !full || cost == null ? 1 : cost / full };
+      // a line with neither attendance nor sheet heads drops out of Processing's sum: the month's ₹ is understated, not whole
+      for (const r of rows) if (r.actualMp == null) partial.push(`${s}|${mk(m)}|${r.department ?? r.stream}`);
     }
   })));
-  return { uph, salary, wd, volume, actuals, legacy, master, masterRates: [...new Set(master.map((k) => salary[k]!))] };
+  return { uph, salary, wd, volume, actuals, legacy, master, partial, masterRates: [...new Set(master.map((k) => salary[k]!))] };
 }
 
 type Norms = Awaited<ReturnType<typeof norms>>;
@@ -121,6 +123,10 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   else {
     const m = points.filter((p) => p.actualCost == null).flatMap((p) => sites.map((s) => `${s}|${p.key}`)); if (m.length) grey.push(`There are no actual heads for ${spans(m, sites)}, so cost and ₹ per unit are blank there.`);
     const nv = points.flatMap((p) => sites.filter((s) => n.volume[`${s}|${p.key}`] == null).map((s) => `${s}|${p.key}`));
+    for (const d of [...new Set(n.partial.map((x) => x.split("|")[2]!))]) {
+      const ks = [...new Set(n.partial.filter((x) => x.endsWith(`|${d}`)).map((x) => x.split("|").slice(0, 2).join("|")))];
+      grey.push(`Actual cost for ${spans(ks, sites)} leaves out ${d} lines with neither attendance nor sheet heads, so it is understated there.`);
+    }
     if (nv.length) grey.push(`AOP › Processing has no volume for ${spans(nv, sites)}, so ₹ per unit is blank there.`);
   }
   { const d = new Set(win.filter((r) => r.processed == null).map((r) => r.day)).size; if (d) grey.push(`Daily processed volume is missing for ${d} of the ${new Set(win.map((r) => r.day)).size} days in this period.`); }
