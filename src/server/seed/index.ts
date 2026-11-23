@@ -280,6 +280,16 @@ export async function bootstrap(rawQ: RunQ) {
     try { await seedWcmOps(rawQ); await setSetting("seed.wcm_ops", "v1"); await rawQ("commit"); console.log("[seed] Warehouse IPP master (revised + legacy) and site leads loaded"); }
     catch (e) { await rawQ("rollback"); throw e; }
   }
+  if ((await setting("seed.mp_daily_backfill")) !== "v1") {
+    const { seedMpDailyBackfill } = await import("./mpDailyBackfill");
+    await rawQ("begin");
+    try {
+      const n = await seedMpDailyBackfill(rawQ);
+      await setSetting("seed.mp_daily_backfill", "v1");
+      await rawQ("commit");
+      console.log(`[seed] attendance heads 1 Apr – 28 Oct 2026 back-filled (${n} day × site × function rows; API days kept)`);
+    } catch (e) { await rawQ("rollback"); throw e; }
+  }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
     await setSetting("seed.handbook", "v1");
