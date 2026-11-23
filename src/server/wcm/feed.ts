@@ -1,6 +1,7 @@
 import "server-only";
 import { q, tx } from "../db";
 import { sfQuery } from "../snowflake";
+import { ucOwned, UC_ALL_DAYS_STREAM } from "./math";
 
 /**
  * Daily stage completions → wcm_stage_output. Read-only Snowflake; each event counted independently, deduplicated.
@@ -88,8 +89,12 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const stored = new Set(edge ? (await q<{ k: string }>(`select distinct day::text || '|' || event as k from wcm_stage_output
     where event = any($1::text[]) and day < $2 and source is distinct from 'uc_items'`, [slaEvs, edge])).map((r) => r.k) : []);
   // day × event that UC items history owns (pullUcHistory): the SLA source's count there is partial, never written over it
-  const uc = new Set((await q<{ k: string }>(`select distinct day::text || '|' || event as k from wcm_stage_output where source = 'uc_items' and event = any($1::text[])`, [slaEvs])).map((r) => r.k));
-  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(`${r.day}|${r.event}`)) || uc.has(`${r.day}|${r.event}`))));
+  const ucRows = await q<{ day: string; site: string; stream: string; event: string }>(`select distinct day::text as day, site, case when stream = $2 then stream else '' end as stream, event
+    from wcm_stage_output where source = 'uc_items' and event = any($1::text[])`, [slaEvs, UC_ALL_DAYS_STREAM]);
+  const ucBy = new Map<string, typeof ucRows>();
+  for (const u of ucRows) ucBy.set(`${u.day}|${u.event}`, [...(ucBy.get(`${u.day}|${u.event}`) ?? []), u]);
+  const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(`${r.day}|${r.event}`))
+    || ucOwned(r as { day: string; site: string; stream: string; event: string }, ucBy.get(`${r.day}|${r.event}`) ?? []))));
   // replace per source (event family) only the days that source returned — one transaction per family, so a failed run leaves its days as they were
   const families = [slaEvs, ["putaway", "audit_move"], ["received", "qc", "unloaded"]];
   for (const evs of families) {
@@ -125,8 +130,10 @@ const UC_WINS_DAYS = 14;
 const UC_STREAM = `CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' OR marketplace_mapped LIKE 'M-NOW%' OR UPPER(marketplace_mapped) = 'SLIKK' THEN 'B2B Marketplace'
   WHEN marketplace_mapped IN ('Own Store','Franchise Store') THEN 'B2B Retail' WHEN marketplace_mapped = 'NYKAA_SAPL_TAURU' THEN 'B2C Marketplace'
   ELSE ${STREAM} END`;
+// B2B Marketplace's packed / dispatched / shipments run to yesterday: UC ties to the S&OP workbook (Oct South 42,086), the SLA source gives 37,630
 const ucEv = (event: string, col: string, unit = "item", key = "saleorderitemcode", until = "{until}") => `SELECT TO_VARCHAR(${col}::date, 'YYYY-MM-DD') AS day, site, stream,
-  '${event}' AS event, '${unit}' AS unit, COUNT(DISTINCT ${key}) AS qty FROM s WHERE ${col} >= TO_DATE('{from}') AND ${col} < TO_DATE('${until}') GROUP BY 1, 2, 3`;
+  '${event}' AS event, '${unit}' AS unit, COUNT(DISTINCT ${key}) AS qty FROM s WHERE ${col} >= TO_DATE('{from}')
+  AND (${col} < TO_DATE('${until}') OR (stream = '${UC_ALL_DAYS_STREAM}' AND ${col} < TO_DATE('{today}'))) GROUP BY 1, 2, 3`;
 export const UC_SQL = `WITH s AS (
   SELECT saleorderitemcode, shippingpackagecode, ${SITE("warehouse_name")} AS site, ${UC_STREAM} AS stream, uc_created, packed_timestamp, dispatched_timestamp
   FROM ${UC} WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU'))

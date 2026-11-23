@@ -156,3 +156,11 @@ export function rate(parts: { paise: number; qty: number | null; unit: string | 
   if (!qty) return { value: null, unit: units[0]!, reason: "no output in the window" };
   return { value: rupees(parts.reduce((a, p) => a + p.paise, 0)) / qty, unit: units[0]!, reason: null };
 }
+
+/** B2B Marketplace: UC items owns packed / dispatched / shipments on every day (ties to the S&OP workbook; the SLA source undercounts it). */
+export const UC_ALL_DAYS_STREAM = "B2B Marketplace";
+/** Whether an SLA-source stage row must be skipped because UC items owns it: any stream on a day × event UC's window covers (from its
+ *  non-B2B-Marketplace rows), and B2B Marketplace's own site × day × event on every other day. */
+export function ucOwned(r: { day: string; site: string; stream: string; event: string }, uc: { day: string; site: string; stream: string; event: string }[]) {
+  return uc.some((u) => u.day === r.day && u.event === r.event && (u.stream !== UC_ALL_DAYS_STREAM || (r.stream === u.stream && r.site === u.site)));
+}

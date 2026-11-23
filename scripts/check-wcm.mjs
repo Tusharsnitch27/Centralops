@@ -2,7 +2,7 @@
 // node --experimental-strip-types scripts/check-wcm.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { rate, rollup, sliceLine, splitPaise, checkSlices, toPaise, manpowerSlices, MP_HEADCOUNT } from "../src/server/wcm/math.ts";
+import { rate, rollup, sliceLine, splitPaise, checkSlices, toPaise, manpowerSlices, MP_HEADCOUNT, ucOwned } from "../src/server/wcm/math.ts";
 
 const L = (id, family, amount, extra = {}) => ({ id, period: "2026-10-01", basis: "actual", site: "South", family, head: family === "ot" ? "Monthly OT" : "Monthly Manpower Cost", channel: null, amount, cell: id, ...extra });
 const R = (id, family, head, slices, extra = {}) => ({ id, family, head, site: "*", from: "2026-04-01", to: null, slices, status: "approved", ...extra });
@@ -136,3 +136,15 @@ assert.equal(sd.cpsB2c, 13.5); assert.equal(sd.cpuB2b, 0.45);
 assert.equal(splitDay([DL("wh", 100, "shared")], { b2c: 0, b2b: 0 }, { b2c: 0 }).b2c, null); // no dispatch ⇒ no split, no CPS
 
 console.log("wcm OK", { octBoth: oct.Both.source / 100, julKnown: jul.source / 100, julMissingLabourLines: 4, julPackaging: pt.source / 100 });
+
+// UC items ownership of SLA stage rows: its window days own the day × event for every stream; B2B Marketplace's all-days rows own only its own site × stream
+{
+  const r = (day, stream, site = "South", event = "dispatched") => ({ day, site, stream, event });
+  const win = [{ ...r("2026-09-30", ""), site: "South" }], mp = [r("2026-10-31", "B2B Marketplace")];
+  assert.equal(ucOwned(r("2026-09-30", "B2C Shopify"), win), true);
+  assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace"), mp), true);
+  assert.equal(ucOwned(r("2026-10-31", "B2C Shopify"), mp), false); // other streams' SLA rows that day are kept
+  assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace", "North"), mp), false);
+  assert.equal(ucOwned(r("2026-10-31", "B2B Marketplace", "South", "packed"), mp), false);
+  console.log("wcm UC ownership OK");
+}
