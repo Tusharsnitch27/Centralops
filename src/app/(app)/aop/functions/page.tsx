@@ -6,6 +6,7 @@ import { requireUser } from "@/server/auth";
 import { listCycles, resolveCycle } from "@/server/aop/model";
 import { FN } from "@/server/functions/sources";
 import { functionView } from "@/server/functions/view";
+import { categoryView, type CategoryView } from "@/server/functions/category";
 import type { Cause, FnKey, FnMode, FnSite, GapPart } from "@/server/functions/types";
 import { fmtDate, fmtMonth } from "@/lib/dates";
 import { inr } from "@/lib/format";
@@ -29,6 +30,7 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
   const mode: FnMode = sp.mode === "month" ? "month" : "day";
   const rulebook = fn === "b2b_retail" && sp.scenario === "1";
   const [cycles, cycle, view] = await Promise.all([listCycles(), resolveCycle(sp.cycle), functionView(fn, site, mode)]);
+  const cats = await categoryView(fn, site, [...new Set(view.points.map((p) => `${p.key.slice(0, 7)}-01`))]);
   const href = (o: Partial<SP>) => {
     const p = { cycle: cycles.length > 1 ? cycle?.id : undefined, fn, site, mode, scenario: rulebook ? "1" : undefined, ...o };
     if (p.fn !== "b2b_retail") p.scenario = undefined;
@@ -79,6 +81,7 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="space-y-3">
+        {cats && <Categories c={cats} fn={fn} />}
         <Section open title="Where the extra cost comes from" sub="Actual cost minus the cost at ideal heads, by cause; a minus is a saving.">
           <GapTable title="Manpower" parts={view.manpowerGap} />
           {view.logisticsGap && <GapTable title="Freight" parts={view.logisticsGap} />}
@@ -125,5 +128,44 @@ function GapTable({ title, parts }: { title: string; parts: GapPart[] }) {
         );
       })}</tbody>
     </table>
+  );
+}
+
+/** By category, month on month: share of units (top apparel categories, then the non-apparel long tail), long-tail share of shipments, inward hours. */
+function Categories({ c, fn }: { c: CategoryView; fn: FnKey }) {
+  const pc = (x: number | null) => (x == null ? "—" : `${x.toFixed(1)} %`);
+  const head = (first: string) => <thead><tr><th>{first}</th>{c.months.map((m) => <th key={m} className="text-right">{fmtMonth(m)}</th>)}</tr></thead>;
+  const ltStart = c.units.findIndex((u) => u.longTail);
+  return (
+    <Section open title="By category" sub={`Share of ${fn === "inwards" || fn.endsWith("returns") ? "units put away" : "units dispatched"} by category; non-apparel (long tail) listed apart.`}>
+      <table className="table-base">
+        {head("Category · % of units")}
+        <tbody>
+          {c.units.map((u, i) => (
+            <tr key={u.category} className={cn(i === ltStart && "border-t-2 border-line")}>
+              <td>{i === ltStart && <span className="mr-2 text-[11px] uppercase text-ink-4">Long tail</span>}{u.category}</td>
+              {u.values.map((v, j) => <td key={j} className="text-right tabular" title={n0(v)}>{pc(c.total[j] ? (100 * (v ?? 0)) / c.total[j]! : null)}</td>)}
+            </tr>
+          ))}
+          <tr className="font-medium"><td>Units</td>{c.total.map((t, j) => <td key={j} className="text-right tabular">{n0(t)}</td>)}</tr>
+        </tbody>
+      </table>
+      {c.shipments && (
+        <table className="table-base">
+          {head("Shipments holding · % of shipments")}
+          <tbody>{c.shipments.map((r, i) => (
+            <tr key={r.category} className={cn(i === 0 && "font-medium")}><td>{r.category}</td>{r.values.map((v, j) => <td key={j} className="text-right tabular">{pc(v)}</td>)}</tr>
+          ))}</tbody>
+        </table>
+      )}
+      {c.hours && (
+        <table className="table-base">
+          {head("Gate entry → last putaway · median hours")}
+          <tbody>{c.hours.map((r) => (
+            <tr key={r.category}><td>{r.category}</td>{r.values.map((v, j) => <td key={j} className="text-right tabular">{v ?? "—"}</td>)}</tr>
+          ))}</tbody>
+        </table>
+      )}
+    </Section>
   );
 }

@@ -83,6 +83,8 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       catch (e) { console.error("[wcm-uc-history] pull failed", e instanceof Error ? e.message : e); }
       try { const { pullWam } = await import("./server/functions/feed"); const w = await pullWam(); console.log(`[fn-wam] ${w.note}`); }
       catch (e) { console.error("[fn-wam] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullCategories } = await import("./server/functions/feed"); const w = await pullCategories(); console.log(`[fn-category] ${w.note}`); }
+      catch (e) { console.error("[fn-category] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

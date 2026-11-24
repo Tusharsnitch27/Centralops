@@ -2,6 +2,8 @@ import "server-only";
 import { q, tx } from "../db";
 import { sfQuery } from "../snowflake";
 import { placementSla } from "./aggregate";
+import { CAT, SITE, UC_STREAM } from "../wcm/feed";
+import { LONG_TAIL, LONG_TAIL_KEY } from "./types";
 
 /** Feeds for the AOP Functions view: store orders, handover rulebook, WAM inward. Read-only Snowflake; missing is null, never 0. */
 const num = (v: unknown) => (v == null ? null : Number(v));
@@ -126,4 +128,57 @@ export async function pullWam(from = "2026-04-01") {
   }
   });
   return { read: rows.length, note: `${rows.length} WAM inward days from ${from}` };
+}
+
+/**
+ * Category split per function (fn_category_month, migration 093), month by month from April:
+ *  forward streams (UC items, dispatched month): units = items, shipments = distinct packages holding the category; '(all)' = the stream's packages;
+ *    '(long tail)' = packages holding any non-apparel item (LONG_TAIL), counted once however many it holds;
+ *  putaway streams (putaway_tracking, trading stock, putaway month): units by final type, as the stage feed maps them;
+ *  inward hours (WAM, gate-entry month): median hours gate entry → last putaway per ASN, category from the ASN's SKU group (style-colour) through the
+ *  inventory master's SKUs. GRN_SUBMITTED_AT lands after putaway on most ASNs, so the stage between isn't split.
+ * Categories fold as storage's (CAT). Months the source returns are replaced.
+ */
+const INV_MASTER = "snitch_db.maplemonk.snitch_final_inventory_wh2";
+const CATEGORY_SQL = `WITH f AS (
+  SELECT TO_VARCHAR(DATE_TRUNC('month', dispatched_timestamp), 'YYYY-MM-DD') AS m, ${SITE("warehouse_name")} AS site, ${UC_STREAM} AS stream,
+    ${CAT("category")} AS cat, saleorderitemcode, shippingpackagecode
+  FROM snitch_db.maplemonk.UNICOMMERCE_FACT_ITEMS_INTERMEDIATE
+  WHERE dispatched_timestamp >= TO_DATE('{from}') AND warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')),
+c AS (SELECT REGEXP_SUBSTR("Item SkuCode", '^(.*)-[^-]+$', 1, 1, 'e') AS g, MAX(${CAT('"Category Name"')}) AS cat FROM ${INV_MASTER}
+  WHERE date >= DATEADD(day, -180, CURRENT_DATE) GROUP BY 1),
+a AS (SELECT ASN_NUMBER, MAX(IFF(WAREHOUSE = 'NORTH_WH', 'North', 'South')) AS site, MAX(SKU_GROUP_ID) AS g, MIN(GATE_ENTRY_TIME) AS ge, MAX(LAST_PUV_AT) AS lp
+  FROM snitch_db.maplemonk.WAM_ASN_INWARD WHERE GATE_ENTRY_TIME >= TO_DATE('{from}') AND WAREHOUSE IN ('NORTH_WH','SOUTH_WH') GROUP BY 1)
+SELECT m AS month, site, stream, cat AS category, 'units' AS metric, COUNT(DISTINCT saleorderitemcode) AS value FROM f WHERE stream <> 'Other' GROUP BY 1, 2, 3, 4
+UNION ALL SELECT m, site, stream, cat, 'shipments', COUNT(DISTINCT shippingpackagecode) FROM f WHERE stream <> 'Other' GROUP BY 1, 2, 3, 4
+UNION ALL SELECT m, site, stream, '(all)', 'shipments', COUNT(DISTINCT shippingpackagecode) FROM f WHERE stream <> 'Other' GROUP BY 1, 2, 3
+UNION ALL SELECT m, site, stream, '${LONG_TAIL_KEY}', 'shipments', COUNT(DISTINCT shippingpackagecode) FROM f
+  WHERE stream <> 'Other' AND cat IN (${LONG_TAIL.map((c) => `'${c}'`).join(",")}) GROUP BY 1, 2, 3
+UNION ALL SELECT TO_VARCHAR(DATE_TRUNC('month', putaway_updated), 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')},
+  CASE final_type WHEN 'New Inward' THEN 'Inward' WHEN 'B2C Return Inward' THEN 'B2C Returns (channel open)' WHEN 'Store Return Inward' THEN 'B2B Returns Retail'
+    WHEN 'B2B MP Returns' THEN 'B2B Returns Marketplace' END, ${CAT("category")}, 'units', SUM(putaway_completed_quantity)
+FROM snitch_db.maplemonk.putaway_tracking
+WHERE putaway_updated >= TO_DATE('{from}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND is_trading = TRUE
+  AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns')
+GROUP BY 1, 2, 3, 4
+UNION ALL SELECT TO_VARCHAR(DATE_TRUNC('month', ge), 'YYYY-MM-DD'), a.site, 'Inward', COALESCE(c.cat, '(NO CATEGORY)'), 'gate_put_h', MEDIAN(DATEDIFF('minute', ge, lp) / 60)
+  FROM a LEFT JOIN c ON c.g = a.g WHERE lp >= ge GROUP BY 1, 2, 3, 4
+UNION ALL SELECT TO_VARCHAR(DATE_TRUNC('month', ge), 'YYYY-MM-DD'), a.site, 'Inward', COALESCE(c.cat, '(NO CATEGORY)'), 'asns', COUNT(*)
+  FROM a LEFT JOIN c ON c.g = a.g WHERE lp >= ge GROUP BY 1, 2, 3, 4`;
+type CatRow = { month: string; site: string | null; stream: string | null; category: string; metric: string; value: number | null };
+
+export async function pullCategories(from = "2026-04-01") {
+  if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
+  const rows = (await sfQuery<CatRow>(CATEGORY_SQL.replaceAll("{from}", from))).filter((r) => r.site && r.stream && r.value != null);
+  if (!rows.length) return { read: 0, note: "category split returned no rows — table kept" };
+  const months = [...new Set(rows.map((r) => r.month))];
+  await tx(async (t) => {
+    await t.q(`delete from fn_category_month where month = any($1::date[])`, [months]);
+    for (const c of chunks(rows)) {
+      await t.q(`insert into fn_category_month (month, site, stream, category, metric, value)
+                 select * from unnest($1::date[], $2::text[], $3::text[], $4::text[], $5::text[], $6::numeric[])`,
+        [c.map((r) => r.month), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.category), c.map((r) => r.metric), c.map((r) => num(r.value))]);
+    }
+  });
+  return { read: rows.length, note: `${rows.length} category rows for ${months.length} months from ${from}` };
 }

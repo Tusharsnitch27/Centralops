@@ -39,7 +39,7 @@ GROUP BY 1, 2, 3`;
 export const STAGE_FROM = "2026-09-21";
 /** Days at the start of the SLA source's window treated as partial (see pullStageOutput). */
 const EDGE_DAYS = 7;
-const SITE = (col: string) => `CASE WHEN ${col} IN ('SAPL-WH1','SAPL-WH2') THEN 'South' WHEN ${col} = 'SAPL-NORTH-TAURU' THEN 'North' END`;
+export const SITE = (col: string) => `CASE WHEN ${col} IN ('SAPL-WH1','SAPL-WH2') THEN 'South' WHEN ${col} = 'SAPL-NORTH-TAURU' THEN 'North' END`;
 /** marketplace_mapped → warehouse stream. Anything unlisted is kept as "Other" (visible, never folded into a channel). */
 const STREAM = `CASE
   WHEN marketplace_mapped = 'SHOPIFY' THEN 'B2C Shopify'
@@ -128,7 +128,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
 const UC = "snitch_db.maplemonk.UNICOMMERCE_FACT_ITEMS_INTERMEDIATE";
 /** B2B Marketplace dispatches up to ~3 weeks after creation: UC owns event days until 14 days past the SLA source's first creation day. */
 const UC_WINS_DAYS = 14;
-const UC_STREAM = `CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' OR marketplace_mapped LIKE 'M-NOW%' OR UPPER(marketplace_mapped) = 'SLIKK' THEN 'B2B Marketplace'
+export const UC_STREAM = `CASE WHEN marketplace = 'FLIPKART B2B CUSTOM' OR marketplace_mapped LIKE 'M-NOW%' OR UPPER(marketplace_mapped) = 'SLIKK' THEN 'B2B Marketplace'
   WHEN marketplace_mapped IN ('Own Store','Franchise Store') THEN 'B2B Retail' WHEN marketplace_mapped = 'NYKAA_SAPL_TAURU' THEN 'B2C Marketplace'
   ELSE ${STREAM} END`;
 // B2B Marketplace's packed / dispatched / shipments run to yesterday: UC ties to the S&OP workbook (Oct South 42,086), the SLA source gives 37,630
@@ -289,7 +289,7 @@ export async function pullRetailSpine(from = "2026-04-01") {
 }
 
 /** Category names as the item master spells them, folded to one name per category (singular / plural variants). */
-const CAT = (col: string) => `CASE UPPER(TRIM(${col})) WHEN 'SHIRT' THEN 'SHIRTS' WHEN 'SWEATER' THEN 'SWEATERS' WHEN 'TROUSER' THEN 'TROUSERS'
+export const CAT = (col: string) => `CASE UPPER(TRIM(${col})) WHEN 'SHIRT' THEN 'SHIRTS' WHEN 'SWEATER' THEN 'SWEATERS' WHEN 'TROUSER' THEN 'TROUSERS'
   WHEN 'JACKET' THEN 'JACKETS' WHEN 'JOGGERS' THEN 'JOGGERS & TRACKPANTS' WHEN 'TRACKPANTS' THEN 'JOGGERS & TRACKPANTS' WHEN 'FOOTWEAR' THEN 'SHOES'
   WHEN 'PYJAMAS' THEN 'NIGHT SUIT & PYJAMAS' ELSE COALESCE(NULLIF(UPPER(TRIM(${col})), ''), '(NO CATEGORY)') END`;
 const INV = "snitch_db.maplemonk.snitch_final_inventory_wh2";

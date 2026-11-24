@@ -30,3 +30,8 @@ export const FN: Record<FnKey, { label: string; streams: StreamKey[]; processed:
   b2c_returns: { label: "B2C Returns", streams: ["B2C Returns Shopify", "B2C Returns Marketplace"], processed: { streams: ["B2C Returns (channel open)"], event: "putaway" } },
   b2b_returns: { label: "B2B Returns", streams: ["B2B Returns Retail", "B2B Returns Marketplace"], processed: { streams: ["B2B Returns Retail", "B2B Returns Marketplace"], event: "putaway" } },
 };
+
+/** Non-apparel long tail (categories as CAT folds them; FOOTWEAR → SHOES). SKU prefixes: SHOES SH…, PERFUMES 4MSFR, SUNGLASSES SN…,
+ *  ACCESSORIES 4MAC / 4MBD / 4MCP / 4MHT / 4MSCK / 4MSFC / 4MSFL, BELTS 4MBL0, BAGS BP…, TROLLEY 4MTL0. */
+export const LONG_TAIL = ["SHOES", "PERFUMES", "SUNGLASSES", "ACCESSORIES", "BELTS", "BAGS", "TROLLEY"];
+export const LONG_TAIL_KEY = "(long tail)";

@@ -52,6 +52,7 @@ import { sql as inwardReceivingFeed } from "./089_inward_receiving_feed";
 import { sql as functions } from "./090_functions";
 import { sql as ippFullYear } from "./091_ipp_full_year";
 import { sql as rulebookCutoffs } from "./092_rulebook_cutoffs";
+import { sql as fnCategory } from "./093_fn_category";
 import { sql as ippUnits } from "./081_ipp_units";
 import { sql as logistics } from "./082_logistics";
 import { sql as ippUpdated } from "./083_ipp_updated";
@@ -113,4 +114,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 90, name: "functions", sql: functions },
   { version: 91, name: "ipp_full_year", sql: ippFullYear },
   { version: 92, name: "rulebook_cutoffs", sql: rulebookCutoffs },
+  { version: 93, name: "fn_category", sql: fnCategory },
 ];
