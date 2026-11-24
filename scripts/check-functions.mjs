@@ -252,3 +252,33 @@ assert.equal(scenarioDelta([{ asIsCost: 1000, cost: 600 }], [5], null).manpowerP
 assert.deepEqual(placementShare([{ sla: "WITHIN_SLA", qty: 20 }, { sla: "BREACHED", qty: 60 }, { sla: "EARLY_CREATION", qty: 20 }, { sla: null, qty: 100 }]), { overlay: 20, overlayBase: 100 });
 assert.deepEqual(placementShare([{ sla: null, qty: 100 }]), { overlay: null, overlayBase: null });
 console.log("functions rulebook scenario OK");
+
+// Functions overview (actuals): pools add back, missing stays null, the total counts each head once
+{
+  const { poolShare, dayCells, perTxn, salaryPerHead, OVERVIEW_FN } = await import("../src/server/functions/overviewMath.ts");
+  for (const s of ["South", "North"]) {
+    close(poolShare("b2b_retail", s) + poolShare("b2b_marketplace", s), 1);
+    close(poolShare("b2c_shopify", s) + poolShare("b2c_marketplace", s), 1);
+    assert.equal(poolShare("inwards", s), 1);
+  }
+  close(poolShare("b2b_marketplace", "North"), 7 / 30.5);
+  const H = [{ day: "2026-10-05", site: "North", dept: "B2B Forward", heads: 61 }, { day: "2026-10-05", site: "North", dept: "Inward", heads: 20 },
+    { day: "2026-10-05", site: "North", dept: "Admin", heads: 3 }];
+  const S = [{ day: "2026-10-05", site: "North", stream: "B2B Retail", event: "shipments", qty: 900, source: "warehouse_sla_performance" },
+    { day: "2026-10-05", site: "North", stream: "Inward", event: "putaway_lines", qty: 2000, source: "putaway_tracking" }];
+  const c = dayCells("North", H, S);
+  close(c.b2b_retail.heads + c.b2b_marketplace.heads, 61);              // the shared pool, split and added back
+  assert.equal(c.total.heads, 84);                                        // every department once
+  close(Object.keys(OVERVIEW_FN).reduce((a, f) => a + c[f].heads, 0) + c.support.heads, 84); // functions + support = total
+  assert.equal(c.b2b_retail.txn, 900);
+  assert.equal(c.b2c_shopify.txn, 0);                                     // the forward feed ran that day: no Shopify packages = 0
+  assert.equal(c.b2b_marketplace.txn, null);                              // B2B MP dispatch is UC-items only: no UC row = not covered
+  assert.equal(c.b2c_returns.txn, null);                                  // no returns-app rows that day: unknown, never 0
+  assert.equal(c.total.txn, null);                                        // a function uncovered → no total
+  assert.equal(c.b2c_returns.heads, 0);                                   // attendance came in without B2C Return heads: a real 0
+  const none = dayCells("North", [], S);
+  assert.equal(none.total.heads, null); assert.equal(none.inwards.heads, null); // no attendance at all: unknown
+  assert.equal(perTxn(100000, 0), null); assert.equal(perTxn(null, 10), null); assert.equal(perTxn(100000, 4000), 25);
+  close(salaryPerHead(4_000_000, 4600), 20000);                           // 200 head-months (4,600 head-days ÷ 23) at ₹20,000
+  console.log("functions overview OK");
+}

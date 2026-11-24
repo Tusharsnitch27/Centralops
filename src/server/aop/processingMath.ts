@@ -98,7 +98,7 @@ export function applyLevers(r: ProcRow, l: Levers): ProcRow {
  *  process = attendance designation where it names the process (employee master 22 Nov, counts in DESIG); everyone else
  *          (generic "Associate", supervisors, DEO) by IPP workload — one unit passes every stage, so a stage's share ∝ 1 ÷ IPP
  */
-const ALLOC: Record<Wh, Partial<Record<StreamKey, number>>> = {
+export const ALLOC: Record<Wh, Partial<Record<StreamKey, number>>> = {
   North: { "B2C Shopify": 12, "B2C Marketplace": 8, "B2B Retail": 23.5, "B2B Marketplace": 7 },
   South: { "B2C Shopify": 16, "B2C Marketplace": 11, "B2B Retail": 25.5, "B2B Marketplace": 8 },
 };

@@ -11,7 +11,8 @@ import { ucOwned, UC_ALL_DAYS_STREAM } from "./math";
  *    packed = PACKED_TIMESTAMP, manifested = MANIFESTED_TIMESTAMP, dispatched = DISPATCHED_TIMESTAMP1.
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
  *  Inward / returns / audit (putaway_tracking from RETURNS_FROM, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
- *    feeds): units = putaway_completed_quantity, by final type. Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
+ *    feeds): units = putaway_completed_quantity, by final type; putaway_lines = distinct completed putaway item lines ("Putaway Item Id": one SKU
+ *    into one bin — the Functions overview's transaction for Inwards and returns). Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
  *  B2C returns (RETURN_2_INWARDING_DATA, the returns app's full history — PG_INWARDING_DATA is its Sep→ subset; one row per packet;
  *    channel B2C = Shopify, MP-* = marketplace; TYPE WH-1/WH-2 = South, North_WH = North): received = RECEIVING_DATE, qc =
  *    QC_TIMESTAMP, distinct packets (~1.05–1.2 units each), from RETURNS_FROM.
@@ -67,6 +68,15 @@ WHERE putaway_updated >= TO_DATE('${RETURNS_FROM}') AND "Warehouse Name" IN ('SA
   AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE
 GROUP BY 1, 2, 3, 4
 UNION ALL
+SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')},
+  CASE final_type WHEN 'New Inward' THEN 'Inward' WHEN 'B2C Return Inward' THEN 'B2C Returns (channel open)' WHEN 'Store Return Inward' THEN 'B2B Returns Retail'
+    WHEN 'B2B MP Returns' THEN 'B2B Returns Marketplace' END,
+  'putaway_lines', 'line', COUNT(DISTINCT "Putaway Item Id")
+FROM ${PUT}
+WHERE putaway_updated >= TO_DATE('${RETURNS_FROM}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
+  AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns') AND is_trading = TRUE AND putaway_completed_quantity > 0
+GROUP BY 1, 2, 3, 4
+UNION ALL
 SELECT TO_VARCHAR(TRY_TO_TIMESTAMP(UPDATED)::date, 'YYYY-MM-DD'), ${PO_SITE}, 'Inward', ev, u, ROUND(SUM(TRY_TO_NUMBER("Recieved Quantity")) / k.dv)
 FROM ${PO}, (SELECT 'received' AS ev, 'item' AS u, 1 AS dv UNION ALL SELECT 'unloaded', 'box', ${PCS_PER_BOX}) k
 WHERE TRY_TO_TIMESTAMP(UPDATED) >= TO_DATE('${RETURNS_FROM}') AND ${PO_TRADING}
@@ -96,7 +106,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
   const rows = raw.filter((r) => !(slaEvs.includes(r.event) && ((edge && r.day! < edge && stored.has(`${r.day}|${r.event}`))
     || ucOwned(r as { day: string; site: string; stream: string; event: string }, ucBy.get(`${r.day}|${r.event}`) ?? []))));
   // replace per source (event family) only the days that source returned — one transaction per family, so a failed run leaves its days as they were
-  const families = [slaEvs, ["putaway", "audit_move"], ["received", "qc", "unloaded"]];
+  const families = [slaEvs, ["putaway", "audit_move", "putaway_lines"], ["received", "qc", "unloaded"]];
   for (const evs of families) {
     const fam = rows.filter((r) => evs.includes(r.event)), days = [...new Set(fam.map((r) => r.day!))];
     if (!days.length) continue;
@@ -109,7 +119,7 @@ export async function pullStageOutput(from = STAGE_FROM) {
                  on conflict (day, site, stream, event) do update set qty = excluded.qty, unit = excluded.unit, source = excluded.source, fetched_at = now()
                  where wcm_stage_output.source is distinct from 'uc_items'`,
           [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.stream), c.map((r) => r.event), c.map((r) => r.unit), c.map((r) => Number(r.qty) || 0),
-            c.map((r) => (["putaway", "audit_move"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
+            c.map((r) => (["putaway", "audit_move", "putaway_lines"].includes(r.event) ? "putaway_tracking" : r.stream === "Inward" ? "uc_purchase_orders"
               : ["received", "qc"].includes(r.event) ? "return_2_inwarding_data" : "warehouse_sla_performance"))]);
       }
     });
