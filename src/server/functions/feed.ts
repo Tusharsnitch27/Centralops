@@ -137,6 +137,8 @@ export async function pullWam(from = "2026-04-01") {
  *  putaway streams (putaway_tracking, trading stock, putaway month): units by final type, as the stage feed maps them;
  *  inward hours (WAM, gate-entry month): median hours gate entry → last putaway per ASN, category from the ASN's SKU group (style-colour) through the
  *  inventory master's SKUs. GRN_SUBMITTED_AT lands after putaway on most ASNs, so the stage between isn't split.
+ *  factory issues (issues_factory_sorted, raised month): issue quantity per inward category — the style's category (its SKU field holds the style),
+ *  else the PO's main category; North_WH = North, WH1 / WH2 = South.
  * Categories fold as storage's (CAT). Months the source returns are replaced.
  */
 const INV_MASTER = "snitch_db.maplemonk.snitch_final_inventory_wh2";
@@ -165,11 +167,22 @@ UNION ALL SELECT TO_VARCHAR(DATE_TRUNC('month', ge), 'YYYY-MM-DD'), a.site, 'Inw
   FROM a LEFT JOIN c ON c.g = a.g WHERE lp >= ge GROUP BY 1, 2, 3, 4
 UNION ALL SELECT TO_VARCHAR(DATE_TRUNC('month', ge), 'YYYY-MM-DD'), a.site, 'Inward', COALESCE(c.cat, '(NO CATEGORY)'), 'asns', COUNT(*)
   FROM a LEFT JOIN c ON c.g = a.g WHERE lp >= ge GROUP BY 1, 2, 3, 4`;
+const ISSUES_SQL = `WITH s AS (SELECT UPPER(REGEXP_SUBSTR("Item SkuCode", '^[^-]+')) AS st, MAX(${CAT('"Category Name"')}) AS cat FROM ${INV_MASTER}
+    WHERE date >= DATEADD(day, -240, CURRENT_DATE) GROUP BY 1),
+  p AS (SELECT UPPER(TRIM("PO Code")) AS po, ${CAT("category")} AS cat, SUM(TRY_TO_NUMBER("Order Quantity")) AS q FROM snitch_db.maplemonk.uc_final_get_purchase_orders
+    GROUP BY 1, 2 QUALIFY ROW_NUMBER() OVER (PARTITION BY po ORDER BY q DESC) = 1)
+SELECT TO_VARCHAR(DATE_TRUNC('month', i.created_at_date), 'YYYY-MM-DD') AS month, IFF(i.facility = 'North_WH', 'North', 'South') AS site, 'Inward' AS stream,
+  COALESCE(s.cat, p.cat, '(NO CATEGORY)') AS category, 'issue_qty' AS metric, SUM(TRY_TO_NUMBER(i.qty)) AS value
+FROM snitch_db.maplemonk.issues_factory_sorted i
+  LEFT JOIN s ON s.st = UPPER(REGEXP_SUBSTR(TRIM(i.sku), '^[^-/ ]+'))
+  LEFT JOIN p ON p.po = UPPER(REGEXP_REPLACE(TRIM(i.po_number), '^-', ''))
+WHERE i.created_at_date >= TO_DATE('{from}') GROUP BY 1, 2, 3, 4, 5`;
 type CatRow = { month: string; site: string | null; stream: string | null; category: string; metric: string; value: number | null };
 
 export async function pullCategories(from = "2026-04-01") {
   if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
-  const rows = (await sfQuery<CatRow>(CATEGORY_SQL.replaceAll("{from}", from))).filter((r) => r.site && r.stream && r.value != null);
+  const [main, issues] = await Promise.all([CATEGORY_SQL, ISSUES_SQL].map((s) => sfQuery<CatRow>(s.replaceAll("{from}", from))));
+  const rows = [...main!, ...issues!].filter((r) => r.site && r.stream && r.value != null);
   if (!rows.length) return { read: 0, note: "category split returned no rows — table kept" };
   const months = [...new Set(rows.map((r) => r.month))];
   await tx(async (t) => {

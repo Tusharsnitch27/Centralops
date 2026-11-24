@@ -49,8 +49,32 @@ export function perUnit(rupees: number | null, units: number | null, medianUnits
   return rupees / units;
 }
 
-export function zoneClass(site: "South" | "North", zone: string | null): "home" | "cross" | "unmapped" {
+/** North / South stores: home or cross-zone by the shipping site; East / West stores have no home site (cheaper lane wins); else unmapped. */
+export function zoneClass(site: "South" | "North", zone: string | null): "home" | "cross" | "eastwest" | "unmapped" {
   const z = zone?.trim().toUpperCase();
+  if (z === "EAST" || z === "WEST") return "eastwest";
   if (z !== "NORTH" && z !== "SOUTH") return "unmapped";
   return z === site.toUpperCase() ? "home" : "cross";
+}
+
+/** East / West zone in a month: the cheaper site's lane (₹ per unit) is the ideal; extra = units shipped from the dearer site × the rate gap.
+ *  Null when either site has no rate for the zone that month (nothing to compare against). */
+export function dearerWh(rate: { North: number | null; South: number | null }, qty: { North: number; South: number }) {
+  if (rate.North == null || rate.South == null) return null;
+  const dear = rate.North > rate.South ? "North" : "South", cheap = dear === "North" ? "South" : "North";
+  return { cheaper: cheap as "North" | "South", units: qty[dear], rupees: qty[dear] * (rate[dear]! - rate[cheap]!) };
+}
+
+/** Courier cost the long tail adds over apparel: per courier, Σ long-tail groups' shipments × (their ₹ per shipment − that courier's apparel-only ₹ per
+ *  shipment), so courier mix doesn't count. A courier with no apparel-only shipments can't be compared: its long-tail shipments are returned unpriced. */
+export function longTailPremium(rows: { courier: string; grp: string; ships: number; cost: number }[], longTail: string[], base = "Apparel only") {
+  let rupees = 0, ships = 0, unpriced = 0;
+  for (const c of new Set(rows.map((r) => r.courier))) {
+    const mine = rows.filter((r) => r.courier === c), b = mine.find((r) => r.grp === base);
+    for (const r of mine.filter((x) => longTail.includes(x.grp))) {
+      if (!b?.ships) { unpriced += r.ships; continue; }
+      rupees += r.cost - (r.ships * b.cost) / b.ships; ships += r.ships;
+    }
+  }
+  return { rupees, ships, unpriced };
 }

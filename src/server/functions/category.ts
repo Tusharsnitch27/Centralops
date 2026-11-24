@@ -1,7 +1,12 @@
 import "server-only";
 import { q } from "../db";
 import { FN } from "./sources";
+import { longTailPremium } from "./math";
 import { LONG_TAIL, LONG_TAIL_KEY, type FnKey, type FnSite } from "./types";
+
+/** Package groups in lg_b2c_cat (scripts/courier-category.mjs); Winterwear is apparel, shown as a heavier-apparel control. */
+const GROUPS = ["Apparel only", "Winterwear", "Shoes", "Perfume", "Accessories / belts / sunglasses", "Bags / trolley"];
+const LT_GROUPS = ["Shoes", "Perfume", "Accessories / belts / sunglasses", "Bags / trolley"];
 
 /**
  * AOP › Functions "By category" (fn_category_month): per month, each category's share of the function's units; non-apparel (LONG_TAIL) listed
@@ -15,6 +20,12 @@ export interface CategoryView {
   total: (number | null)[];
   shipments: { category: string; values: (number | null)[] }[] | null; // share of '(all)' shipments, % per month
   hours: { category: string; values: (string | null)[] }[] | null; // "1.5" or "S 1.5 · N 21.6"
+  /** Inwards: factory issue quantity per 100 units put away, by category (issues_factory_sorted, Mar–Oct 2026; WAM issues after). */
+  issues: { category: string; values: (number | null)[] }[] | null;
+  /** B2C only, months with courier bills loaded (lg_b2c_cat): ₹ per forward shipment and kg by what the package holds; the long tail's premium
+   *  over apparel-only at the same courier. Bills carry no site, so this is both sites. */
+  courier: { months: string[]; rows: { grp: string; ships: (number | null)[]; perShip: (number | null)[]; kg: (number | null)[] }[];
+    premium: (number | null)[]; premiumShips: (number | null)[]; unpriced: number } | null;
 }
 
 export async function categoryView(fn: FnKey, site: FnSite, months: string[]): Promise<CategoryView | null> {
@@ -54,5 +65,30 @@ export async function categoryView(fn: FnKey, site: FnSite, months: string[]): P
       return per.every((x) => x == null) ? null : sites.length === 1 ? per[0]! : sites.map((s, i) => `${s[0]} ${per[i] ?? "—"}`).join(" · ");
     }) }));
   }
-  return { months, units, total, shipments, hours };
+  let issues: CategoryView["issues"] = null;
+  if (fn === "inwards" && rows.some((r) => r.metric === "issue_qty")) {
+    const iq = new Map<string, number>();
+    for (const r of rows.filter((x) => x.metric === "issue_qty")) iq.set(r.category, (iq.get(r.category) ?? 0) + r.value);
+    const per = (c: string | null, m: string) => { const i = c ? val("issue_qty", c, m) : rows.filter((r) => r.metric === "issue_qty" && r.month === m).reduce((a, r) => a + r.value, 0);
+      const u = c ? val("units", c, m) : total[months.indexOf(m)]; return i && u ? (100 * i) / u : null; };
+    issues = [{ category: "All categories", values: months.map((m) => per(null, m)) },
+      ...[...iq].filter(([c]) => c !== "(NO CATEGORY)").sort((a, b) => b[1] - a[1]).slice(0, TOP).map(([c]) => ({ category: c, values: months.map((m) => per(c, m)) }))];
+  }
+  let courier: CategoryView["courier"] = null;
+  if (fn === "b2c_shopify" || fn === "b2c_marketplace") {
+    const cr = await q<{ month: string; courier: string; grp: string; ships: number; cost: number; kg: number | null }>(
+      `select month::text as month, courier, grp, ships, cost::float8 as cost, kg::float8 as kg from lg_b2c_cat where channel = $1 and month = any($2::date[])`, [FN[fn].label, months]);
+    const cm = months.filter((m) => cr.some((r) => r.month === m));
+    if (cm.length) {
+      const at = (m: string, g: string) => cr.filter((r) => r.month === m && r.grp === g);
+      const prem = cm.map((m) => longTailPremium(cr.filter((r) => r.month === m), LT_GROUPS));
+      courier = { months: cm, unpriced: prem.reduce((a, p) => a + p.unpriced, 0),
+        premium: prem.map((p) => (p.ships ? p.rupees : null)), premiumShips: prem.map((p) => p.ships || null),
+        rows: GROUPS.filter((g) => cr.some((r) => r.grp === g)).map((g) => {
+          const per = cm.map((m) => { const xs = at(m, g), n = xs.reduce((a, r) => a + r.ships, 0); return { n, cost: xs.reduce((a, r) => a + r.cost, 0), kg: xs.reduce((a, r) => a + (r.kg ?? 0), 0) }; });
+          return { grp: g, ships: per.map((p) => p.n || null), perShip: per.map((p) => (p.n ? p.cost / p.n : null)), kg: per.map((p) => (p.n && p.kg ? p.kg / p.n : null)) };
+        }) };
+    }
+  }
+  return { months, units, total, shipments, hours, issues, courier };
 }

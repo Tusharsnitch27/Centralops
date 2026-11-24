@@ -8,8 +8,10 @@ export interface FnChartPoint { label: string; projected: number | null; receive
   /** rulebook scenario only: heads the store orders need, as placed and on rulebook days */
   neededAsIs?: number | null; neededRulebook?: number | null }
 
-const PROJ = "var(--color-ink-3)", REC = "var(--color-line-strong)", PROC = "var(--color-ink)", ISS = "var(--color-bad)";
-const CPU = "var(--color-accent)", OVL = "var(--color-warn)", NEED = "var(--color-ok)";
+// one hue per meaning, shape inside it (charts.md › Color): volume = blue (bars received, line processed), plan = grey dashed,
+// cost = violet (solid actual, dashed ideal), overlay % = green, issues = red, rulebook heads = amber. Axis ticks carry their series' hue.
+const VOL = "var(--color-info)", REC = "rgb(29 78 216 / 0.16)", PROJ = "var(--color-ink-4)", PROC = VOL, ISS = "var(--color-bad)";
+const CPU = "var(--color-violet)", OVL = "var(--color-ok)", NEED = "var(--color-warn)";
 const r2 = (v: number | null) => (v == null || !Number.isFinite(v) ? "—" : `₹${v.toFixed(2)}`);
 
 /** Units on the left (projected, received, processed, issues), manpower ₹ per unit on the right, overlay % on its own hidden 0–100 axis,
@@ -21,31 +23,37 @@ export function FunctionChart({ data, heads, received, overlay, height = 300 }: 
   const maxIss = Math.max(1, ...data.map((d) => d.issues ?? 0));
   const hasNeed = data.some((d) => d.neededAsIs != null || d.neededRulebook != null);
   const maxNeed = Math.max(1, ...data.flatMap((d) => [d.neededAsIs ?? 0, d.neededRulebook ?? 0]));
-  const key = [
-    { label: "Projected", line: PROJ, dash: true }, { label: received, box: REC }, { label: "Processed", line: PROC },
-    ...(hasIssues ? [{ label: "Issues", box: ISS }] : []),
-    { label: "₹ / unit", line: CPU }, { label: "Ideal ₹ / unit", line: CPU, dash: true },
-    ...(hasOverlay ? [{ label: overlay!, line: OVL }] : []),
-    ...(hasNeed ? [{ label: "Heads needed, as placed", line: NEED, dash: true }, { label: "Heads needed, on rulebook days", line: NEED }] : []),
+  type K = { label: string; line?: string; box?: string; edge?: string; dash?: boolean };
+  const groups: { title: string; items: K[] }[] = [
+    { title: "Volume", items: [{ label: "Projected", line: PROJ, dash: true }, { label: received, box: REC, edge: VOL }, { label: "Processed", line: PROC },
+      ...(hasIssues ? [{ label: "Issues", box: ISS }] : [])] },
+    { title: "Cost", items: [{ label: "₹ / unit", line: CPU }, { label: "Ideal ₹ / unit", line: CPU, dash: true }] },
+    ...(hasOverlay || hasNeed ? [{ title: "Other", items: [...(hasOverlay ? [{ label: overlay!, line: OVL }] : []),
+      ...(hasNeed ? [{ label: "Heads needed, as placed", line: NEED, dash: true }, { label: "Heads needed, on rulebook days", line: NEED }] : [])] }] : []),
   ];
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
-        {key.map((k) => (
-          <span key={k.label} className="flex items-center gap-1.5">
-            {"box" in k ? <span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: k.box }} />
-              : <span className="inline-block w-4 border-t-2" style={{ borderColor: k.line, borderTopStyle: k.dash ? "dashed" : "solid" }} />}
-            {k.label}
+      <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[12px] text-ink-3">
+        {groups.map((g) => (
+          <span key={g.title} className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+            <span className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">{g.title}</span>
+            {g.items.map((k) => (
+              <span key={k.label} className="flex items-center gap-1.5">
+                {k.box ? <span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: k.box, boxShadow: k.edge ? `inset 0 0 0 1px ${k.edge}` : undefined }} />
+                  : <span className="inline-block w-4 border-t-2" style={{ borderColor: k.line, borderTopStyle: k.dash ? "dashed" : "solid" }} />}
+                {k.label}
+              </span>
+            ))}
           </span>
         ))}
-        <span className="ml-auto text-ink-4">units · ₹ per unit{hasNeed ? " · heads on their own scale" : ""}</span>
+        <span className="ml-auto text-ink-4"><span style={{ color: VOL }}>units</span> left · <span style={{ color: CPU }}>₹ per unit</span> right{hasNeed ? " · heads on their own scale" : ""}</span>
       </div>
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} barGap={2} barCategoryGap="20%">
           <CartesianGrid vertical={false} stroke="var(--color-line)" />
           <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "var(--color-line)" }} tick={{ fontSize: 11, fill: "var(--color-ink-3)" }} minTickGap={12} />
-          <YAxis yAxisId="u" tickLine={false} axisLine={false} width={48} tick={{ fontSize: 11, fill: "var(--color-ink-4)" }} tickFormatter={(v: number) => num(v)} />
-          <YAxis yAxisId="r" orientation="right" tickLine={false} axisLine={false} width={44} tick={{ fontSize: 11, fill: "var(--color-ink-4)" }} tickFormatter={(v: number) => `₹${v}`} />
+          <YAxis yAxisId="u" tickLine={false} axisLine={false} width={48} tick={{ fontSize: 11, fill: VOL, fillOpacity: 0.75 }} tickFormatter={(v: number) => num(v)} />
+          <YAxis yAxisId="r" orientation="right" tickLine={false} axisLine={false} width={44} tick={{ fontSize: 11, fill: CPU, fillOpacity: 0.75 }} tickFormatter={(v: number) => `₹${v}`} />
           {/* issues sit low on their own scale; overlay on 0–100 % */}
           <YAxis yAxisId="i" hide domain={[0, maxIss * 4]} />
           <YAxis yAxisId="p" hide domain={[0, 100]} />
@@ -70,13 +78,13 @@ export function FunctionChart({ data, heads, received, overlay, height = 300 }: 
               </div>
             );
           }} />
-          <Bar yAxisId="u" dataKey="received" fill={REC} radius={[3, 3, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+          <Bar yAxisId="u" dataKey="received" fill={REC} stroke={VOL} strokeOpacity={0.35} strokeWidth={1} radius={[3, 3, 0, 0]} maxBarSize={28} isAnimationActive={false} />
           {hasIssues && <Bar yAxisId="i" dataKey="issues" fill={ISS} radius={[2, 2, 0, 0]} maxBarSize={8} isAnimationActive={false} />}
           <Line yAxisId="u" dataKey="projected" stroke={PROJ} strokeWidth={1.5} strokeDasharray="5 4" dot={{ r: 1.5, strokeWidth: 0, fill: PROJ }} connectNulls={false} isAnimationActive={false} />
-          <Line yAxisId="u" dataKey="processed" stroke={PROC} strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: PROC }} connectNulls={false} isAnimationActive={false} />
+          <Line yAxisId="u" dataKey="processed" stroke={PROC} strokeWidth={2.25} dot={{ r: 2.75, strokeWidth: 0, fill: PROC }} connectNulls={false} isAnimationActive={false} />
           <Line yAxisId="r" dataKey="costPerUnit" stroke={CPU} strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: CPU }} connectNulls={false} isAnimationActive={false} />
           <Line yAxisId="r" dataKey="idealCostPerUnit" stroke={CPU} strokeWidth={1.5} strokeDasharray="5 4" dot={{ r: 1.5, strokeWidth: 0, fill: CPU }} connectNulls={false} isAnimationActive={false} />
-          {hasOverlay && <Line yAxisId="p" dataKey="overlay" stroke={OVL} strokeWidth={1} dot={false} connectNulls={false} isAnimationActive={false} />}
+          {hasOverlay && <Line yAxisId="p" dataKey="overlay" stroke={OVL} strokeWidth={1.5} strokeOpacity={0.8} dot={false} connectNulls={false} isAnimationActive={false} />}
           {hasNeed && <Line yAxisId="h" dataKey="neededAsIs" stroke={NEED} strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls={false} isAnimationActive={false} />}
           {hasNeed && <Line yAxisId="h" dataKey="neededRulebook" stroke={NEED} strokeWidth={2} dot={{ r: 2, strokeWidth: 0, fill: NEED }} connectNulls={false} isAnimationActive={false} />}
         </ComposedChart>

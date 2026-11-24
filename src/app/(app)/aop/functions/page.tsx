@@ -19,7 +19,7 @@ const FNS = Object.keys(FN) as FnKey[];
 const RECEIVED: Record<FnKey, string> = { inwards: "Received", b2c_shopify: "Orders", b2c_marketplace: "Orders", b2b_retail: "Store orders", b2b_marketplace: "Orders", b2c_returns: "Returns received (packets)", b2b_returns: "Received" };
 const OVERLAY: Partial<Record<FnKey, string>> = { b2c_shopify: "Within SLA", b2c_marketplace: "Within SLA", b2b_retail: "Ordered in rulebook window" };
 const CAUSE: Record<Cause, string> = { plan_peak: "Plan's cover for its busiest day", volume: "Volume vs projection", held_up: "Work held up by issues", below_ipp: "Output per head against the norm",
-  absenteeism: "Absenteeism above 10 %", cross_zone: "Cross-zone freight", courier_rate: "Courier rates", other: "Other" };
+  absenteeism: "Absenteeism above 10 %", cross_zone: "Cross-zone freight (North / South stores)", dearer_wh: "East / West shipped from the dearer warehouse", courier_rate: "Courier rates", other: "Other" };
 
 /** AOP › Functions: per function, volume against ideal and actual manpower cost, the cost gap split into causes, and what is assumed or missing. */
 export default async function FunctionsPage({ searchParams }: { searchParams: Promise<SP> }) {
@@ -155,6 +155,28 @@ function Categories({ c, fn }: { c: CategoryView; fn: FnKey }) {
           {head("Shipments holding · % of shipments")}
           <tbody>{c.shipments.map((r, i) => (
             <tr key={r.category} className={cn(i === 0 && "font-medium")}><td>{r.category}</td>{r.values.map((v, j) => <td key={j} className="text-right tabular">{pc(v)}</td>)}</tr>
+          ))}</tbody>
+        </table>
+      )}
+      {c.courier && (
+        <table className="table-base">
+          <thead><tr><th>Courier ₹ per forward shipment · by what the package holds</th>{c.courier.months.map((m) => <th key={m} className="text-right">{fmtMonth(m)}</th>)}</tr></thead>
+          <tbody>
+            {c.courier.rows.map((r) => (
+              <tr key={r.grp}><td>{r.grp}{r.grp === "Winterwear" && <span className="ml-2 text-[11px] text-ink-4">apparel, for comparison</span>}</td>
+                {r.perShip.map((v, j) => <td key={j} className="text-right tabular" title={`${n0(r.ships[j])} shipments · ${r.kg[j] == null ? "—" : r.kg[j]!.toFixed(2)} kg charged`}>
+                  {v == null ? "—" : `₹${v.toFixed(0)}`}<span className="ml-1.5 text-[11px] text-ink-4">{r.kg[j] == null ? "" : `${r.kg[j]!.toFixed(1)} kg`}</span></td>)}</tr>
+            ))}
+            <tr className="font-medium"><td>Long tail over apparel, same courier</td>{c.courier.premium.map((v, j) => <td key={j} className="text-right tabular" title={`${n0(c.courier!.premiumShips[j])} long-tail shipments`}>{inr(v)}</td>)}</tr>
+          </tbody>
+        </table>
+      )}
+      {c.courier && <p className="px-4 pb-3 pt-1 text-[11.5px] text-ink-4">From the couriers' own per-AWB bills (pre-tax, RTO included), each AWB matched to its package; both sites. Shadowfax's main forward bill has no AWBs, so it is not split.{c.courier.unpriced ? ` ${n0(c.courier.unpriced)} long-tail shipments went with couriers that carried no apparel-only parcels and are not priced.` : ""}</p>}
+      {c.issues && (
+        <table className="table-base">
+          {head("Factory issues (issue tracker, to Oct) · qty per 100 units put away")}
+          <tbody>{c.issues.map((r, i) => (
+            <tr key={r.category} className={cn(i === 0 && "font-medium")}><td>{r.category}</td>{r.values.map((v, j) => <td key={j} className="text-right tabular">{v == null ? "—" : v.toFixed(1)}</td>)}</tr>
           ))}</tbody>
         </table>
       )}

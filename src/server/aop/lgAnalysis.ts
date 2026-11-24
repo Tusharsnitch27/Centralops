@@ -42,14 +42,13 @@ export const minCharge = (months: string[], site: LgSite, category: string | nul
    from b left join f using (partner) group by 1, 2 order by sum(b.freight) desc`, [months, site, category]);
 
 /**
- * Zone lanes: each LR's store matched (case-insensitive) to its zone in the retail journey spine; dispatching site vs store zone.
+ * Zone lanes: each LR's store matched by lg_key to its zone (lg_zone: spine zone + overrides, migration 094); dispatching site vs store zone.
  * Unmatched stores stay "zone unknown" (shown, never dropped).
  */
 export const zoneLanes = (months: string[], site: LgSite, category: string | null) => q<{ site: string; zone: string; lrs: number; boxes: number; qty: number; freight: number }>(
-  `with z as (select upper(trim(store)) as s, mode() within group (order by zone) as zone from lg_retail_month where zone <> 'UNMAPPED' group by 1)
-   select b.site, coalesce(z.zone, 'zone unknown') as zone, count(*)::int as lrs, coalesce(sum(b.boxes), 0)::float8 as boxes,
+  `select b.site, coalesce(z.zone, 'zone unknown') as zone, count(*)::int as lrs, coalesce(sum(b.boxes), 0)::float8 as boxes,
      coalesce(sum(b.qty), 0)::float8 as qty, coalesce(sum(b.freight), 0)::float8 as freight
-   from lg_b2b_lr b left join z on z.s = upper(trim(b.store))
+   from lg_b2b_lr b left join lg_zone z on z.key = lg_key(b.store)
    where b.month = any($1::date[]) and ${siteSql("b.site", 2)} and ($3::text is null or b.category = $3) group by 1, 2 order by 1, freight desc`, [months, site, category]);
 
 /** Freight (LR file) beside dispatched volume (retail journey spine) per month × site — the retail store correlation. */
@@ -63,9 +62,9 @@ export const retailCorrelation = (months: string[], site: LgSite) => q<{ month: 
 
 /** Top stores by freight with their spine volume: ₹ per dispatched unit per store. */
 export const storeTop = (months: string[], site: LgSite, limit = 25) => q<{ store: string; site: string; zone: string | null; freight: number; lrs: number; one_box: number; lr_qty: number; spine_qty: number | null }>(
-  `with z as (select upper(trim(store)) as s, mode() within group (order by zone) as zone, sum(qty)::float8 as spine_qty
-       from lg_retail_month where month = any($1::date[]) group by 1)
+  `with v as (select lg_key(store) as s, sum(qty)::float8 as spine_qty from lg_retail_month where month = any($1::date[]) group by 1),
+   z as (select coalesce(v.s, g.key) as s, g.zone, v.spine_qty from v full join lg_zone g on g.key = v.s)
    select b.store, b.site, z.zone, sum(b.freight)::float8 as freight, count(*)::int as lrs, count(*) filter (where b.boxes = 1)::int as one_box,
      sum(b.qty)::float8 as lr_qty, max(z.spine_qty) as spine_qty
-   from lg_b2b_lr b left join z on z.s = upper(trim(b.store))
+   from lg_b2b_lr b left join z on z.s = lg_key(b.store)
    where b.month = any($1::date[]) and ${siteSql("b.site", 2)} and b.store <> '' group by 1, 2, 3 order by 4 desc limit ${limit}`, [months, site]);

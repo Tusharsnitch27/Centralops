@@ -5,7 +5,7 @@ export type FnSite = "South" | "North" | "Both";
 export type FnMode = "day" | "month";
 export interface DayRow { day: string; site: "South" | "North"; projected: number | null; received: number | null; processed: number | null;
   issues: number | null; presentHeads: number | null; overlay: number | null; overlayBase?: number | null } // overlay: SLA % or merchandising SLA %, function-specific; overlayBase: its denominator (units judged), so Both / months weight it
-export type Cause = "plan_peak" | "volume" | "held_up" | "below_ipp" | "absenteeism" | "cross_zone" | "courier_rate" | "other";
+export type Cause = "plan_peak" | "volume" | "held_up" | "below_ipp" | "absenteeism" | "cross_zone" | "dearer_wh" | "courier_rate" | "other";
 export interface GapPart { cause: Cause; rupees: number | null; note: string }
 export interface Point { key: string; projected: number | null; received: number | null; processed: number | null; issues: number | null;
   idealHeads: number | null; actualHeads: number | null; idealCost: number | null; actualCost: number | null;

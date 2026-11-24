@@ -2,14 +2,15 @@ import "server-only";
 import { q } from "../db";
 import { addDays, addMonths, fmtDate, monthStart, today } from "@/lib/dates";
 import { inr } from "@/lib/format";
-import { activeIpps } from "../wcm/daily";
+import { activeIpps as activeIppsRaw } from "../wcm/daily";
 import { courierOf } from "../wcm/dayCost";
 import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
 import { courierSplit, retimeOrders, scenarioDelta, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
-import { dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, pmonth, SITES } from "./sources";
+import { dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, SITES } from "./sources";
+const activeIpps = memo(activeIppsRaw);
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
 
@@ -201,13 +202,17 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     logisticsGap = [
       { cause: "cross_zone", rupees: cz.rupees, note: cz.crossUnits == null ? "no LR file for these months" : cz.rupees == null ? `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone`
         : `${n0(cz.crossUnits)} units sent to stores in the other warehouse's zone cost ₹${n0(Math.abs(cz.rupees))} ${cz.rupees >= 0 ? "more" : "less"} than the home lanes` },
+      { cause: "dearer_wh", rupees: cz.eastWest.rupees, note: cz.crossUnits == null ? "no LR file for these months" : cz.eastWest.rupees == null ? "no month has both warehouses' lanes to compare"
+        : `${n0(cz.eastWest.units)} units to East / West stores went from the warehouse whose lane cost more that month` },
       { cause: "other", rupees: null, note: "there is no ideal retail freight to set the rest against" },
     ];
     const out = reNeed.filter((p, i) => p.idealCost == null || asIs[i]!.idealCost == null).map((p) => p.key);
     if (!paired.length) grey.push("The rulebook scenario is blank: no period here has store orders with a norm and salary.");
     else if (out.length) grey.push(`The rulebook scenario leaves out ${mode === "day" ? `${out.length} days` : spans(out.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)} with no store orders, norm or salary.`);
     if (cz.unpriced.length) grey.push(`Cross-zone freight leaves out ${cz.unpriced.join(", ")}, which have no rate in the LR file.`);
-    if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores outside the North and South zones or with no zone; they are neither home nor cross-zone.`);
+    if (cz.unmappedUnits) grey.push(`${n0(cz.unmappedUnits)} units went to stores with no zone (no spine match and no override); they are left out of the freight gap.`);
+    if (cz.eastWest.unpriced.length) grey.push(`East / West freight leaves out ${cz.eastWest.unpriced.join(", ")}, where only one warehouse shipped that month.`);
+    grey.push("East / West stores have no home warehouse: the ideal is whichever warehouse's lane cost less per unit that month. Warehouse transfers, HQ and marketplace loads are left out.");
     if (freightMissing) grey.push(`The rulebook scenario's freight part and total are blank: there is no cross-zone freight for ${freightMissing}.`);
     const unjudged = orders.filter((o) => o.sla == null && o.day >= from && o.day <= to).reduce((a, o) => a + o.qty, 0);
     if (unjudged) grey.push(`${n0(unjudged)} store-order units have no rulebook placement flag, so the rulebook scenario leaves them on their day and "Ordered in rulebook window" leaves them out.`);

@@ -1,7 +1,7 @@
 // Self-check: shared maths for the AOP Functions view.
 // node --experimental-strip-types scripts/check-functions.mjs
 import assert from "node:assert/strict";
-import { unitsPerHead, idealHeads, manpowerGap, perUnit, zoneClass } from "../src/server/functions/math.ts";
+import { unitsPerHead, idealHeads, manpowerGap, perUnit, zoneClass, dearerWh, longTailPremium } from "../src/server/functions/math.ts";
 import { workbookActual, workbookMonthVolumes } from "../src/server/functions/workbookHistory.ts";
 
 const close = (a, b, d = 0.01) => assert.ok(Math.abs(a - b) < d, `${a} ≠ ${b}`);
@@ -34,7 +34,14 @@ assert.equal(perUnit(100000, 15, 18000), null);
 assert.equal(perUnit(100000, 20000, 18000), 5);
 assert.equal(zoneClass("North", "NORTH"), "home");
 assert.equal(zoneClass("North", "SOUTH"), "cross");
-assert.equal(zoneClass("South", "WEST"), "unmapped");
+assert.equal(zoneClass("South", "WEST"), "eastwest");
+assert.equal(zoneClass("North", "EXCLUDED"), "unmapped");
+// West in a month: North ₹14/unit for 1,000 units, South ₹10/unit for 500 → South is the ideal; extra = 1,000 × ₹4
+assert.deepEqual(dearerWh({ North: 14, South: 10 }, { North: 1000, South: 500 }), { cheaper: "South", units: 1000, rupees: 4000 });
+assert.equal(dearerWh({ North: null, South: 10 }, { North: 1000, South: 500 }), null);
+// A: apparel ₹80/ship, 10 shoes at ₹200 → +₹1,200; B: no apparel → its 5 shoes unpriced; winterwear is not long tail
+assert.deepEqual(longTailPremium([{ courier: "A", grp: "Apparel only", ships: 100, cost: 8000 }, { courier: "A", grp: "Shoes", ships: 10, cost: 2000 },
+  { courier: "A", grp: "Winterwear", ships: 10, cost: 1200 }, { courier: "B", grp: "Shoes", ships: 5, cost: 900 }], ["Shoes"]), { rupees: 1200, ships: 10, unpriced: 5 });
 assert.equal(zoneClass("South", null), "unmapped");
 console.log("functions math OK");
 

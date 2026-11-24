@@ -30,7 +30,7 @@ export default async function DataPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const u = await requireUser();
   const [cycles, cycle, snap, diffs, src, rates, pmonths] = await Promise.all([listCycles(), resolveCycle(sp.cycle), currentSnapshot(), costMasterDiffs(),
-    q<{ k: string; s: string | null }>(`select 'b2c' as k, max(source) as s from lg_b2c_month union all select 'b2b', max(source) from lg_b2b_lr union all select 'rvp', max(source) from lg_rvp_month`),
+    q<{ k: string; s: string | null }>(`select 'b2c' as k, max(source) as s from lg_b2c_month union all select 'b2b', max(source) from lg_b2b_lr union all select 'rvp', max(source) from lg_rvp_month union all select 'b2ccat', max(source) from lg_b2c_cat`),
     q<{ site: string; effective_from: string; monthly_salary: number; days_basis: number; ot_hourly: number | null; note: string | null }>(
       `select site, effective_from::text, monthly_salary::float8, days_basis, ot_hourly::float8, note from wcm_mp_rate order by site, effective_from desc`),
     processingMonths()]);
@@ -75,7 +75,7 @@ export default async function DataPage({ searchParams }: { searchParams: Promise
 
       <div className="space-y-3">
         {manage && <Section title="Logistics files">
-          <div className="p-3"><LogisticsUpload loaded={{ b2c: src.find((x) => x.k === "b2c")?.s ?? null, b2b: src.find((x) => x.k === "b2b")?.s ?? null, rvp: src.find((x) => x.k === "rvp")?.s ?? null }} /></div>
+          <div className="p-3"><LogisticsUpload loaded={{ b2c: src.find((x) => x.k === "b2c")?.s ?? null, b2b: src.find((x) => x.k === "b2b")?.s ?? null, rvp: src.find((x) => x.k === "rvp")?.s ?? null, b2ccat: src.find((x) => x.k === "b2ccat")?.s ?? null }} /></div>
         </Section>}
 
         <Section open={diffs.length > 0} title="Owner figures that differ from the Cost Master" summary={<span className="tabular text-white/80">{diffs.length}</span>}>

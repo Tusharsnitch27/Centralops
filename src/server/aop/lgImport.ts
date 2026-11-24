@@ -89,9 +89,34 @@ export function parseRvp(buf: ArrayBuffer): RvpRow[] {
   return out;
 }
 
+/** B2C courier cost by package group: the CSV scripts/courier-category.mjs writes (month, channel, courier, group, shipments, cost, kg). */
+export interface CatRow { month: string; channel: string; courier: string; grp: string; ships: number; cost: number; kg: number | null }
+export function parseB2cCat(buf: ArrayBuffer): CatRow[] {
+  const wb = XLSX.read(new Uint8Array(buf), { type: "array", raw: true });
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]!]!, { defval: "", raw: false });
+  const out = rows.map((r, i) => {
+    const m = String(r.month).trim(), ships = num(r.shipments), cost = num(r.cost);
+    if (!/^\d{4}-\d{2}-01$/.test(m) || ships == null || cost == null || !r.courier || !r.group) throw new Error(`Row ${i + 2}: expected month (YYYY-MM-01), channel, courier, group, shipments, cost`);
+    return { month: m, channel: String(r.channel).trim(), courier: String(r.courier).trim(), grp: String(r.group).trim(), ships, cost, kg: num(r.kg) };
+  });
+  if (!out.length) throw new Error("No rows: is this the CSV scripts/courier-category.mjs wrote?");
+  return out;
+}
+
 /** Replace one dataset in a single transaction; returns what was loaded (rows, ₹) so the upload can be checked against the file. */
-export async function loadLogistics(actorId: string, kind: "b2c" | "b2b" | "rvp", fileName: string, buf: ArrayBuffer) {
+export async function loadLogistics(actorId: string, kind: "b2c" | "b2b" | "rvp" | "b2ccat", fileName: string, buf: ArrayBuffer) {
   const source = `${fileName} · ${new Date().toISOString().slice(0, 10)}`;
+  if (kind === "b2ccat") {
+    const c = parseB2cCat(buf), months = [...new Set(c.map((r) => r.month))];
+    await tx(async (t) => {
+      await t.q(`delete from lg_b2c_cat where month = any($1::date[])`, [months]); // an upload replaces only the months it carries
+      await t.q(`insert into lg_b2c_cat (month, channel, courier, grp, ships, cost, kg, source)
+                 select m::date, ch, co, g, s, c, k, $1 from unnest($2::text[], $3::text[], $4::text[], $5::text[], $6::int[], $7::numeric[], $8::numeric[]) as x(m, ch, co, g, s, c, k)`,
+        [source, c.map((r) => r.month), c.map((r) => r.channel), c.map((r) => r.courier), c.map((r) => r.grp), c.map((r) => r.ships), c.map((r) => r.cost), c.map((r) => r.kg)]);
+      await logActivity({ actorId, entityType: "aop_section", entityId: null, action: "logistics_b2c_cat_loaded", from: null, to: { source, rows: c.length }, summary: `B2C courier cost by package loaded: ${c.length} rows for ${months.join(", ")} (${fileName})` }, t);
+    });
+    return { rows: c.length, amount: c.reduce((a, r) => a + r.cost, 0) };
+  }
   if (kind === "b2c") {
     const b = parseB2c(buf);
     let filled = 0;

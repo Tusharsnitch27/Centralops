@@ -15,8 +15,23 @@ export { FN };
  */
 export const SITES: Wh[] = ["South", "North"];
 
-/** processingMonth, once per request (dailyRows and the view both need it). */
-export const pmonth = cache(processingMonth);
+/**
+ * Memo across requests for TTL_MS: a Functions render needs processingMonth and the IPP set for every FY month × site (~190 queries), which
+ * crawls against the remote DB. ponytail: in-process TTL cache, so edits in Processing / the IPP master show here up to 10 min later; a
+ * failed load is dropped so the next render retries. Upgrade to explicit invalidation from the editing actions if that lag matters.
+ */
+const TTL_MS = 10 * 60_000;
+export function memo<A extends unknown[], R>(fn: (...a: A) => Promise<R>) {
+  const m = new Map<string, { at: number; p: Promise<R> }>();
+  return (...a: A) => {
+    const key = JSON.stringify(a), hit = m.get(key);
+    if (hit && Date.now() - hit.at < TTL_MS) return hit.p;
+    const p = fn(...a); m.set(key, { at: Date.now(), p }); p.catch(() => m.delete(key));
+    return p;
+  };
+}
+/** processingMonth, memoised (dailyRows and the view both need it). */
+export const pmonth = memo(processingMonth);
 /** Months in [from, to] ("2026-04-01") with no daily inward plan, whose inward projection is the monthly plan spread evenly. */
 export const inwardEvenMonths = async (from: string, to: string) => (await q<{ m: string }>(
   `select period::text as m from sop_review_rows r where view_key = 'category_inward' and period between $1::date and $2::date and south_plan is not null
@@ -118,9 +133,11 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   // a stage total is null when the feed did not run for that day × site × event, 0 when it ran with nothing for these streams
   const stageSum = (s: string, d: string, event: string, streams: string[]) => stageTotal(stage, s, d, event, streams);
   const ORDERS_FROM = "2026-04-01"; // fn_retail_order: store orders from the spine from April
+  const headsBy = new Map<string, typeof heads>(); // site-day → its department rows (one pass, not a scan per day)
+  for (const h of heads) { const key = k(h.site, h.day); headsBy.set(key, [...(headsBy.get(key) ?? []), h]); }
   const out: DayRow[] = [];
   for (const d of days) for (const s of sites) {
-    const hs = heads.filter((h) => h.day === d && h.site === s), pm = pms.get(k(s, monthOf(d)));
+    const hs = headsBy.get(k(s, d)) ?? [], pm = pms.get(k(s, monthOf(d)));
     const share = (st: StreamKey) => pm?.shares[st];
     const deptHeads = f.streams.map((st) => hs.find((h) => h.dept === STREAMS.find((x) => x.key === st)!.dept)?.heads); // a department absent that day is unknown, not 0
     const presentHeads = !hs.length || f.streams.some((st, i) => share(st) == null || deptHeads[i] == null) ? null
