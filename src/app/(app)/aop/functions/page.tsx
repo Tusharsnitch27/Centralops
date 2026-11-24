@@ -5,7 +5,7 @@ import { n0, Section } from "@/components/aop/processing/bits";
 import { requireUser } from "@/server/auth";
 import { listCycles, resolveCycle } from "@/server/aop/model";
 import { FN } from "@/server/functions/sources";
-import { functionView } from "@/server/functions/view";
+import { fnWindow, functionView } from "@/server/functions/view";
 import { categoryView, type CategoryView } from "@/server/functions/category";
 import type { Cause, FnKey, FnMode, FnSite, GapPart } from "@/server/functions/types";
 import { fmtDate, fmtMonth } from "@/lib/dates";
@@ -29,8 +29,8 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
   const site: FnSite = sp.site === "South" || sp.site === "North" ? sp.site : "Both";
   const mode: FnMode = sp.mode === "month" ? "month" : "day";
   const rulebook = fn === "b2b_retail" && sp.scenario === "1";
-  const [cycles, cycle, view] = await Promise.all([listCycles(), resolveCycle(sp.cycle), functionView(fn, site, mode)]);
-  const cats = await categoryView(fn, site, [...new Set(view.points.map((p) => `${p.key.slice(0, 7)}-01`))]);
+  // By category needs only the window's months, so it starts with functionView instead of after it
+  const [cycles, cycle, view, cats] = await Promise.all([listCycles(), resolveCycle(sp.cycle), functionView(fn, site, mode), categoryView(fn, site, fnWindow(mode).months)]);
   const href = (o: Partial<SP>) => {
     const p = { cycle: cycles.length > 1 ? cycle?.id : undefined, fn, site, mode, scenario: rulebook ? "1" : undefined, ...o };
     if (p.fn !== "b2b_retail") p.scenario = undefined;
@@ -81,7 +81,6 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="space-y-3">
-        {cats && <Categories c={cats} fn={fn} />}
         <Section open title="Where the extra cost comes from" sub="Actual cost minus the cost at ideal heads, by cause; a minus is a saving.">
           <GapTable title="Manpower" parts={view.manpowerGap} />
           {view.logisticsGap && <GapTable title="Freight" parts={view.logisticsGap} />}
@@ -89,6 +88,7 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
         <Section open title="What is assumed or missing">
           <ul className="list-disc space-y-1 py-3 pl-9 pr-4 text-[12.5px] text-ink-3">{view.grey.map((g) => <li key={g}>{g}</li>)}</ul>
         </Section>
+        {cats && <Categories c={cats} fn={fn} />}
       </div>
     </div>
   );

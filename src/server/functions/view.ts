@@ -80,12 +80,19 @@ async function courierGap(from: string, to: string, site: FnSite) {
   return courierSplit(ships.map((r) => ({ month: r.day, courier: courierOf(r.vendor) ?? r.vendor, n: r.n })), months, jas);
 }
 
-export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promise<FunctionView> {
-  const f = FN[fn], sites: Wh[] = site === "Both" ? SITES : [site];
+/** The view's window (IST): last 30 days to yesterday (day), or the financial year to yesterday (month); months = every calendar month it
+ *  touches (a 30-day window can span two). Shared with the page so By category loads the same months without waiting on functionView. */
+export function fnWindow(mode: FnMode) {
   const to = addDays(today(), -1), from = mode === "day" ? addDays(to, -29) : fyStart(to);
-  const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const months: string[] = [];
   for (let m = monthStart(from); m <= to; m = addMonths(m, 1)) months.push(m);
+  return { from, to, months };
+}
+
+export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promise<FunctionView> {
+  const f = FN[fn], sites: Wh[] = site === "Both" ? SITES : [site];
+  const { from, to, months } = fnWindow(mode);
+  const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const [rows, n, fallback, evenMonths, logistics, retail, lastOrder] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),

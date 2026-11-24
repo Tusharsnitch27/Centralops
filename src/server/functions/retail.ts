@@ -13,15 +13,21 @@ const sitesOf = (site: FnSite) => (site === "Both" ? ["South", "North"] : [site]
 /**
  * Store orders per day × site × rulebook slot × placement flag (orders ±6 days around [from, to]), the slot from the rulebook upload in force
  * on the order date (FRESH → fresh slot, else RPL); retimeOrders moves the late ones. Stores not in that upload have no slot.
+ * The upload in force is looked up once per order day (d), not per order, and the rulebook joined on its normalised store: the per-order
+ * correlated lookup scanned fn_rulebook once for each of ~35k orders (FY, Both: 27.8 s on the local copy, 11–13 s on prod; now ~1 s).
+ * Output identical to the per-order form on the local copy (FY Both, Oct–Nov South, last 30 days North). Two rulebook rows of one upload ×
+ * site whose stores differ only in case or spacing resolve to the first by store (the old LIMIT 1 took either).
  */
 export async function rulebookScenario(site: FnSite, from: string, to: string): Promise<StoreOrders[]> {
   return q<StoreOrders>(
-    `with up as (select distinct upload_date as u from fn_rulebook),
-     o as (select o.*, (select max(u) from up where u <= o.order_date) as u from fn_retail_order o
-           where o.order_date between $1::date - 6 and $2::date + 6 and o.site = any($3::text[]) and o.quantity is not null)
-     select o.order_date::text as day, o.site, r.tat, o.placement_sla as sla, sum(o.quantity)::float8 as qty from o
-     left join lateral (select case when o.order_type like 'FRESH%' then r.fresh_tat else r.rpl_tat end as tat from fn_rulebook r
-       where r.upload_date = o.u and r.site = o.site and upper(trim(r.store)) = upper(trim(o.store)) limit 1) r on true
+    `with o as (select order_date, site, upper(trim(store)) as s, order_type like 'FRESH%' as fresh, placement_sla, quantity from fn_retail_order
+           where order_date between $1::date - 6 and $2::date + 6 and site = any($3::text[]) and quantity is not null),
+     up as materialized (select distinct upload_date as u from fn_rulebook),
+     d as (select x.d, (select max(u) from up where u <= x.d) as u from (select distinct order_date as d from o) x),
+     r as (select distinct on (upload_date, site, upper(trim(store))) upload_date, site, upper(trim(store)) as s, fresh_tat, rpl_tat
+           from fn_rulebook order by upload_date, site, upper(trim(store)), store)
+     select o.order_date::text as day, o.site, case when o.fresh then r.fresh_tat else r.rpl_tat end as tat, o.placement_sla as sla, sum(o.quantity)::float8 as qty
+     from o join d on d.d = o.order_date left join r on r.upload_date = d.u and r.site = o.site and r.s = o.s
      group by 1, 2, 3, 4`, [from, to, sitesOf(site)]);
 }
 
