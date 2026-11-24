@@ -290,6 +290,12 @@ export async function bootstrap(rawQ: RunQ) {
       console.log(`[seed] attendance heads 1 Apr – 28 Oct 2026 back-filled (${n} day × site × function rows; API days kept)`);
     } catch (e) { await rawQ("rollback"); throw e; }
   }
+  if ((await setting("seed.fn_adhoc")) !== "v1") {
+    const { seedFnAdhoc } = await import("./fnAdhoc");
+    await rawQ("begin");
+    try { const n = await seedFnAdhoc(rawQ); await setSetting("seed.fn_adhoc", "v1"); await rawQ("commit"); console.log(`[seed] Functions ad-hoc work: ${n} rows from the justification workbook (24 Nov)`); }
+    catch (e) { await rawQ("rollback"); throw e; }
+  }
   if ((await setting("seed.handbook")) !== "v1") {
     await seedHandbook(rawQ);
     await setSetting("seed.handbook", "v1");

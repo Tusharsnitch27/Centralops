@@ -169,6 +169,28 @@ export async function dailyRows(fn: FnKey, from: string, to: string, sites: Wh[]
   return out;
 }
 
+/** Ad-hoc work and event notes recorded for a function (fn_adhoc / fn_note, migration 093; seed.fn_adhoc). */
+export const adhocRows = (fn: FnKey, sites: Wh[], months: string[]) => Promise.all([
+  q<{ month: string; site: string; task: string; dates: string | null; man_days: number; note: string | null }>(
+    `select month::text as month, site, task, dates, man_days::float8 as man_days, note from fn_adhoc where fn = $1 and site = any($2::text[]) and month = any($3::date[]) order by month, site, id`, [fn, sites, months]),
+  q<{ month: string; site: string; note: string }>(`select month::text as month, site, note from fn_note where fn = $1 and site = any($2::text[]) and month = any($3::date[]) order by month, site, id`, [fn, sites, months]),
+]);
+
+/**
+ * B2B Forward works both B2B Retail and B2B Marketplace. Per site over [from, to] (Sundays out): correlation of the department's present
+ * heads with each stream's dispatched units. Heads following retail and not marketplace = the same team absorbs marketplace on lighter
+ * retail days, so a fixed monthly split misplaces heads day to day. Null below 20 days.
+ */
+export async function sharedTeam(sites: Wh[], from: string, to: string) {
+  return q<{ site: string; n: number; r: number | null; m: number | null }>(
+    `with h as (select d.day, sm.warehouse as site, sum(d.heads)::float8 as heads from mp_daily d join mp_site_map sm on sm.site = d.site
+       left join mp_func_map fm on fm.func = d.func where coalesce(fm.department, d.func) = 'B2B Forward' and d.day between $1 and $2 and sm.warehouse = any($3::text[]) group by 1, 2),
+     v as (select day, site, sum(qty) filter (where stream = 'B2B Retail')::float8 as r, sum(qty) filter (where stream = 'B2B Marketplace')::float8 as m
+       from wcm_stage_output where event = 'dispatched' and day between $1 and $2 group by 1, 2)
+     select h.site, count(*)::int as n, corr(h.heads, v.r)::float8 as r, corr(h.heads, v.m)::float8 as m from h join v using (day, site)
+     where extract(dow from h.day) <> 0 group by 1 having count(*) >= 20 order by 1`, [from, to, sites]);
+}
+
 /** Inward days whose received came from PO receipts (no WAM row) — for the grey area. */
 export async function inwardFallbackDays(from: string, to: string, sites: Wh[]) {
   return (await q<{ n: number }>(`select count(*)::int as n from wcm_stage_output o where o.stream = 'Inward' and o.event = 'received' and o.day between $1 and $2

@@ -1,5 +1,5 @@
 // Pure aggregation for the AOP Functions view: day rows → chart points (no server imports; scripts/check-functions.mjs runs it).
-import { idealHeads, manpowerGap, monthStats, perUnit } from "./math.ts";
+import { idealHeads, manpowerGap, monthStats, perUnit, planDay } from "./math.ts";
 import { UC_ALL_DAYS_EVENTS, UC_ALL_DAYS_STREAM } from "../wcm/math.ts";
 import type { Cause, DayRow, GapPart, Point } from "./types";
 
@@ -103,13 +103,13 @@ const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); retu
  */
 export const onRoll = (peak: number | null, uph: number | null, days: number, wd = 23) => idealHeads(peak == null ? null : (peak * days) / wd, uph)?.roll ?? null;
 
-/** Ideal heads per site × month from the month's literal peak projected day: on the floor (day view) and on roll (month view, ₹). */
+/** Ideal heads per site × month from the month's planned day (planDay: average + PEAK_SHARE of the gap to the peak): on the floor (day view) and on roll (month view, ₹). */
 function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
   const groups = new Map<string, (number | null)[]>();
   for (const r of rows) { const k = `${r.site}|${monthKey(r.day)}`; groups.set(k, [...(groups.get(k) ?? []), r.projected]); }
   const out = new Map<string, { floor: number; roll: number } | null>();
   for (const [k, v] of groups) {
-    const [site, month] = k.split("|") as [string, string], peak = monthStats(v)?.peak ?? null, u = at(uph, site, month);
+    const [site, month] = k.split("|") as [string, string], peak = planDay(monthStats(v)), u = at(uph, site, month);
     const floor = idealHeads(peak, u)?.floor, roll = onRoll(peak, u, daysIn(month), (wd && at(wd, site, month)) || 23);
     out.set(k, floor == null || roll == null ? null : { floor, roll });
   }
@@ -177,12 +177,12 @@ export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByM
  * norm, salary, projection or processed volume.
  */
 export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, sites: string[], from: string, to: string,
-  o: { actuals?: Actuals; wd?: ByMonth; heldUp?: boolean } = {}) {
+  o: { actuals?: Actuals; wd?: ByMonth; heldUp?: boolean; adhoc?: ByMonth } = {}) {
   const acts = mode === "month" ? o.actuals : undefined;
   const pts = toPoints(mode, rows, uph, salary, from, to, acts, o.wd);
   const paired = new Set(pts.filter((p) => p.actualCost != null && p.idealCost != null).map((p) => p.key));
   const inWin = (d: string) => d >= from && d <= to, keyOf = (d: string) => (mode === "day" ? d : monthKey(d));
-  const parts: GapPart[][] = [], left: string[] = [];
+  const parts: GapPart[][] = [], left: string[] = [], segs: { key: string; parts: GapPart[] }[] = [];
   for (const s of sites) {
     const mine = rows.filter((r) => r.site === s);
     for (const seg of toPoints("month", mine, uph, salary, from, to, acts, o.wd, (r) => paired.has(keyOf(r.day)))) {
@@ -193,8 +193,11 @@ export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, s
       const issueDays = win.filter((r) => r.issues != null);
       const held = o.heldUp && issueDays.length ? issueDays.filter((r) => r.issues! > 0 && r.processed != null).reduce((a, r) => a + Math.max(0, (r.received ?? 0) - (r.processed ?? 0)), 0) : null;
       // head-days at ₹ salary ÷ 23: ideal and actual exactly as the chart costs them
+      // ad-hoc man-days are recorded per month: the window's share of the month's days. ponytail: pro rata by days, not by each task's dates.
+      const ad = o.adhoc ? at(o.adhoc, s, seg.key) : null;
       parts.push(manpowerGap({ salary: sal, uph: u, projAvg: proj.avg, days, processed: seg.processed, heldUpUnits: held,
-        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal }));
+        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal, adhocHeadDays: ad == null ? null : (ad * win.length) / daysIn(seg.key) }));
+      segs.push({ key: `${s}|${seg.key}`, parts: parts.at(-1)! });
     }
   }
   const causes = [...new Set(parts.flatMap((p) => p.map((x) => x.cause)))] as Cause[];
@@ -202,7 +205,7 @@ export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, s
     const xs = parts.map((p) => p.find((x) => x.cause === c)!);
     return { cause: c, rupees: sumN(xs.map((x) => x.rupees)), note: (xs.find((x) => x.rupees != null) ?? xs[0]!).note };
   });
-  return { gap, left, dropped: pts.filter((p) => !paired.has(p.key)).map((p) => p.key) };
+  return { gap, left, segs, dropped: pts.filter((p) => !paired.has(p.key)).map((p) => p.key) };
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

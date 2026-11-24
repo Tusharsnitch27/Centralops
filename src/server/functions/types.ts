@@ -5,7 +5,7 @@ export type FnSite = "South" | "North" | "Both";
 export type FnMode = "day" | "month";
 export interface DayRow { day: string; site: "South" | "North"; projected: number | null; received: number | null; processed: number | null;
   issues: number | null; presentHeads: number | null; overlay: number | null; overlayBase?: number | null } // overlay: SLA % or merchandising SLA %, function-specific; overlayBase: its denominator (units judged), so Both / months weight it
-export type Cause = "plan_peak" | "volume" | "held_up" | "below_ipp" | "absenteeism" | "cross_zone" | "dearer_wh" | "courier_rate" | "other";
+export type Cause = "plan_peak" | "volume" | "held_up" | "adhoc" | "below_ipp" | "absenteeism" | "cross_zone" | "dearer_wh" | "courier_rate" | "other";
 export interface GapPart { cause: Cause; rupees: number | null; note: string }
 export interface Point { key: string; projected: number | null; received: number | null; processed: number | null; issues: number | null;
   idealHeads: number | null; actualHeads: number | null; idealCost: number | null; actualCost: number | null;
@@ -13,9 +13,15 @@ export interface Point { key: string; projected: number | null; received: number
   /** units the actual ₹ per unit divides by: month = Processing's volume over the days the actual ₹ covers; day = processed */
   actualUnits: number | null }
 export interface FunctionView { fn: FnKey; site: FnSite; mode: FnMode; points: Point[]; manpowerGap: GapPart[]; logisticsGap: GapPart[] | null;
-  summary: string[]; grey: string[]; scenario: { points: Point[]; needed: Needed[];
+  summary: string[]; grey: string[];
+  /** What explains the gap: event notes and ad-hoc work outside BAU (justification workbook) in the window, and for B2B the shared team's pattern. */
+  explain: { notes: { month: string; site: string; note: string }[]; adhoc: AdhocRow[]; sharedTeam: string | null };
+  scenario: { points: Point[]; needed: Needed[];
     /** saving parts over the same periods (+ = less): staffing, cross-zone freight (null when a month lacks it, named in freightMissing); total only when both exist */
     deltaManpower: number | null; manpowerPerUnit: number | null; deltaFreight: number | null; freightMissing: string | null; deltaRupees: number | null; deltaPerUnit: number | null } | null }
+/** One ad-hoc task: ₹ = man-days × the month's salary ÷ 23; covers = its share of that site-month's gap left after volume and plan
+ *  (output per head + ad-hoc), % — null when the month has no gap to set it against. */
+export interface AdhocRow { month: string; site: string; task: string; dates: string | null; manDays: number; rupees: number | null; covers: number | null; note: string | null }
 /** Heads (and their ₹, costed as ideal) needed for the actual store orders' peak, as placed and on rulebook days; one per point key. */
 export interface Needed { key: string; asIsHeads: number | null; asIsCost: number | null; heads: number | null; cost: number | null }
 

@@ -30,6 +30,12 @@ close(by(g2, "below_ipp").rupees, 200000);
 close(by(g2, "other").rupees, 0);
 close(total(g2), 100000);
 
+// ad-hoc work: 30 head-days come out of output per head; the causes still add up to A − I
+const g3 = manpowerGap({ ...input, adhocHeadDays: 30 });
+close(by(g3, "adhoc").rupees, 30000);
+close(by(g3, "below_ipp").rupees, 160000);
+close(total(g3), 100000);
+assert.equal(by(g, "adhoc").rupees, null);
 assert.equal(perUnit(100000, 15, 18000), null);
 assert.equal(perUnit(100000, 20000, 18000), 5);
 assert.equal(zoneClass("North", "NORTH"), "home");
@@ -72,8 +78,8 @@ assert.equal(workbookActual("inwards", "2026-11", "South"), null);
 }
 const [mp] = toMonthPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2)], { "2026-11": 100 }, 23000);
 assert.equal(mp.projected, 400);
-// month view: on roll with weekly-off cover, ⌈300 ÷ 100 × 30 ÷ 23 × 1.1⌉ = 5 (on the floor ⌈300 ÷ 100⌉ = 3)
-assert.equal(mp.idealHeads, 5);
+// month view: planned day = avg 200 + 0.5 × (peak 300 − 200) = 250; on roll with weekly-off cover ⌈250 ÷ 100 × 30 ÷ 23 × 1.1⌉ = 4
+assert.equal(mp.idealHeads, 4);
 assert.equal(onRoll(300, 100, 30), 5);
 assert.equal(onRoll(null, 100, 30), null);
 assert.equal(mp.actualCost, 4000);
@@ -83,7 +89,7 @@ const [np] = toMonthPoints([day("2026-11-01", null, 200, 2)], { "2026-11": 100 }
 assert.equal(np.projected, null);
 assert.equal(np.idealHeads, null);
 assert.equal(np.idealCost, null);
-// day mode: each day carries its month's peak (300 → 3 heads), Both = sum of the sites
+// day mode: each day carries its month's planned day (avg 200 + 0.5 × (300 − 200) = 250 → 3 heads), Both = sum of the sites
 const dp = toDayPoints([day("2026-11-01", 100, 200, 2), day("2026-11-02", 300, 200, 2), day("2026-11-01", 50, 100, 1, "North")], { "South|2026-11": 100, "North|2026-11": 50 }, 23000, "2026-11-01", "2026-11-01");
 assert.equal(dp.length, 1);
 assert.equal(dp[0].idealHeads, 4);

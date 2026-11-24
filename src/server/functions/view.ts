@@ -9,14 +9,14 @@ import type { Wh } from "../aop/processingTypes";
 import { courierSplit, retimeOrders, scenarioDelta, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { unitsPerHead } from "./math";
 import { crossZone, rulebookScenario } from "./retail";
-import { dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, SITES } from "./sources";
+import { adhocRows, dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, sharedTeam, SITES } from "./sources";
 const activeIpps = memo(activeIppsRaw);
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
 
 /**
  * One function's view: last 30 days to yesterday (IST), day on day, or the financial year to date, month on month.
- * Ideal heads per site × month = the month's peak projected day ÷ units per head (active updated IPPs, as Processing): on the floor in
+ * Ideal heads per site × month = the month's planned day (average + PEAK_SHARE of the gap to the peak projected day) ÷ units per head (active updated IPPs, as Processing): on the floor in
  * the day view; on roll in the month view (× days in month ÷ working days for weekly offs, × 1.1 absenteeism);
  * actual heads and ₹ are Processing's (attendance split by the rule split; sheet months from the sheet).
  */
@@ -93,16 +93,21 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const f = FN[fn], sites: Wh[] = site === "Both" ? SITES : [site];
   const { from, to, months } = fnWindow(mode);
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
-  const [rows, n, fallback, evenMonths, logistics, retail, lastOrder] = await Promise.all([
+  const b2b = fn === "b2b_retail" || fn === "b2b_marketplace";
+  const [rows, n, fallback, evenMonths, logistics, retail, lastOrder, [adhoc, notes], team] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),
     fn === "inwards" ? inwardEvenMonths(monthStart(from), to) : Promise.resolve([] as string[]),
     fn === "b2c_shopify" ? courierGap(from, to, site) : Promise.resolve(null),
     fn === "b2b_retail" ? Promise.all([rulebookScenario(site, monthStart(from), rowsTo), crossZone(site, months)]) : Promise.resolve(null),
     fn === "b2b_retail" ? lastOrderDay() : Promise.resolve(null),
+    adhocRows(fn, sites, months),
+    b2b ? sharedTeam(sites, mode === "day" ? from : addDays(to, -89), to) : Promise.resolve([]), // the month view reads the latest 90 days
   ]);
+  const adhocDays: ByMonth = {};
+  for (const a of adhoc) adhocDays[`${a.site}|${mk(a.month)}`] = (adhocDays[`${a.site}|${mk(a.month)}`] ?? 0) + a.man_days;
   const points = pointsOf(mode, rows, n, from, to);
-  const { gap, left, dropped } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards" });
+  const { gap, left, dropped, segs } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards", adhoc: adhocDays });
   const win = rows.filter((r) => r.day >= from && r.day <= to);
   let hasWorkbookPlan = false, hasWorkbookOutput = false;
   if (mode === "month") {
@@ -227,5 +232,17 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     const lm = (x: number) => `${inr(Math.abs(x))} ${x >= 0 ? "less" : "more"}`;
     if (d.deltaManpower != null) summary.splice(3, 0, `Staffing sized to the store-order peak would cost ${lm(d.deltaManpower)} if stores ordered on their rulebook days${d.manpowerPerUnit == null ? "" : ` (₹${Math.abs(d.manpowerPerUnit).toFixed(2)} per unit)`}${d.deltaFreight == null ? "" : `; shipping from the home-zone warehouse would cost ${lm(d.deltaFreight)} in freight`}.`);
   }
-  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario };
+  // what explains the gap: each ad-hoc task's ₹ against its site-month's gap left after plan and volume (output per head + ad-hoc)
+  const seg = new Map(segs.map((x) => [x.key, x.parts]));
+  const explainAdhoc = adhoc.map((a) => {
+    const key = `${a.site}|${mk(a.month)}`, sal = n.salary[key], parts = seg.get(key);
+    const rupees = sal == null ? null : (a.man_days * sal) / 23;
+    const left = parts ? (parts.find((p) => p.cause === "below_ipp")?.rupees ?? 0) + (parts.find((p) => p.cause === "adhoc")?.rupees ?? 0) : null;
+    // the window holds the whole month only in the month view: share the task's ₹ as the gap does (days of the month in the window)
+    const share = mode === "month" ? 1 : rows.filter((r) => r.site === a.site && mk(r.day) === mk(a.month) && r.day >= from && r.day <= to).length / (new Date(Date.UTC(+a.month.slice(0, 4), +a.month.slice(5, 7), 0)).getUTCDate());
+    return { month: a.month, site: a.site, task: a.task, dates: a.dates, manDays: a.man_days, rupees, note: a.note,
+      covers: rupees == null || left == null || left <= 0 ? null : Math.min(100, (100 * rupees * share) / left) };
+  });
+  const sharedLine = team.length ? `B2B Forward's present heads follow retail volume (${team.map((t) => `${t.site} r = ${(t.r ?? 0).toFixed(2)}`).join(", ")}) and not marketplace (${team.map((t) => `${t.site} r = ${(t.m ?? 0).toFixed(2)}`).join(", ")}): the same team takes marketplace orders on lighter retail days, so the fixed monthly head split between the two over-counts marketplace on heavy retail days and under-counts it on marketplace days.` : null;
+  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario, explain: { notes, adhoc: explainAdhoc, sharedTeam: sharedLine } };
 }

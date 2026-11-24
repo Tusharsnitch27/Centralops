@@ -18,7 +18,7 @@ type SP = { fn?: string; site?: string; mode?: string; scenario?: string; cycle?
 const FNS = Object.keys(FN) as FnKey[];
 const RECEIVED: Record<FnKey, string> = { inwards: "Received", b2c_shopify: "Orders", b2c_marketplace: "Orders", b2b_retail: "Store orders", b2b_marketplace: "Orders", b2c_returns: "Returns received (packets)", b2b_returns: "Received" };
 const OVERLAY: Partial<Record<FnKey, string>> = { b2c_shopify: "Within SLA", b2c_marketplace: "Within SLA", b2b_retail: "Ordered in rulebook window" };
-const CAUSE: Record<Cause, string> = { plan_peak: "Plan's cover for its busiest day", volume: "Volume vs projection", held_up: "Work held up by issues", below_ipp: "Output per head against the norm",
+const CAUSE: Record<Cause, string> = { plan_peak: "Plan's cover above the average day", volume: "Volume vs projection", held_up: "Work held up by issues", adhoc: "Ad-hoc work (outside BAU)", below_ipp: "Output per head against the norm",
   absenteeism: "Absenteeism above 10 %", cross_zone: "Cross-zone freight (North / South stores)", dearer_wh: "East / West shipped from the dearer warehouse", courier_rate: "Courier rates", other: "Other" };
 
 /** AOP › Functions: per function, volume against ideal and actual manpower cost, the cost gap split into causes, and what is assumed or missing. */
@@ -85,6 +85,7 @@ export default async function FunctionsPage({ searchParams }: { searchParams: Pr
           <GapTable title="Manpower" parts={view.manpowerGap} />
           {view.logisticsGap && <GapTable title="Freight" parts={view.logisticsGap} />}
         </Section>
+        {(view.explain.notes.length > 0 || view.explain.adhoc.length > 0 || view.explain.sharedTeam) && <Explain e={view.explain} />}
         <Section open title="What is assumed or missing">
           <ul className="list-disc space-y-1 py-3 pl-9 pr-4 text-[12.5px] text-ink-3">{view.grey.map((g) => <li key={g}>{g}</li>)}</ul>
         </Section>
@@ -109,6 +110,34 @@ function Scenario({ s }: { s: NonNullable<Awaited<ReturnType<typeof functionView
         {" · "}Cross-zone freight: {s.deltaFreight != null ? lm(s.deltaFreight) : s.freightMissing ? `not available for ${s.freightMissing}` : "—"}
       </span>
     </span>
+  );
+}
+
+/** Events, ad-hoc work outside BAU and the shared-team pattern: what the gap's "output per head" part is made of, where it is known. */
+function Explain({ e }: { e: Awaited<ReturnType<typeof functionView>>["explain"] }) {
+  return (
+    <Section open title="What explains the gap" sub="Events and ad-hoc work outside BAU from the justification workbook; ad-hoc ₹ is taken out of output per head above.">
+      {(e.notes.length > 0 || e.sharedTeam) && (
+        <ul className="list-disc space-y-1 py-3 pl-9 pr-4 text-[12.5px] text-ink-2">
+          {e.notes.map((x) => <li key={x.site + x.month + x.note}><span className="text-ink-4">{x.site} · {fmtMonth(x.month)} — </span>{x.note}</li>)}
+          {e.sharedTeam && <li>{e.sharedTeam}</li>}
+        </ul>
+      )}
+      {e.adhoc.length > 0 && (
+        <table className="table-base">
+          <thead><tr><th>Ad-hoc work</th><th>Site · month</th><th className="text-right">Man-days</th><th className="text-right">₹</th><th className="text-right">Of the unexplained gap</th></tr></thead>
+          <tbody>{e.adhoc.map((a, i) => (
+            <tr key={i}>
+              <td>{a.task}{a.dates && <span className="ml-2 text-[11px] text-ink-4">{a.dates}</span>}{a.note && <span className="block text-[11px] text-ink-4">{a.note}</span>}</td>
+              <td className="tabular">{a.site} · {fmtMonth(a.month)}</td>
+              <td className="text-right tabular">{n0(a.manDays)}</td>
+              <td className="text-right tabular">{inr(a.rupees)}</td>
+              <td className="text-right tabular">{a.covers == null ? "—" : `${a.covers.toFixed(0)} %`}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      )}
+    </Section>
   );
 }
 
