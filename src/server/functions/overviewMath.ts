@@ -1,10 +1,10 @@
 // Pure maths for the Functions overview (no server imports; scripts/check-functions.mjs runs it).
 // Actuals only: heads present (attendance), completed transactions and processed units (stage feed), booked payroll (Cost Master → AOP).
-import { ALLOC } from "../aop/processingMath.ts";
+import { poolShare, type Site } from "./teams.ts";
 import { stageTotal } from "./aggregate.ts";
 import type { FnKey } from "./types";
 
-export type Site = "South" | "North";
+export type { Site };
 /** Attendance departments that serve no function: counted in the warehouse total once, never in a function row. */
 export const SUPPORT_DEPTS = ["Inventory", "Ops & Logistics", "Admin"];
 
@@ -23,16 +23,7 @@ export const OVERVIEW_FN: Record<FnKey, { dept: string; txn: { event: string; st
   b2c_returns: { dept: "B2C Return", txn: { event: "putaway_lines", streams: ["B2C Returns (channel open)"], unit: "putaway lines" }, units: { event: "putaway", streams: ["B2C Returns (channel open)"] } },
   b2b_returns: { dept: "B2B Return", txn: { event: "putaway_lines", streams: ["B2B Returns Retail", "B2B Returns Marketplace"], unit: "putaway lines" }, units: { event: "putaway", streams: ["B2B Returns Retail", "B2B Returns Marketplace"] } },
 };
-const STREAM_OF: Partial<Record<FnKey, string>> = { b2c_shopify: "B2C Shopify", b2c_marketplace: "B2C Marketplace", b2b_retail: "B2B Retail", b2b_marketplace: "B2B Marketplace" };
-
-/** A function's share of its department's heads at a site: the channel weight over the department's functions' weights (1 when it has the pool alone). */
-export function poolShare(fn: FnKey, site: Site): number {
-  const dept = OVERVIEW_FN[fn].dept, mates = (Object.keys(OVERVIEW_FN) as FnKey[]).filter((k) => OVERVIEW_FN[k].dept === dept);
-  if (mates.length === 1) return 1;
-  const w = (k: FnKey) => ALLOC[site][STREAM_OF[k] as keyof (typeof ALLOC)["South"]] ?? 0;
-  const tot = mates.reduce((a, k) => a + w(k), 0);
-  return tot ? w(fn) / tot : 1 / mates.length;
-}
+export { poolShare };
 
 export type StageRow = { day: string; site: string; stream: string; event: string; qty: number; source?: string | null };
 export type HeadRow = { day: string; site: string; dept: string; heads: number };

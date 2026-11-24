@@ -31,15 +31,17 @@ import type { GapPart } from "./types";
  * Splits actual − ideal (head-days × ₹ salary ÷ 23) into causes that add up, walking ideal → plan average → processed → actual:
  *  plan_peak = Pavg − I (I = ideal head-days, Pavg = projected average day ÷ uph × days), volume = N − Pavg (N = processed ÷ uph),
  *  held_up = H (held-up units ÷ uph; null when unknown, then it sits in below_ipp), adhoc = D (man-days on ad-hoc work outside BAU, from
- *  the justification workbook; null when none is recorded), below_ipp = A − N − H − D. `other` = the remainder (≈ 0).
+ *  the justification workbook; null when none is recorded), below_ipp = A − N − H − D − C. C = the minimum crew's head-days (teams.ts), in the ideal
+ *  and in the actual alike: plan_peak compares workload with workload (Pavg − (I − C)) and the crew, who process nothing, leave output per head.
  */
 export function manpowerGap(i: { salary: number; uph: number; projAvg: number; days: number; processed: number; heldUpUnits: number | null;
-  actualHeadDays: number; idealHeadDays: number; adhocHeadDays?: number | null }): GapPart[] {
+  actualHeadDays: number; idealHeadDays: number; adhocHeadDays?: number | null; crewHeadDays?: number | null }): GapPart[] {
   const r = i.salary / 23, A = i.actualHeadDays, I = i.idealHeadDays;
   const pavg = (i.projAvg / i.uph) * i.days, need = i.processed / i.uph;
   const held = i.heldUpUnits == null ? null : i.heldUpUnits / i.uph;
   const adhoc = i.adhocHeadDays ?? null;
-  const plan = pavg - I, volume = need - pavg, below = A - need - (held ?? 0) - (adhoc ?? 0);
+  const crew = i.crewHeadDays ?? 0;
+  const plan = pavg - (I - crew), volume = need - pavg, below = A - need - (held ?? 0) - (adhoc ?? 0) - crew;
   const other = (A - I) - (plan + volume + (held ?? 0) + (adhoc ?? 0) + below);
   const R = (d: number | null) => (d == null ? null : d * r);
   return [

@@ -8,6 +8,7 @@ import { passShare } from "../aop/processingMath";
 import type { Wh } from "../aop/processingTypes";
 import { courierSplit, retimeOrders, scenarioDelta, spans, windowGap, toDayPoints, toMonthPoints, unitShare, type Actuals, type ByMonth } from "./aggregate";
 import { unitsPerHead } from "./math";
+import { crewOf } from "./teams";
 import { crossZone, rulebookScenario } from "./retail";
 import { adhocRows, dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, sharedTeam, SITES } from "./sources";
 const activeIpps = memo(activeIppsRaw);
@@ -59,13 +60,15 @@ export async function norms(fn: FnKey, months: string[], sites: Wh[]) {
       for (const r of rows) if (r.actualMp == null) partial.push(`${s}|${mk(m)}|${r.department ?? r.stream}`);
     }
   })));
-  return { uph, salary, wd, volume, actuals, legacy, master, partial, masterRates: [...new Set(master.map((k) => salary[k]!))] };
+  // minimum crew per site (teams.ts): roles no IPP sizes; null where the site's crew is not validated
+  const crew = Object.fromEntries(sites.map((s) => [s, crewOf(fn, s)])) as Record<string, number | null>;
+  return { uph, salary, wd, volume, actuals, legacy, master, partial, crew, masterRates: [...new Set(master.map((k) => salary[k]!))] };
 }
 
 type Norms = Awaited<ReturnType<typeof norms>>;
 /** Rows (whole months) → chart points for [from, to]. Exported so a scenario (Task 5) can re-run it on re-timed rows. */
 export const pointsOf = (mode: FnMode, rows: DayRow[], n: Norms, from: string, to: string): Point[] =>
-  mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to, n.wd) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals, n.wd, n.volume);
+  mode === "day" ? toDayPoints(rows, n.uph, n.salary, from, to, n.wd, n.crew) : toMonthPoints(rows, n.uph, n.salary, from, to, n.actuals, n.wd, n.volume, n.crew);
 
 
 /** B2C Shopify forward shipments (South + North) priced per courier against that courier's own cost per shipment in the latest completed Jul–Sep (courierSplit). */
@@ -107,7 +110,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const adhocDays: ByMonth = {};
   for (const a of adhoc) adhocDays[`${a.site}|${mk(a.month)}`] = (adhocDays[`${a.site}|${mk(a.month)}`] ?? 0) + a.man_days;
   const points = pointsOf(mode, rows, n, from, to);
-  const { gap, left, dropped, segs } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards", adhoc: adhocDays });
+  const { gap, left, dropped, segs } = windowGap(mode, rows, n.uph, n.salary, sites, from, to, { actuals: n.actuals, wd: n.wd, heldUp: fn === "inwards", adhoc: adhocDays, crew: n.crew });
   const win = rows.filter((r) => r.day >= from && r.day <= to);
   let hasWorkbookPlan = false, hasWorkbookOutput = false;
   if (mode === "month") {
@@ -152,6 +155,9 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   if (n.master.length) grey.push(`Salary is the salary master's ${n.masterRates.map((r) => `₹${n0(r)}`).join(" / ")} per head where no sheet salary exists (${spans(n.master, sites)}).`);
   if (n.legacy.length) grey.push(`Salary is the legacy ₹${n0(LEGACY_SALARY)} per head where neither a sheet salary nor a salary master rate exists (${spans(n.legacy, sites)}).`);
   if (mode === "month" && months.some((m) => mk(m) === "2026-04")) grey.push("April's first 24 days of attendance come from the site attendance workbooks, which count more heads than the attendance app used from 25 April.");
+  { const withCrew = sites.filter((s) => n.crew[s]), without = sites.filter((s) => n.crew[s] == null);
+    if (withCrew.length) grey.push(`Ideal heads include a minimum crew no productivity norm sizes (supervisors, DEO, ERP): ${withCrew.map((s) => `${s} ${n.crew[s]!.toFixed(1)} on roll`).join(", ")}, from the site's department-wise IPP sheet; it comes out of output per head, not the plan.`);
+    if (without.length) grey.push(`No minimum crew is assumed for ${without.join(" and ")}: the site has no department-wise crew sheet yet, so supervisors and DEOs sit in output per head.`); }
   grey.push("Absenteeism is an assumed 10 %, not measured. Attrition is not modelled.");
   if (fn !== "inwards") grey.push("Work held up by issues is not recorded for this function.");
   if (left.length || dropped.length) grey.push(`The manpower gap leaves out ${[left.length ? spans(left, sites) : "", dropped.length ? (mode === "day" ? `${dropped.length} days` : spans(dropped.flatMap((k) => sites.map((s) => `${s}|${k}`)), sites)) : ""].filter(Boolean).join(" and ")}, which lack a norm, a projection, attendance or processed volume.`);

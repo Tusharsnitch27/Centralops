@@ -283,3 +283,25 @@ console.log("functions rulebook scenario OK");
   close(salaryPerHead(4_000_000, 4600), 20000);                           // 200 head-months (4,600 head-days ÷ 23) at ₹20,000
   console.log("functions overview OK");
 }
+
+// minimum crew: in the ideal and the actual alike — the causes still add to A − I, the crew leaves output per head, not the plan
+{
+  const { manpowerGap: mg } = await import("../src/server/functions/math.ts");
+  const { crewOf } = await import("../src/server/functions/teams.ts");
+  const { toMonthPoints: tmp } = await import("../src/server/functions/aggregate.ts");
+  const base = { salary: 23000, uph: 500, projAvg: 9000, days: 23, processed: 200000, heldUpUnits: null, actualHeadDays: 600 };
+  const g0 = mg({ ...base, idealHeadDays: 500 }), g1 = mg({ ...base, idealHeadDays: 520, crewHeadDays: 20 }); // ideal = workload 500 + crew 20
+  const tot = (g) => g.reduce((a, p) => a + (p.rupees ?? 0), 0), by1 = (g, c) => g.find((p) => p.cause === c).rupees;
+  close(tot(g1), 80000);                                       // (600 − 520) head-days × ₹1,000
+  close(by1(g1, "plan_peak"), by1(g0, "plan_peak"));           // workload vs workload: unchanged by the crew
+  close(by1(g1, "below_ipp"), by1(g0, "below_ipp") - 20000);   // 20 crew head-days out of output per head
+  close(by1(g1, "other"), 0);
+  close(crewOf("b2b_retail", "North") + crewOf("b2b_marketplace", "North"), 7); // B2B Forward's crew of 7, split and added back
+  assert.equal(crewOf("inwards", "North"), 6);
+  assert.equal(crewOf("inwards", "South"), null);              // South not validated: no crew assumed
+  const d = (day, p) => ({ day, site: "North", projected: p, received: null, processed: 200, issues: null, presentHeads: 2, overlay: null });
+  const [a0] = tmp([d("2026-11-01", 100), d("2026-11-02", 300)], { "2026-11": 100 }, 23000);
+  const [a1] = tmp([d("2026-11-01", 100), d("2026-11-02", 300)], { "2026-11": 100 }, 23000, undefined, undefined, undefined, undefined, undefined, { North: 6 });
+  assert.equal(a1.idealHeads, a0.idealHeads + 6);             // on roll: + the crew
+  console.log("functions minimum crew OK");
+}

@@ -103,15 +103,17 @@ const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); retu
  */
 export const onRoll = (peak: number | null, uph: number | null, days: number, wd = 23) => idealHeads(peak == null ? null : (peak * days) / wd, uph)?.roll ?? null;
 
-/** Ideal heads per site × month from the month's planned day (planDay: average + PEAK_SHARE of the gap to the peak): on the floor (day view) and on roll (month view, ₹). */
-function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
+/** Ideal heads per site × month from the month's planned day (planDay: average + PEAK_SHARE of the gap to the peak): on the floor (day view) and on roll (month view, ₹),
+ *  plus the site's minimum crew (teams.ts crewOf: roles no IPP sizes) — on roll as is, on the floor as its daily presence (× working days ÷ days in month). */
+function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth, crew?: Record<string, number | null>) {
   const groups = new Map<string, (number | null)[]>();
   for (const r of rows) { const k = `${r.site}|${monthKey(r.day)}`; groups.set(k, [...(groups.get(k) ?? []), r.projected]); }
   const out = new Map<string, { floor: number; roll: number } | null>();
   for (const [k, v] of groups) {
     const [site, month] = k.split("|") as [string, string], peak = planDay(monthStats(v)), u = at(uph, site, month);
-    const floor = idealHeads(peak, u)?.floor, roll = onRoll(peak, u, daysIn(month), (wd && at(wd, site, month)) || 23);
-    out.set(k, floor == null || roll == null ? null : { floor, roll });
+    const w = (wd && at(wd, site, month)) || 23, c = crew?.[site] ?? 0;
+    const floor = idealHeads(peak, u)?.floor, roll = onRoll(peak, u, daysIn(month), w);
+    out.set(k, floor == null || roll == null ? null : { floor: floor + (c * w) / daysIn(month), roll: roll + c });
   }
   return out;
 }
@@ -124,8 +126,8 @@ function idealBySiteMonth(rows: DayRow[], uph: ByMonth, wd?: ByMonth) {
  * Actual ₹/unit takes the volume over the same days as the ₹: × Processing's share, or (no Processing ₹) × attendance days ÷ the
  * month's days in the window; ideal ₹ covers every day, so ideal ₹/unit takes the whole volume.
  */
-function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth, keep?: (r: DayRow) => boolean, volume?: ByMonth): Point[] {
-  const ideal = idealBySiteMonth(rows, uph, wd);
+function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from = "0000", to = "9999", actuals?: Actuals, wd?: ByMonth, keep?: (r: DayRow) => boolean, volume?: ByMonth, crew?: Record<string, number | null>): Point[] {
+  const ideal = idealBySiteMonth(rows, uph, wd, crew);
   const win = rows.filter((r) => r.day >= from && r.day <= to && (!keep || keep(r))); // peaks still use every row
   const groups = new Map<string, DayRow[]>(), vols = new Map<string, number | null>(), aUnits = new Map<string, number | null>();
   for (const r of win) { const k = mode === "day" ? r.day : monthKey(r.day); groups.set(k, [...(groups.get(k) ?? []), r]); }
@@ -167,9 +169,9 @@ function toPoints(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: n
 }
 
 /** Day view: ideal heads on the floor (against present heads); ideal ₹ is the month's on-roll cost per day. */
-export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, wd?: ByMonth) => toPoints("day", rows, uph, salary, from, to, undefined, wd);
+export const toDayPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, wd?: ByMonth, crew?: Record<string, number | null>) => toPoints("day", rows, uph, salary, from, to, undefined, wd, undefined, undefined, crew);
 /** `actuals` ("South|2026-10" → Processing's heads and ₹ for the month) replace the attendance figure, and `volume` (Processing's units) is the ₹/unit base, so months tie to AOP › Processing. */
-export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth, volume?: ByMonth) => toPoints("month", rows, uph, salary, from, to, actuals, wd, undefined, volume);
+export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByMonth, from?: string, to?: string, actuals?: Actuals, wd?: ByMonth, volume?: ByMonth, crew?: Record<string, number | null>) => toPoints("month", rows, uph, salary, from, to, actuals, wd, undefined, volume, crew);
 
 /**
  * Manpower gap for the window, per site × month segment, summed by cause. Only periods whose chart point has both actual and ideal ₹
@@ -177,15 +179,15 @@ export const toMonthPoints = (rows: DayRow[], uph: ByMonth, salary: number | ByM
  * norm, salary, projection or processed volume.
  */
 export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, salary: number | ByMonth, sites: string[], from: string, to: string,
-  o: { actuals?: Actuals; wd?: ByMonth; heldUp?: boolean; adhoc?: ByMonth } = {}) {
+  o: { actuals?: Actuals; wd?: ByMonth; heldUp?: boolean; adhoc?: ByMonth; crew?: Record<string, number | null> } = {}) {
   const acts = mode === "month" ? o.actuals : undefined;
-  const pts = toPoints(mode, rows, uph, salary, from, to, acts, o.wd);
+  const pts = toPoints(mode, rows, uph, salary, from, to, acts, o.wd, undefined, undefined, o.crew);
   const paired = new Set(pts.filter((p) => p.actualCost != null && p.idealCost != null).map((p) => p.key));
   const inWin = (d: string) => d >= from && d <= to, keyOf = (d: string) => (mode === "day" ? d : monthKey(d));
   const parts: GapPart[][] = [], left: string[] = [], segs: { key: string; parts: GapPart[] }[] = [];
   for (const s of sites) {
     const mine = rows.filter((r) => r.site === s);
-    for (const seg of toPoints("month", mine, uph, salary, from, to, acts, o.wd, (r) => paired.has(keyOf(r.day)))) {
+    for (const seg of toPoints("month", mine, uph, salary, from, to, acts, o.wd, (r) => paired.has(keyOf(r.day)), undefined, o.crew)) {
       const u = at(uph, s, seg.key), sal = at(salary, s, seg.key);
       const win = mine.filter((r) => monthKey(r.day) === seg.key && inWin(r.day) && paired.has(keyOf(r.day)));
       const proj = monthStats(rows.filter((r) => r.site === s && monthKey(r.day) === seg.key).map((r) => r.projected)), days = win.filter((r) => r.processed != null).length;
@@ -196,7 +198,8 @@ export function windowGap(mode: "day" | "month", rows: DayRow[], uph: ByMonth, s
       // ad-hoc man-days are recorded per month: the window's share of the month's days. ponytail: pro rata by days, not by each task's dates.
       const ad = o.adhoc ? at(o.adhoc, s, seg.key) : null;
       parts.push(manpowerGap({ salary: sal, uph: u, projAvg: proj.avg, days, processed: seg.processed, heldUpUnits: held,
-        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal, adhocHeadDays: ad == null ? null : (ad * win.length) / daysIn(seg.key) }));
+        actualHeadDays: (seg.actualCost * 23) / sal, idealHeadDays: (seg.idealCost * 23) / sal, adhocHeadDays: ad == null ? null : (ad * win.length) / daysIn(seg.key),
+        crewHeadDays: o.crew?.[s] ? (o.crew[s]! * 23 * win.length) / daysIn(seg.key) : null })); // the crew's head-days as the ideal costs them
       segs.push({ key: `${s}|${seg.key}`, parts: parts.at(-1)! });
     }
   }
