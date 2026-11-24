@@ -8,12 +8,12 @@ export interface TrendPoint { label: string; txn: number | null; heads: number |
 // volume blue (bars), heads ink (line), as the function charts; the right axis carries heads, tinted to match
 const TXN = "var(--color-info)", TXN_SOFT = "rgb(29 78 216 / 0.22)", HEADS = "var(--color-ink-2)";
 
-/** Recorded warehouse transactions (bars, left axis) and average daily heads present (line, right axis). Partial periods are lighter. */
+/** Items handled (bars, left axis) and average daily heads present (line, right axis). Partial periods are lighter. */
 export function OverviewTrend({ data, height = 260 }: { data: TrendPoint[]; height?: number }) {
   return (
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
-        <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: TXN }} />Transactions completed</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: TXN }} />Items handled</span>
         <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: TXN_SOFT, boxShadow: `inset 0 0 0 1px ${TXN}` }} />Partial coverage</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 border-t-2" style={{ borderColor: HEADS }} />Heads present (daily average)</span>
       </div>
@@ -29,9 +29,9 @@ export function OverviewTrend({ data, height = 260 }: { data: TrendPoint[]; heig
             return (
               <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[12px]" style={{ boxShadow: "var(--shadow-pop)" }}>
                 <div className="mb-1 font-medium text-ink">{p.label}{p.partial && <span className="ml-1.5 text-warn">partial</span>}</div>
-                <Row k="Transactions completed" v={num(p.txn)} />
+                <Row k="Items handled" v={num(p.txn)} />
                 <Row k="Heads present (daily average)" v={num(p.heads)} />
-                {p.perTxn != null && <Row k="₹ per transaction (payroll)" v={`₹${p.perTxn.toFixed(2)}`} />}
+                {p.perTxn != null && <Row k="₹ per item (payroll)" v={`₹${p.perTxn.toFixed(2)}`} />}
               </div>
             );
           }} />

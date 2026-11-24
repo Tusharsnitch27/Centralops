@@ -5,7 +5,7 @@ import { OverviewTrend, type TrendPoint } from "@/components/functions/OverviewT
 import { n0, n1, Section } from "@/components/aop/processing/bits";
 import { requireUser } from "@/server/auth";
 import { FN_LABEL, functionsOverview, ROWS, type Agg, type Key, type OverviewData } from "@/server/functions/overview";
-import { OVERVIEW_FN } from "@/server/functions/overviewMath";
+import { OVERVIEW_FN, SUPPORT_TXN } from "@/server/functions/overviewMath";
 import type { FnKey } from "@/server/functions/types";
 import { fmtDate, fmtMonth } from "@/lib/dates";
 import { fnHref, parseMode, parseSite } from "@/lib/functions";
@@ -40,12 +40,12 @@ export default async function FunctionsOverviewPage({ searchParams }: { searchPa
       <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Tile label="Heads worked" value={n0(w.total.heads)} foot={`a day on average · ${n0(w.total.headDays)} head-days`}
           hint="Attendance: people present per day, every department counted once, averaged over the days with attendance." />
-        <Tile label="Transactions completed" value={n0(w.total.txn)} foot={partial(w.total) ? `${w.total.days} of ${w.total.of} days fully covered` : "packages dispatched and putaway lines"}
-          tone={partial(w.total) ? "warn" : undefined} hint="Recorded warehouse transactions: the sum of each function's completed events. One item can pass through several activities, so this is not a count of items." />
+        <Tile label="Items handled" value={n0(w.total.txn)} foot={partial(w.total) ? `${w.total.days} of ${w.total.of} days fully covered` : "items put away, dispatched and moved"}
+          tone={partial(w.total) ? "warn" : undefined} hint="Items handled across every warehouse activity: pieces put away (inward, returns), items dispatched, pieces moved in inventory audits. An item is counted at each activity it passes through (put away, later dispatched)." />
         <Tile label="Payroll per head" value={costMonth?.cells.total.salary == null ? "—" : inr(costMonth.cells.total.salary)} foot={costMonth ? `${fmtMonth(`${costMonth.key}-01`)} · a month, booked` : "no booked month"}
           hint="Booked manpower (Cost Master) ÷ heads on roll; heads on roll = head-days present ÷ 23 working days. OT is excluded." />
-        <Tile label="Cost per transaction" value={costMonth?.cells.total.perTxn == null ? "—" : `₹${costMonth.cells.total.perTxn.toFixed(2)}`} foot={costMonth ? `${fmtMonth(`${costMonth.key}-01`)} · manpower + OT` : "no booked month"}
-          hint="Booked manpower + OT ÷ all transactions completed, same site and month; a dash when any day's feed is missing." />
+        <Tile label="Cost per item handled" value={costMonth?.cells.total.perTxn == null ? "—" : `₹${costMonth.cells.total.perTxn.toFixed(2)}`} foot={costMonth ? `${fmtMonth(`${costMonth.key}-01`)} · manpower + OT` : "no booked month"}
+          hint="Booked manpower + OT ÷ items handled, same site and month; a dash when any day's feed is missing." />
         <Tile label="Manpower cost" value={inr(totalCost)} foot={booked.length ? `${booked.map((p) => fmtMonth(`${p.key}-01`).split(" ")[0]).join(", ")} booked` : "nothing booked"}
           hint="Booked payroll (Monthly Manpower Cost + Monthly OT, Cost Master → AOP). Months without a booked figure are left out, not estimated." />
       </div>
@@ -86,26 +86,27 @@ function FunctionTable({ d, q }: { d: OverviewData; q: Parameters<typeof fnHref>
         <td>
           {fn ? <Link href={fnHref(fn, q)} className="group inline-flex items-center gap-1 font-medium text-ink hover:text-accent-ink">{FN_LABEL(k)}<ChevronRight size={13} className="text-ink-4 group-hover:text-accent-ink" /></Link> : FN_LABEL(k)}
           {fn && <span className="block text-[11px] text-ink-4">{OVERVIEW_FN[fn].txn.unit}</span>}
-          {k === "total" && <span className="block text-[11px] font-normal text-ink-4">recorded warehouse transactions</span>}
+          {k === "support" && <span className="block text-[11px] text-ink-4">{SUPPORT_TXN.unit}</span>}
+          {k === "total" && <span className="block text-[11px] font-normal text-ink-4">items handled, every activity</span>}
         </td>
         <td className="text-right tabular">{n1(a.heads)}</td>
         <td className="text-right tabular">{n0(a.headDays)}</td>
-        <td className="text-right tabular">{k === "support" ? "—" : n0(a.txn)}</td>
-        <td className="text-right tabular">{k === "support" || k === "total" ? "—" : n0(a.units)}</td>
-        <td className="text-right tabular">{k === "support" ? "—" : n1(perHeadDay)}</td>
+        <td className="text-right tabular">{n0(a.txn)}</td>
+        <td className="text-right tabular" title={fn ? OVERVIEW_FN[fn].units.unit : undefined}>{k === "support" || k === "total" ? "—" : n0(a.units)}</td>
+        <td className="text-right tabular">{n1(perHeadDay)}</td>
         <td className="text-right tabular" title={fn ? "Payroll is booked per site and month, not per function: no actual. The function page estimates it from attendance × salary." : undefined}>
           {k === "total" ? (a.perTxn == null ? "—" : `₹${a.perTxn.toFixed(2)}`) : "—"}
         </td>
-        <td className="text-right">{k === "support" ? <span className="text-ink-4">—</span> : cov(a)}</td>
+        <td className="text-right">{cov(a)}</td>
       </tr>
     );
   };
   return (
-    <Section open title="By function" sub="Average daily heads present, head-days, completed transactions and the items they carried. Open a function for its volume, ideal and cost.">
+    <Section open title="By function" sub="Average daily heads present, head-days and items handled (transactions), with packages / putaway lines alongside. Open a function for its volume, ideal and cost.">
       <div className="overflow-x-auto">
         <table className="table-base min-w-[860px]">
-          <thead><tr><th>Function · counts</th><th className="text-right">Heads a day</th><th className="text-right">Head-days</th><th className="text-right">Transactions</th>
-            <th className="text-right">Items</th><th className="text-right">Transactions per head-day</th><th className="text-right">₹ per transaction</th><th className="text-right">Coverage</th></tr></thead>
+          <thead><tr><th>Function · counts</th><th className="text-right">Heads a day</th><th className="text-right">Head-days</th><th className="text-right">Items handled</th>
+            <th className="text-right">Packages / putaway lines</th><th className="text-right">Items per head-day</th><th className="text-right">₹ per item</th><th className="text-right">Coverage</th></tr></thead>
           <tbody>{ROWS.map(row)}</tbody>
         </table>
       </div>
@@ -121,11 +122,11 @@ function FunctionTable({ d, q }: { d: OverviewData; q: Parameters<typeof fnHref>
 /** Month on month, warehouse total: the month-to-date month and partial coverage marked; ratios from summed figures. */
 function MonthTable({ d }: { d: OverviewData }) {
   return (
-    <Section open title="Month on month" sub="Warehouse total. Cost, payroll per head and ₹ per transaction only where payroll is booked and the month is fully covered.">
+    <Section open title="Month on month" sub="Warehouse total. Cost, payroll per head and ₹ per item only where payroll is booked and the month is fully covered.">
       <div className="overflow-x-auto">
         <table className="table-base min-w-[760px]">
-          <thead><tr><th>Month</th><th className="text-right">Heads a day</th><th className="text-right">Head-days</th><th className="text-right">Transactions</th><th className="text-right">Manpower + OT</th>
-            <th className="text-right">Payroll per head</th><th className="text-right">₹ per transaction</th><th className="text-right">Coverage</th></tr></thead>
+          <thead><tr><th>Month</th><th className="text-right">Heads a day</th><th className="text-right">Head-days</th><th className="text-right">Items handled</th><th className="text-right">Manpower + OT</th>
+            <th className="text-right">Payroll per head</th><th className="text-right">₹ per item</th><th className="text-right">Coverage</th></tr></thead>
           <tbody>{d.periods.map((p) => {
             const t = p.cells.total;
             return (
@@ -152,10 +153,10 @@ function Definitions({ d }: { d: OverviewData }) {
     <div className="space-y-3 px-4 py-3 text-[12.5px] text-ink-2">
       <dl className="grid gap-x-6 gap-y-1.5 sm:grid-cols-[180px_1fr]">
         <dt className="font-medium">Heads a day</dt><dd className="text-ink-3">People present per day from attendance (day × site × department), every department once; a month is the average over its days with attendance. Teams that serve two functions (B2C Forward, B2B Forward) are split by AOP › Processing's channel weights.</dd>
-        <dt className="font-medium">Transactions</dt><dd className="text-ink-3">One completed event per function: a package dispatched (UC shipping package; a store or marketplace consignment is one package), a putaway line (one SKU into one bin) for Inwards and both returns functions. The total is "recorded warehouse transactions": different activities added, not distinct items.</dd>
-        <dt className="font-medium">Items</dt><dd className="text-ink-3">Units those events carried (items dispatched, units put away), kept apart from transactions.</dd>
+        <dt className="font-medium">Transactions</dt><dd className="text-ink-3">Items handled: pieces put away (putaway completed quantity — inward and both returns; the inward team, unloaders included, over the pieces they bring in, never per box), items dispatched (forward), pieces moved in inventory audits (support). The total adds every activity, so an item is counted again at each step it passes through.</dd>
+        <dt className="font-medium">Packages / putaway lines</dt><dd className="text-ink-3">The secondary count: UC shipping packages dispatched (a store or marketplace consignment is one) and putaway lines (one SKU into one bin).</dd>
         <dt className="font-medium">Manpower cost</dt><dd className="text-ink-3">Booked payroll only: Monthly Manpower Cost + Monthly OT per site and month (Cost Master → AOP). No estimate is shown here.</dd>
-        <dt className="font-medium">₹ per transaction</dt><dd className="text-ink-3">Σ manpower + OT ÷ Σ transactions over the same site and month, only when every day is covered; a dash otherwise.</dd>
+        <dt className="font-medium">₹ per item</dt><dd className="text-ink-3">Σ manpower + OT ÷ Σ items handled over the same site and month, only when every day is covered; a dash otherwise.</dd>
         <dt className="font-medium">Payroll per head</dt><dd className="text-ink-3">Booked manpower ÷ heads on roll (head-days present ÷ 23 working days), a month with full attendance.</dd>
       </dl>
       <ul className="list-disc space-y-1 pl-5 text-ink-3">{d.gaps.map((g) => <li key={g}>{g}</li>)}</ul>

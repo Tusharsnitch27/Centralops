@@ -9,7 +9,7 @@ import type { FnKey, FnMode, FnSite } from "./types";
 
 /**
  * Functions › Overview: actuals only. Heads = attendance present (mp_daily, day × site × department, each department counted once);
- * transactions = completed events from the stage feed (per function, OVERVIEW_FN); manpower cost = booked payroll (Cost Master → AOP
+ * transactions = items handled (pieces put away, items dispatched, inventory pieces moved; OVERVIEW_FN); manpower cost = booked payroll (Cost Master → AOP
  * "Monthly Manpower Cost" + "Monthly OT", site × month). Function-level ₹ is not booked anywhere (Processing's ₹ is heads × a sheet / master
  * salary), so it is unavailable here. Window as the detail views (fnWindow: IST, to yesterday). Three light queries; no processingMonth.
  */
@@ -22,8 +22,8 @@ const WD = 23; // working days per head per month (Processing's norm): heads on 
 export interface Agg {
   heads: number | null;    // average daily heads present over the days every selected site has attendance (a day view: that day's)
   headDays: number | null; // Σ heads present over those days
-  txn: number | null;      // Σ completed transactions over the days the feed covered
-  units: number | null;    // Σ processed units over the days the feed covered
+  txn: number | null;      // Σ items handled over the days the feed covered
+  units: number | null;    // Σ packages / putaway lines over the days the feed covered (secondary)
   days: number;            // days with attendance and the transaction feed for every selected site
   of: number;              // days in the period (through yesterday)
   cost: number | null;     // total row, month: booked manpower + OT for every selected site
@@ -47,7 +47,7 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
        where d.day between $1 and $2 and sm.warehouse = any($3::text[]) group by 1, 2, 3`, [from, to, sites]),
     q<StageRow>(`select day::text as day, site, stream, event, source, sum(qty)::float8 as qty from wcm_stage_output
        where day between $1 and $2 and site = any($3::text[]) and event = any($4::text[]) group by 1, 2, 3, 4, 5`,
-      [from, to, sites, ["shipments", "dispatched", "putaway_lines", "putaway", "ordered"]]), // ordered: UC items' daily row, B2B Marketplace's coverage
+      [from, to, sites, ["shipments", "dispatched", "putaway_lines", "putaway", "audit_move", "ordered"]]), // ordered: UC items' daily row, B2B Marketplace's coverage
     q<{ site: string; month: string; item: string; actual: number }>(
       `select case when s.name ilike '%north%' then 'North' else 'South' end as site, v.period::text as month, i.name as item, v.actual::float8 as actual
        from aop_items i join aop_sections s on s.id = i.section_id join aop_sections p on p.id = s.parent_id
@@ -75,8 +75,8 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
     const full = ds.filter((d) => sites.every((s) => at(s, d)[k].heads != null));
     const headDays = full.length ? full.reduce((a, d) => a + sites.reduce((x, s) => x + at(s, d)[k].heads!, 0), 0) : null;
     const sum = (f: (c: Cell) => number | null) => { const xs = ds.flatMap((d) => sites.map((s) => f(at(s, d)[k]))); return xs.some((x) => x != null) ? xs.reduce<number>((a, x) => a + (x ?? 0), 0) : null; };
-    const covered = ds.filter((d) => sites.every((s) => at(s, d)[k].heads != null && (k === "support" || at(s, d)[k].txn != null))).length;
-    const r: Agg = { heads: headDays == null ? null : headDays / full.length, headDays, txn: k === "support" ? null : sum((c) => c.txn), units: sum((c) => c.units),
+    const covered = ds.filter((d) => sites.every((s) => at(s, d)[k].heads != null && at(s, d)[k].txn != null)).length;
+    const r: Agg = { heads: headDays == null ? null : headDays / full.length, headDays, txn: sum((c) => c.txn), units: sum((c) => c.units),
       days: covered, of: ds.length, cost: null, ot: null, salary: null, perTxn: null };
     if (k === "total" && month) {
       const ms = [...new Set(ds.map((d) => `${d.slice(0, 7)}-01`))];
@@ -111,7 +111,6 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
   if (noBook.length) gaps.push(`No booked payroll for ${noBook.join(", ")}: cost, salary per head and ₹ per transaction are blank there.`);
   if (months.some((m) => sites.some((s) => provisional(s, m)))) gaps.push("South Oct 2026 manpower in the Cost Master is a provisional 288 heads × ₹21,983, not payroll; it is left out until Manish confirms the booked figure.");
   gaps.push("Payroll is booked per site and month, so cost per function and per day has no actual. The function pages estimate it from attendance × salary.");
-  gaps.push("B2C Returns counts completed putaway lines, not QC'd packets: North's returns app stamps QC in bulk (July 2026: 97,505 packets on 4 days), so QC dates do not show when the work was done.");
   gaps.push("Attendance arrives as counts per day and department, with no employee IDs, so a distinct employee count is not available.");
   const last = addDays(addMonths(monthStart(to), 1), -1);
   return { mode, site, from, to, mtd: to < last ? to.slice(0, 7) : null, periods, window, pools, gaps };
