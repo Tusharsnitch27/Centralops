@@ -40,7 +40,7 @@ export function Topbar({ unread, user }: { unread: number; counts?: Record<strin
 
 const TITLES: [RegExp, string, string][] = [
   [/^\/$/, "Home", "Summary"], [/^\/tasks/, "Work", "Tasks"], [/^\/followups/, "Work", "Follow-ups"], [/^\/meetings/, "Others", "Meetings & MoM"], [/^\/weekly/, "Work", "Weekly updates"],
-  [/^\/aop/, "Programs", "AOP"], [/^\/sop/, "Programs", "S&OP"], [/^\/library/, "Others", "Ops Handbook"], [/^\/settings/, "Account", "Settings"], [/^\/welcome/, "Home", "Get started"],
+  [/^\/aop/, "Programs", "AOP"], [/^\/functions/, "Programs", "Functions"], [/^\/sop/, "Programs", "S&OP"], [/^\/library/, "Others", "Ops Handbook"], [/^\/settings/, "Account", "Settings"], [/^\/welcome/, "Home", "Get started"],
 ];
 function PageTitle() {
   const path = usePathname();

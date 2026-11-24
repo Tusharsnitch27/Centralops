@@ -47,7 +47,7 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
        where d.day between $1 and $2 and sm.warehouse = any($3::text[]) group by 1, 2, 3`, [from, to, sites]),
     q<StageRow>(`select day::text as day, site, stream, event, source, sum(qty)::float8 as qty from wcm_stage_output
        where day between $1 and $2 and site = any($3::text[]) and event = any($4::text[]) group by 1, 2, 3, 4, 5`,
-      [from, to, sites, ["shipments", "dispatched", "putaway_lines", "putaway", "qc", "ordered"]]), // ordered: UC items' daily row, B2B Marketplace's coverage
+      [from, to, sites, ["shipments", "dispatched", "putaway_lines", "putaway", "ordered"]]), // ordered: UC items' daily row, B2B Marketplace's coverage
     q<{ site: string; month: string; item: string; actual: number }>(
       `select case when s.name ilike '%north%' then 'North' else 'South' end as site, v.period::text as month, i.name as item, v.actual::float8 as actual
        from aop_items i join aop_sections s on s.id = i.section_id join aop_sections p on p.id = s.parent_id
@@ -111,6 +111,7 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
   if (noBook.length) gaps.push(`No booked payroll for ${noBook.join(", ")}: cost, salary per head and ₹ per transaction are blank there.`);
   if (months.some((m) => sites.some((s) => provisional(s, m)))) gaps.push("South Oct 2026 manpower in the Cost Master is a provisional 288 heads × ₹21,983, not payroll; it is left out until Manish confirms the booked figure.");
   gaps.push("Payroll is booked per site and month, so cost per function and per day has no actual. The function pages estimate it from attendance × salary.");
+  gaps.push("B2C Returns counts completed putaway lines, not QC'd packets: North's returns app stamps QC in bulk (July 2026: 97,505 packets on 4 days), so QC dates do not show when the work was done.");
   gaps.push("Attendance arrives as counts per day and department, with no employee IDs, so a distinct employee count is not available.");
   const last = addDays(addMonths(monthStart(to), 1), -1);
   return { mode, site, from, to, mtd: to < last ? to.slice(0, 7) : null, periods, window, pools, gaps };

@@ -19,7 +19,8 @@ export const OVERVIEW_FN: Record<FnKey, { dept: string; txn: { event: string; st
   b2c_marketplace: { dept: "B2C Forward", txn: { event: "shipments", streams: ["B2C Marketplace"], unit: "packages dispatched" }, units: { event: "dispatched", streams: ["B2C Marketplace"] } },
   b2b_retail: { dept: "B2B Forward", txn: { event: "shipments", streams: ["B2B Retail"], unit: "packages dispatched" }, units: { event: "dispatched", streams: ["B2B Retail"] } },
   b2b_marketplace: { dept: "B2B Forward", txn: { event: "shipments", streams: ["B2B Marketplace"], unit: "packages dispatched" }, units: { event: "dispatched", streams: ["B2B Marketplace"] } },
-  b2c_returns: { dept: "B2C Return", txn: { event: "qc", streams: ["B2C Returns Shopify", "B2C Returns Marketplace"], unit: "return packets QC'd" }, units: { event: "putaway", streams: ["B2C Returns (channel open)"] } },
+  // not QC'd packets: North's returns app stamps QC in bulk (Jul 2026: 97,505 packets on 4 days), so the putaway line is the daily completion
+  b2c_returns: { dept: "B2C Return", txn: { event: "putaway_lines", streams: ["B2C Returns (channel open)"], unit: "putaway lines" }, units: { event: "putaway", streams: ["B2C Returns (channel open)"] } },
   b2b_returns: { dept: "B2B Return", txn: { event: "putaway_lines", streams: ["B2B Returns Retail", "B2B Returns Marketplace"], unit: "putaway lines" }, units: { event: "putaway", streams: ["B2B Returns Retail", "B2B Returns Marketplace"] } },
 };
 const STREAM_OF: Partial<Record<FnKey, string>> = { b2c_shopify: "B2C Shopify", b2c_marketplace: "B2C Marketplace", b2b_retail: "B2B Retail", b2b_marketplace: "B2B Marketplace" };

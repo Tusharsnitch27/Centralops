@@ -273,7 +273,8 @@ console.log("functions rulebook scenario OK");
   assert.equal(c.b2b_retail.txn, 900);
   assert.equal(c.b2c_shopify.txn, 0);                                     // the forward feed ran that day: no Shopify packages = 0
   assert.equal(c.b2b_marketplace.txn, null);                              // B2B MP dispatch is UC-items only: no UC row = not covered
-  assert.equal(c.b2c_returns.txn, null);                                  // no returns-app rows that day: unknown, never 0
+  assert.equal(c.b2c_returns.txn, 0);                                     // the putaway feed ran that day (Inward lines): no B2C return lines = 0
+  assert.equal(dayCells("North", H, [S[0]]).b2c_returns.txn, null);      // no putaway rows that day at all: unknown, never 0
   assert.equal(c.total.txn, null);                                        // a function uncovered → no total
   assert.equal(c.b2c_returns.heads, 0);                                   // attendance came in without B2C Return heads: a real 0
   const none = dayCells("North", [], S);
