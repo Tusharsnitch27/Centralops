@@ -349,3 +349,37 @@ console.log("functions rulebook scenario OK");
   assert.equal(teamRupees(null, 30, 23000), null);
   console.log("functions SLA maths OK");
 }
+
+// Pointers (25 Nov 2026): team at the projected average day, its ₹ against actual, breaches when volume runs above, heads by TAT
+{
+  const { pointers } = await import("../src/server/functions/slaMath.ts");
+  const row = (day, received, presentHeads = 5) => ({ day, site: "South", projected: 100, received, processed: received, presentHeads });
+  const rows = [row("2026-11-01", 100), row("2026-11-02", 300), row("2026-11-03", 100), row("2026-11-04", 100)];
+  const p = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => 50, salary: () => 23000, tatDays: 1, capacityPerDay: null,
+    sla: [{ within: 90, judged: 100 }], actual: { rupees: 20000, units: 600, heads: 5 } });
+  assert.deepEqual(p.sla, { pct: 90, judged: 100, missed: 10, tatDays: 1 });
+  assert.equal(p.team.heads, 2);                       // 100 a day ÷ 50 per head
+  assert.equal(p.team.rupees, 8000);                   // 2 heads × 4 days × 23,000 ÷ 23
+  assert.equal(p.team.saving, 12000);
+  assert.deepEqual(p.above, { exceedDays: 1, breachUnits: 100, total: 600, pct: 100 / 6 }); // day 2's 300: 100 still open after a day
+  assert.deepEqual(p.byTat.map((t) => +t.heads.toFixed(6)), [6, 4, 3.333333, 3]);  // peak 300; best 2-day 200; 3-day 166.7; 4-day 150 — ÷ 50
+  assert.equal(p.byTat[1].current, true);
+  const none = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => null, salary: () => 23000, tatDays: null, capacityPerDay: 5000, sla: [], actual: { rupees: null, units: null, heads: null } });
+  assert.equal(none.team, null); assert.deepEqual(none.byTat, []); assert.equal(none.sla.pct, null);
+  console.log("functions pointers OK");
+}
+
+// Pre-pack ROI (25 Nov 2026)
+{
+  const { prepackRoi } = await import("../src/server/functions/slaMath.ts");
+  const r = prepackRoi([
+    { month: "2026-10-01", site: "South", kind: "inward_pp", hours: 2, pieces: 300, packs: null },
+    { month: "2026-11-01", site: "South", kind: "inward_pp", hours: 4, pieces: 100, packs: null },
+    { month: "2026-10-01", site: "South", kind: "inward_solid", hours: 1, pieces: 500, packs: null },
+    { month: "2026-10-01", site: "South", kind: "retail_pp", hours: null, pieces: 400, packs: 100 },
+  ], () => 300, () => 23000);
+  assert.deepEqual(r.inward, { ppPieces: 400, ppHours: 2.5, solidPieces: 500, solidHours: 1 });
+  assert.equal(r.retail.saving, 1000);              // 300 handlings saved ÷ 300 per head-day × ₹1,000 a head-day
+  assert.equal(prepackRoi([], () => 300, () => 23000).retail.saving, null);
+  console.log("functions pre-pack ROI OK");
+}

@@ -172,6 +172,32 @@ export async function pullFnSla(from = "2026-04-01") {
   return { read: rows.length, note: `${rows.length} SLA day × site × function rows from ${from}` };
 }
 
+/** Pre-pack ROI → fn_prepack_monthly (migration 097), replaced in full from `from`: WAM ASNs with / without pre-packs (median gate entry → last
+ *  putaway hours, pieces) and pre-pack SKUs dispatched to stores (UC items: pieces and packs). */
+const PREPACK_SQL = `WITH a AS (
+  SELECT ASN_NUMBER, MIN(GATE_ENTRY_TIME) AS g, MAX(LAST_PUV_AT) AS p, SUM(FI_QTY) AS q, MAX(COALESCE(NUM_PREPACKS, 0)) AS packs, MAX(IFF(WAREHOUSE = 'NORTH_WH', 'North', 'South')) AS site
+  FROM snitch_db.maplemonk.WAM_ASN_INWARD WHERE GATE_ENTRY_TIME >= TO_DATE('{from}') AND WAREHOUSE IN ('NORTH_WH', 'SOUTH_WH') GROUP BY 1)
+SELECT TO_VARCHAR(DATE_TRUNC('month', g), 'YYYY-MM-DD') AS month, site, IFF(packs > 0, 'inward_pp', 'inward_solid') AS kind,
+  MEDIAN(DATEDIFF('minute', g, p) / 60) AS hours, SUM(q) AS pieces, NULL AS packs
+FROM a WHERE p IS NOT NULL AND q > 0 GROUP BY 1, 2, 3
+UNION ALL
+SELECT TO_VARCHAR(DATE_TRUNC('month', DISPATCH_DATE), 'YYYY-MM-DD'), CASE WHEN warehouse_name IN ('SAPL-WH1','SAPL-WH2') THEN 'South' ELSE 'North' END, 'retail_pp', NULL,
+  SUM(SUBORDER_QUANTITY * COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR(SKU, '^PP([0-9]+)', 1, 1, 'e', 1)), 1)), SUM(SUBORDER_QUANTITY)
+FROM snitch_db.maplemonk.UNICOMMERCE_FACT_ITEMS_INTERMEDIATE
+WHERE SKU LIKE 'PP%' AND MARKETPLACE_MAPPED IN ('FRANCHISE_STORE_B2B','OWN_STORE_B2B') AND DISPATCH_DATE >= TO_DATE('{from}') AND warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
+GROUP BY 1, 2, 3`;
+
+export async function pullPrepack(from = "2026-08-01") {
+  if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
+  const rows = await sfQuery<{ month: string; site: string; kind: string; hours: number | null; pieces: number | null; packs: number | null }>(PREPACK_SQL.replaceAll("{from}", from));
+  await tx(async (t) => {
+    await t.q(`delete from fn_prepack_monthly where month >= $1::date`, [from]);
+    for (const r of rows) await t.q(`insert into fn_prepack_monthly (month, site, kind, hours, pieces, packs) values ($1, $2, $3, $4, $5, $6)`,
+      [r.month, r.site, r.kind, num(r.hours), num(r.pieces), num(r.packs)]);
+  });
+  return { read: rows.length, note: `${rows.length} pre-pack month × site rows from ${from}` };
+}
+
 /**
  * Category split per function (fn_category_month, migration 093), month by month from April:
  *  forward streams (UC items, dispatched month): units = items, shipments = distinct packages holding the category; '(all)' = the stream's packages;

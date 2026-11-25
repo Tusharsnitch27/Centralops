@@ -87,6 +87,8 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       catch (e) { console.error("[fn-category] pull failed", e instanceof Error ? e.message : e); }
       try { const { pullFnSla } = await import("./server/functions/feed"); const w = await pullFnSla(); console.log(`[fn-sla] ${w.note}`); }
       catch (e) { console.error("[fn-sla] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullPrepack } = await import("./server/functions/feed"); const w = await pullPrepack(); console.log(`[fn-prepack] ${w.note}`); }
+      catch (e) { console.error("[fn-prepack] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

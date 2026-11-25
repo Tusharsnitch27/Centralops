@@ -1,5 +1,6 @@
 // Shared types and the function list for the AOP Functions view (pure; no server imports).
 import type { StreamKey } from "../aop/processingTypes";
+import type { Pointers } from "./slaMath";
 export type FnKey = "inwards" | "b2c_shopify" | "b2c_marketplace" | "b2b_retail" | "b2b_marketplace" | "b2c_returns" | "b2b_returns";
 export type FnSite = "South" | "North" | "Both";
 export type FnMode = "day" | "month";
@@ -14,6 +15,10 @@ export interface Point { key: string; projected: number | null; received: number
   actualUnits: number | null }
 export interface FunctionView { fn: FnKey; site: FnSite; mode: FnMode; points: Point[]; manpowerGap: GapPart[]; logisticsGap: GapPart[] | null;
   summary: string[]; grey: string[];
+  /** where cost can come down: SLA, actual ₹, a team at the projected average day, what it would miss, heads by TAT */
+  pointers: Pointers;
+  /** pre-pack ROI lines (Inwards, B2B Retail), [] elsewhere */
+  prepack: string[];
   /** What explains the gap: event notes and ad-hoc work outside BAU (justification workbook) in the window, and for B2B the shared team's pattern. */
   explain: { notes: { month: string; site: string; note: string }[]; adhoc: AdhocRow[]; sharedTeam: string | null };
   scenario: { points: Point[]; needed: Needed[];

@@ -43,3 +43,85 @@ export function slaShare(rows: { within: number | null; judged: number | null }[
   const judged = ok.reduce((a, r) => a + r.judged!, 0), within = ok.reduce((a, r) => a + r.within!, 0);
   return judged ? { pct: (100 * within) / judged, judged } : { pct: null, judged: null };
 }
+
+export interface Pointers {
+  sla: { pct: number | null; judged: number | null; missed: number | null; tatDays: number | null };
+  actual: { rupees: number | null; perUnit: number | null; heads: number | null };
+  /** a team at the projected average day (B2B Marketplace: the 5,000 items a day capacity), on the floor, over the same days */
+  team: { heads: number | null; rupees: number | null; perUnit: number | null; saving: number | null } | null;
+  /** with that team: days above its capacity and the units that would miss the TAT */
+  above: { exceedDays: number; breachUnits: number; total: number; pct: number | null } | null;
+  /** heads (and ₹ over the window) to clear every unit within each TAT; current = the function's TAT */
+  byTat: { tatDays: number; heads: number | null; rupees: number | null; current: boolean }[];
+}
+type PRow = { day: string; site: string; projected: number | null; received: number | null; processed: number | null; presentHeads: number | null };
+
+/**
+ * The cost-reduction pointers for one function over a window (rows: that window's site-days). Per site and month: team = average projected
+ * day of the month (whole month: monthRows) ÷ units per head — or capacityPerDay ÷ uph when the function has a fixed capacity; ₹ = team × salary
+ * ÷ 23 per day, counted on the days actual heads are known so it compares with actual ₹. Arrivals = received, else processed.
+ */
+export function pointers(i: {
+  rows: PRow[]; monthRows: PRow[]; sites: string[]; uph: (site: string, month: string) => number | null; salary: (site: string, month: string) => number | null;
+  tatDays: number | null; capacityPerDay: number | null; sla: { within: number; judged: number }[]; actual: { rupees: number | null; units: number | null; heads: number | null };
+}): Pointers {
+  const m7 = (d: string) => d.slice(0, 7);
+  const s = slaShare(i.sla);
+  const sla = { pct: s.pct, judged: s.judged, missed: s.judged == null ? null : s.judged - i.sla.reduce((a, r) => a + r.within, 0), tatDays: i.tatDays };
+  const actual = { rupees: i.actual.rupees, perUnit: i.actual.rupees != null && i.actual.units ? i.actual.rupees / i.actual.units : null, heads: i.actual.heads };
+  const avgProj = (site: string, m: string) => { const p = i.monthRows.filter((r) => r.site === site && m7(r.day) === m && r.projected != null).map((r) => r.projected!); return p.length ? p.reduce((a, x) => a + x, 0) / p.length : null; };
+  const cap = (site: string, m: string) => i.capacityPerDay ?? avgProj(site, m);
+  const teamAt = (site: string, m: string) => projectionTeam(cap(site, m), i.uph(site, m));
+  // team ₹ and units on the days actual heads are known; missing team or salary on any such day → no team figure (never a partial ₹)
+  const costed = i.rows.filter((r) => r.presentHeads != null);
+  let rupees: number | null = costed.length ? 0 : null, units = 0, headDays = 0;
+  for (const r of costed) {
+    const h = teamAt(r.site, m7(r.day)), sal = i.salary(r.site, m7(r.day));
+    if (h == null || sal == null) { rupees = null; break; }
+    rupees! += teamRupees(h, 1, sal)!; headDays += h; units += r.processed ?? 0;
+  }
+  const days = new Set(costed.map((r) => r.day)).size;
+  const team = rupees == null ? null : { heads: days ? headDays / days : null, rupees, perUnit: units ? rupees / units : null, saving: actual.rupees == null ? null : actual.rupees - rupees };
+  // breaches with that team, per site, then summed
+  let above: Pointers["above"] = null;
+  if (i.tatDays != null || i.capacityPerDay != null) {
+    above = { exceedDays: 0, breachUnits: 0, total: 0, pct: null };
+    for (const site of i.sites) {
+      const b = simulateBacklog(i.rows.filter((r) => r.site === site).sort((a, b) => a.day.localeCompare(b.day))
+        .map((r) => ({ day: r.day, volume: r.received ?? r.processed, capacity: cap(site, m7(r.day)) })), i.tatDays ?? 0);
+      above.exceedDays += b.exceedDays; above.breachUnits += b.breachUnits; above.total += b.total;
+    }
+    above.pct = above.total ? (100 * above.breachUnits) / above.total : null;
+  }
+  // heads by TAT: per site at the window's mean units per head and salary; ₹ over the window's days
+  const nDays = new Set(i.rows.map((r) => r.day)).size;
+  const mean = (f: (site: string, m: string) => number | null, site: string) => { const v = [...new Set(i.rows.filter((r) => r.site === site).map((r) => m7(r.day)))].map((m) => f(site, m)).filter((x): x is number => x != null); return v.length ? v.reduce((a, x) => a + x, 0) / v.length : null; };
+  const byTat = i.tatDays == null ? [] : [0, 1, 2, 3].map((t) => {
+    let heads: number | null = 0, rs: number | null = 0;
+    for (const site of i.sites) {
+      const h = tatHeads(i.rows.filter((r) => r.site === site).sort((a, b) => a.day.localeCompare(b.day)).map((r) => r.received ?? r.processed), t, mean(i.uph, site)), sal = mean(i.salary, site);
+      heads = h == null || heads == null ? null : heads + h; rs = h == null || sal == null || rs == null ? null : rs + teamRupees(h, nDays, sal)!;
+    }
+    return { tatDays: t, heads, rupees: rs, current: t === i.tatDays };
+  });
+  return { sla, actual, team, above, byTat };
+}
+
+/**
+ * Pre-pack ROI over some site-months: inward — pieces in pre-pack and solid ASNs and their gate → putaway hours (piece-weighted over the monthly
+ * medians; elapsed time, not labour); retail — pre-pack packs and the pieces they carried, and the saving of handling a pack once instead of
+ * each piece: (pieces − packs) ÷ units per head × salary ÷ 23.
+ * ponytail: the saving uses the function's whole units per head, so it assumes every B2B Retail stage handles a pack as one unit; per-stage IPPs if it matters.
+ */
+export function prepackRoi(rows: { month: string; site: string; kind: string; hours: number | null; pieces: number | null; packs: number | null }[],
+  uph: (site: string, month: string) => number | null, salary: (site: string, month: string) => number | null) {
+  const w = (kind: string) => { const r = rows.filter((x) => x.kind === kind && x.pieces); const p = r.reduce((a, x) => a + x.pieces!, 0);
+    const hr = r.filter((x) => x.hours != null); const hp = hr.reduce((a, x) => a + x.pieces!, 0);
+    return { pieces: r.length ? p : null, hours: hp ? hr.reduce((a, x) => a + x.hours! * x.pieces!, 0) / hp : null }; };
+  const pp = w("inward_pp"), solid = w("inward_solid");
+  const rt = rows.filter((x) => x.kind === "retail_pp" && x.pieces != null && x.packs != null);
+  let saving: number | null = rt.length ? 0 : null;
+  for (const r of rt) { const u = uph(r.site, r.month.slice(0, 7)), s = salary(r.site, r.month.slice(0, 7)); if (!u || s == null) { saving = null; break; } saving! += ((r.pieces! - r.packs!) / u) * (s / 23); }
+  return { inward: { ppPieces: pp.pieces, ppHours: pp.hours, solidPieces: solid.pieces, solidHours: solid.hours },
+    retail: { pieces: rt.length ? rt.reduce((a, x) => a + x.pieces!, 0) : null, packs: rt.length ? rt.reduce((a, x) => a + x.packs!, 0) : null, saving } };
+}

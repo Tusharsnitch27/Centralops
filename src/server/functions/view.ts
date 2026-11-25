@@ -10,10 +10,16 @@ import { courierSplit, retimeOrders, scenarioDelta, spans, windowGap, toDayPoint
 import { unitsPerHead } from "./math";
 import { crewOf } from "./teams";
 import { crossZone, rulebookScenario } from "./retail";
-import { adhocRows, dailyRows, FN, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, sharedTeam, SITES } from "./sources";
+import { adhocRows, dailyRows, FN, hasRetailReturnDb, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, sharedTeam, SITES, slaDaily } from "./sources";
+import { pointers, prepackRoi } from "./slaMath";
 const activeIpps = memo(activeIppsRaw);
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
+
+/** Each function's SLA in whole days (Malhar M, 25 Nov 2026): inward 24 h; B2C the TAT column (next day); B2B Retail the handover deadline;
+ *  returns 2 days receiving → processed; B2B Marketplace has no TAT but a 5,000 items a day capacity. */
+const TAT_DAYS: Record<FnKey, number | null> = { inwards: 1, b2c_shopify: 1, b2c_marketplace: 1, b2b_retail: 1, b2b_marketplace: null, b2c_returns: 2, b2b_returns: 2 };
+const B2B_MP_CAPACITY = 5000;
 
 /** Why B2C heads sit above the projection (Central Ops, 25 Nov 2026). */
 const B2C_CUTOFFS = "Shopify and marketplace cutoffs: manpower in B2C stays higher than projected because Shopify and every marketplace have their own dispatch cutoffs to meet day to day; a few extra people are kept on the floor to make each one.";
@@ -100,6 +106,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const { from, to, months } = fnWindow(mode);
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const b2b = fn === "b2b_retail" || fn === "b2b_marketplace";
+  const slaP = slaDaily(fn, sites, from, to);
   const [rows, n, fallback, evenMonths, logistics, retail, lastOrder, [adhoc, notes], team] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),
@@ -253,5 +260,26 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
       covers: rupees == null || left == null || left <= 0 ? null : Math.min(100, (100 * rupees * share) / left) };
   });
   const sharedLine = team.length ? `B2B Forward's present heads follow retail volume (${team.map((t) => `${t.site} r = ${(t.r ?? 0).toFixed(2)}`).join(", ")}) and not marketplace (${team.map((t) => `${t.site} r = ${(t.m ?? 0).toFixed(2)}`).join(", ")}): the same team takes marketplace orders on lighter retail days, so the fixed monthly head split between the two over-counts marketplace on heavy retail days and under-counts it on marketplace days.` : null;
-  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario, explain: { notes, adhoc: explainAdhoc, sharedTeam: sharedLine ?? (fn === "b2c_shopify" || fn === "b2c_marketplace" ? B2C_CUTOFFS : null) } };
+  // where cost can come down (Malhar M, 25 Nov 2026): the ideal is untouched; a team at the projected average day, what it would save and the SLA it would miss
+  const sal = (s: string, m: string) => (n.salary[`${s}|${m}`] ?? null) as number | null;
+  const costedRows = win.filter((r) => r.presentHeads != null);
+  const actualRs = costedRows.length && costedRows.every((r) => sal(r.site, mk(r.day)) != null) ? costedRows.reduce((a, r) => a + (r.presentHeads! * sal(r.site, mk(r.day))!) / 23, 0) : null;
+  const pts = pointers({ rows: win, monthRows: rows, sites, uph: (s, m) => (n.uph[`${s}|${m}`] ?? null) as number | null, salary: sal,
+    tatDays: TAT_DAYS[fn], capacityPerDay: fn === "b2b_marketplace" ? B2B_MP_CAPACITY : null, sla: await slaP,
+    actual: { rupees: actualRs, units: costedRows.reduce((a, r) => a + (r.processed ?? 0), 0) || null, heads: costedRows.length ? costedRows.reduce((a, r) => a + r.presentHeads!, 0) / new Set(costedRows.map((r) => r.day)).size : null } });
+  // pre-pack ROI (Inwards, B2B Retail): inward time of pre-pack ASNs against the retail handlings a pack saves, over the window's months
+  const prepack: string[] = [];
+  if (fn === "inwards" || fn === "b2b_retail") {
+    const pr = await q<{ month: string; site: string; kind: string; hours: number | null; pieces: number | null; packs: number | null }>(
+      `select month::text as month, site, kind, hours::float8 as hours, pieces::float8 as pieces, packs::float8 as packs from fn_prepack_monthly where month = any($1::date[]) and site = any($2::text[])`, [months, sites]);
+    const retailN = fn === "b2b_retail" ? n : await norms("b2b_retail", months, sites);
+    const r = prepackRoi(pr, (s, m) => (retailN.uph[`${s}|${m}`] ?? null) as number | null, (s, m) => (retailN.salary[`${s}|${m}`] ?? null) as number | null);
+    const h = (x: number | null) => (x == null ? "—" : `${x.toFixed(1)} h`);
+    if (r.inward.ppPieces != null) prepack.push(`Inward: pre-pack ASNs brought ${n0(r.inward.ppPieces)} pieces${r.inward.solidPieces ? ` (${n0((100 * r.inward.ppPieces) / (r.inward.ppPieces + r.inward.solidPieces))} % of WAM inward)` : ""} and took ${h(r.inward.ppHours)} from gate entry to putaway against ${h(r.inward.solidHours)} for solid ASNs${r.inward.ppHours != null && r.inward.solidHours != null ? ` (${r.inward.ppHours >= r.inward.solidHours ? "+" : "−"}${Math.abs(r.inward.ppHours - r.inward.solidHours).toFixed(1)} h, elapsed time — inward attendance is not split by stock type, so its ₹ is not separable)` : ""}.`);
+    if (r.retail.packs != null) prepack.push(`B2B Retail: ${n0(r.retail.packs)} pre-packs carried ${n0(r.retail.pieces!)} pieces to stores; each pack is picked and packed once, so ${n0(r.retail.pieces! - r.retail.packs)} fewer handlings${r.retail.saving == null ? "" : `, about ${inr(r.retail.saving)} of B2B Retail manpower at its units per head`}.`);
+    if (!prepack.length) prepack.push("No pre-pack data for this period yet.");
+  }
+  if (fn === "b2b_returns" && !hasRetailReturnDb()) grey.push("B2B Returns' SLA (receiving → processed within 2 days) comes from the Retail Return Tool, which is not connected yet (RETAIL_RETURN_DATABASE_URL), so it is blank.");
+  if (fn === "inwards" && win.some((r) => r.day < "2026-09-15")) grey.push("Inward SLA comes from WAM, which starts in September 2026, so earlier days have no SLA.");
+  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario, pointers: pts, prepack, explain: { notes, adhoc: explainAdhoc, sharedTeam: sharedLine ?? (fn === "b2c_shopify" || fn === "b2c_marketplace" ? B2C_CUTOFFS : null) } };
 }
