@@ -4,8 +4,9 @@ import { addDays, addMonths, monthStart, today } from "@/lib/dates";
 import { activeIpps } from "../wcm/daily";
 import { passShare } from "../aop/processingMath";
 import { unitsPerHead } from "./math";
-import { FN, memo } from "./sources";
+import { FN, memo, slaDaily } from "./sources";
 import { fnWindow } from "./view";
+import { slaShare } from "./slaMath";
 import { dayCells, eventTotal, OVERVIEW_FN, perTxn, poolShare, salaryPerHead, workloadShare, type Cell, type HeadRow, type Site, type StageRow } from "./overviewMath";
 import type { FnKey, FnMode, FnSite } from "./types";
 
@@ -37,6 +38,7 @@ export interface Agg {
   basis: Basis | null;     // booked payroll, salary calculation, or both across the period
   salary: number | null;   // total row: monthly cost per head on roll (cost excl. OT ÷ head-days × 23), booked or calculated
   perTxn: number | null;   // ₹ per item: cost ÷ items over the same covered days
+  sla?: number | null;     // window only, functions only: on-time % against the function's SLA (slaDaily), null when not measured
 }
 export interface OverviewData {
   mode: FnMode; site: FnSite; from: string; to: string; mtd: string | null; // the running month ("2026-11") when the window ends inside it
@@ -131,6 +133,10 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
     return { key, cells: Object.fromEntries(ROWS.map((k) => [k, agg(k, ds)])) as Record<Key, Agg> };
   });
   const window = Object.fromEntries(ROWS.map((k) => [k, agg(k, days)])) as Record<Key, Agg>;
+  // each function's SLA over the window (same rule and sources as its page)
+  const fns = Object.keys(OVERVIEW_FN) as FnKey[];
+  const slas = await Promise.all(fns.map((f) => slaDaily(f, sites, from, to)));
+  fns.forEach((f, i) => { window[f].sla = slaShare(slas[i]!).pct; });
 
   // shared pools: the department's heads (counted once) and each function's part, which add back to it
   const full = days.filter((d) => sites.every((s) => at(s, d).total.heads != null));

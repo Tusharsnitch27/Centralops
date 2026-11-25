@@ -98,15 +98,17 @@ function FunctionTable({ d, q }: { d: OverviewData; q: Parameters<typeof fnHref>
         <td className="text-right tabular">{inr(a.cost)}<Mark b={a.basis} /></td>
         <td className="text-right tabular">{rs(a.perTxn)}</td>
         <td className="text-right"><Cov a={a} /></td>
+        <td className="text-right tabular" title={fn ? undefined : "SLA is per function"}>{a.sla == null ? "—" : `${a.sla.toFixed(1)} %`}</td>
       </tr>
     );
   };
   return (
     <Section open title="By function" sub="Heads present, items handled and their cost over the covered days; packages / putaway lines alongside. Open a function for its volume, ideal and cost.">
       <div className="overflow-x-auto">
-        <table className="table-base min-w-[880px]">
+        <table className="table-base min-w-[940px]">
           <thead><tr><th>Function · counts</th><th className="text-right">Heads a day</th><th className="text-right">Head-days</th><th className="text-right">Items handled</th>
-            <th className="text-right" title="Packages dispatched / putaway lines">Packages / lines</th><th className="text-right">Items / head-day</th><th className="text-right">Cost</th><th className="text-right">₹ per item</th><th className="text-right">Coverage</th></tr></thead>
+            <th className="text-right" title="Packages dispatched / putaway lines">Packages / lines</th><th className="text-right">Items / head-day</th><th className="text-right">Cost</th><th className="text-right">₹ per item</th><th className="text-right">Coverage</th>
+            <th className="text-right" title="On time against the function's SLA: inward ≤ 24 h, B2C by the TAT deadline, B2B Retail by the handover deadline, returns ≤ 2 days received → processed; B2B Marketplace has no TAT">SLA</th></tr></thead>
           <tbody>{ROWS.map(row)}</tbody>
         </table>
       </div>
