@@ -22,8 +22,8 @@ export function processingWeekday(tat: string | null): string | null {
 
 /**
  * Store-order placement against the rulebook cutoff ("Wednesday 9 AM"), as retail_journey_spine flags it (matched on its Sep–Nov rows):
- * the next cutoff on or after the order day; on that day before the cutoff = WITHIN_SLA, after it = BREACHED; 1–2 days ahead (Friday
- * for a Monday cutoff) = EARLY_CREATION; further ahead = BREACHED (placed after the previous week's cutoff). No rule → null.
+ * the next cutoff on or after the order day; on that day before the cutoff = WITHIN_SLA, after it = BREACHED; 1–3 days ahead
+ * = EARLY_CREATION (allowed); further ahead = BREACHED (placed after the previous week's cutoff). No rule → null.
  */
 export function placementSla(orderTs: string, rule: { cutoff: string | null } | null): "WITHIN_SLA" | "EARLY_CREATION" | "BREACHED" | null {
   const m = /^(\w+day) (\d{1,2})(?::(\d{2}))? ?(AM|PM)$/i.exec(rule?.cutoff?.trim() ?? "");
@@ -33,7 +33,7 @@ export function placementSla(orderTs: string, rule: { cutoff: string | null } | 
   const ahead = (ci - new Date(`${t[1]}T00:00:00Z`).getUTCDay() + 7) % 7;
   const cut = ((+m![2]! % 12) + (/PM/i.test(m![4]!) ? 12 : 0)) * 60 + +(m![3] ?? 0);
   if (ahead === 0) return +t[2]! * 60 + +t[3]! <= cut ? "WITHIN_SLA" : "BREACHED";
-  return ahead <= 2 || (ahead === 3 && ci === 1) ? "EARLY_CREATION" : "BREACHED";
+  return ahead <= 3 ? "EARLY_CREATION" : "BREACHED";
 }
 
 /** The nearest `weekday` on or after `orderDate` (forward) or on or before it (back), within 6 days; an unknown weekday leaves the date as it is. */
@@ -61,9 +61,10 @@ export function retimeOrders(orders: StoreOrders[], from: string, to: string): D
     return { day: d, site: s, projected: null, received: qty, processed: null, issues: null, presentHeads: null, overlay: null }; });
 }
 
-/** Store orders placed in the rulebook window, % of the units judged (WITHIN ÷ flagged units); no-rule (null) units are not judged. */
+/** Store orders placed in the rulebook window, % of the units judged ((WITHIN + EARLY) ÷ flagged units): early creation (≤ 3 days before
+ *  the cutoff) is allowed, only BREACHED counts against; no-rule (null) units are not judged. */
 export function placementShare(rows: { sla: string | null; qty: number }[]) {
-  const judged = rows.filter((r) => r.sla != null).reduce((a, r) => a + r.qty, 0), within = rows.filter((r) => r.sla === "WITHIN_SLA").reduce((a, r) => a + r.qty, 0);
+  const judged = rows.filter((r) => r.sla != null).reduce((a, r) => a + r.qty, 0), within = rows.filter((r) => r.sla === "WITHIN_SLA" || r.sla === "EARLY_CREATION").reduce((a, r) => a + r.qty, 0);
   return judged ? { overlay: (100 * within) / judged, overlayBase: judged } : { overlay: null, overlayBase: null };
 }
 

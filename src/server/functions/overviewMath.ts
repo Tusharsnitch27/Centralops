@@ -37,22 +37,34 @@ export const eventTotal = (mine: StageRow[], event: string, streams: string[]) =
 
 const supportTxn = (stage: StageRow[]) => eventTotal(stage, SUPPORT_TXN.event, SUPPORT_TXN.streams) ?? (eventTotal(stage, "putaway", SUPPORT_TXN.streams) == null ? null : 0);
 
-export interface Cell { heads: number | null; txn: number | null; units: number | null }
+/**
+ * Split of a shared team by the month's workload (Malhar, 25 Nov 2026 — B2B Forward between Retail and Marketplace): each part's head-days of work =
+ * items ÷ units per head (its IPP stages); shares = part ÷ Σ parts. Null when any part lacks items or a norm (the caller keeps the fixed weights).
+ */
+export function workloadShare(parts: { items: number | null; uph: number | null }[]): number[] | null {
+  if (parts.some((p) => p.items == null || !p.uph)) return null;
+  const w = parts.map((p) => p.items! / p.uph!), tot = w.reduce((a, x) => a + x, 0);
+  return tot ? w.map((x) => x / tot) : null;
+}
+
+/** complete (total only): every activity's feed covered the day — the total's ₹ per item uses only such days; its items are the rows' sum regardless. */
+export interface Cell { heads: number | null; txn: number | null; units: number | null; complete?: boolean }
 /** One site-day per function plus the support pool and the warehouse total. Heads: function = its department × poolShare; total = every
  *  department once. A department absent that day is unknown (null), not 0; with no attendance at all the day's heads are null. */
-export function dayCells(site: Site, heads: HeadRow[], stage: StageRow[]) {
+export function dayCells(site: Site, heads: HeadRow[], stage: StageRow[], shares?: Partial<Record<FnKey, number>>) {
   const dept = new Map(heads.map((h) => [h.dept, h.heads]));
   const any = heads.length > 0;
   const out = {} as Record<FnKey | "support" | "total", Cell>;
   for (const fn of Object.keys(OVERVIEW_FN) as FnKey[]) {
     const d = OVERVIEW_FN[fn], h = dept.get(d.dept);
-    out[fn] = { heads: !any ? null : (h ?? 0) * poolShare(fn, site), txn: eventTotal(stage, d.txn.event, d.txn.streams), units: eventTotal(stage, d.units.event, d.units.streams) };
+    out[fn] = { heads: !any ? null : (h ?? 0) * (shares?.[fn] ?? poolShare(fn, site)), txn: eventTotal(stage, d.txn.event, d.txn.streams), units: eventTotal(stage, d.units.event, d.units.streams) };
   }
   out.support = { heads: !any ? null : SUPPORT_DEPTS.reduce((a, k) => a + (dept.get(k) ?? 0), 0), txn: supportTxn(stage), units: null };
   out.total = { heads: !any ? null : heads.reduce((a, h) => a + h.heads, 0), txn: null, units: null };
   const fns = Object.keys(OVERVIEW_FN) as FnKey[];
   const parts = [...fns.map((f) => out[f].txn), out.support.txn]; // the seven functions + inventory moves: items handled across all activities
-  out.total.txn = parts.every((x) => x != null) ? parts.reduce<number>((a, x) => a + x!, 0) : null; // every activity covered, else unknown
+  out.total.txn = parts.some((x) => x != null) ? parts.reduce<number>((a, x) => a + (x ?? 0), 0) : null; // = Σ the rows' items
+  out.total.complete = parts.every((x) => x != null);
   return out;
 }
 

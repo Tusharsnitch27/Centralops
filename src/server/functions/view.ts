@@ -15,6 +15,9 @@ const activeIpps = memo(activeIppsRaw);
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
 
+/** Why B2C heads sit above the projection (Central Ops, 25 Nov 2026). */
+const B2C_CUTOFFS = "Shopify and marketplace cutoffs: manpower in B2C stays higher than projected because Shopify and every marketplace have their own dispatch cutoffs to meet day to day; a few extra people are kept on the floor to make each one.";
+
 /**
  * One function's view: last 30 days to yesterday (IST), day on day, or the financial year to date, month on month.
  * Ideal heads per site × month = the month's planned day (average + PEAK_SHARE of the gap to the peak projected day) ÷ units per head (active updated IPPs, as Processing): on the floor in
@@ -250,5 +253,5 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
       covers: rupees == null || left == null || left <= 0 ? null : Math.min(100, (100 * rupees * share) / left) };
   });
   const sharedLine = team.length ? `B2B Forward's present heads follow retail volume (${team.map((t) => `${t.site} r = ${(t.r ?? 0).toFixed(2)}`).join(", ")}) and not marketplace (${team.map((t) => `${t.site} r = ${(t.m ?? 0).toFixed(2)}`).join(", ")}): the same team takes marketplace orders on lighter retail days, so the fixed monthly head split between the two over-counts marketplace on heavy retail days and under-counts it on marketplace days.` : null;
-  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario, explain: { notes, adhoc: explainAdhoc, sharedTeam: sharedLine } };
+  return { fn, site, mode, points, manpowerGap: gap, logisticsGap, summary: summary.slice(0, 4), grey, scenario, explain: { notes, adhoc: explainAdhoc, sharedTeam: sharedLine ?? (fn === "b2c_shopify" || fn === "b2c_marketplace" ? B2C_CUTOFFS : null) } };
 }

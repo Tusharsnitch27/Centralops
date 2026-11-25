@@ -93,7 +93,8 @@ export function applyLevers(r: ProcRow, l: Levers): ProcRow {
 
 /**
  * Department heads → stream × process (Malhar M, 22 Nov 2026; stored rows still win):
- *  stream  forward = Manish's Manpower Allocation tab (B2C SF / MP, B2B Retail / MP); B2B Return = all store returns (Retail);
+ *  stream  forward = Manish's Manpower Allocation tab (B2C SF / MP; B2B Retail / MP only when the month has no workload to split by — B2B Forward
+ *          is split by the month's workload, 25 Nov 2026); B2B Return = all store returns (Retail);
  *          B2C Return = each returns stream's volume that month (final output, else S&OP projection; none → the B2C forward share)
  *  process = attendance designation where it names the process (employee master 22 Nov, counts in DESIG); everyone else
  *          (generic "Associate", supervisors, DEO) by IPP workload — one unit passes every stage, so a stage's share ∝ 1 ÷ IPP
@@ -118,7 +119,11 @@ export function ruleSplit(wh: Wh, lines: PLine[], heads: Map<string, number>) {
     if (!ls.length) continue;
     const streams = [...new Set(ls.map((l) => l.stream))];
     const vol = (st: StreamKey) => Math.max(0, ...ls.filter((l) => l.stream === st).map((l) => l.volume ?? 0));
-    const w = (st: StreamKey) => dept === "B2B Return" ? (/retail/i.test(st) ? 1 : 0)
+    // B2B Forward works Retail and Marketplace as one team (Malhar, 25 Nov 2026): split by the month's workload — volume × Σ pass ÷ IPP over the
+    // stream's stages (head-days of work) — when both streams have volume and norms; else the fixed channel weights below
+    const work = (st: StreamKey) => vol(st) * ls.filter((l) => l.stream === st && l.target).reduce((a, l) => a + passShare(l.process) / l.target!, 0);
+    const byWork = dept === "B2B Forward" && streams.length > 1 && streams.every((st) => work(st) > 0);
+    const w = (st: StreamKey) => byWork ? work(st) : dept === "B2B Return" ? (/retail/i.test(st) ? 1 : 0)
       : dept === "B2C Return" ? (streams.some((x) => vol(x) > 0) ? vol(st) : ALLOC[wh][/shopify/i.test(st) ? "B2C Shopify" : "B2C Marketplace"] ?? 1)
       : ALLOC[wh][st] ?? 1;
     const wTot = streams.reduce((a, st) => a + w(st), 0) || 1;
