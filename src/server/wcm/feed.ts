@@ -11,7 +11,7 @@ import { ucOwned, UC_ALL_DAYS_STREAM } from "./math";
  *    packed = PACKED_TIMESTAMP, manifested = MANIFESTED_TIMESTAMP, dispatched = DISPATCHED_TIMESTAMP1.
  *    Timestamps are read as IST wall clock, as the S&OP outwards feed does (UC's own packed date agrees on every row tested).
  *  Inward / returns / audit (putaway_tracking from RETURNS_FROM, day = putaway updated, trading stock only — is_trading = TRUE, as the S&OP
- *    feeds): units = putaway_completed_quantity, by final type; putaway_lines = distinct completed putaway item lines ("Putaway Item Id": one SKU
+ *    feeds): units = putaway_completed_quantity × pre-pack size (PP4-… = 4 pieces), by final type; putaway_lines = distinct completed putaway item lines ("Putaway Item Id": one SKU
  *    into one bin — the Functions overview's transaction for Inwards and returns). Non-trading bulk rows (e.g. 19.7 lakh South B2B MP returns in Nov) are excluded.
  *  B2C returns (RETURN_2_INWARDING_DATA, the returns app's full history — PG_INWARDING_DATA is its Sep→ subset; one row per packet;
  *    channel B2C = Shopify, MP-* = marketplace; TYPE WH-1/WH-2 = South, North_WH = North): received = RECEIVING_DATE, qc =
@@ -23,6 +23,9 @@ import { ucOwned, UC_ALL_DAYS_STREAM } from "./math";
  */
 const SLA = "snitch_db.maplemonk.warehouse_sla_performance";
 const PUT = "snitch_db.maplemonk.putaway_tracking";
+/** Pieces per putaway unit: a pre-pack SKU "PP4-…" is one pack of 4 pieces (S&OP Category inward's rule, sop/sync.ts mult). WAM FI_QTY is already
+ *  in pieces; store orders and UC items stay in packs (a pack is picked and packed once). */
+const PP_PIECES = `CASE WHEN "Item Type skuCode" LIKE 'PP%' THEN COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR("Item Type skuCode", '^PP([0-9]+)', 1, 1, 'e', 1)), 1) ELSE 1 END`;
 const RET = "snitch_db.maplemonk.RETURN_2_INWARDING_DATA";
 const PO = "snitch_db.maplemonk.UC_FINAL_GET_PURCHASE_ORDERS";
 const PCS_PER_BOX = 30;
@@ -62,7 +65,7 @@ UNION ALL
 SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')},
   CASE final_type WHEN 'New Inward' THEN 'Inward' WHEN 'B2C Return Inward' THEN 'B2C Returns (channel open)' WHEN 'Store Return Inward' THEN 'B2B Returns Retail'
     WHEN 'B2B MP Returns' THEN 'B2B Returns Marketplace' WHEN 'Audit Activity' THEN 'Inventory' END,
-  IFF(final_type = 'Audit Activity', 'audit_move', 'putaway'), 'item', SUM(putaway_completed_quantity)
+  IFF(final_type = 'Audit Activity', 'audit_move', 'putaway'), 'item', SUM(putaway_completed_quantity * ${PP_PIECES})
 FROM ${PUT}
 WHERE putaway_updated >= TO_DATE('${RETURNS_FROM}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
   AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE
