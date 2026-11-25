@@ -383,3 +383,18 @@ console.log("functions rulebook scenario OK");
   assert.equal(prepackRoi([], () => 300, () => 23000).retail.saving, null);
   console.log("functions pre-pack ROI OK");
 }
+
+// Review fixes (25 Nov 2026): no "above" line without a team; TAT ₹ over the same costed days as the team ₹
+{
+  const { pointers } = await import("../src/server/functions/slaMath.ts");
+  const row = (day, presentHeads) => ({ day, site: "South", projected: null, received: 100, processed: 100, presentHeads });
+  const noProj = pointers({ rows: [row("2026-11-01", 5)], monthRows: [row("2026-11-01", 5)], sites: ["South"], uph: () => 50, salary: () => 23000, tatDays: 1, capacityPerDay: null,
+    sla: [], actual: { rupees: 5000, units: 100, heads: 5 } });
+  assert.equal(noProj.team, null); assert.equal(noProj.above, null);   // no projection: no team, no breach line (never "0 days, 0 units")
+  const r2 = (day, presentHeads) => ({ day, site: "South", projected: 100, received: 100, processed: 100, presentHeads });
+  const rows = [r2("2026-11-01", 5), r2("2026-11-02", null)];         // attendance on one of two days
+  const p = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => 50, salary: () => 23000, tatDays: 1, capacityPerDay: null, sla: [], actual: { rupees: 5000, units: 100, heads: 5 } });
+  assert.equal(p.team.rupees, 2000);                                   // 2 heads × 1 costed day × 1,000
+  assert.equal(p.byTat[0].rupees, 2000);                               // same day, peak 100 ÷ 50 = 2 heads × the same 1 costed day
+  console.log("functions review fixes OK");
+}

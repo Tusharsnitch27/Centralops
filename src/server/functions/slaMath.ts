@@ -83,8 +83,8 @@ export function pointers(i: {
   const days = new Set(costed.map((r) => r.day)).size;
   const team = rupees == null ? null : { heads: days ? headDays / days : null, rupees, perUnit: units ? rupees / units : null, saving: actual.rupees == null ? null : actual.rupees - rupees };
   // breaches with that team, per site, then summed
-  let above: Pointers["above"] = null;
-  if (i.tatDays != null || i.capacityPerDay != null) {
+  let above: Pointers["above"] = null as Pointers["above"];
+  if (team && (i.tatDays != null || i.capacityPerDay != null)) { // no team shown → no breach line for it
     above = { exceedDays: 0, breachUnits: 0, total: 0, pct: null };
     for (const site of i.sites) {
       const b = simulateBacklog(i.rows.filter((r) => r.site === site).sort((a, b) => a.day.localeCompare(b.day))
@@ -92,9 +92,10 @@ export function pointers(i: {
       above.exceedDays += b.exceedDays; above.breachUnits += b.breachUnits; above.total += b.total;
     }
     above.pct = above.total ? (100 * above.breachUnits) / above.total : null;
+    if (!above.total) above = null; // nothing simulated: unknown, not 0
   }
   // heads by TAT: per site at the window's mean units per head and salary; ₹ over the window's days
-  const nDays = new Set(i.rows.map((r) => r.day)).size;
+  const nDays = days; // the same costed days as the team and actual ₹
   const mean = (f: (site: string, m: string) => number | null, site: string) => { const v = [...new Set(i.rows.filter((r) => r.site === site).map((r) => m7(r.day)))].map((m) => f(site, m)).filter((x): x is number => x != null); return v.length ? v.reduce((a, x) => a + x, 0) / v.length : null; };
   const byTat = i.tatDays == null ? [] : [0, 1, 2, 3].map((t) => {
     let heads: number | null = 0, rs: number | null = 0;

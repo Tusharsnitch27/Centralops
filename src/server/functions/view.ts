@@ -106,7 +106,7 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const { from, to, months } = fnWindow(mode);
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const b2b = fn === "b2b_retail" || fn === "b2b_marketplace";
-  const slaP = slaDaily(fn, sites, from, to);
+  const slaP = slaDaily(fn, sites, from, to).catch((e) => { console.error("[functions] SLA read failed", e instanceof Error ? e.message : e); return []; });
   const [rows, n, fallback, evenMonths, logistics, retail, lastOrder, [adhoc, notes], team] = await Promise.all([
     dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),

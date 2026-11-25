@@ -135,7 +135,7 @@ export async function functionsOverview(site: FnSite, mode: FnMode): Promise<Ove
   const window = Object.fromEntries(ROWS.map((k) => [k, agg(k, days)])) as Record<Key, Agg>;
   // each function's SLA over the window (same rule and sources as its page)
   const fns = Object.keys(OVERVIEW_FN) as FnKey[];
-  const slas = await Promise.all(fns.map((f) => slaDaily(f, sites, from, to)));
+  const slas = await Promise.all(fns.map((f) => slaDaily(f, sites, from, to).catch(() => [])));
   fns.forEach((f, i) => { window[f].sla = slaShare(slas[i]!).pct; });
 
   // shared pools: the department's heads (counted once) and each function's part, which add back to it

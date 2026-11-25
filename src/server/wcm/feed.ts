@@ -65,7 +65,7 @@ UNION ALL
 SELECT TO_VARCHAR(putaway_updated::date, 'YYYY-MM-DD'), ${SITE('"Warehouse Name"')},
   CASE final_type WHEN 'New Inward' THEN 'Inward' WHEN 'B2C Return Inward' THEN 'B2C Returns (channel open)' WHEN 'Store Return Inward' THEN 'B2B Returns Retail'
     WHEN 'B2B MP Returns' THEN 'B2B Returns Marketplace' WHEN 'Audit Activity' THEN 'Inventory' END,
-  IFF(final_type = 'Audit Activity', 'audit_move', 'putaway'), 'item', SUM(putaway_completed_quantity * ${PP_PIECES})
+  IFF(final_type = 'Audit Activity', 'audit_move', 'putaway'), 'item', SUM(putaway_completed_quantity * IFF(final_type = 'Audit Activity', 1, ${PP_PIECES}))
 FROM ${PUT}
 WHERE putaway_updated >= TO_DATE('${RETURNS_FROM}') AND "Warehouse Name" IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
   AND final_type IN ('New Inward','B2C Return Inward','Store Return Inward','B2B MP Returns','Audit Activity') AND is_trading = TRUE

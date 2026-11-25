@@ -231,13 +231,13 @@ function CostPointers({ fn, p, prepack }: { fn: FnKey; p: Pointers; prepack: str
       <div className="mb-1.5 text-[10.5px] font-medium uppercase tracking-wide text-ink-4">Where cost can come down</div>
       <ul className="list-disc space-y-1 pl-5">
         <li><span className="font-medium">SLA</span> ({SLA_RULE[fn]}): {p.sla.pct == null ? (fn === "b2b_marketplace" ? "not measured" : "no data for this period") : `${p.sla.pct.toFixed(1)} % on time, ${n0(p.sla.missed)} of ${n0(p.sla.judged)} units missed it`}.</li>
-        <li><span className="font-medium">Average cost</span> on the days attendance is in: {n0(p.actual.heads)} heads a day, {inr(p.actual.rupees)}, {rs(p.actual.perUnit)} per unit.</li>
+        <li><span className="font-medium">Actual cost</span> on the days attendance is in: {n0(p.actual.heads)} heads a day, {inr(p.actual.rupees)}, {rs(p.actual.perUnit)} per unit.</li>
         {p.team && (
           <li><span className="font-medium">{fn === "b2b_marketplace" ? "A team sized to 5,000 items a day" : "A team at the projected average day"}</span>: {n0(p.team.heads)} heads a day would cost {inr(p.team.rupees)} ({rs(p.team.perUnit)} per unit)
             {p.team.saving != null && <>, <span className={p.team.saving > 0 ? "font-medium text-ok" : "text-warn"}>{inr(Math.abs(p.team.saving))} {p.team.saving > 0 ? "less" : "more"}</span> than actual</>} — enough for BAU days.</li>
         )}
         {p.above && (
-          <li><span className="font-medium">When volume runs above it</span>: on {n0(p.above.exceedDays)} days volume was above that team's capacity; holding the team, about {n0(p.above.breachUnits)} units ({p.above.pct == null ? "—" : `${p.above.pct.toFixed(1)} %`}) would miss the SLA. Cost stays the same — the excess turns into breaches, not extra heads.</li>
+          <li><span className="font-medium">When volume runs above it</span>: on {n0(p.above.exceedDays)} days volume was above that team's capacity; holding the team, about {n0(p.above.breachUnits)} units ({p.above.pct == null ? "—" : `${p.above.pct.toFixed(1)} %`}) {fn === "b2b_marketplace" ? "would not be cleared the same day" : "would miss the SLA"}. Cost stays the same — the excess turns into breaches, not extra heads.</li>
         )}
         {prepack.map((x) => <li key={x}><span className="font-medium">Pre-packs</span> — {x}</li>)}
       </ul>

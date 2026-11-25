@@ -148,12 +148,12 @@ r AS (
     COALESCE(TRY_TO_TIMESTAMP(NULLIF(PROCESSED_DATE, ''), 'MON DD, YYYY HH12:MI AM'), TRY_TO_TIMESTAMP(QC_TIMESTAMP, 'MON DD, YYYY HH12:MI AM')) AS p
   FROM snitch_db.maplemonk.RETURN_2_INWARDING_DATA WHERE TRY_TO_DATE(RECEIVING_DATE, 'DD-MM-YYYY') >= TO_DATE('{from}') AND (TYPE ILIKE 'North%' OR TYPE ILIKE 'WH-%'))
 SELECT TO_VARCHAR(g::date, 'YYYY-MM-DD') AS day, site, 'inwards' AS fn,
-  SUM(IFF(p IS NOT NULL OR DATEDIFF('minute', g, CURRENT_TIMESTAMP()::timestamp_ntz) > 1440, q, 0)) AS judged,
+  SUM(IFF(p IS NOT NULL OR DATEDIFF('minute', g, CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::timestamp_ntz) > 1440, q, 0)) AS judged,
   SUM(IFF(p IS NOT NULL AND DATEDIFF('minute', g, p) <= 1440, q, 0)) AS within
 FROM a WHERE q > 0 GROUP BY 1, 2
 UNION ALL
 SELECT TO_VARCHAR(d, 'YYYY-MM-DD'), site, 'b2c_returns',
-  SUM(IFF(p IS NOT NULL OR DATEDIFF('day', d, CURRENT_DATE()) > 2, 1, 0)), SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 2, 1, 0))
+  SUM(IFF(p IS NOT NULL OR DATEDIFF('day', d, CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::date) > 2, 1, 0)), SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 2, 1, 0))
 FROM r WHERE d IS NOT NULL AND site IS NOT NULL GROUP BY 1, 2`;
 
 export async function pullFnSla(from = "2026-04-01") {

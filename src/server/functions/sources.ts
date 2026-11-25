@@ -200,7 +200,15 @@ export async function inwardFallbackDays(from: string, to: string, sites: Wh[]) 
 
 /** SLA rows per receiving / deadline day × site: within and judged units; [] when the function has no SLA source (B2B Marketplace: no TAT). */
 export type SlaDay = { day: string; site: Wh; within: number; judged: number };
-const rrPool = () => (process.env.RETAIL_RETURN_DATABASE_URL ? ((globalThis as { __rrPg?: Pool }).__rrPg ??= new Pool({ connectionString: process.env.RETAIL_RETURN_DATABASE_URL, max: 2 })) : null);
+const rrPool = () => {
+  if (!process.env.RETAIL_RETURN_DATABASE_URL) return null;
+  const g = globalThis as { __rrPg?: Pool };
+  if (!g.__rrPg) {
+    g.__rrPg = new Pool({ connectionString: process.env.RETAIL_RETURN_DATABASE_URL, max: 2, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
+    g.__rrPg.on("error", (e) => console.error("[retail-return-db] idle client error", e.message)); // a dropped idle client must not crash the app
+  }
+  return g.__rrPg;
+};
 /** True when the Retail Return Tool's database is configured (B2B Returns SLA). */
 export const hasRetailReturnDb = () => !!process.env.RETAIL_RETURN_DATABASE_URL;
 
@@ -221,12 +229,14 @@ export async function slaDaily(fn: FnKey, sites: Wh[], from: string, to: string)
   if (fn === "b2b_returns") {
     const pool = rrPool();
     if (!pool) return [];
+    try {
     const { rows } = await pool.query<{ day: string; site: string; within: number; judged: number }>(
       `select "consideredDeliveredDate"::text as day, case facility when 'NORTH' then 'North' else 'South' end as site,
          sum(case when "processingEndDate" is not null and "processingEndDate" - "consideredDeliveredDate" <= 2 then "dcQuantity" else 0 end)::float8 as within,
          sum(case when "processingEndDate" is not null or (now() at time zone 'Asia/Kolkata')::date - "consideredDeliveredDate" > 2 then "dcQuantity" else 0 end)::float8 as judged
        from shipment_tracker where "consideredDeliveredDate" between $1 and $2 group by 1, 2`, [from, to]);
     return num(rows);
+    } catch (e) { console.error("[retail-return-db] SLA read failed", e instanceof Error ? e.message : e); return []; } // the page still renders, SLA blank
   }
   return [];
 }
