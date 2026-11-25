@@ -5,7 +5,7 @@ import type { RunQ } from "../db";
  * "North / South WH AD Hoc Task and Deployment Update". Charged to the function the work served (fn = FnKey); `rfid` and `liquidation` are
  * their own buckets, not functions (site overhead) — kept for the record, not in any function's gap.
  * Decisions: Birthday Sale = event note, not ad-hoc; Myntra tagging / re-sticker = B2B Marketplace; RFID Sep = 30 days (450); washing and
- * Berrylush (acquired company) left out; QC-reject putaway = returns (B2C Returns, the South returns team — to confirm); South Sep–Oct
+ * Berrylush (acquired company) left out; QC-reject putaway left out: it is BAU for the returns processing team, not ad-hoc (Malhar, 25 Nov 2026); South Sep–Oct
  * liquidation split by the 19 Sep batch's days (checked against IPP 300).
  */
 type A = [site: "South" | "North", month: string, fn: string, task: string, dates: string, days: number, qty: number, heads: number, manDays: number, dept: string, note: string];
@@ -16,8 +16,6 @@ const ADHOC: A[] = [
   ["North", "2026-08-01", "inwards", "Threadfusion tagging (China goods: sorting, feeding, tagging, box data entry)", "19–31 Aug", 13, 78169, 22, 286, "Inward", ""],
   ["North", "2026-09-01", "inwards", "Threadfusion tagging", "01–02 Sep", 2, 12026, 22, 44, "Inward", ""],
   ["North", "2026-10-01", "inwards", "Threadfusion tagging", "02–05 Oct", 4, 18000, 15, 60, "Inward", ""],
-  ["South", "2026-10-01", "b2c_returns", "QC-reject putaway", "01–31 Oct", 6, 13617, 2, 12, "Inward", "accounted in returns"],
-  ["South", "2026-11-01", "b2c_returns", "QC-reject putaway", "02–13 Nov", 3, 9309, 2, 6, "Inward", "accounted in returns"],
   ["North", "2026-08-01", "rfid", "RFID encoding (store + operational efficiency across inward, outward, inventory)", "20–31 Aug", 14, 23814, 15, 210, "B2B Forward", ""],
   ["North", "2026-09-01", "rfid", "RFID encoding", "01–30 Sep", 30, 52731, 15, 450, "B2B Forward", ""],
   ["North", "2026-10-01", "rfid", "RFID encoding", "01–30 Oct", 30, 51030, 15, 450, "B2B Forward", ""],

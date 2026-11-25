@@ -7,6 +7,7 @@ import { q } from "@/server/db";
 import { listCycles, resolveCycle } from "@/server/aop/model";
 import { b2bBy, b2bCategories, b2cRows, lgMonths, minCharge, retailCorrelation, storeTop, zoneLanes, type B2bAgg, type LgSite } from "@/server/aop/lgAnalysis";
 import { inrFull } from "@/lib/format";
+import { OneBoxTrend } from "@/components/aop/OneBoxTrend";
 import { cn } from "@/lib/cn";
 
 export const metadata = { title: "AOP · Logistics" };
@@ -29,24 +30,30 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
   const header = <AopHeader active="logistics" cycleId={cycle?.id ?? null} cycles={cycles} title="Logistics" subtitle="Billed, before credit notes" />;
   if (!all.length) return <div className="animate-fade-in">{header}<div className="card"><EmptyState title="No logistics files loaded" body="Upload them on AOP › Data." /></div></div>;
   const site: LgSite = sp.site === "South" || sp.site === "North" ? sp.site : "Both";
-  const cat = sp.cat && cats.includes(sp.cat) ? sp.cat : null;
+  // dispatch categories: several can be picked (comma list); none = all
+  const picked = [sp.cat ?? ""].flat().join(",").split(",").filter((x) => cats.includes(x)), cat = picked.length ? picked : null;
+  const toggle = (x: string) => { const n = picked.includes(x) ? picked.filter((y) => y !== x) : [...picked, x]; return n.length ? n.join(",") : undefined; };
   const months = sp.month && all.includes(sp.month) ? [sp.month] : all;
-  const href = (o: Partial<SP>) => `/aop/logistics?${new URLSearchParams(Object.entries({ cycle: sp.cycle, site, cat: cat ?? undefined, month: sp.month, ...o }).filter(([, v]) => v) as [string, string][])}`;
+  const href = (o: Partial<SP>) => `/aop/logistics?${new URLSearchParams(Object.entries({ cycle: sp.cycle, site, cat: cat?.join(","), month: sp.month, ...o }).filter(([, v]) => v) as [string, string][])}`;
 
   const rvp = await q<{ month: string; partner: string; flow: string; lrs: number | null; boxes: number | null; qty: number | null; amount: number | null; adhoc: number | null; kg: number | null }>(
     `select month::text as month, partner, flow, lrs::float8 as lrs, boxes::float8 as boxes, qty::float8 as qty, amount::float8 as amount, adhoc::float8 as adhoc, kg::float8 as kg
      from lg_rvp_month where month = any($1::date[]) order by flow, partner, month`, [all]);
   const rvpPartners = [...new Set(rvp.map((r) => `${r.flow}|${r.partner}`))];
-  const [b2c, byMonth, byCat, byType, byPartner, floor, lanes, corr, stores] = await Promise.all([
+  const [b2c, byMonth, byCat, byType, byPartner, floor, lanes, corr, stores, southM, northM, bothM] = await Promise.all([
     b2cRows(months), b2bBy("month", months, site, cat), b2bBy("category", months, site, null), b2bBy("type", months, site, cat),
     b2bBy("partner", months, site, cat), minCharge(months, site, cat), zoneLanes(months, site, cat), retailCorrelation(months, site), storeTop(months, site),
+    b2bBy("month", all, "South", cat), b2bBy("month", all, "North", cat), b2bBy("month", all, "Both", cat),
   ]);
+  // 1-box share trend, every month, split by warehouse (the site filter does not apply: the split is the point)
+  const share = (rs: B2bAgg[], m: string) => { const r = rs.find((x) => x.key === m); return r?.lrs ? (100 * r.oneBoxLrs) / r.lrs : null; };
+  const oneBox = all.map((m) => ({ label: mon(m), both: share(bothM, m), South: share(southM, m), North: share(northM, m) }));
   const tot = byMonth.reduce((a, r) => ({ lrs: a.lrs + r.lrs, qty: a.qty + r.qty, freight: a.freight + r.freight, oneBoxLrs: a.oneBoxLrs + r.oneBoxLrs, oneBoxFreight: a.oneBoxFreight + r.oneBoxFreight }),
     { lrs: 0, qty: 0, freight: 0, oneBoxLrs: 0, oneBoxFreight: 0 });
   const couriers = [...new Set(b2c.map((r) => r.courier))];
   const c = (courier: string, type: string, m?: string) => b2c.filter((r) => r.courier === courier && r.type === type && (!m || r.month === m))
     .reduce((a, r) => ({ awbs: a.awbs + (r.awbs ?? 0), cost: a.cost + (r.cost ?? 0), qty: a.qty + (r.qty ?? 0) }), { awbs: 0, cost: 0, qty: 0 });
-  const b2cTot = b2c.reduce((a, r) => ({ awbs: a.awbs + (r.awbs ?? 0), cost: a.cost + (r.cost ?? 0) }), { awbs: 0, cost: 0 });
+  const b2cTot = b2c.filter((r) => ["FWD", "RTO", "DTO"].includes(r.type)).reduce((a, r) => ({ awbs: a.awbs + (r.awbs ?? 0), cost: a.cost + (r.cost ?? 0) }), { awbs: 0, cost: 0 });
   const fwdAll = couriers.reduce((a, k) => a + c(k, "FWD").awbs, 0);
   const zoneTot = lanes.reduce((a, l) => a + l.freight, 0);
 
@@ -71,7 +78,7 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-        {([["B2C billed", inrFull(b2cTot.cost), `${n0(b2cTot.awbs)} AWBs · ${r2(div(b2cTot.cost, b2cTot.awbs))} / AWB`],
+        {([["B2C CPS, all-in", r2(div(b2cTot.cost, fwdAll)), `${inrFull(b2cTot.cost)} billed · ${n0(fwdAll)} forward AWBs`],
           ["B2B freight", inrFull(tot.freight), `${n0(tot.lrs)} LRs · ${r2(div(tot.freight, tot.qty))} / unit`],
           ["1-box LRs", pc(div(tot.oneBoxLrs, tot.lrs)), `${pc(div(tot.oneBoxFreight, tot.freight))} of B2B freight`],
           ["Credit notes", "not applied", "figures as billed"]] as const).map(([l, v, s]) => (
@@ -85,15 +92,28 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
             <tbody>{couriers.map((k) => { const f = c(k, "FWD"), r = c(k, "RTO"), d = c(k, "DTO"); const rto = div(r.awbs, f.awbs);
               return <tr key={k}><td className="font-medium">{k}</td><td className="text-right tabular">{n0(f.awbs)}</td><td className="text-right tabular">{pc(div(f.awbs, fwdAll))}</td><td className="text-right tabular">{r2(div(f.cost, f.awbs))}</td><td className="text-right tabular">{r2(div(f.cost, f.qty))}</td>
                 <td className={cn("text-right tabular", rto != null && rto > 0.08 && "text-bad")}>{pc(rto)}</td><td className="text-right tabular">{r2(div(r.cost, r.awbs))}</td><td className="text-right tabular">{n0(d.awbs || null)}</td><td className="text-right tabular">{r2(div(d.cost, d.awbs))}</td>
-                <td className="text-right tabular">{inrFull(f.cost + r.cost + d.cost)}</td></tr>; })}</tbody></table></div>
+                <td className="text-right tabular">{inrFull(f.cost + r.cost + d.cost)}</td></tr>; })}
+              {(() => { const t = (type: string) => couriers.reduce((a, k) => { const x = c(k, type); return { awbs: a.awbs + x.awbs, cost: a.cost + x.cost, qty: a.qty + x.qty }; }, { awbs: 0, cost: 0, qty: 0 });
+                const f = t("FWD"), r = t("RTO"), d = t("DTO");
+                return <tr className="border-t-2 border-line font-medium"><td>Total</td><td className="text-right tabular">{n0(f.awbs)}</td><td className="text-right tabular">{pc(div(f.awbs, fwdAll))}</td><td className="text-right tabular">{r2(div(f.cost, f.awbs))}</td><td className="text-right tabular">{r2(div(f.cost, f.qty))}</td>
+                  <td className="text-right tabular">{pc(div(r.awbs, f.awbs))}</td><td className="text-right tabular">{r2(div(r.cost, r.awbs))}</td><td className="text-right tabular">{n0(d.awbs || null)}</td><td className="text-right tabular">{r2(div(d.cost, d.awbs))}</td>
+                  <td className="text-right tabular">{inrFull(f.cost + r.cost + d.cost)}</td></tr>; })()}
+              <tr className="text-ink-3"><td colSpan={3}>All-in CPS (forward + RTO + DTO billed ÷ forward AWBs)</td><td className="text-right tabular font-medium text-ink">{r2(div(b2cTot.cost, fwdAll))}</td><td colSpan={6} /></tr>
+            </tbody></table></div>
           <div className="mt-3 overflow-x-auto"><table className="table-base min-w-[760px]">
             <thead><tr><th>Forward CPS by month</th>{months.map((m) => <th key={m} className="text-right">{mon(m)}</th>)}</tr></thead>
-            <tbody>{couriers.map((k) => <tr key={k}><td className="font-medium">{k}</td>{months.map((m) => { const f = c(k, "FWD", m); return <td key={m} className="text-right tabular">{r2(div(f.cost, f.awbs))}</td>; })}</tr>)}</tbody></table></div>
+            <tbody>{couriers.map((k) => <tr key={k}><td className="font-medium">{k}</td>{months.map((m) => { const f = c(k, "FWD", m); return <td key={m} className="text-right tabular">{r2(div(f.cost, f.awbs))}</td>; })}</tr>)}
+              {(["FWD", "all-in"] as const).map((x) => <tr key={x} className={cn("font-medium", x === "FWD" && "border-t-2 border-line")}><td>{x === "FWD" ? "Total, forward" : "Total, all-in (+ RTO + DTO)"}</td>{months.map((m) => {
+                const fwd = couriers.reduce((a, k) => a + c(k, "FWD", m).awbs, 0), cost = couriers.reduce((a, k) => a + c(k, "FWD", m).cost + (x === "FWD" ? 0 : c(k, "RTO", m).cost + c(k, "DTO", m).cost), 0);
+                return <td key={m} className="text-right tabular">{r2(div(cost, fwd))}</td>; })}</tr>)}
+            </tbody></table></div>
         </Section>
 
-        <Section open title="B2B · by month" sub={`${cat ?? "All categories"} · ${site}`}>
+        <Section open title="B2B · by month" sub={`${cat ? cat.join(", ") : "All dispatch categories"} · ${site}`}>
           <div className="mb-2 flex flex-wrap gap-1"><Link href={href({ cat: undefined })} className={cn("rounded-md px-2 py-1 text-[12px]", !cat ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>All categories</Link>
-            {cats.map((x) => <Link key={x} href={href({ cat: x })} className={cn("rounded-md px-2 py-1 text-[12px]", cat === x ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>{x}</Link>)}</div>
+            {cats.map((x) => <Link key={x} href={href({ cat: toggle(x) })} aria-pressed={picked.includes(x)} className={cn("rounded-md px-2 py-1 text-[12px]", picked.includes(x) ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>{x}</Link>)}
+            <span className="self-center pl-1 text-[11px] text-ink-4">pick several to combine</span></div>
+          <OneBoxTrend data={oneBox} />
           <div className="overflow-x-auto"><table className="table-base min-w-[1100px]">{aggHead("Month")}<tbody>{byMonth.map((r) => aggRow(r, mon(r.key)))}</tbody></table></div>
         </Section>
 

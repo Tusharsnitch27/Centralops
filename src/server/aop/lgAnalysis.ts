@@ -20,11 +20,11 @@ const AGG = `count(*)::int as lrs, coalesce(sum(boxes), 0)::float8 as boxes, coa
   coalesce(sum(freight), 0)::float8 as freight, count(*) filter (where boxes = 1)::int as "oneBoxLrs",
   coalesce(sum(freight) filter (where boxes = 1), 0)::float8 as "oneBoxFreight", coalesce(sum(qty) filter (where boxes = 1), 0)::float8 as "oneBoxQty"`;
 
-/** B2B LRs grouped by one dimension (month | category | type | partner | site), filtered to months × site × category. */
-export function b2bBy(dim: "month" | "category" | "type" | "partner" | "site", months: string[], site: LgSite, category: string | null) {
+/** B2B LRs grouped by one dimension (month | category | type | partner | site), filtered to months × site × dispatch categories (null = all). */
+export function b2bBy(dim: "month" | "category" | "type" | "partner" | "site", months: string[], site: LgSite, category: string[] | null) {
   const col = dim === "month" ? "month::text" : dim;
   return q<B2bAgg>(`select ${col} as key, ${AGG} from lg_b2b_lr
-     where month = any($1::date[]) and ${siteSql("site", 2)} and ($3::text is null or category = $3) group by 1 order by ${dim === "month" ? "1" : "freight desc"}`,
+     where month = any($1::date[]) and ${siteSql("site", 2)} and ($3::text[] is null or category = any($3::text[])) group by 1 order by ${dim === "month" ? "1" : "freight desc"}`,
     [months, site, category]);
 }
 export const b2bCategories = async () => (await q<{ c: string }>(`select category as c from lg_b2b_lr group by 1 order by sum(freight) desc`)).map((r) => r.c);
@@ -33,8 +33,8 @@ export const b2bCategories = async () => (await q<{ c: string }>(`select categor
  * Minimum-charge read per partner: 1-box LRs whose charged weight equals that partner's most common 1-box weight (the
  * likely minimum slab) vs everything else. Inferred, not a contract term — the partner rate cards will confirm the slab.
  */
-export const minCharge = (months: string[], site: LgSite, category: string | null) => q<{ partner: string; floor_kg: number | null; at_floor: number; at_floor_freight: number; one_box: number; lrs: number }>(
-  `with b as (select * from lg_b2b_lr where month = any($1::date[]) and ${siteSql("site", 2)} and ($3::text is null or category = $3)),
+export const minCharge = (months: string[], site: LgSite, category: string[] | null) => q<{ partner: string; floor_kg: number | null; at_floor: number; at_floor_freight: number; one_box: number; lrs: number }>(
+  `with b as (select * from lg_b2b_lr where month = any($1::date[]) and ${siteSql("site", 2)} and ($3::text[] is null or category = any($3::text[]))),
    f as (select partner, mode() within group (order by kg) as floor_kg from b where boxes = 1 and kg > 0 group by 1)
    select b.partner, f.floor_kg::float8 as floor_kg, count(*) filter (where b.boxes = 1 and b.kg = f.floor_kg)::int as at_floor,
      coalesce(sum(b.freight) filter (where b.boxes = 1 and b.kg = f.floor_kg), 0)::float8 as at_floor_freight,
@@ -45,11 +45,11 @@ export const minCharge = (months: string[], site: LgSite, category: string | nul
  * Zone lanes: each LR's store matched by lg_key to its zone (lg_zone: spine zone + overrides, migration 094); dispatching site vs store zone.
  * Unmatched stores stay "zone unknown" (shown, never dropped).
  */
-export const zoneLanes = (months: string[], site: LgSite, category: string | null) => q<{ site: string; zone: string; lrs: number; boxes: number; qty: number; freight: number }>(
+export const zoneLanes = (months: string[], site: LgSite, category: string[] | null) => q<{ site: string; zone: string; lrs: number; boxes: number; qty: number; freight: number }>(
   `select b.site, coalesce(z.zone, 'zone unknown') as zone, count(*)::int as lrs, coalesce(sum(b.boxes), 0)::float8 as boxes,
      coalesce(sum(b.qty), 0)::float8 as qty, coalesce(sum(b.freight), 0)::float8 as freight
    from lg_b2b_lr b left join lg_zone z on z.key = lg_key(b.store)
-   where b.month = any($1::date[]) and ${siteSql("b.site", 2)} and ($3::text is null or b.category = $3) group by 1, 2 order by 1, freight desc`, [months, site, category]);
+   where b.month = any($1::date[]) and ${siteSql("b.site", 2)} and ($3::text[] is null or b.category = any($3::text[])) group by 1, 2 order by 1, freight desc`, [months, site, category]);
 
 /** Freight (LR file) beside dispatched volume (retail journey spine) per month × site — the retail store correlation. */
 export const retailCorrelation = (months: string[], site: LgSite) => q<{ month: string; site: string; freight: number; lr_qty: number; lr_boxes: number; lrs: number; spine_qty: number | null; spine_boxes: number | null; spine_awbs: number | null; spine_orders: number | null }>(

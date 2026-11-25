@@ -328,7 +328,7 @@ console.log("functions rulebook scenario OK");
 
 // SLA maths (25 Nov 2026): projection-sized team, carry-over breaches, heads by TAT, SLA share
 {
-  const { projectionTeam, simulateBacklog, tatHeads, slaShare, teamRupees } = await import("../src/server/functions/slaMath.ts");
+  const { projectionTeam, simulateBacklog, mixHeads, tierLabel, slaShare, teamRupees } = await import("../src/server/functions/slaMath.ts");
   assert.equal(projectionTeam(1000, 250), 4);
   assert.equal(projectionTeam(null, 250), null); assert.equal(projectionTeam(1000, 0), null);
   const d = (v, c = 100) => ({ day: "x", volume: v, capacity: c });
@@ -338,11 +338,18 @@ console.log("functions rulebook scenario OK");
   assert.deepEqual(simulateBacklog([d(300), d(100), d(100)], 1), { exceedDays: 1, breachUnits: 100, total: 500 }); // 100 of day 1 still open after day 2
   assert.equal(simulateBacklog([d(150), d(null), d(50)], 1).total, 200);                                         // a gap day is skipped
   assert.deepEqual(simulateBacklog([d(300, 100), d(0, 100), d(0, 100)], 0), { exceedDays: 1, breachUnits: 200, total: 300 }); // same-day TAT
-  assert.equal(tatHeads([100, 300, 100], 0, 100), 3);
-  assert.equal(tatHeads([100, 300, 100], 1, 100), 2);
-  assert.ok(Math.abs(tatHeads([100, 300, 100], 2, 100) - 5 / 3) < 1e-9);
-  assert.equal(tatHeads([100, null, 300], 1, 100), 2);  // unknown days are skipped, known days stay consecutive
-  assert.equal(tatHeads([100], 1, null), null);
+  // smallest steady team (FIFO, oldest first) that meets every tier; days after the window clear at the same pace (no new arrivals)
+  const near = (a, b) => Math.abs(a - b) < 1e-3;
+  assert.ok(near(mixHeads([100, 300, 100], [{ share: 1, tatDays: 0 }], 100), 3));
+  assert.ok(near(mixHeads([100, 300, 100], [{ share: 1, tatDays: 1 }], 100), 1.5));   // day 2's 300 over days 2–3; day 3's 100 on day 4
+  assert.ok(near(mixHeads([100, 100], [{ share: 0.4, tatDays: 0 }, { share: 1, tatDays: 1 }], 100), 0.7)); // day 2: 30 of day 1 first, then 40 of its own
+  assert.ok(near(mixHeads([100, null, 300], [{ share: 1, tatDays: 0 }], 100), 3));     // unknown days skipped
+  assert.equal(mixHeads([100], [{ share: 1, tatDays: 1 }], null), null);
+  assert.equal(mixHeads([null], [{ share: 1, tatDays: 1 }], 100), null);
+  assert.equal(tierLabel([{ share: 0.2, tatDays: 1 }, { share: 1, tatDays: 2 }]), "20 % within 24 h, 80 % within 48 h");
+  // 95 % of the period's units on time (Malhar, 25 Nov 2026): a peak day's overflow may be the 5 % that misses
+  assert.ok(near(mixHeads([100, 100, 100, 100, 100, 100, 100, 100, 100, 150], [{ share: 1, tatDays: 0 }], 100, 0.95), 1));    // 50 late of 1,050 = 4.8 %
+  assert.ok(mixHeads([100, 100, 100, 100, 100, 100, 100, 100, 100, 200], [{ share: 1, tatDays: 0 }], 100, 0.95) > 1);      // 100 late of 1,100 = 9 %: more heads
   assert.deepEqual(slaShare([{ within: 80, judged: 100 }, { within: null, judged: 50 }, { within: 10, judged: 100 }]), { pct: 45, judged: 200 });
   assert.deepEqual(slaShare([]), { pct: null, judged: null });
   assert.equal(teamRupees(4, 30, 23000), 120000);   // heads × days × salary ÷ 23
@@ -362,8 +369,16 @@ console.log("functions rulebook scenario OK");
   assert.equal(p.team.rupees, 8000);                   // 2 heads × 4 days × 23,000 ÷ 23
   assert.equal(p.team.saving, 12000);
   assert.deepEqual(p.above, { exceedDays: 1, breachUnits: 100, total: 600, pct: 100 / 6 }); // day 2's 300: 100 still open after a day
-  assert.deepEqual(p.byTat.map((t) => +t.heads.toFixed(6)), [6, 4, 3.333333, 3]);  // peak 300; best 2-day 200; 3-day 166.7; 4-day 150 — ÷ 50
-  assert.equal(p.byTat[1].current, true);
+  assert.deepEqual(p.byTat.map((t) => t.label), ["same day", "24 h", "48 h", "72 h", "96 h"]);
+  assert.ok(p.byTat[0].heads < 6 && p.byTat[0].heads > 4);  // same day at 95 % of 600 units: 30 of day 2's 300 may run late — 270 ÷ 50 = 5.4
+  assert.ok(Math.abs(p.byTat[0].heads - 5.4) < 1e-3);
+  assert.ok(p.byTat.every((t, i) => i === 0 || t.heads <= p.byTat[i - 1].heads + 1e-9)); // a longer SLA never needs more heads
+  assert.equal(p.byTat[1].current, true); assert.equal(p.byTat.filter((t) => t.current).length, 1);
+  // a tiered SLA (B2B returns: 20 % within 24 h, the rest within 48 h) is its own current row between 24 h and 48 h
+  const mix = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => 50, salary: () => 23000, tatDays: 2, tiers: [{ share: 0.2, tatDays: 1 }, { share: 1, tatDays: 2 }], capacityPerDay: null,
+    sla: [], actual: { rupees: 20000, units: 600, heads: 5 } });
+  assert.deepEqual(mix.byTat.map((t) => t.label), ["same day", "24 h", "20 % within 24 h, 80 % within 48 h", "48 h", "72 h", "96 h"]);
+  assert.deepEqual(mix.byTat.map((t) => t.current), [false, false, true, false, false, false]);
   const none = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => null, salary: () => 23000, tatDays: null, capacityPerDay: 5000, sla: [], actual: { rupees: null, units: null, heads: null } });
   assert.equal(none.team, null); assert.deepEqual(none.byTat, []); assert.equal(none.sla.pct, null);
   console.log("functions pointers OK");
@@ -395,6 +410,6 @@ console.log("functions rulebook scenario OK");
   const rows = [r2("2026-11-01", 5), r2("2026-11-02", null)];         // attendance on one of two days
   const p = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => 50, salary: () => 23000, tatDays: 1, capacityPerDay: null, sla: [], actual: { rupees: 5000, units: 100, heads: 5 } });
   assert.equal(p.team.rupees, 2000);                                   // 2 heads × 1 costed day × 1,000
-  assert.equal(p.byTat[0].rupees, 2000);                               // same day, peak 100 ÷ 50 = 2 heads × the same 1 costed day
+  assert.ok(Math.abs(p.byTat[0].rupees - p.byTat[0].heads * 1000) < 1e-6); // ₹ = heads × the same 1 costed day × 1,000 (not 2 days)
   console.log("functions review fixes OK");
 }

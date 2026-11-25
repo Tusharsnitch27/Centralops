@@ -28,13 +28,39 @@ export function simulateBacklog(days: { day: string; volume: number | null; capa
   return { exceedDays, breachUnits, total };
 }
 
-/** Heads to clear every unit within the TAT: the busiest run of tatDays + 1 known days, averaged, ÷ units per head (TAT 0 = the peak day). */
-export function tatHeads(volumes: (number | null)[], tatDays: number, uph: number | null) {
-  const v = volumes.filter((x): x is number => x != null), w = tatDays + 1;
-  if (!uph || !v.length) return null;
-  let best = 0;
-  for (let i = 0; i + Math.min(w, v.length) <= v.length; i++) { const run = v.slice(i, i + w); best = Math.max(best, run.reduce((a, x) => a + x, 0) / run.length); }
-  return best / uph;
+/** An SLA as cumulative tiers: `share` of each day's arrivals cleared within `tatDays` whole days (last tier share 1). "24 h" = [{ share: 1, tatDays: 1 }]. */
+export type Tier = { share: number; tatDays: number };
+const hrs = (d: number) => (d === 0 ? "same day" : `${d * 24} h`);
+export const tierLabel = (t: Tier[]) => (t.length === 1 ? hrs(t[0]!.tatDays)
+  : t.map((x, i) => `${Math.round(100 * (x.share - (t[i - 1]?.share ?? 0)))} % ${x.tatDays === 0 ? "same day" : `within ${hrs(x.tatDays)}`}`).join(", "));
+
+/** The SLA table holds each SLA on 95 % of the period's units, as the SLA % is reported (Malhar M, 25 Nov 2026): a peak day's overflow may be the 5 % late. */
+export const ON_TIME = 0.95;
+
+/**
+ * Heads a day to hold an SLA: the smallest steady daily capacity that, clearing oldest first, gets onTime of the period's units within
+ * every tier (binary search; 1 = every unit of every day), ÷ units per head. Unknown days are skipped; after the last day the same capacity
+ * keeps clearing with no new arrivals.
+ */
+export function mixHeads(volumes: (number | null)[], tiers: Tier[], uph: number | null, onTime = 1) {
+  const v = volumes.filter((x): x is number => x != null);
+  if (!uph || !v.length || !tiers.length) return null;
+  const last = Math.max(...tiers.map((t) => t.tatDays)), days = [...v, ...Array<number>(last).fill(0)];
+  const ok = (cap: number) => {
+    const left = [...days], done = days.map(() => [] as number[]); // done[i][a] = units of day i cleared by age a
+    let head = 0; // oldest day with units still open
+    for (let d = 0; d < days.length; d++) {
+      let c = cap;
+      for (let i = head; i <= d && c > 0; i++) { const take = Math.min(c, left[i]!); left[i]! -= take; c -= take; }
+      while (head < d && left[head]! <= 0) head++;
+      for (let i = Math.max(0, d - last); i <= d; i++) done[i]![d - i] = days[i]! - left[i]!;
+    }
+    const tot = v.reduce((a, x) => a + x, 0); // each day counts up to its tier's share, so 1 = every day meets it
+    return tiers.every((t) => v.reduce((a, x, i) => a + Math.min(done[i]![t.tatDays]!, t.share * x), 0) >= onTime * t.share * tot - 1e-9 * tot);
+  };
+  let lo = 0, hi = Math.max(...v);
+  for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (ok(mid)) hi = mid; else lo = mid; }
+  return Math.round(hi * 1e4) / 1e4 / uph; // capacity to 1/10,000 of a unit: the search's float tail is not a real difference
 }
 
 /** On-time share: Σ within ÷ Σ judged over rows where both are known; null when nothing is judged. */
@@ -51,8 +77,8 @@ export interface Pointers {
   team: { heads: number | null; rupees: number | null; perUnit: number | null; saving: number | null } | null;
   /** with that team: days above its capacity and the units that would miss the TAT */
   above: { exceedDays: number; breachUnits: number; total: number; pct: number | null } | null;
-  /** heads (and ₹ over the window) to clear every unit within each TAT; current = the function's TAT */
-  byTat: { tatDays: number; heads: number | null; rupees: number | null; current: boolean }[];
+  /** heads (and ₹ over the window) to hold each SLA: all within same day … 96 h, plus the function's own tiered SLA where it has one; current = the function's SLA */
+  byTat: { label: string; heads: number | null; rupees: number | null; current: boolean }[];
 }
 type PRow = { day: string; site: string; projected: number | null; received: number | null; processed: number | null; presentHeads: number | null };
 
@@ -63,7 +89,7 @@ type PRow = { day: string; site: string; projected: number | null; received: num
  */
 export function pointers(i: {
   rows: PRow[]; monthRows: PRow[]; sites: string[]; uph: (site: string, month: string) => number | null; salary: (site: string, month: string) => number | null;
-  tatDays: number | null; capacityPerDay: number | null; sla: { within: number; judged: number }[]; actual: { rupees: number | null; units: number | null; heads: number | null };
+  tatDays: number | null; tiers?: Tier[] | null; capacityPerDay: number | null; sla: { within: number; judged: number }[]; actual: { rupees: number | null; units: number | null; heads: number | null };
 }): Pointers {
   const m7 = (d: string) => d.slice(0, 7);
   const s = slaShare(i.sla);
@@ -97,13 +123,17 @@ export function pointers(i: {
   // heads by TAT: per site at the window's mean units per head and salary; ₹ over the window's days
   const nDays = days; // the same costed days as the team and actual ₹
   const mean = (f: (site: string, m: string) => number | null, site: string) => { const v = [...new Set(i.rows.filter((r) => r.site === site).map((r) => m7(r.day)))].map((m) => f(site, m)).filter((x): x is number => x != null); return v.length ? v.reduce((a, x) => a + x, 0) / v.length : null; };
-  const byTat = i.tatDays == null ? [] : [0, 1, 2, 3].map((t) => {
+  // rows: all within same day … 96 h, and the function's own tiered SLA (between its tiers' rows) when it has more than one tier
+  const own = i.tiers ?? (i.tatDays == null ? null : [{ share: 1, tatDays: i.tatDays }]);
+  const sets = own == null ? [] : [...[0, 1, 2, 3, 4].map((t) => ({ tiers: [{ share: 1, tatDays: t }], key: t })),
+    ...(own.length > 1 ? [{ tiers: own, key: own.at(-1)!.tatDays - 0.5 }] : [])].sort((a, b) => a.key - b.key);
+  const byTat = sets.map(({ tiers }) => {
     let heads: number | null = 0, rs: number | null = 0;
     for (const site of i.sites) {
-      const h = tatHeads(i.rows.filter((r) => r.site === site).sort((a, b) => a.day.localeCompare(b.day)).map((r) => r.received ?? r.processed), t, mean(i.uph, site)), sal = mean(i.salary, site);
+      const h = mixHeads(i.rows.filter((r) => r.site === site).sort((a, b) => a.day.localeCompare(b.day)).map((r) => r.received ?? r.processed), tiers, mean(i.uph, site), ON_TIME), sal = mean(i.salary, site);
       heads = h == null || heads == null ? null : heads + h; rs = h == null || sal == null || rs == null ? null : rs + teamRupees(h, nDays, sal)!;
     }
-    return { tatDays: t, heads, rupees: rs, current: t === i.tatDays };
+    return { label: tierLabel(tiers), heads, rupees: rs, current: tierLabel(tiers) === tierLabel(own!) };
   });
   return { sla, actual, team, above, byTat };
 }

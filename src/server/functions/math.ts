@@ -45,7 +45,7 @@ export function manpowerGap(i: { salary: number; uph: number; projAvg: number; d
   const other = (A - I) - (plan + volume + (held ?? 0) + (adhoc ?? 0) + below);
   const R = (d: number | null) => (d == null ? null : d * r);
   return [
-    { cause: "plan_peak", rupees: R(plan), note: "the ideal staffs for the average projected day plus half the gap to the busiest one, with the 10 % and weekly-off cover; an average day needs fewer heads" },
+    { cause: "plan_peak", rupees: R(plan), note: "a minus by design: the ideal carries heads above the average projected day (half the gap to the busiest day, plus the 10 % and weekly-off cover), which an average day does not need. It is not a saving on the floor; how the heads actually present performed is output per head below" },
     { cause: "volume", rupees: R(volume), note: "processed volume against the projected average" },
     { cause: "held_up", rupees: R(held), note: held == null ? "held-up units not available" : "heads idle on held-up units" },
     { cause: "adhoc", rupees: R(adhoc), note: adhoc == null ? "no ad-hoc work recorded" : "man-days on tasks outside BAU (re-tagging, re-stickering, physical counts …), from the justification workbook" },

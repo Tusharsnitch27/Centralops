@@ -216,41 +216,55 @@ function Categories({ c, fn }: { c: CategoryView; fn: FnKey }) {
   );
 }
 
-const TAT_LABEL = (d: number) => (d === 0 ? "same day" : d === 1 ? "24 h" : `${d * 24} h`);
-const SLA_RULE: Record<FnKey, string> = { inwards: "gate entry → putaway within 24 h", b2c_shopify: "dispatched by the TAT deadline", b2c_marketplace: "dispatched by the TAT deadline",
+const SLA_RULE: Record<FnKey, string> = { inwards: "gate entry → putaway within 24 h", b2c_shopify: "dispatched by the cutoff, about 4–5 h after the order", b2c_marketplace: "dispatched by each marketplace's TAT deadline",
   b2b_retail: "handed over by the handover deadline", b2b_marketplace: "no TAT; capacity 5,000 items a day", b2c_returns: "received → processed within 2 days", b2b_returns: "received → processed within 2 days" };
 
-/** Where cost can come down (Malhar M, 25 Nov 2026): SLA → actual → a team at the projected average day → what it misses when volume runs above → heads by TAT. */
+/** Why each function is staffed as it is (Malhar M, 25 Nov 2026), under the SLA line. */
+const WHY: Partial<Record<FnKey, (p: Pointers) => string>> = {
+  b2c_shopify: () => "Shopify has 4 dispatch cutoffs a day, so an order gets about 4–5 hours to ship (the median order ships in 2–3 hours, as of 25 Nov). The load is lopsided: about half the day's orders (47–49 % in the 30 days to 25 Nov) come in between 4 PM and midnight for the 2 AM cutoff, so the evening and night shifts carry the peak. The table sizes a whole day's team; a looser SLA would let it spread the peaks.",
+  b2c_marketplace: (p) => `Marketplace SLAs are set by each marketplace: tight, overlapping through the day, and not ours to trade off. Central Ops staffs it to make every cutoff: the ${p.actual.heads == null ? "" : `${n0(p.actual.heads)} `}heads a day on the floor are what that takes, so there is no SLA trade-off to show here.`,
+  b2c_returns: () => "B2C returns are staffed to the projection, where 30–40 % of returns could be cleared within 24 h. Volumes are high, so the team is run on processing output rather than same-day clearing: inside the 48 h SLA it aims for about 40 % processed the same day and the other 60 % within 24 h.",
+  b2b_returns: () => "The team is sized to process 20 % of each day's returns within 24 h and the other 80 % within 48 h (the current row below).",
+  inwards: () => "Space: running the warehouse at 75–80 % space utilisation would lift putaway output per head, since putters lose less time finding space. Today box management takes people only to create space; that work falls away once utilisation is in range.",
+};
+
+/** Where cost can come down (Malhar M, 25 Nov 2026): SLA → why it is staffed so → actual → a team at the projected average day → what it misses when volume runs above → heads by SLA. */
 function CostPointers({ fn, p, prepack }: { fn: FnKey; p: Pointers; prepack: string[] }) {
   const rs = (x: number | null) => (x == null ? "—" : `₹${x.toFixed(2)}`);
+  const cur = p.byTat.find((t) => t.current)?.rupees ?? null;
   return (
     <div className="mt-3 border-t border-line pt-3 text-[13px] text-ink-2">
       <div className="mb-1.5 text-[10.5px] font-medium uppercase tracking-wide text-ink-4">Where cost can come down</div>
       <ul className="list-disc space-y-1 pl-5">
         <li><span className="font-medium">SLA</span> ({SLA_RULE[fn]}): {p.sla.pct == null ? (fn === "b2b_marketplace" ? "not measured" : "no data for this period") : `${p.sla.pct.toFixed(1)} % on time, ${n0(p.sla.missed)} of ${n0(p.sla.judged)} units missed it`}.</li>
+        {WHY[fn] && <li>{WHY[fn]!(p)}</li>}
         <li><span className="font-medium">Actual cost</span> on the days attendance is in: {n0(p.actual.heads)} heads a day, {inr(p.actual.rupees)}, {rs(p.actual.perUnit)} per unit.</li>
         {p.team && (
           <li><span className="font-medium">{fn === "b2b_marketplace" ? "A team sized to 5,000 items a day" : "A team at the projected average day"}</span>: {n0(p.team.heads)} heads a day would cost {inr(p.team.rupees)} ({rs(p.team.perUnit)} per unit)
             {p.team.saving != null && <>, <span className={p.team.saving > 0 ? "font-medium text-ok" : "text-warn"}>{inr(Math.abs(p.team.saving))} {p.team.saving > 0 ? "less" : "more"}</span> than actual</>} — enough for BAU days.</li>
         )}
         {p.above && (
-          <li><span className="font-medium">When volume runs above it</span>: on {n0(p.above.exceedDays)} days volume was above that team's capacity; holding the team, about {n0(p.above.breachUnits)} units ({p.above.pct == null ? "—" : `${p.above.pct.toFixed(1)} %`}) {fn === "b2b_marketplace" ? "would not be cleared the same day" : "would miss the SLA"}. Cost stays the same — the excess turns into breaches, not extra heads.</li>
+          <li><span className="font-medium">When volume runs above it</span>: on {n0(p.above.exceedDays)} days volume was above that team's capacity; holding the team, about {n0(p.above.breachUnits)} units ({p.above.pct == null ? "—" : `${p.above.pct.toFixed(1)} %`}) {fn === "b2b_marketplace" ? "would not be cleared the same day" : fn === "b2b_returns" ? "would miss the 48 h limit" : "would miss the SLA"}. Cost stays the same — the excess turns into breaches, not extra heads.</li>
         )}
         {prepack.map((x) => <li key={x}><span className="font-medium">Pre-packs</span> — {x}</li>)}
       </ul>
       {p.byTat.length > 0 && (
         <div className="mt-2.5 overflow-x-auto">
-          <table className="table-base max-w-[520px]">
-            <thead><tr><th>If the SLA were</th><th className="text-right">Heads a day to hold it</th><th className="text-right">₹ over this period</th></tr></thead>
-            <tbody>{p.byTat.map((t) => (
-              <tr key={t.tatDays} className={t.current ? "font-medium" : undefined}>
-                <td>{TAT_LABEL(t.tatDays)}{t.current && <span className="ml-1.5 text-[11px] text-ink-4">current</span>}</td>
-                <td className="text-right tabular">{t.heads == null ? "—" : t.heads.toFixed(1)}</td>
-                <td className="text-right tabular">{inr(t.rupees)}</td>
-              </tr>
-            ))}</tbody>
+          <table className="table-base max-w-[680px]">
+            <thead><tr><th>If the SLA were</th><th className="text-right">Heads a day to hold it</th><th className="text-right">₹ over this period</th><th className="text-right">Against the current SLA</th></tr></thead>
+            <tbody>{p.byTat.map((t) => {
+              const d = t.rupees == null || cur == null || t.current ? null : Math.round(t.rupees - cur);
+              return (
+                <tr key={t.label} className={t.current ? "font-medium" : undefined}>
+                  <td>{t.label}{t.current && <span className="ml-1.5 text-[11px] text-ink-4">{fn === "b2c_shopify" ? "current · whole-day view of the 4–5 h cutoffs" : "current"}</span>}</td>
+                  <td className="text-right tabular">{t.heads == null ? "—" : t.heads.toFixed(1)}</td>
+                  <td className="text-right tabular">{inr(t.rupees)}</td>
+                  <td className={cn("text-right tabular", d == null ? "text-ink-4" : d < 0 ? "text-ok" : d > 0 ? "text-bad" : "text-ink-3")}>{!d ? "—" : `${inr(Math.abs(d))} ${d < 0 ? "less" : "more"}`}</td>
+                </tr>
+              );
+            })}</tbody>
           </table>
-          <p className="mt-1 text-[11.5px] text-ink-4">Heads to clear every unit within the SLA over this period's busiest run of days. A longer SLA spreads the peaks, so fewer heads hold it.</p>
+          <p className="mt-1 text-[11.5px] text-ink-4">The smallest steady team that, clearing the oldest work first, gets 95 % of this period's units within the SLA (as the SLA % above is counted). A longer SLA lets the team spread the peaks over more days, so fewer heads hold it.</p>
         </div>
       )}
     </div>

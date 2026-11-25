@@ -11,14 +11,16 @@ import { unitsPerHead } from "./math";
 import { crewOf } from "./teams";
 import { crossZone, rulebookScenario } from "./retail";
 import { adhocRows, dailyRows, FN, hasRetailReturnDb, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, sharedTeam, SITES, slaDaily } from "./sources";
-import { pointers, prepackRoi } from "./slaMath";
+import { pointers, prepackRoi, type Tier } from "./slaMath";
 const activeIpps = memo(activeIppsRaw);
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
 
-/** Each function's SLA in whole days (Malhar M, 25 Nov 2026): inward 24 h; B2C the TAT column (next day); B2B Retail the handover deadline;
- *  returns 2 days receiving → processed; B2B Marketplace has no TAT but a 5,000 items a day capacity. */
-const TAT_DAYS: Record<FnKey, number | null> = { inwards: 1, b2c_shopify: 1, b2c_marketplace: 1, b2b_retail: 1, b2b_marketplace: null, b2c_returns: 2, b2b_returns: 2 };
+/** Each function's SLA in whole days (Malhar M, 25 Nov 2026): inward 24 h; B2C the TAT column — Shopify about 4–5 h to one of 4 cutoffs a day,
+ *  so same day; B2B Retail the handover deadline; returns 2 days receiving → processed; B2B Marketplace has no TAT but a 5,000 items a day capacity. */
+const TAT_DAYS: Record<FnKey, number | null> = { inwards: 1, b2c_shopify: 0, b2c_marketplace: 1, b2b_retail: 1, b2b_marketplace: null, b2c_returns: 2, b2b_returns: 2 };
+/** What the B2B returns team is sized for (Malhar M, 25 Nov 2026): 20 % processed within 24 h, the rest within 48 h. */
+const TIERS: Partial<Record<FnKey, Tier[]>> = { b2b_returns: [{ share: 0.2, tatDays: 1 }, { share: 1, tatDays: 2 }] };
 const B2B_MP_CAPACITY = 5000;
 
 /** Why B2C heads sit above the projection (Central Ops, 25 Nov 2026). */
@@ -265,8 +267,9 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const costedRows = win.filter((r) => r.presentHeads != null);
   const actualRs = costedRows.length && costedRows.every((r) => sal(r.site, mk(r.day)) != null) ? costedRows.reduce((a, r) => a + (r.presentHeads! * sal(r.site, mk(r.day))!) / 23, 0) : null;
   const pts = pointers({ rows: win, monthRows: rows, sites, uph: (s, m) => (n.uph[`${s}|${m}`] ?? null) as number | null, salary: sal,
-    tatDays: TAT_DAYS[fn], capacityPerDay: fn === "b2b_marketplace" ? B2B_MP_CAPACITY : null, sla: await slaP,
+    tatDays: TAT_DAYS[fn], tiers: TIERS[fn] ?? null, capacityPerDay: fn === "b2b_marketplace" ? B2B_MP_CAPACITY : null, sla: await slaP,
     actual: { rupees: actualRs, units: costedRows.reduce((a, r) => a + (r.processed ?? 0), 0) || null, heads: costedRows.length ? costedRows.reduce((a, r) => a + r.presentHeads!, 0) / new Set(costedRows.map((r) => r.day)).size : null } });
+  if (fn === "b2c_marketplace") pts.byTat = []; // marketplace SLAs are the marketplaces' own and not traded off: no SLA table (Malhar M, 25 Nov 2026)
   // pre-pack ROI (Inwards, B2B Retail): inward time of pre-pack ASNs against the retail handlings a pack saves, over the window's months
   const prepack: string[] = [];
   if (fn === "inwards" || fn === "b2b_retail") {
