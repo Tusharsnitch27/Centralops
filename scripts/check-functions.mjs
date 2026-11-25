@@ -325,3 +325,27 @@ console.log("functions rulebook scenario OK");
   close(none.get("B2B Marketplace|Picker"), 7);                                        // no Marketplace volume: fixed weights
   console.log("functions B2B workload split OK");
 }
+
+// SLA maths (25 Nov 2026): projection-sized team, carry-over breaches, heads by TAT, SLA share
+{
+  const { projectionTeam, simulateBacklog, tatHeads, slaShare, teamRupees } = await import("../src/server/functions/slaMath.ts");
+  assert.equal(projectionTeam(1000, 250), 4);
+  assert.equal(projectionTeam(null, 250), null); assert.equal(projectionTeam(1000, 0), null);
+  const d = (v, c = 100) => ({ day: "x", volume: v, capacity: c });
+  assert.deepEqual(simulateBacklog([d(100), d(100)], 1), { exceedDays: 0, breachUnits: 0, total: 200 });
+  assert.deepEqual(simulateBacklog([d(150), d(50)], 1), { exceedDays: 1, breachUnits: 0, total: 200 });        // 50 carried one day: within the TAT
+  assert.deepEqual(simulateBacklog([d(200), d(100), d(100)], 1), { exceedDays: 1, breachUnits: 0, total: 400 });   // oldest first: day 1's 100 clears on day 2
+  assert.deepEqual(simulateBacklog([d(300), d(100), d(100)], 1), { exceedDays: 1, breachUnits: 100, total: 500 }); // 100 of day 1 still open after day 2
+  assert.equal(simulateBacklog([d(150), d(null), d(50)], 1).total, 200);                                         // a gap day is skipped
+  assert.deepEqual(simulateBacklog([d(300, 100), d(0, 100), d(0, 100)], 0), { exceedDays: 1, breachUnits: 200, total: 300 }); // same-day TAT
+  assert.equal(tatHeads([100, 300, 100], 0, 100), 3);
+  assert.equal(tatHeads([100, 300, 100], 1, 100), 2);
+  assert.ok(Math.abs(tatHeads([100, 300, 100], 2, 100) - 5 / 3) < 1e-9);
+  assert.equal(tatHeads([100, null, 300], 1, 100), 2);  // unknown days are skipped, known days stay consecutive
+  assert.equal(tatHeads([100], 1, null), null);
+  assert.deepEqual(slaShare([{ within: 80, judged: 100 }, { within: null, judged: 50 }, { within: 10, judged: 100 }]), { pct: 45, judged: 200 });
+  assert.deepEqual(slaShare([]), { pct: null, judged: null });
+  assert.equal(teamRupees(4, 30, 23000), 120000);   // heads × days × salary ÷ 23
+  assert.equal(teamRupees(null, 30, 23000), null);
+  console.log("functions SLA maths OK");
+}
