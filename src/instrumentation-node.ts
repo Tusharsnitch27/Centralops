@@ -85,6 +85,8 @@ if (enabled && process.env.DATABASE_URL && !gs.__sopSyncTimer) {
       catch (e) { console.error("[fn-wam] pull failed", e instanceof Error ? e.message : e); }
       try { const { pullCategories } = await import("./server/functions/feed"); const w = await pullCategories(); console.log(`[fn-category] ${w.note}`); }
       catch (e) { console.error("[fn-category] pull failed", e instanceof Error ? e.message : e); }
+      try { const { pullFnSla } = await import("./server/functions/feed"); const w = await pullFnSla(); console.log(`[fn-sla] ${w.note}`); }
+      catch (e) { console.error("[fn-sla] pull failed", e instanceof Error ? e.message : e); }
     } catch (e) {
       console.error("[sop-sync] run failed", e instanceof Error ? e.message : e);
     }

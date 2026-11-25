@@ -55,6 +55,7 @@ import { sql as rulebookCutoffs } from "./092_rulebook_cutoffs";
 import { sql as fnCategory } from "./093_fn_category";
 import { sql as lgStoreZone } from "./094_lg_store_zone";
 import { sql as lgB2cCat, sqlIssues as fnIssues } from "./095_lg_b2c_cat";
+import { sql as fnSlaDaily } from "./096_fn_sla_daily";
 import { sql as ippUnits } from "./081_ipp_units";
 import { sql as logistics } from "./082_logistics";
 import { sql as ippUpdated } from "./083_ipp_updated";
@@ -119,4 +120,5 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
   { version: 93, name: "fn_category", sql: fnCategory },
   { version: 94, name: "lg_store_zone", sql: lgStoreZone },
   { version: 95, name: "lg_b2c_cat", sql: lgB2cCat + fnIssues },
+  { version: 96, name: "fn_sla_daily", sql: fnSlaDaily },
 ];

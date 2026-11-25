@@ -135,6 +135,44 @@ export async function pullWam(from = "2026-04-01") {
 }
 
 /**
+ * Functions SLA → fn_sla_daily (migration 096), from `from`; only the days returned are replaced. Timestamps are IST wall clock in both sources.
+ *  inwards: per ASN, gate entry → last putaway (LAST_PUV_AT) within 24 h; an ASN not put away and older than 24 h is judged and missed.
+ *  b2c_returns: per packet, receiving day → processed within 2 days (PROCESSED_DATE is mostly blank — Oct–Nov 1 % filled — and equals QC_TIMESTAMP
+ *  where filled, so QC time stands in); not processed and older than 2 days = missed.
+ */
+const FN_SLA_SQL = `WITH a AS (
+  SELECT ASN_NUMBER, MIN(GATE_ENTRY_TIME) AS g, MAX(LAST_PUV_AT) AS p, SUM(FI_QTY) AS q, MAX(IFF(WAREHOUSE = 'NORTH_WH', 'North', 'South')) AS site
+  FROM snitch_db.maplemonk.WAM_ASN_INWARD WHERE GATE_ENTRY_TIME >= TO_DATE('{from}') AND WAREHOUSE IN ('NORTH_WH', 'SOUTH_WH') GROUP BY 1),
+r AS (
+  SELECT TRY_TO_DATE(RECEIVING_DATE, 'DD-MM-YYYY') AS d, CASE WHEN TYPE ILIKE 'North%' THEN 'North' WHEN TYPE ILIKE 'WH-%' THEN 'South' END AS site,
+    COALESCE(TRY_TO_TIMESTAMP(NULLIF(PROCESSED_DATE, ''), 'MON DD, YYYY HH12:MI AM'), TRY_TO_TIMESTAMP(QC_TIMESTAMP, 'MON DD, YYYY HH12:MI AM')) AS p
+  FROM snitch_db.maplemonk.RETURN_2_INWARDING_DATA WHERE TRY_TO_DATE(RECEIVING_DATE, 'DD-MM-YYYY') >= TO_DATE('{from}') AND (TYPE ILIKE 'North%' OR TYPE ILIKE 'WH-%'))
+SELECT TO_VARCHAR(g::date, 'YYYY-MM-DD') AS day, site, 'inwards' AS fn,
+  SUM(IFF(p IS NOT NULL OR DATEDIFF('minute', g, CURRENT_TIMESTAMP()::timestamp_ntz) > 1440, q, 0)) AS judged,
+  SUM(IFF(p IS NOT NULL AND DATEDIFF('minute', g, p) <= 1440, q, 0)) AS within
+FROM a WHERE q > 0 GROUP BY 1, 2
+UNION ALL
+SELECT TO_VARCHAR(d, 'YYYY-MM-DD'), site, 'b2c_returns',
+  SUM(IFF(p IS NOT NULL OR DATEDIFF('day', d, CURRENT_DATE()) > 2, 1, 0)), SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 2, 1, 0))
+FROM r WHERE d IS NOT NULL AND site IS NOT NULL GROUP BY 1, 2`;
+
+export async function pullFnSla(from = "2026-04-01") {
+  if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
+  const rows = await sfQuery<{ day: string; site: string; fn: string; judged: number; within: number }>(FN_SLA_SQL.replaceAll("{from}", from));
+  await tx(async (t) => {
+    for (const fn of ["inwards", "b2c_returns"]) {
+      const days = [...new Set(rows.filter((r) => r.fn === fn).map((r) => r.day))];
+      if (days.length) await t.q(`delete from fn_sla_daily where fn = $1 and day = any($2::date[])`, [fn, days]);
+    }
+    for (const c of chunks(rows)) {
+      await t.q(`insert into fn_sla_daily (day, site, fn, judged, within) select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[], $5::numeric[])`,
+        [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.fn), c.map((r) => num(r.judged) ?? 0), c.map((r) => num(r.within) ?? 0)]);
+    }
+  });
+  return { read: rows.length, note: `${rows.length} SLA day × site × function rows from ${from}` };
+}
+
+/**
  * Category split per function (fn_category_month, migration 093), month by month from April:
  *  forward streams (UC items, dispatched month): units = items, shipments = distinct packages holding the category; '(all)' = the stream's packages;
  *    '(long tail)' = packages holding any non-apparel item (LONG_TAIL), counted once however many it holds;

@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { Pool } from "pg";
 import { q } from "../db";
 import { addDays, monthStart } from "@/lib/dates";
 import { processingMonth } from "../aop/processing";
@@ -195,4 +196,37 @@ export async function sharedTeam(sites: Wh[], from: string, to: string) {
 export async function inwardFallbackDays(from: string, to: string, sites: Wh[]) {
   return (await q<{ n: number }>(`select count(*)::int as n from wcm_stage_output o where o.stream = 'Inward' and o.event = 'received' and o.day between $1 and $2
     and o.site = any($3::text[]) and not exists (select 1 from fn_inward_daily w where w.day = o.day and w.site = o.site and w.received is not null)`, [from, to, sites]))[0]?.n ?? 0;
+}
+
+/** SLA rows per receiving / deadline day × site: within and judged units; [] when the function has no SLA source (B2B Marketplace: no TAT). */
+export type SlaDay = { day: string; site: Wh; within: number; judged: number };
+const rrPool = () => (process.env.RETAIL_RETURN_DATABASE_URL ? ((globalThis as { __rrPg?: Pool }).__rrPg ??= new Pool({ connectionString: process.env.RETAIL_RETURN_DATABASE_URL, max: 2 })) : null);
+/** True when the Retail Return Tool's database is configured (B2B Returns SLA). */
+export const hasRetailReturnDb = () => !!process.env.RETAIL_RETURN_DATABASE_URL;
+
+/**
+ * Per function (Malhar M, 25 Nov 2026): Inwards and B2C Returns from fn_sla_daily (pullFnSla); B2C Shopify / Marketplace and B2B Retail from
+ * wcm_sla_cell by deadline day (within + future-done ÷ those + breached + overdue open); B2B Returns from the WH Retail Return Tool's
+ * shipment_tracker (read-only RETAIL_RETURN_DATABASE_URL): considered-delivered day → processing end within 2 days, pieces = DC quantity,
+ * open past 2 days = missed; [] when the connection is not set.
+ */
+export async function slaDaily(fn: FnKey, sites: Wh[], from: string, to: string): Promise<SlaDay[]> {
+  const num = (rows: { day: string; site: string; within: number; judged: number }[]) =>
+    rows.filter((r) => sites.includes(r.site as Wh)).map((r) => ({ day: r.day, site: r.site as Wh, within: Number(r.within), judged: Number(r.judged) }));
+  if (fn === "inwards" || fn === "b2c_returns")
+    return num(await q(`select day::text as day, site, within::float8 as within, judged::float8 as judged from fn_sla_daily where fn = $1 and day between $2 and $3`, [fn, from, to]));
+  if (fn === "b2c_shopify" || fn === "b2c_marketplace" || fn === "b2b_retail")
+    return num(await q(`select deadline::date::text as day, ${slaSite} as site, sum(within + fut_done)::float8 as within, sum(within + fut_done + breached + pend_breach)::float8 as judged
+       from wcm_sla_cell where stream = $1 and deadline >= $2::date and deadline < $3::date + 1 group by 1, 2`, [FN[fn].label, from, to]));
+  if (fn === "b2b_returns") {
+    const pool = rrPool();
+    if (!pool) return [];
+    const { rows } = await pool.query<{ day: string; site: string; within: number; judged: number }>(
+      `select "consideredDeliveredDate"::text as day, case facility when 'NORTH' then 'North' else 'South' end as site,
+         sum(case when "processingEndDate" is not null and "processingEndDate" - "consideredDeliveredDate" <= 2 then "dcQuantity" else 0 end)::float8 as within,
+         sum(case when "processingEndDate" is not null or (now() at time zone 'Asia/Kolkata')::date - "consideredDeliveredDate" > 2 then "dcQuantity" else 0 end)::float8 as judged
+       from shipment_tracker where "consideredDeliveredDate" between $1 and $2 group by 1, 2`, [from, to]);
+    return num(rows);
+  }
+  return [];
 }
