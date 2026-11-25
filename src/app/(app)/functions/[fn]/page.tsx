@@ -42,7 +42,7 @@ export default async function FunctionPage({ params, searchParams }: { params: P
   const need = rulebook && view.scenario ? new Map(view.scenario.needed.map((x) => [x.key, x])) : null;
   const data: FnChartPoint[] = view.points.map((p) => ({ label: label(p.key), projected: p.projected, received: moved ? moved.get(p.key) ?? null : p.received,
     processed: p.processed, issues: p.issues, idealHeads: p.idealHeads, actualHeads: p.actualHeads, costPerUnit: p.costPerUnit, idealCostPerUnit: p.idealCostPerUnit, overlay: p.overlay,
-    ...(need ? { neededAsIs: need.get(p.key)?.asIsHeads ?? null, neededRulebook: need.get(p.key)?.heads ?? null } : {}) }));
+    ...(need ? { neededAsIs: need.get(p.key)?.asIsHeads ?? null, neededRulebook: need.get(p.key)?.heads ?? null, asPlaced: p.received } : {}) }));
 
   return (
     <div className="animate-fade-in">

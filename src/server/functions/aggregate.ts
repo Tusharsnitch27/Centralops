@@ -21,10 +21,14 @@ export function processingWeekday(tat: string | null): string | null {
 }
 
 /**
- * Store-order placement against the rulebook cutoff ("Wednesday 9 AM"), as retail_journey_spine flags it (matched on its Sep–Nov rows):
- * the next cutoff on or after the order day; on that day before the cutoff = WITHIN_SLA, after it = BREACHED; 1–3 days ahead
- * = EARLY_CREATION (allowed); further ahead = BREACHED (placed after the previous week's cutoff). No rule → null.
+ * Store-order placement against the rulebook cutoff ("Wednesday 9 AM"), Central Ops' rule (Malhar, 25 Nov 2026), measured to the next cutoff on or
+ * after the order day (retail_journey_spine's ORDER_CUTOFF_TS): within 48 hours before it = WITHIN_SLA (the rulebook window); 48–72 hours = EARLY_CREATION
+ * (out of the window, moved forward in the scenario); after it, or more than 72 hours before (placed after the previous cutoff) = BREACHED. No rule → null.
+ * PLACEMENT_SQL is the same rule in Snowflake; keep the two in step.
  */
+export const PLACEMENT_SQL = `CASE WHEN ORDER_CUTOFF_TS IS NULL OR ORDER_TIMESTAMP IS NULL THEN NULL
+  WHEN DATEDIFF('minute', ORDER_TIMESTAMP, ORDER_CUTOFF_TS) < 0 OR DATEDIFF('minute', ORDER_TIMESTAMP, ORDER_CUTOFF_TS) > 4320 THEN 'BREACHED'
+  WHEN DATEDIFF('minute', ORDER_TIMESTAMP, ORDER_CUTOFF_TS) <= 2880 THEN 'WITHIN_SLA' ELSE 'EARLY_CREATION' END`;
 export function placementSla(orderTs: string, rule: { cutoff: string | null } | null): "WITHIN_SLA" | "EARLY_CREATION" | "BREACHED" | null {
   const m = /^(\w+day) (\d{1,2})(?::(\d{2}))? ?(AM|PM)$/i.exec(rule?.cutoff?.trim() ?? "");
   const t = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/.exec(orderTs);
@@ -32,8 +36,8 @@ export function placementSla(orderTs: string, rule: { cutoff: string | null } | 
   if (ci < 0 || !t) return null;
   const ahead = (ci - new Date(`${t[1]}T00:00:00Z`).getUTCDay() + 7) % 7;
   const cut = ((+m![2]! % 12) + (/PM/i.test(m![4]!) ? 12 : 0)) * 60 + +(m![3] ?? 0);
-  if (ahead === 0) return +t[2]! * 60 + +t[3]! <= cut ? "WITHIN_SLA" : "BREACHED";
-  return ahead <= 3 ? "EARLY_CREATION" : "BREACHED";
+  const before = ahead * 1440 + cut - (+t[2]! * 60 + +t[3]!); // minutes from the order to its cutoff
+  return before < 0 || before > 4320 ? "BREACHED" : before <= 2880 ? "WITHIN_SLA" : "EARLY_CREATION";
 }
 
 /** The nearest `weekday` on or after `orderDate` (forward) or on or before it (back), within 6 days; an unknown weekday leaves the date as it is. */
@@ -61,10 +65,9 @@ export function retimeOrders(orders: StoreOrders[], from: string, to: string): D
     return { day: d, site: s, projected: null, received: qty, processed: null, issues: null, presentHeads: null, overlay: null }; });
 }
 
-/** Store orders placed in the rulebook window, % of the units judged ((WITHIN + EARLY) ÷ flagged units): early creation (≤ 3 days before
- *  the cutoff) is allowed, only BREACHED counts against; no-rule (null) units are not judged. */
+/** Store orders placed in the rulebook window (≤ 48 hours before the cutoff), % of the units judged (WITHIN ÷ flagged units); no-rule (null) units are not judged. */
 export function placementShare(rows: { sla: string | null; qty: number }[]) {
-  const judged = rows.filter((r) => r.sla != null).reduce((a, r) => a + r.qty, 0), within = rows.filter((r) => r.sla === "WITHIN_SLA" || r.sla === "EARLY_CREATION").reduce((a, r) => a + r.qty, 0);
+  const judged = rows.filter((r) => r.sla != null).reduce((a, r) => a + r.qty, 0), within = rows.filter((r) => r.sla === "WITHIN_SLA").reduce((a, r) => a + r.qty, 0);
   return judged ? { overlay: (100 * within) / judged, overlayBase: judged } : { overlay: null, overlayBase: null };
 }
 

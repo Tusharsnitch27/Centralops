@@ -1,7 +1,7 @@
 import "server-only";
 import { q, tx } from "../db";
 import { sfQuery } from "../snowflake";
-import { placementSla } from "./aggregate";
+import { PLACEMENT_SQL, placementSla } from "./aggregate";
 import { CAT, SITE, UC_STREAM } from "../wcm/feed";
 import { LONG_TAIL, LONG_TAIL_KEY } from "./types";
 
@@ -15,24 +15,25 @@ const ORDERS_SQL = `SELECT ORDER_NAME AS order_name, TO_VARCHAR(MAX(ORDER_DATE),
   MAX(IFF(WAREHOUSE_NAME = 'SAPL-NORTH-TAURU', 'North', 'South')) AS site, MAX(STORE) AS store, MAX(RECEIVER_CITY) AS city,
   MAX(QUANTITY) AS quantity, MAX(PACKAGE_COUNT) AS packages, MAX(ORDER_TYPE) AS order_type, MAX(ORDER_PLACEMENT_SLA) AS placement_sla
 FROM snitch_db.maplemonk.DISTRIBUTION_ANALYTICS WHERE ORDER_DATE >= TO_DATE('{from}') AND ORDER_NAME IS NOT NULL GROUP BY ORDER_NAME`;
-/** retail_journey_spine: the same UC store orders from March 2026, with the rulebook's store names; its placement flag is filled from Sep. */
+/** retail_journey_spine: the same UC store orders from March 2026, with the rulebook's store names; placement judged from its order and cutoff times
+ *  (PLACEMENT_SQL, 48-hour window) — its own ORDER_PLACEMENT_SLA is not used (BREACHED also turns up 2–3 days before the cutoff). */
 const SPINE_ORDERS_SQL = `SELECT ORDER_NAME AS order_name, TO_VARCHAR(ORDER_DATE, 'YYYY-MM-DD') AS order_date, TO_VARCHAR(ORDER_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS order_ts,
   IFF(WAREHOUSE_NAME = 'SAPL-NORTH-TAURU', 'North', 'South') AS site, STORE AS store, RECEIVER_CITY AS city, QUANTITY AS quantity, PACKAGE_COUNT AS packages,
-  ORDER_TYPE AS order_type, ORDER_PLACEMENT_SLA AS placement_sla
+  ORDER_TYPE AS order_type, ${PLACEMENT_SQL} AS placement_sla
 FROM snitch_db.maplemonk.retail_journey_spine
 WHERE ORDER_DATE >= TO_DATE('{from}') AND ORDER_NAME IS NOT NULL AND WAREHOUSE_NAME IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU')
 QUALIFY ROW_NUMBER() OVER (PARTITION BY ORDER_NAME ORDER BY LAST_UPDATED DESC NULLS LAST) = 1`;
 type OrderRow = { order_name: string; order_date: string; order_ts?: string | null; site: string; store: string | null; city: string | null; quantity: number | null;
   packages: number | null; order_type: string | null; placement_sla: string | null };
 
-/** Upsert orders; a row without its own placement flag keeps the one stored (DISTRIBUTION_ANALYTICS over the spine's computed flag). */
-async function upsertOrders(rows: OrderRow[]) {
+/** Upsert orders; with keepFlag a row without its own placement flag keeps the one stored (DISTRIBUTION_ANALYTICS over the spine's); the spine's flag always replaces it. */
+async function upsertOrders(rows: OrderRow[], keepFlag = true) {
   for (const c of chunks(rows)) {
     await q(`insert into fn_retail_order (order_name, order_date, site, store, city, quantity, packages, order_type, placement_sla)
              select * from unnest($1::text[], $2::date[], $3::text[], $4::text[], $5::text[], $6::numeric[], $7::numeric[], $8::text[], $9::text[])
              on conflict (order_name) do update set order_date = excluded.order_date, site = excluded.site, store = excluded.store, city = excluded.city,
                quantity = excluded.quantity, packages = excluded.packages, order_type = excluded.order_type,
-               placement_sla = coalesce(excluded.placement_sla, fn_retail_order.placement_sla), fetched_at = now()`,
+               placement_sla = ${keepFlag ? "coalesce(excluded.placement_sla, fn_retail_order.placement_sla)" : "excluded.placement_sla"}, fetched_at = now()`,
       [c.map((r) => r.order_name), c.map((r) => r.order_date), c.map((r) => r.site), c.map((r) => r.store), c.map((r) => r.city),
         c.map((r) => num(r.quantity)), c.map((r) => num(r.packages)), c.map((r) => r.order_type), c.map((r) => r.placement_sla)]);
   }
@@ -63,7 +64,10 @@ export async function pullRetailOrders(from = "2026-04-01") {
     o.placement_sla = placementSla(o.order_ts, { cutoff: cutoff(o) });
     if (o.placement_sla) computed++;
   }
-  await upsertOrders(spine);
+  // one rule for every order: DISTRIBUTION_ANALYTICS' own flag (its older rule) only for orders the spine doesn't have
+  const inSpine = new Set(spine.map((o) => o.order_name));
+  for (const o of da) if (inSpine.has(o.order_name)) o.placement_sla = null;
+  await upsertOrders(spine, false);
   await upsertOrders(da);
   return { read: spine.length + da.length, note: `${spine.length} spine + ${da.length} DISTRIBUTION_ANALYTICS store orders from ${from} (${computed} placement flags computed from the rulebook)` };
 }
