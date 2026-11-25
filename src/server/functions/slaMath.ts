@@ -111,8 +111,7 @@ export function pointers(i: {
 /**
  * Pre-pack ROI over some site-months: inward — pieces in pre-pack and solid ASNs and their gate → putaway hours (piece-weighted over the monthly
  * medians; elapsed time, not labour); retail — pre-pack packs and the pieces they carried, and the saving of handling a pack once instead of
- * each piece: (pieces − packs) ÷ units per head × salary ÷ 23.
- * ponytail: the saving uses the function's whole units per head, so it assumes every B2B Retail stage handles a pack as one unit; per-stage IPPs if it matters.
+ * each piece: (pieces − packs) ÷ units per head × salary ÷ 23 — the caller passes the per-piece stages' units per head (B2B Retail: Picker + Packer).
  */
 export function prepackRoi(rows: { month: string; site: string; kind: string; hours: number | null; pieces: number | null; packs: number | null }[],
   uph: (site: string, month: string) => number | null, salary: (site: string, month: string) => number | null) {

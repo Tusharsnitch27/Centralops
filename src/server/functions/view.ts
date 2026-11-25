@@ -273,10 +273,15 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     const pr = await q<{ month: string; site: string; kind: string; hours: number | null; pieces: number | null; packs: number | null }>(
       `select month::text as month, site, kind, hours::float8 as hours, pieces::float8 as pieces, packs::float8 as packs from fn_prepack_monthly where month = any($1::date[]) and site = any($2::text[])`, [months, sites]);
     const retailN = fn === "b2b_retail" ? n : await norms("b2b_retail", months, sites);
-    const r = prepackRoi(pr, (s, m) => (retailN.uph[`${s}|${m}`] ?? null) as number | null, (s, m) => (retailN.salary[`${s}|${m}`] ?? null) as number | null);
+    // a pack saves work only where B2B Retail handles each piece: the Picker and Packer stages (bagging, encoding and dispatch work per box)
+    const pickPack = new Map<string, number | null>(await Promise.all(months.flatMap((m) => sites.map(async (st) => {
+      const ipps = await activeIpps(m === monthStart(today()) ? today() : addDays(addMonths(m, 1), -1), st);
+      return [`${st}|${mk(m)}`, unitsPerHead(ipps.filter((p) => p.stream === "B2B Retail" && /^(picker|packer)$/i.test(p.stage)).map((p) => ({ ipp: p.ipp, unit: p.unit, pass: passShare(p.stage) })))] as const;
+    }))));
+    const r = prepackRoi(pr, (s, m) => pickPack.get(`${s}|${m}`) ?? null, (s, m) => (retailN.salary[`${s}|${m}`] ?? null) as number | null);
     const h = (x: number | null) => (x == null ? "—" : `${x.toFixed(1)} h`);
     if (r.inward.ppPieces != null) prepack.push(`Inward: pre-pack ASNs brought ${n0(r.inward.ppPieces)} pieces${r.inward.solidPieces ? ` (${n0((100 * r.inward.ppPieces) / (r.inward.ppPieces + r.inward.solidPieces))} % of WAM inward)` : ""} and took ${h(r.inward.ppHours)} from gate entry to putaway against ${h(r.inward.solidHours)} for solid ASNs${r.inward.ppHours != null && r.inward.solidHours != null ? ` (${r.inward.ppHours >= r.inward.solidHours ? "+" : "−"}${Math.abs(r.inward.ppHours - r.inward.solidHours).toFixed(1)} h, elapsed time — inward attendance is not split by stock type, so its ₹ is not separable)` : ""}.`);
-    if (r.retail.packs != null) prepack.push(`B2B Retail: ${n0(r.retail.packs)} pre-packs carried ${n0(r.retail.pieces!)} pieces to stores; each pack is picked and packed once, so ${n0(r.retail.pieces! - r.retail.packs)} fewer handlings${r.retail.saving == null ? "" : `, about ${inr(r.retail.saving)} of B2B Retail manpower at its units per head`}.`);
+    if (r.retail.packs != null) prepack.push(`B2B Retail: ${n0(r.retail.packs)} pre-packs carried ${n0(r.retail.pieces!)} pieces to stores; each pack is picked and packed once, so ${n0(r.retail.pieces! - r.retail.packs)} fewer handlings${r.retail.saving == null ? "" : `, about ${inr(r.retail.saving)} of picking and packing manpower at their IPPs`}.`);
     if (!prepack.length) prepack.push("No pre-pack data for this period yet.");
   }
   if (fn === "b2b_returns" && !hasRetailReturnDb()) grey.push("B2B Returns' SLA (receiving → processed within 2 days) comes from the Retail Return Tool, which is not connected yet (RETAIL_RETURN_DATABASE_URL), so it is blank.");

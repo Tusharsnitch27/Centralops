@@ -186,7 +186,9 @@ export async function pullUcHistory(from = "2026-04-01") {
  *       delay_flag lines (exchange / warehouse switch / error order) are counted apart and excluded from every other count.
  *       Latest row per order line. The source keeps ~60 days, so the first EDGE_SLA_DAYS deadline days of its window are
  *       written only if never stored (items created earlier have aged out of the source).
- *  B2B Retail: retail_journey_spine.HANDOVER_SLA vs HANDOVER_DEADLINE_TS, in units (quantity) and orders. NSO / QCOM have no SLA.
+ *  B2B Retail: retail_journey_spine UC_DISPATCHED_TIMESTAMP vs HANDOVER_DEADLINE_TS (Malhar M, 25 Nov 2026), in units (quantity) and orders: dispatched by the
+ *       deadline = within, after = breached, not dispatched and past it = overdue open. The spine's own HANDOVER_SLA is not used: it is filled only from Sep
+ *       and leaves dispatched orders as BREACHED-PENDING FOR PROCESS (Oct: 137k of 178k such units were dispatched on time). No deadline = No SLA.
  *  B2B Marketplace: the Marketplace<>Warehouse tracker (gs_marketplace_wh_tracker, Airbyte copy of the sheet) — the channel has no
  *       UC TAT; the warehouse works to the tracker's Dispatch_date (taken as 18:00, day-shift end), done = RTS_DATE.
  *       A DISPATCHED row with no RTS date can't be judged (no_sla).
@@ -213,7 +215,9 @@ SELECT TO_VARCHAR(t, 'YYYY-MM-DD HH24:MI') AS deadline, TO_VARCHAR(DATE_TRUNC('h
 FROM s GROUP BY 1, 2, 3, 4, 5`;
 export const SLA_SPINE_SQL = `WITH s AS (
   SELECT CASE warehouse_name WHEN 'SAPL-WH1' THEN 'WH1' WHEN 'SAPL-WH2' THEN 'WH2' ELSE 'NORTH' END AS wh, order_timestamp AS c, handover_deadline_ts AS t,
-    handover_sla AS st, COALESCE(quantity, 0) AS q
+    CASE WHEN handover_deadline_ts IS NULL THEN NULL WHEN uc_dispatched_timestamp IS NOT NULL THEN IFF(uc_dispatched_timestamp <= handover_deadline_ts, 'WITHIN_SLA', 'BREACHED')
+      WHEN handover_deadline_ts < CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::timestamp_ntz THEN 'BREACHED-PENDING FOR PROCESS' ELSE 'FUTURE SLA' END AS st,
+    COALESCE(quantity, 0) AS q
   FROM snitch_db.maplemonk.retail_journey_spine
   WHERE warehouse_name IN ('SAPL-WH1','SAPL-WH2','SAPL-NORTH-TAURU') AND order_timestamp IS NOT NULL AND COALESCE(handover_deadline_ts, order_timestamp) >= TO_DATE('{from}'))
 SELECT TO_VARCHAR(IFF(st IS NULL OR t IS NULL, DATE_TRUNC('hour', c), t), 'YYYY-MM-DD HH24:MI') AS deadline, TO_VARCHAR(DATE_TRUNC('hour', c), 'YYYY-MM-DD HH24:MI') AS created_hr,
@@ -267,7 +271,9 @@ async function writeCells(source: string, rows: Cell[], keep: Set<string>) {
 /** Pull all three SLA sources into wcm_sla_cell (07:00 job and the planner's Refresh). Name kept for the existing callers. */
 export async function pullSla(from = STAGE_FROM) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new Error("from must be YYYY-MM-DD");
-  const [b2c, spine, trk] = await Promise.all([SLA_B2C_SQL, SLA_SPINE_SQL, SLA_TRACKER_SQL].map((s) => sfQuery<Cell>(s.replaceAll("{from}", from))));
+  // the spine keeps full history (store orders from April): B2B Retail reads from April so earlier months have a handover SLA
+  const spineFrom = from < RETURNS_FROM ? from : RETURNS_FROM;
+  const [b2c, spine, trk] = await Promise.all([SLA_B2C_SQL, SLA_SPINE_SQL, SLA_TRACKER_SQL].map((s) => sfQuery<Cell>(s.replaceAll("{from}", s === SLA_SPINE_SQL ? spineFrom : from))));
   const first = b2c.map((r) => String(r.deadline).slice(0, 10)).sort()[0];
   const edge = first ? new Date(Date.parse(`${first}T00:00:00Z`) + EDGE_SLA_DAYS * 864e5).toISOString().slice(0, 10) : null;
   const stored = new Set(edge ? (await q<{ d: string }>(`select distinct deadline::date::text as d from wcm_sla_cell where source = 'warehouse_sla_performance' and deadline < $1::date`, [edge])).map((r) => r.d) : []);
