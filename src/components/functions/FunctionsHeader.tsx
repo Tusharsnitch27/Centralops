@@ -11,7 +11,7 @@ export function FunctionsHeader({ active, q, title, subtitle }: { active: FnKey 
   return (
     <>
       <PageHeader eyebrow="Warehouse functions" title={title} subtitle={subtitle} className="mb-4" />
-      <nav aria-label="Functions" className="mb-3 flex flex-wrap items-center gap-2">
+      <nav aria-label="Cost Control" className="mb-3 flex flex-wrap items-center gap-2">
         <div className="seg">
           <Link href={fnHref(null, q)} scroll={false} data-on={active === "overview"} aria-current={active === "overview" ? "page" : undefined} className="seg-item">Overview</Link>
         </div>

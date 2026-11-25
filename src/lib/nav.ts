@@ -13,7 +13,7 @@ export const NAV: NavGroup[] = [
   ] },
   { label: "Programs", items: [
     { href: "/aop", label: "AOP", icon: "Wallet", countKey: "aop", hue: "#ea580c" },
-    { href: "/functions", label: "Functions", icon: "Warehouse", hue: "#4f46e5" },
+    { href: "/functions", label: "Cost Control", icon: "Warehouse", hue: "#4f46e5" },
     { href: "/sop", label: "S&OP", icon: "PackageSearch", countKey: "sop", hue: "#0891b2" },
   ] },
   // meetings & MoM and the handbook sit together; MoMs can also be started from Summary

@@ -12,7 +12,7 @@ import { fnHref, parseMode, parseSite } from "@/lib/functions";
 import { inr } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-export const metadata = { title: "Functions · Overview" };
+export const metadata = { title: "Cost Control · Overview" };
 type SP = { site?: string; mode?: string; cycle?: string };
 
 const rs = (x: number | null) => (x == null ? "—" : `₹${x.toFixed(2)}`);
@@ -34,7 +34,7 @@ export default async function FunctionsOverviewPage({ searchParams }: { searchPa
 
   return (
     <div className="animate-fade-in">
-      <FunctionsHeader active="overview" q={q} title="Functions"
+      <FunctionsHeader active="overview" q={q} title="Cost Control"
         subtitle={`Heads present, items handled and what they cost, ${mode === "day" ? `last 30 days to ${fmtDate(view.to)}` : `financial year to ${fmtDate(view.to)}`}.`} />
 
       <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -57,7 +57,7 @@ export default async function FunctionsOverviewPage({ searchParams }: { searchPa
       <div className="space-y-3">
         <FunctionTable d={view} q={q} />
         {mode === "month" && <MonthTable d={view} />}
-        <Section title="How these are counted" sub="Metric definitions, the cost basis and the source gaps.">
+        <Section title="How these are counted" sub="What each column means and where the cost comes from.">
           <Definitions d={view} />
         </Section>
       </div>
@@ -163,7 +163,6 @@ function Definitions({ d }: { d: OverviewData }) {
         <dt className="font-medium">₹ per item</dt><dd className="text-ink-3">Manpower cost ÷ items handled over the same covered days (attendance and the items feed both in); days without either are left out of both.</dd>
         <dt className="font-medium">Payroll per head</dt><dd className="text-ink-3">Manpower cost excluding OT ÷ heads on roll (head-days present ÷ 23 working days), a month.</dd>
       </dl>
-      <ul className="list-disc space-y-1 pl-5 text-ink-3">{d.gaps.map((g) => <li key={g}>{g}</li>)}</ul>
     </div>
   );
 }
