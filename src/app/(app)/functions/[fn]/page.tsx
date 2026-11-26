@@ -204,14 +204,6 @@ function Categories({ c, fn }: { c: CategoryView; fn: FnKey }) {
           ))}</tbody>
         </table>
       )}
-      {c.hours && (
-        <table className="table-base">
-          {head("Gate entry → last putaway · median hours")}
-          <tbody>{c.hours.map((r) => (
-            <tr key={r.category}><td>{r.category}</td>{r.values.map((v, j) => <td key={j} className="text-right tabular">{v ?? "—"}</td>)}</tr>
-          ))}</tbody>
-        </table>
-      )}
     </Section>
   );
 }

@@ -10,8 +10,8 @@ const LT_GROUPS = ["Shoes", "Perfume", "Accessories / belts / sunglasses", "Bags
 
 /**
  * AOP › Functions "By category" (fn_category_month): per month, each category's share of the function's units; non-apparel (LONG_TAIL) listed
- * apart; forward functions add the share of shipments holding each long-tail category and any of them; Inwards adds median hours gate entry →
- * last putaway (per site — a median doesn't add across sites). Top apparel categories by units over the months shown; the rest is "Other".
+ * apart; forward functions add the share of shipments holding each long-tail category and any of them. Inward gate entry → putaway hours are not
+ * shown: South's WAM timestamps give ~2 h medians, less than unloading alone takes (Malhar M, 26 Nov 2026). Top apparel categories by units over the months shown; the rest is "Other".
  */
 const TOP = 8;
 export interface CategoryView {
@@ -19,7 +19,6 @@ export interface CategoryView {
   units: { category: string; longTail: boolean; values: (number | null)[] }[]; // units per month; share = value ÷ total
   total: (number | null)[];
   shipments: { category: string; values: (number | null)[] }[] | null; // share of '(all)' shipments, % per month
-  hours: { category: string; values: (string | null)[] }[] | null; // "1.5" or "S 1.5 · N 21.6"
   /** Inwards: factory issue quantity per 100 units put away, by category (issues_factory_sorted, Mar–Oct 2026; WAM issues after). */
   issues: { category: string; values: (number | null)[] }[] | null;
   /** B2C only, months with courier bills loaded (lg_b2c_cat): ₹ per forward shipment and kg by what the package holds; the long tail's premium
@@ -55,16 +54,6 @@ export async function categoryView(fn: FnKey, site: FnSite, months: string[]): P
     ? [{ category: "Any long-tail item", values: months.map((m) => pct(LONG_TAIL_KEY, m)) }, ...lt.map((c) => ({ category: c, values: months.map((m) => pct(c, m)) }))]
     : null;
 
-  let hours: CategoryView["hours"] = null;
-  if (fn === "inwards" && rows.some((r) => r.metric === "gate_put_h")) {
-    const asns = new Map<string, number>();
-    for (const r of rows.filter((x) => x.metric === "asns")) asns.set(r.category, (asns.get(r.category) ?? 0) + r.value);
-    const f = (h: number | null) => (h == null ? null : h.toFixed(1));
-    hours = [...asns].sort((a, b) => b[1] - a[1]).slice(0, TOP + lt.length).map(([c]) => ({ category: c, values: months.map((m) => {
-      const per = sites.map((s) => f(val("gate_put_h", c, m, s)));
-      return per.every((x) => x == null) ? null : sites.length === 1 ? per[0]! : sites.map((s, i) => `${s[0]} ${per[i] ?? "—"}`).join(" · ");
-    }) }));
-  }
   let issues: CategoryView["issues"] = null;
   if (fn === "inwards" && rows.some((r) => r.metric === "issue_qty")) {
     const iq = new Map<string, number>();
@@ -90,5 +79,5 @@ export async function categoryView(fn: FnKey, site: FnSite, months: string[]): P
         }) };
     }
   }
-  return { months, units, total, shipments, hours, issues, courier };
+  return { months, units, total, shipments, issues, courier };
 }
