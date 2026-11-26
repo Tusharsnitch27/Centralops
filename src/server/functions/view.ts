@@ -11,7 +11,9 @@ import { unitsPerHead } from "./math";
 import { crewOf } from "./teams";
 import { crossZone, rulebookScenario } from "./retail";
 import { adhocRows, dailyRows, FN, hasRetailReturnDb, inwardEvenMonths, inwardFallbackDays, lastOrderDay, memo, pmonth, sharedTeam, SITES, slaDaily } from "./sources";
-import { pointers, prepackRoi, type Tier } from "./slaMath";
+import { asRunTiers, pointers, prepackRoi, type Tier } from "./slaMath";
+import { costBase } from "./costBase";
+import type { Site } from "./overviewMath";
 const activeIpps = memo(activeIppsRaw);
 import type { DayRow, FnKey, FnMode, FnSite, FunctionView, GapPart, Point } from "./types";
 import { workbookMonthVolumes } from "./workbookHistory";
@@ -109,8 +111,8 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   const rowsTo = addDays(addMonths(monthStart(to), 1), -1); // whole months: the peak is the month's
   const b2b = fn === "b2b_retail" || fn === "b2b_marketplace";
   const slaP = slaDaily(fn, sites, from, to).catch((e) => { console.error("[functions] SLA read failed", e instanceof Error ? e.message : e); return []; });
-  const [rows, n, fallback, evenMonths, logistics, retail, lastOrder, [adhoc, notes], team] = await Promise.all([
-    dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites),
+  const [rawRows, n, cb, fallback, evenMonths, logistics, retail, lastOrder, [adhoc, notes], team] = await Promise.all([
+    dailyRows(fn, monthStart(from), rowsTo, sites), norms(fn, months, sites), costBase(sites, monthStart(from), to, months),
     fn === "inwards" ? inwardFallbackDays(from, to, sites) : Promise.resolve(0),
     fn === "inwards" ? inwardEvenMonths(monthStart(from), to) : Promise.resolve([] as string[]),
     fn === "b2c_shopify" ? courierGap(from, to, site) : Promise.resolve(null),
@@ -119,6 +121,13 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
     adhocRows(fn, sites, months),
     b2b ? sharedTeam(sites, mode === "day" ? from : addDays(to, -89), to) : Promise.resolve([]), // the month view reads the latest 90 days
   ]);
+  // one cost structure with the Overview (Malhar M, 26 Nov 2026): the function's heads are the Overview's (same split, same covered days) and every
+  // head-day — actual, ideal, team, SLA table — costs the site-month rate (booked payroll + OT ÷ head-days, else salary master ÷ 23), so this
+  // page's actual ₹ is the Overview's row for the function. Processing's department sheet figures are no longer the actual.
+  const rows = rawRows.map((r) => ({ ...r, presentHeads: r.day <= to ? cb.costedHeads(fn, r.site as Site, r.day) : null }));
+  for (const s of sites) for (const m of months) { const rate = cb.monthCost.get(`${s}|${m}`)?.rate; if (rate != null) n.salary[`${s}|${mk(m)}`] = rate * 23; }
+  for (const key of Object.keys(n.actuals)) delete n.actuals[key];
+  n.partial.length = 0;
   const adhocDays: ByMonth = {};
   for (const a of adhoc) adhocDays[`${a.site}|${mk(a.month)}`] = (adhocDays[`${a.site}|${mk(a.month)}`] ?? 0) + a.man_days;
   const points = pointsOf(mode, rows, n, from, to);
@@ -265,10 +274,18 @@ export async function functionView(fn: FnKey, site: FnSite, mode: FnMode): Promi
   // where cost can come down (Malhar M, 25 Nov 2026): the ideal is untouched; a team at the projected average day, what it would save and the SLA it would miss
   const sal = (s: string, m: string) => (n.salary[`${s}|${m}`] ?? null) as number | null;
   const costedRows = win.filter((r) => r.presentHeads != null);
+  // heads a day exactly as the Overview counts them: days in the window where every site has attendance, Σ sites that day
+  const fullDayHeads = () => { const all: string[] = []; for (let d = from; d <= to; d = addDays(d, 1)) all.push(d); // every calendar day, as the Overview
+    const ds = all.filter((d) => sites.every((st) => cb.at(st as Site, d)?.[fn].heads != null));
+    return ds.length ? ds.reduce((a, d) => a + sites.reduce((x, st) => x + cb.at(st as Site, d)[fn].heads!, 0), 0) / ds.length : null; };
   const actualRs = costedRows.length && costedRows.every((r) => sal(r.site, mk(r.day)) != null) ? costedRows.reduce((a, r) => a + (r.presentHeads! * sal(r.site, mk(r.day))!) / 23, 0) : null;
+  const slaRows = await slaP;
+  // returns: the current row is the mix the data shows (same day / 24 h / 48 h shares, Malhar M, 26 Nov 2026); B2B falls back to 20 / 80 unmeasured
+  const asRun = fn === "b2c_returns" || fn === "b2b_returns" ? asRunTiers(slaRows) : null;
   const pts = pointers({ rows: win, monthRows: rows, sites, uph: (s, m) => (n.uph[`${s}|${m}`] ?? null) as number | null, salary: sal,
-    tatDays: TAT_DAYS[fn], tiers: TIERS[fn] ?? null, capacityPerDay: fn === "b2b_marketplace" ? B2B_MP_CAPACITY : null, sla: await slaP,
-    actual: { rupees: actualRs, units: costedRows.reduce((a, r) => a + (r.processed ?? 0), 0) || null, heads: costedRows.length ? costedRows.reduce((a, r) => a + r.presentHeads!, 0) / new Set(costedRows.map((r) => r.day)).size : null } });
+    tatDays: TAT_DAYS[fn], tiers: asRun ?? TIERS[fn] ?? null, calibrate: asRun != null, capacityPerDay: fn === "b2b_marketplace" ? B2B_MP_CAPACITY : null, sla: slaRows,
+    actual: { rupees: actualRs, units: costedRows.reduce((a, r) => a + (cb.at(r.site as Site, r.day)?.[fn].txn ?? 0), 0) || null, heads: fullDayHeads() } }); // ₹ per item over the Overview's items
+  pts.asRun = asRun;
   if (fn === "b2c_marketplace") pts.byTat = []; // marketplace SLAs are the marketplaces' own and not traded off: no SLA table (Malhar M, 25 Nov 2026)
   // pre-pack ROI (Inwards, B2B Retail): inward time of pre-pack ASNs against the retail handlings a pack saves, over the window's months
   const prepack: string[] = [];

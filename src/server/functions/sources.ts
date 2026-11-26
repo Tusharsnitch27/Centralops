@@ -199,7 +199,8 @@ export async function inwardFallbackDays(from: string, to: string, sites: Wh[]) 
 }
 
 /** SLA rows per receiving / deadline day × site: within and judged units; [] when the function has no SLA source (B2B Marketplace: no TAT). */
-export type SlaDay = { day: string; site: Wh; within: number; judged: number };
+/** within0 / within1: of the judged, processed the same day / by the next day (returns only; null where not measured). */
+export type SlaDay = { day: string; site: Wh; within: number; judged: number; within0?: number | null; within1?: number | null };
 const rrPool = () => {
   if (!process.env.RETAIL_RETURN_DATABASE_URL) return null;
   const g = globalThis as { __rrPg?: Pool };
@@ -219,10 +220,12 @@ export const hasRetailReturnDb = () => !!process.env.RETAIL_RETURN_DATABASE_URL;
  * open past 2 days = missed; [] when the connection is not set.
  */
 export async function slaDaily(fn: FnKey, sites: Wh[], from: string, to: string): Promise<SlaDay[]> {
-  const num = (rows: { day: string; site: string; within: number; judged: number }[]) =>
-    rows.filter((r) => sites.includes(r.site as Wh)).map((r) => ({ day: r.day, site: r.site as Wh, within: Number(r.within), judged: Number(r.judged) }));
+  const n = (x: unknown) => (x == null ? null : Number(x));
+  const num = (rows: { day: string; site: string; within: number; judged: number; within_0?: number | null; within_1?: number | null }[]) =>
+    rows.filter((r) => sites.includes(r.site as Wh)).map((r) => ({ day: r.day, site: r.site as Wh, within: Number(r.within), judged: Number(r.judged), within0: n(r.within_0), within1: n(r.within_1) }));
   if (fn === "inwards" || fn === "b2c_returns")
-    return num(await q(`select day::text as day, site, within::float8 as within, judged::float8 as judged from fn_sla_daily where fn = $1 and day between $2 and $3`, [fn, from, to]));
+    return num(await q(`select day::text as day, site, within::float8 as within, judged::float8 as judged, within_0::float8 as within_0, within_1::float8 as within_1
+       from fn_sla_daily where fn = $1 and day between $2 and $3`, [fn, from, to]));
   if (fn === "b2c_shopify" || fn === "b2c_marketplace" || fn === "b2b_retail")
     return num(await q(`select deadline::date::text as day, ${slaSite} as site, sum(within + fut_done)::float8 as within, sum(within + fut_done + breached + pend_breach)::float8 as judged
        from wcm_sla_cell where stream = $1 and deadline >= $2::date and deadline < $3::date + 1 group by 1, 2`, [FN[fn].label, from, to]));
@@ -230,10 +233,12 @@ export async function slaDaily(fn: FnKey, sites: Wh[], from: string, to: string)
     const pool = rrPool();
     if (!pool) return [];
     try {
-    const { rows } = await pool.query<{ day: string; site: string; within: number; judged: number }>(
+    const { rows } = await pool.query<{ day: string; site: string; within: number; judged: number; within_0: number; within_1: number }>(
       `select "consideredDeliveredDate"::text as day, case facility when 'NORTH' then 'North' else 'South' end as site,
          sum(case when "processingEndDate" is not null and "processingEndDate" - "consideredDeliveredDate" <= 2 then "dcQuantity" else 0 end)::float8 as within,
-         sum(case when "processingEndDate" is not null or (now() at time zone 'Asia/Kolkata')::date - "consideredDeliveredDate" > 2 then "dcQuantity" else 0 end)::float8 as judged
+         sum(case when "processingEndDate" is not null or (now() at time zone 'Asia/Kolkata')::date - "consideredDeliveredDate" > 2 then "dcQuantity" else 0 end)::float8 as judged,
+         sum(case when "processingEndDate" is not null and "processingEndDate" - "consideredDeliveredDate" <= 0 then "dcQuantity" else 0 end)::float8 as within_0,
+         sum(case when "processingEndDate" is not null and "processingEndDate" - "consideredDeliveredDate" <= 1 then "dcQuantity" else 0 end)::float8 as within_1
        from shipment_tracker where "consideredDeliveredDate" between $1 and $2 group by 1, 2`, [from, to]);
     return num(rows);
     } catch (e) { console.error("[retail-return-db] SLA read failed", e instanceof Error ? e.message : e); return []; } // the page still renders, SLA blank

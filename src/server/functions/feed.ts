@@ -149,24 +149,25 @@ r AS (
   FROM snitch_db.maplemonk.RETURN_2_INWARDING_DATA WHERE TRY_TO_DATE(RECEIVING_DATE, 'DD-MM-YYYY') >= TO_DATE('{from}') AND (TYPE ILIKE 'North%' OR TYPE ILIKE 'WH-%'))
 SELECT TO_VARCHAR(g::date, 'YYYY-MM-DD') AS day, site, 'inwards' AS fn,
   SUM(IFF(p IS NOT NULL OR DATEDIFF('minute', g, CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::timestamp_ntz) > 1440, q, 0)) AS judged,
-  SUM(IFF(p IS NOT NULL AND DATEDIFF('minute', g, p) <= 1440, q, 0)) AS within
+  SUM(IFF(p IS NOT NULL AND DATEDIFF('minute', g, p) <= 1440, q, 0)) AS within, NULL AS within_0, NULL AS within_1
 FROM a WHERE q > 0 GROUP BY 1, 2
 UNION ALL
 SELECT TO_VARCHAR(d, 'YYYY-MM-DD'), site, 'b2c_returns',
-  SUM(IFF(p IS NOT NULL OR DATEDIFF('day', d, CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::date) > 2, 1, 0)), SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 2, 1, 0))
+  SUM(IFF(p IS NOT NULL OR DATEDIFF('day', d, CONVERT_TIMEZONE('Asia/Kolkata', CURRENT_TIMESTAMP())::date) > 2, 1, 0)), SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 2, 1, 0)),
+  SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 0, 1, 0)), SUM(IFF(p IS NOT NULL AND DATEDIFF('day', d, p::date) <= 1, 1, 0))
 FROM r WHERE d IS NOT NULL AND site IS NOT NULL GROUP BY 1, 2`;
 
 export async function pullFnSla(from = "2026-04-01") {
   if (!isDay(from)) throw new Error("from must be YYYY-MM-DD");
-  const rows = await sfQuery<{ day: string; site: string; fn: string; judged: number; within: number }>(FN_SLA_SQL.replaceAll("{from}", from));
+  const rows = await sfQuery<{ day: string; site: string; fn: string; judged: number; within: number; within_0: number | null; within_1: number | null }>(FN_SLA_SQL.replaceAll("{from}", from));
   await tx(async (t) => {
     for (const fn of ["inwards", "b2c_returns"]) {
       const days = [...new Set(rows.filter((r) => r.fn === fn).map((r) => r.day))];
       if (days.length) await t.q(`delete from fn_sla_daily where fn = $1 and day = any($2::date[])`, [fn, days]);
     }
     for (const c of chunks(rows)) {
-      await t.q(`insert into fn_sla_daily (day, site, fn, judged, within) select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[], $5::numeric[])`,
-        [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.fn), c.map((r) => num(r.judged) ?? 0), c.map((r) => num(r.within) ?? 0)]);
+      await t.q(`insert into fn_sla_daily (day, site, fn, judged, within, within_0, within_1) select * from unnest($1::date[], $2::text[], $3::text[], $4::numeric[], $5::numeric[], $6::numeric[], $7::numeric[])`,
+        [c.map((r) => r.day), c.map((r) => r.site), c.map((r) => r.fn), c.map((r) => num(r.judged) ?? 0), c.map((r) => num(r.within) ?? 0), c.map((r) => num(r.within_0)), c.map((r) => num(r.within_1))]);
     }
   });
   return { read: rows.length, note: `${rows.length} SLA day × site × function rows from ${from}` };

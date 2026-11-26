@@ -328,7 +328,7 @@ console.log("functions rulebook scenario OK");
 
 // SLA maths (25 Nov 2026): projection-sized team, carry-over breaches, heads by TAT, SLA share
 {
-  const { projectionTeam, simulateBacklog, mixHeads, tierLabel, slaShare, teamRupees } = await import("../src/server/functions/slaMath.ts");
+  const { projectionTeam, simulateBacklog, mixHeads, tierLabel, asRunTiers, slaShare, teamRupees } = await import("../src/server/functions/slaMath.ts");
   assert.equal(projectionTeam(1000, 250), 4);
   assert.equal(projectionTeam(null, 250), null); assert.equal(projectionTeam(1000, 0), null);
   const d = (v, c = 100) => ({ day: "x", volume: v, capacity: c });
@@ -347,6 +347,11 @@ console.log("functions rulebook scenario OK");
   assert.equal(mixHeads([100], [{ share: 1, tatDays: 1 }], null), null);
   assert.equal(mixHeads([null], [{ share: 1, tatDays: 1 }], 100), null);
   assert.equal(tierLabel([{ share: 0.2, tatDays: 1 }, { share: 1, tatDays: 2 }]), "20 % within 24 h, 80 % within 48 h");
+  // as run (26 Nov 2026): the shares the team actually delivered, from the judged units; the rest later
+  assert.deepEqual(asRunTiers([{ within: 80, judged: 100, within0: 20, within1: 70 }, { within: 90, judged: 100, within0: 20, within1: 70 }, { within: 5, judged: 10 }]),
+    [{ share: 0.2, tatDays: 0 }, { share: 0.7, tatDays: 1 }, { share: 0.85, tatDays: 2 }]);   // rows without the split are left out
+  assert.equal(asRunTiers([{ within: 5, judged: 10 }]), null);
+  assert.equal(tierLabel([{ share: 0.2, tatDays: 0 }, { share: 0.7, tatDays: 1 }, { share: 0.85, tatDays: 2 }]), "20 % same day, 50 % within 24 h, 15 % within 48 h, 15 % later");
   // 95 % of the period's units on time (Malhar, 25 Nov 2026): a peak day's overflow may be the 5 % that misses
   assert.ok(near(mixHeads([100, 100, 100, 100, 100, 100, 100, 100, 100, 150], [{ share: 1, tatDays: 0 }], 100, 0.95), 1));    // 50 late of 1,050 = 4.8 %
   assert.ok(mixHeads([100, 100, 100, 100, 100, 100, 100, 100, 100, 200], [{ share: 1, tatDays: 0 }], 100, 0.95) > 1);      // 100 late of 1,100 = 9 %: more heads
@@ -379,6 +384,14 @@ console.log("functions rulebook scenario OK");
     sla: [], actual: { rupees: 20000, units: 600, heads: 5 } });
   assert.deepEqual(mix.byTat.map((t) => t.label), ["same day", "24 h", "20 % within 24 h, 80 % within 48 h", "48 h", "72 h", "96 h"]);
   assert.deepEqual(mix.byTat.map((t) => t.current), [false, false, true, false, false, false]);
+  // as run (returns, 26 Nov 2026): rows scaled to today's output per head, so the current row is the team actually on the floor
+  const cal = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => 50, salary: () => 23000, tatDays: 2, tiers: [{ share: 0.2, tatDays: 1 }, { share: 1, tatDays: 2 }], capacityPerDay: null,
+    sla: [], actual: { rupees: 20000, units: 600, heads: 5 }, calibrate: true });
+  const curr = cal.byTat.find((t) => t.current), ratio = cal.byTat[0].heads / mix.byTat[0].heads;
+  assert.ok(Math.abs(curr.heads - 5) < 1e-9);                                     // = actual heads
+  assert.ok(Math.abs(ratio - cal.scale) < 1e-9);                                  // every other row by the same factor
+  assert.ok(Math.abs(curr.rupees - 5 * 4 * 1000) < 1e-6);                         // 5 heads × 4 costed days × ₹1,000
+  assert.equal(cal.scale != null, true); assert.equal(mix.scale ?? null, null);
   const none = pointers({ rows, monthRows: rows, sites: ["South"], uph: () => null, salary: () => 23000, tatDays: null, capacityPerDay: 5000, sla: [], actual: { rupees: null, units: null, heads: null } });
   assert.equal(none.team, null); assert.deepEqual(none.byTat, []); assert.equal(none.sla.pct, null);
   console.log("functions pointers OK");

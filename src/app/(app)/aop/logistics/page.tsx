@@ -72,9 +72,9 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
     <div className="animate-fade-in">
       {header}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="seg"><span className="seg-label">B2B site</span>{(["Both", "South", "North"] as const).map((s) => <Link key={s} href={href({ site: s })} data-on={site === s} className="seg-item">{s}</Link>)}</div>
-        <div className="flex flex-wrap gap-1"><Link href={href({ month: undefined })} className={cn("rounded-md px-2 py-1 text-[12px]", !sp.month ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>Apr–Oct</Link>
-          {all.map((m) => <Link key={m} href={href({ month: m })} className={cn("rounded-md px-2 py-1 text-[12px]", sp.month === m ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>{mon(m)}</Link>)}</div>
+        <div className="seg"><span className="seg-label">B2B site</span>{(["Both", "South", "North"] as const).map((s) => <Link scroll={false} key={s} href={href({ site: s })} data-on={site === s} className="seg-item">{s}</Link>)}</div>
+        <div className="flex flex-wrap gap-1"><Link scroll={false} href={href({ month: undefined })} className={cn("rounded-md px-2 py-1 text-[12px]", !sp.month ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>Apr–Oct</Link>
+          {all.map((m) => <Link scroll={false} key={m} href={href({ month: m })} className={cn("rounded-md px-2 py-1 text-[12px]", sp.month === m ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>{mon(m)}</Link>)}</div>
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -110,8 +110,8 @@ export default async function LogisticsPage({ searchParams }: { searchParams: Pr
         </Section>
 
         <Section open title="B2B · by month" sub={`${cat ? cat.join(", ") : "All dispatch categories"} · ${site}`}>
-          <div className="mb-2 flex flex-wrap gap-1"><Link href={href({ cat: undefined })} className={cn("rounded-md px-2 py-1 text-[12px]", !cat ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>All categories</Link>
-            {cats.map((x) => <Link key={x} href={href({ cat: toggle(x) })} aria-pressed={picked.includes(x)} className={cn("rounded-md px-2 py-1 text-[12px]", picked.includes(x) ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>{x}</Link>)}
+          <div className="mb-2 flex flex-wrap gap-1"><Link scroll={false} href={href({ cat: undefined })} className={cn("rounded-md px-2 py-1 text-[12px]", !cat ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>All categories</Link>
+            {cats.map((x) => <Link scroll={false} key={x} href={href({ cat: toggle(x) })} aria-pressed={picked.includes(x)} className={cn("rounded-md px-2 py-1 text-[12px]", picked.includes(x) ? "bg-ink text-white" : "text-ink-3 ring-1 ring-inset ring-line")}>{x}</Link>)}
             <span className="self-center pl-1 text-[11px] text-ink-4">pick several to combine</span></div>
           <OneBoxTrend data={oneBox} />
           <div className="overflow-x-auto"><table className="table-base min-w-[1100px]">{aggHead("Month")}<tbody>{byMonth.map((r) => aggRow(r, mon(r.key)))}</tbody></table></div>

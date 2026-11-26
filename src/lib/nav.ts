@@ -3,6 +3,9 @@
 export interface NavItem { href: string; label: string; short?: string; icon: string; countKey?: string; match?: string[]; hue?: string }
 export interface NavGroup { label: string; items: NavItem[] }
 
+/** The desktop rail's collapsed state ("1" = collapsed), read by the app layout so the server renders the right width. */
+export const NAV_COOKIE = "nav_collapsed";
+
 export const NAV: NavGroup[] = [
   { label: "Home", items: [
     { href: "/", label: "Summary", icon: "LayoutGrid", countKey: "inbox", hue: "#16a34a" },

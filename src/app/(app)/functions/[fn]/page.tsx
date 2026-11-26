@@ -219,12 +219,20 @@ function Categories({ c, fn }: { c: CategoryView; fn: FnKey }) {
 const SLA_RULE: Record<FnKey, string> = { inwards: "gate entry → putaway within 24 h", b2c_shopify: "dispatched by the cutoff, about 4–5 h after the order", b2c_marketplace: "dispatched by each marketplace's TAT deadline",
   b2b_retail: "handed over by the handover deadline", b2b_marketplace: "no TAT; capacity 5,000 items a day", b2c_returns: "received → processed within 2 days", b2b_returns: "received → processed within 2 days" };
 
+const pct = (x: number) => `${Math.round(100 * x)} %`;
+/** "As run over this period: 20 % processed the same day, 72 % within 24 h, 90 % within 48 h (the current row below)." */
+const asRunLine = (p: Pointers, what: string) => {
+  const t = p.asRun;
+  if (!t) return `No processing times for these ${what} in this period, so the current row is the 48 h SLA.`;
+  return `As run over this period: ${pct(t[0]!.share)} of ${what} processed the same day, ${pct(t[1]!.share)} by 24 h and ${pct(t[2]!.share)} by 48 h, counting cumulatively (the current row below).`;
+};
+
 /** Why each function is staffed as it is (Malhar M, 25 Nov 2026), under the SLA line. */
 const WHY: Partial<Record<FnKey, (p: Pointers) => string>> = {
   b2c_shopify: () => "Shopify has 4 dispatch cutoffs a day, so an order gets about 4–5 hours to ship (the median order ships in 2–3 hours, as of 25 Nov). The load is lopsided: about half the day's orders (47–49 % in the 30 days to 25 Nov) come in between 4 PM and midnight for the 2 AM cutoff, so the evening and night shifts carry the peak. The table sizes a whole day's team; a looser SLA would let it spread the peaks.",
   b2c_marketplace: (p) => `Marketplace SLAs are set by each marketplace: tight, overlapping through the day, and not ours to trade off. Central Ops staffs it to make every cutoff: the ${p.actual.heads == null ? "" : `${n0(p.actual.heads)} `}heads a day on the floor are what that takes, so there is no SLA trade-off to show here.`,
-  b2c_returns: () => "B2C returns are staffed to the projection, where 30–40 % of returns could be cleared within 24 h. Volumes are high, so the team is run on processing output rather than same-day clearing: inside the 48 h SLA it aims for about 40 % processed the same day and the other 60 % within 24 h.",
-  b2b_returns: () => "The team is sized to process 20 % of each day's returns within 24 h and the other 80 % within 48 h (the current row below).",
+  b2c_returns: (p) => `${asRunLine(p, "returns")} The clock runs from receiving through every step a return goes through — receiving, QC, processing, SPF, WPR and putaway — so most returns finish the next day rather than the day they land; with volumes this high the team is staffed to the projection and run on processing output, not same-day clearing.`,
+  b2b_returns: (p) => `${p.asRun ? asRunLine(p, "store returns") : "Until the Retail Return Tool is connected, the team is taken as sized for 20 % processed within 24 h and the other 80 % within 48 h (the current row below)."} The time covers receiving, QC, processing, WPR and putaway (SPF rarely applies to store returns).`,
   inwards: () => "Space: running the warehouse at 75–80 % space utilisation would lift putaway output per head, since putters lose less time finding space. Today box management takes people only to create space; that work falls away once utilisation is in range.",
 };
 
@@ -256,7 +264,7 @@ function CostPointers({ fn, p, prepack }: { fn: FnKey; p: Pointers; prepack: str
               const d = t.rupees == null || cur == null || t.current ? null : Math.round(t.rupees - cur);
               return (
                 <tr key={t.label} className={t.current ? "font-medium" : undefined}>
-                  <td>{t.label}{t.current && <span className="ml-1.5 text-[11px] text-ink-4">{fn === "b2c_shopify" ? "current · whole-day view of the 4–5 h cutoffs" : "current"}</span>}</td>
+                  <td>{t.label}{t.current && <span className="ml-1.5 text-[11px] text-ink-4">{fn === "b2c_shopify" ? "current · whole-day view of the 4–5 h cutoffs" : p.asRun ? "current · as run" : "current"}</span>}</td>
                   <td className="text-right tabular">{t.heads == null ? "—" : t.heads.toFixed(1)}</td>
                   <td className="text-right tabular">{inr(t.rupees)}</td>
                   <td className={cn("text-right tabular", d == null ? "text-ink-4" : d < 0 ? "text-ok" : d > 0 ? "text-bad" : "text-ink-3")}>{!d ? "—" : `${inr(Math.abs(d))} ${d < 0 ? "less" : "more"}`}</td>
@@ -264,7 +272,7 @@ function CostPointers({ fn, p, prepack }: { fn: FnKey; p: Pointers; prepack: str
               );
             })}</tbody>
           </table>
-          <p className="mt-1 text-[11.5px] text-ink-4">The smallest steady team that, clearing the oldest work first, gets 95 % of this period's units within the SLA (as the SLA % above is counted). A longer SLA lets the team spread the peaks over more days, so fewer heads hold it.</p>
+          <p className="mt-1 text-[11.5px] text-ink-4">The smallest steady team that, clearing the oldest work first, gets 95 % of this period's units within the SLA (as the SLA % above is counted). A longer SLA lets the team spread the peaks over more days, so fewer heads hold it.{p.scale != null && ` Heads are at this team's own output per head (${(1 / p.scale).toFixed(2)} × the IPP norm), so the current row is the team on the floor.`}</p>
         </div>
       )}
     </div>

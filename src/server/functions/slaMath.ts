@@ -31,8 +31,21 @@ export function simulateBacklog(days: { day: string; volume: number | null; capa
 /** An SLA as cumulative tiers: `share` of each day's arrivals cleared within `tatDays` whole days (last tier share 1). "24 h" = [{ share: 1, tatDays: 1 }]. */
 export type Tier = { share: number; tatDays: number };
 const hrs = (d: number) => (d === 0 ? "same day" : `${d * 24} h`);
-export const tierLabel = (t: Tier[]) => (t.length === 1 ? hrs(t[0]!.tatDays)
-  : t.map((x, i) => `${Math.round(100 * (x.share - (t[i - 1]?.share ?? 0)))} % ${x.tatDays === 0 ? "same day" : `within ${hrs(x.tatDays)}`}`).join(", "));
+// parts are differences of the rounded cumulative shares, so they always add to 100
+export const tierLabel = (t: Tier[]) => {
+  if (t.length === 1 && t[0]!.share === 1) return hrs(t[0]!.tatDays);
+  const cum = t.map((x) => Math.round(100 * x.share));
+  return [...t.map((x, i) => `${cum[i]! - (cum[i - 1] ?? 0)} % ${x.tatDays === 0 ? "same day" : `within ${hrs(x.tatDays)}`}`),
+    ...(cum.at(-1)! < 100 ? [`${100 - cum.at(-1)!} % later`] : [])].join(", ");
+};
+
+/** The returns SLA as run: of the judged units, the share processed the same day, by 24 h and by 48 h (rows carrying the split only); null when none do. */
+export function asRunTiers(rows: { within: number; judged: number; within0?: number | null; within1?: number | null }[]): Tier[] | null {
+  const r = rows.filter((x) => x.within0 != null && x.within1 != null && x.judged > 0), j = r.reduce((a, x) => a + x.judged, 0);
+  if (!j) return null;
+  const sh = (f: (x: (typeof r)[number]) => number) => r.reduce((a, x) => a + f(x), 0) / j;
+  return [{ share: sh((x) => x.within0!), tatDays: 0 }, { share: sh((x) => x.within1!), tatDays: 1 }, { share: sh((x) => x.within), tatDays: 2 }];
+}
 
 /** The SLA table holds each SLA on 95 % of the period's units, as the SLA % is reported (Malhar M, 25 Nov 2026): a peak day's overflow may be the 5 % late. */
 export const ON_TIME = 0.95;
@@ -79,6 +92,10 @@ export interface Pointers {
   above: { exceedDays: number; breachUnits: number; total: number; pct: number | null } | null;
   /** heads (and ₹ over the window) to hold each SLA: all within same day … 96 h, plus the function's own tiered SLA where it has one; current = the function's SLA */
   byTat: { label: string; heads: number | null; rupees: number | null; current: boolean }[];
+  /** returns: the SLA mix the team actually delivered over the window (the current row), null when not measured */
+  asRun?: Tier[] | null;
+  /** when calibrated: actual heads ÷ the current row's IPP heads — every row is at today's output per head; null = IPP heads */
+  scale?: number | null;
 }
 type PRow = { day: string; site: string; projected: number | null; received: number | null; processed: number | null; presentHeads: number | null };
 
@@ -90,6 +107,8 @@ type PRow = { day: string; site: string; projected: number | null; received: num
 export function pointers(i: {
   rows: PRow[]; monthRows: PRow[]; sites: string[]; uph: (site: string, month: string) => number | null; salary: (site: string, month: string) => number | null;
   tatDays: number | null; tiers?: Tier[] | null; capacityPerDay: number | null; sla: { within: number; judged: number }[]; actual: { rupees: number | null; units: number | null; heads: number | null };
+  /** scale the table so its current row is the actual team (the current row is what that team delivered: returns as run) */
+  calibrate?: boolean;
 }): Pointers {
   const m7 = (d: string) => d.slice(0, 7);
   const s = slaShare(i.sla);
@@ -135,7 +154,10 @@ export function pointers(i: {
     }
     return { label: tierLabel(tiers), heads, rupees: rs, current: tierLabel(tiers) === tierLabel(own!) };
   });
-  return { sla, actual, team, above, byTat };
+  const cur = byTat.find((t) => t.current);
+  const scale = i.calibrate && cur?.heads && actual.heads ? actual.heads / cur.heads : null;
+  if (scale != null) for (const t of byTat) { t.heads = t.heads == null ? null : t.heads * scale; t.rupees = t.rupees == null ? null : t.rupees * scale; }
+  return { sla, actual, team, above, byTat, scale };
 }
 
 /**
